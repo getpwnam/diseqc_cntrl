@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "diseqc_cntrl")(type "KiCad")(uri "${KIPRJMOD}/project-local/diseqc_cntrl.pretty")(options "")(descr ""))
+)
