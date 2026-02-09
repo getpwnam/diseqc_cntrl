@@ -5,11 +5,6 @@ Ethernet-connected DiSEqC motor control interface for satellite LNB systems, bui
 ## Disclaimer
 This project is in development. No hardware or software testing has been performed and use in any way is at your own risk.
 
-## License
-Hardware: [CERN Open Hardware Licence Version 2 — Permissive (CERN-OHL-P v2)](hardware/LICENSE.txt)
-
-Software: [MIT License](software/LICENSE.txt)
-
 ## Introduction
 
 Enables remote control of LNB power supply voltage (13 V / 18 V polarization selection), DiSEqC 1.x command generation, and IF signal routing — all manageable over a 10/100 Mbps Ethernet link or USB.
