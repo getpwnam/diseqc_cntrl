@@ -9,7 +9,7 @@ hardware/kicad-project/nonfree/
 
     footprints/
         <PROJECTNAME>.pretty
-        
+
     symbols/
         <PROJECTNAME>.kicad_sym
 ```
@@ -19,13 +19,21 @@ The content is stored in a private Git submodule:
 
 ## How to fetch it
 
-If you have access:
-
-    git submodule update --init --recursive
-
-If you do *not* have access, this directory will remain empty.
-
-## Component Search Engine
+### Component Search Engine
 
 All of the required symbols are available from https://componentsearchengine.com
-You'll just need to fetch them yourself and copy them into the appropriate directories here.
+You'll just need to fetch them yourself and copy them into the appropriate directories shown above.
+
+
+### If you have access to the submodule
+
+To install:
+`git submodule update --init --recursive`
+
+To update / pin most recent revision:
+```bash
+git pull                          # update main repo
+git submodule update --init       # ensure submodule loaded
+git submodule update --remote     # fetch latest private content
+```
+
