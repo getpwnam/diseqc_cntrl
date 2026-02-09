@@ -1,0 +1,3 @@
+[submodule "hardware/kicad-project/nonfree"]
+	path = hardware/kicad-project/nonfree
+	url = git@github.com:getpwnam/m0dmf_kicad_nonfree.git
