@@ -1,4 +1,4 @@
 (sym_lib_table
   (version 7)
-  (lib (name "diseqc_cntrl")(type "KiCad")(uri "${KIPRJMOD}/project-local/diseqc_cntrl.kicad_sym")(options "")(descr ""))
+  (lib (name "diseqc_cntrl")(type "KiCad")(uri "${KIPRJMOD}/nonfree/symbols/diseqc_cntrl.kicad_sym")(options "")(descr ""))
 )
