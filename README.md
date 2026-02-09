@@ -1,20 +1,25 @@
 # diseqc_cntrl
 
+## Disclaimer
+This project is in development. No hardware or software testing has been performed and use in any way is at your own risk.
+
+## Introduction
+
 Ethernet-connected DiSEqC motor control interface for satellite LNB systems, built around an STM32F407 microcontroller.
 
 Enables remote control of LNB power supply voltage (13 V / 18 V polarization selection), DiSEqC 1.x command generation, and IF signal routing — all manageable over a 10/100 Mbps Ethernet link or USB.
 
-![3D render - top](img/3d_1.png)
+![3D render - top](docs/images/3d_1.png)
 
-![3D render - perspective](img/3d_2.png)
+![3D render - perspective](docs/images/3d_2.png)
 
-![3D render - bottom](img/3d_3.png)
+![3D render - bottom](docs/images/3d_3.png)
 
 ## PCB
 
 4-layer board (F.Cu / In1.Cu / In2.Cu / B.Cu) with split ground planes — digital GND, analog GNDA, and power PGND domains are connected via net ties at controlled star-ground points to minimise noise coupling into the LNB signal path.
 
-![PCB layout](img/pcb.png)
+![PCB layout](docs/images/pcb.png)
 
 ## Hardware Overview
 
