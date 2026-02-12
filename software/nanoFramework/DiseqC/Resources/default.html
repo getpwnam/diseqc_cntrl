@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src='script.js'></script>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        h1,
+        legend {
+            text-align: center;
+        }
+
+        fieldset {
+            border-radius: 5px;
+            box-shadow: 3px 3px 15px hsl(0, 0%, 90%);
+            font-size: large;
+            max-width: 250px;
+            margin: 10px auto 0 auto;
+        }
+
+        input {
+            width: 100%;
+            padding: 4px;
+            margin-bottom: 8px;
+            border: 1px solid hsl(0, 0%, 50%);
+            border-radius: 3px;
+            font-size: medium;
+        }
+
+        input[type=submit]:hover {
+            cursor: pointer;
+            background-color: hsl(0, 0%, 90%);
+            transition: 0.5s;
+        }
+
+        input[type=button]:hover {
+            cursor: pointer;
+            background-color: hsl(0, 0%, 90%);
+            transition: 0.5s;
+        }
+
+        #error {
+            color: red;
+            display: none;
+        }
+
+        #ok {
+            color: blue;
+            display: none;
+        }
+
+
+        @media only screen and (max-width: 768px) {
+            form {
+                max-width: 100%;
+            }
+        }
+    </style>
+    <title>Diseqc controller</title>
+</head>
+<body>
+    <h1>&#x1F3F4;&#x200D;&#x2620;&#xFE0F; DiSEqC Controller &#x1F3F4;&#x200D;&#x2620;&#xFE0F;</h1>
+
+<form id="angleForm">
+    <fieldset>
+        <legend>Diseqc controller!</legend>
+        Angle:<br><input type="number"
+                         id="angle"
+                         name="angle"
+                         step="1"
+                         placeholder="e.g., -45 or 90"><br>
+        <br>
+        <input type="submit" value="Set angle">
+    </fieldset>
+
+    <h1 id="error">Please enter a valid integer (positive or negative)</h1>
+    <h1 id="ok">Moving the rotor!</h1>
+</form>
+
+<fieldset>
+    <legend>Potentiometer</legend>
+    Current Angle:<br>
+    <input type="number" id="pot_angle" name="pot_angle" disabled><br><br>
+    <input type="button" id="readPot" value="Read Potentiometer">
+</fieldset>
+
+<form method='POST' action="/wifi">
+        <fieldset>
+            <legend>Wireless configuration</legend>
+            Ssid:<br><input type="text" name="ssid" value=""><br>
+            Password:<br><input type="text" name="password" value=""><br>
+            <br>
+            <input type="submit" value="Save">
+        </fieldset>
+    </form>
+</body>
+</html>

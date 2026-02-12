@@ -1,0 +1,43 @@
+# Build artifacts
+build/nanoCLR.bin
+build/nanoCLR.hex
+build/nanoCLR.elf
+build/*.o
+build/*.d
+build/*.map
+
+# nf-interpreter (cloned during build)
+nf-interpreter/
+
+# Docker volumes
+.docker/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+bin/
+obj/
+packages/
+
+# C# build artifacts
+DiseqC/bin/
+DiseqC/obj/
+DiseqC/*.csproj.user
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+build.log

@@ -1,0 +1,63 @@
+#
+# CMake file for DISEQC_STM32F407 target
+#
+
+# Set board name
+set(TARGET_BOARD DISEQC_STM32F407)
+set(TARGET_SERIES STM32F4xx)
+
+# Set target base
+set(TARGET_BASE_LOCATION ${PROJECT_SOURCE_DIR}/targets/DISEQC_STM32F407)
+
+# Board definitions
+set(BOARD_NAME "DiSEqC Controller STM32F407VGT6")
+set(TARGET_VENDOR "Custom")
+
+# Include board-specific cmake
+include(${TARGET_BASE_LOCATION}/target_common.cmake)
+
+# Board files
+list(APPEND TARGET_COMMON_SOURCES
+    ${TARGET_BASE_LOCATION}/board_diseqc.cpp
+)
+
+list(APPEND TARGET_COMMON_HEADERS
+    ${TARGET_BASE_LOCATION}/board_diseqc.h
+    ${TARGET_BASE_LOCATION}/target_board.h
+)
+
+# Device capabilities (customize based on your board)
+set(NF_FEATURE_DEBUGGER                     TRUE CACHE BOOL "option to enable debugger")
+set(NF_FEATURE_RTC                          TRUE CACHE BOOL "option to use hardware RTC")
+set(NF_FEATURE_WATCHDOG                     FALSE CACHE BOOL "option to use hardware watchdog")
+set(API_System.Math                         FALSE CACHE BOOL "option to include System.Math support")
+set(API_Hardware.Stm32                      TRUE CACHE BOOL "option to include Hardware.Stm32 support")
+set(API_Windows.Devices.Gpio                TRUE CACHE BOOL "option to include Windows.Devices.Gpio")
+set(API_Windows.Devices.Spi                 TRUE CACHE BOOL "option to include Windows.Devices.Spi")
+set(API_Windows.Devices.I2c                 FALSE CACHE BOOL "option to include Windows.Devices.I2c")
+set(API_Windows.Devices.Pwm                 FALSE CACHE BOOL "option to include Windows.Devices.Pwm")
+set(API_Windows.Devices.SerialCommunication TRUE CACHE BOOL "option to include Windows.Devices.SerialCommunication")
+set(API_nanoFramework.Devices.OneWire       FALSE CACHE BOOL "option to include nanoFramework.Devices.OneWire")
+set(API_nanoFramework.Devices.Can           FALSE CACHE BOOL "option to include nanoFramework.Devices.Can")
+set(API_nanoFramework.Hardware.Stm32        TRUE CACHE BOOL "option to include nanoFramework.Hardware.Stm32")
+set(API_nanoFramework.Runtime.Events        TRUE CACHE BOOL "option to include nanoFramework.Runtime.Events")
+set(API_nanoFramework.Runtime.Native        TRUE CACHE BOOL "option to include nanoFramework.Runtime.Native")
+set(API_nanoFramework.Networking.Sntp       FALSE CACHE BOOL "option to include nanoFramework.Networking.Sntp")
+
+# Networking support (if using W5500)
+set(NF_FEATURE_HAS_CONFIG_BLOCK             TRUE CACHE BOOL "option for target to have configuration block")
+set(NF_NETWORKING_SNTP                      FALSE CACHE BOOL "option to use SNTP")
+
+# MCU and board specific
+set(STM32_CUBE_PACKAGE_REQUIRED             TRUE)
+set(CHIBIOS_BOARD                           DISEQC_STM32F407)
+set(STM32_CUBE_PACKAGE_NAME                 "STM32F4xx")
+
+# Memory configuration
+# Adjust based on your board's flash layout
+set(NANOCLR_RAM_ADDR                        0x20000000)
+set(NANOCLR_RAM_SIZE                        0x00020000)  # 128KB RAM
+set(NANOCLR_FLASH_ADDR                      0x08000000)
+set(NANOCLR_FLASH_SIZE                      0x00100000)  # 1MB Flash
+
+# DiSEqC native driver is included via nanoCLR CMakeLists.txt

@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  nanoframework-build:
+    image: nanoframework/dev-container:latest
+    container_name: diseqc-build
+    volumes:
+      # Mount your project directory
+      - .:/work
+      # Mount nf-interpreter (will be cloned if not exists)
+      - nf-interpreter:/nf-interpreter
+    working_dir: /work
+    command: /bin/bash -c "echo 'nanoFramework build container ready. Run: docker-compose run nanoframework-build ./build.sh'"
+    
+volumes:
+  nf-interpreter:
+    driver: local
