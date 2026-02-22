@@ -698,7 +698,7 @@
 				)
 			)
 		)
-		(property "Footprint" "FM24CL16B-GTR:SOIC127P602X173-8N"
+		(property "Footprint" "diseqc_cntrl:SOIC127P602X173-8N"
 			(at 54.61 125.4 0)
 			(effects
 				(font
@@ -796,15 +796,6 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 30.48 30.48 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 30.48 30.48 0)
 			(effects
 				(font

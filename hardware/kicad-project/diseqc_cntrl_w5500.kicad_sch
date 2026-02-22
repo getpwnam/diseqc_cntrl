@@ -4777,15 +4777,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "50"
-			(at 137.16 80.01 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "2"
 			(uuid "88213a14-8c93-409e-b4af-a8d887c32b56")
 		)
@@ -4899,15 +4890,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "50"
-			(at 111.76 27.94 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "1"
 			(uuid "6d42628d-d732-4891-9507-035de99c3e33")
 		)
@@ -5013,15 +4995,6 @@
 			)
 		)
 		(property "Mouser Part Number" "81-GRM39X104K16"
-			(at 92.71 27.94 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" "50"
 			(at 92.71 27.94 0)
 			(effects
 				(font
@@ -5201,15 +5174,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "0"
-			(at 254 62.23 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "2"
 			(uuid "09dbf159-7d78-4a2a-869c-0f4afc21c8c4")
 		)
@@ -5315,15 +5279,6 @@
 			)
 		)
 		(property "Mouser Part Number" "81-GRM39X104K16"
-			(at 82.55 27.94 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" "50"
 			(at 82.55 27.94 0)
 			(effects
 				(font
@@ -5502,15 +5457,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "25"
-			(at 91.44 114.3 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "1"
 			(uuid "b1a70b89-6685-4ff2-9e8b-04bcd43a4638")
 		)
@@ -5599,15 +5545,6 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 144.78 50.8 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" "0"
 			(at 144.78 50.8 0)
 			(effects
 				(font
@@ -5797,15 +5734,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" ""
-			(at 73.66 27.94 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "2"
 			(uuid "d67787a0-e85c-46d4-a92b-70db83db8e0c")
 		)
@@ -5967,15 +5895,6 @@
 			)
 		)
 		(property "Mouser Part Number" "279-CRG0603F33R"
-			(at 137.16 68.58 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" "50"
 			(at 137.16 68.58 90)
 			(effects
 				(font
@@ -6222,15 +6141,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" ""
-			(at 175.26 39.37 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "1"
 			(uuid "2288089b-0a54-42f7-84aa-a1076be2f5ba")
 		)
@@ -6328,15 +6238,6 @@
 			)
 		)
 		(property "Mouser Part Number" "81-GRM39X104K16"
-			(at 53.34 161.29 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" "50"
 			(at 53.34 161.29 90)
 			(effects
 				(font
@@ -6451,15 +6352,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "50"
-			(at 160.02 88.9 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "1"
 			(uuid "60c9220f-11ea-4b6a-833a-6b696432fa83")
 		)
@@ -6557,15 +6449,6 @@
 			)
 		)
 		(property "Mouser Part Number" "963-JMK107BJ475KAHT"
-			(at 53.34 154.94 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 53.34 154.94 90)
 			(effects
 				(font
@@ -6803,15 +6686,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "100"
-			(at 100.33 119.38 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(property "Mouser Part Number" "603-AC0603JR-130RL"
 			(at 100.33 119.38 0)
 			(effects
@@ -6919,15 +6793,6 @@
 			)
 		)
 		(property "Mouser Part Number" "603-RC0603DR-0710KL"
-			(at 45.72 31.75 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" "100"
 			(at 45.72 31.75 0)
 			(effects
 				(font
@@ -7115,15 +6980,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "50"
-			(at 101.6 27.94 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "2"
 			(uuid "d4141923-1463-47d9-a3d6-e9dc88619268")
 		)
@@ -7219,15 +7075,6 @@
 			)
 		)
 		(property "Mouser Part Number" "603-AC0603FR-0712K4L"
-			(at 39.37 147.32 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" "0"
 			(at 39.37 147.32 90)
 			(effects
 				(font
@@ -7408,15 +7255,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "25"
-			(at 82.55 132.08 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "1"
 			(uuid "631d9a25-e222-446b-aa4f-4d0e8c78a566")
 		)
@@ -7458,7 +7296,7 @@
 				)
 			)
 		)
-		(property "Footprint" "W5500:QFP50P900X900X160-48N"
+		(property "Footprint" "diseqc_cntrl:QFP50P900X900X160-48N"
 			(at 67.31 181.28 0)
 			(effects
 				(font
@@ -7556,15 +7394,6 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 27.94 96.52 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 27.94 96.52 0)
 			(effects
 				(font
@@ -7752,7 +7581,7 @@
 				)
 			)
 		)
-		(property "Footprint" "RJCSE538101"
+		(property "Footprint" "diseqc_cntrl:RJCSE538101"
 			(at 246.38 154.61 0)
 			(effects
 				(font
@@ -7850,15 +7679,6 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 227.33 59.69 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 227.33 59.69 0)
 			(effects
 				(font
@@ -8006,15 +7826,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "50"
-			(at 137.16 74.93 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "2"
 			(uuid "0b036582-22a9-46a5-98b1-3e6c1e77917f")
 		)
@@ -8121,15 +7932,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "25"
-			(at 100.33 132.08 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "1"
 			(uuid "cd8a8963-e20e-4b74-8561-236ef4d50d4f")
 		)
@@ -8171,7 +7973,7 @@
 				)
 			)
 		)
-		(property "Footprint" "ABLS 25mhz xtal:ABLS25000MHZDFT"
+		(property "Footprint" "diseqc_cntrl:ABLS25000MHZDFT"
 			(at 95.25 221.92 0)
 			(effects
 				(font
@@ -8269,15 +8071,6 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 86.36 125.73 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 86.36 125.73 0)
 			(effects
 				(font
@@ -8391,15 +8184,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "0"
-			(at 254 67.31 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "2"
 			(uuid "7e2ae7c4-d092-4680-a6aa-aca0c5e76cbc")
 		)
@@ -8503,15 +8287,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "50"
-			(at 137.16 63.5 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "2"
 			(uuid "bcb7f66e-10f0-4f3c-bac5-7df47176c1b9")
 		)
@@ -8600,15 +8375,6 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 149.86 50.8 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" "0"
 			(at 149.86 50.8 0)
 			(effects
 				(font
@@ -8732,15 +8498,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "100"
-			(at 36.83 31.75 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "2"
 			(uuid "76b02d69-8d8c-4479-8960-0b86cf9551be")
 		)
@@ -8846,15 +8603,6 @@
 			)
 		)
 		(property "Mouser Part Number" "81-GRM39X104K16"
-			(at 120.65 27.94 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" "50"
 			(at 120.65 27.94 0)
 			(effects
 				(font
@@ -9037,7 +8785,7 @@
 				)
 			)
 		)
-		(property "Footprint" "H1102NL:SOIC127P940X597-16N"
+		(property "Footprint" "diseqc_cntrl:SOIC127P940X597-16N"
 			(at 193.04 154.61 0)
 			(effects
 				(font
@@ -9135,15 +8883,6 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 168.91 59.69 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 168.91 59.69 0)
 			(effects
 				(font
@@ -9290,15 +9029,6 @@
 			)
 		)
 		(property "Mouser Part Number" "603-AC0603FR-074K7L"
-			(at 57.15 74.93 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" "0"
 			(at 57.15 74.93 90)
 			(effects
 				(font

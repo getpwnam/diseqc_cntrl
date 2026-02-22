@@ -3632,7 +3632,7 @@
 				)
 			)
 		)
-		(property "Footprint" "0603DC-27NXJRW:0603DC27NXJRW"
+		(property "Footprint" "diseqc_cntrl:0603DC27NXJRW"
 			(at 191.77 163.5 0)
 			(effects
 				(font
@@ -3738,15 +3738,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" ""
-			(at 175.26 67.31 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "1"
 			(uuid "b379ff3a-b5e9-4930-8704-0f8e5f42c4e3")
 		)
@@ -3844,15 +3835,6 @@
 			)
 		)
 		(property "Mouser Part Number" "791-0603B204K160CT"
-			(at 160.02 72.39 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 160.02 72.39 0)
 			(effects
 				(font
@@ -3968,7 +3950,7 @@
 				)
 			)
 		)
-		(property "Footprint" "LNBH26PQR:QFN50P400X400X100-25N-D"
+		(property "Footprint" "diseqc_cntrl:QFN50P400X400X100-25N-D"
 			(at 157.48 172.39 0)
 			(effects
 				(font
@@ -4086,15 +4068,6 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 120.65 90.17 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 120.65 90.17 0)
 			(effects
 				(font
@@ -4267,15 +4240,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "0"
-			(at 215.9 55.88 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(property "Mouser Part Number" "538-73251-1153"
 			(at 215.9 55.88 0)
 			(effects
@@ -4328,7 +4292,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "STPS130A:STTH2R02AY"
+		(property "Footprint" "diseqc_cntrl:STTH2R02AY"
 			(at 97.79 81.28 0)
 			(effects
 				(font
@@ -4383,15 +4347,6 @@
 			)
 		)
 		(property "Mouser Part Number" "511-STPS130A"
-			(at 97.79 81.28 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 97.79 81.28 90)
 			(effects
 				(font
@@ -4506,15 +4461,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" ""
-			(at 102.87 57.15 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "2"
 			(uuid "4492cd3e-b5ad-40f5-a1ad-8b28ccb5ce96")
 		)
@@ -4558,7 +4504,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "LIB_BAT43XV2:SODFL1608X70N"
+		(property "Footprint" "diseqc_cntrl:SODFL1608X70N"
 			(at 167.005 72.39 0)
 			(effects
 				(font
@@ -4613,15 +4559,6 @@
 			)
 		)
 		(property "Mouser Part Number" "512-BAT43XV2"
-			(at 171.45 72.39 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 171.45 72.39 90)
 			(effects
 				(font
@@ -4754,15 +4691,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" ""
-			(at 160.02 63.5 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "1"
 			(uuid "048ec37c-172c-4af2-8f59-e7db23c890f0")
 		)
@@ -4806,7 +4734,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "LIB_865080445010:CAPAE660X770N"
+		(property "Footprint" "diseqc_cntrl:CAPAE660X770N"
 			(at 26.3652 38.1 0)
 			(effects
 				(font
@@ -4861,15 +4789,6 @@
 			)
 		)
 		(property "Mouser Part Number" "710-865080445010"
-			(at 25.4 34.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 25.4 34.29 0)
 			(effects
 				(font
@@ -5039,15 +4958,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" "0"
-			(at 215.9 67.31 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(property "Mouser Part Number" "538-73251-1153"
 			(at 215.9 67.31 0)
 			(effects
@@ -5098,7 +5008,7 @@
 				)
 			)
 		)
-		(property "Footprint" "RCLAMP0502BATCT:SOT50P160X90-3N"
+		(property "Footprint" "diseqc_cntrl:SOT50P160X90-3N"
 			(at 222.25 129.21 0)
 			(effects
 				(font
@@ -5196,15 +5106,6 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 190.5 34.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 190.5 34.29 0)
 			(effects
 				(font
@@ -5319,15 +5220,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" ""
-			(at 187.96 100.33 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "2"
 			(uuid "a87b65fa-f6eb-472a-9714-01fe190de9f4")
 		)
@@ -5414,15 +5306,6 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 38.1 43.18 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" "1000"
 			(at 38.1 43.18 0)
 			(effects
 				(font
@@ -5529,15 +5412,6 @@
 			)
 		)
 		(property "Mouser Part Number" "603-RC0603JR-07100KL"
-			(at 138.43 138.43 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" "50"
 			(at 138.43 138.43 0)
 			(effects
 				(font
@@ -5718,15 +5592,6 @@
 				(hide yes)
 			)
 		)
-		(property "My Stock" ""
-			(at 175.26 100.33 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(pin "2"
 			(uuid "ab6190b8-58bf-4e29-b7ae-8d1906c8ff98")
 		)
@@ -5834,7 +5699,7 @@
 				)
 			)
 		)
-		(property "Footprint" "GRM1885C2A221JA01D:CAPC1608X90N"
+		(property "Footprint" "diseqc_cntrl:CAPC1608X90N"
 			(at 189.23 152.07 0)
 			(effects
 				(font
@@ -5932,15 +5797,6 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 180.34 55.88 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 180.34 55.88 0)
 			(effects
 				(font
@@ -6124,7 +5980,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "LIB_865080445010:CAPAE660X770N"
+		(property "Footprint" "diseqc_cntrl:CAPAE660X770N"
 			(at 115.2652 60.96 0)
 			(effects
 				(font
@@ -6179,15 +6035,6 @@
 			)
 		)
 		(property "Mouser Part Number" "710-865080445010"
-			(at 114.3 57.15 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 114.3 57.15 0)
 			(effects
 				(font
@@ -6292,15 +6139,6 @@
 			)
 		)
 		(property "Mouser Part Number" "963-CBMF1608T100K"
-			(at 102.87 95.25 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "My Stock" ""
 			(at 102.87 95.25 90)
 			(effects
 				(font

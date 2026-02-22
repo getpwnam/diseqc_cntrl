@@ -1,4 +1,6 @@
 (sym_lib_table
   (version 7)
   (lib (name "diseqc_cntrl")(type "KiCad")(uri "${KIPRJMOD}/nonfree/symbols/diseqc_cntrl.kicad_sym")(options "")(descr ""))
+  (lib (name "tps5604")(type "KiCad")(uri "${KIPRJMOD}/nonfree/symbols/TPS560430XDBVR.kicad_sym")(options "")(descr ""))
+  (lib (name "1812L075_33DR")(type "KiCad")(uri "${KIPRJMOD}/nonfree/symbols/1812L075_33DR.kicad_sym")(options "")(descr ""))
 )

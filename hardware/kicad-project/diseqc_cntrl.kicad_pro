@@ -58,16 +58,7 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [
-        [
-          "solder_mask_bridge|56360000|103780000|0200388c-7f43-4a8f-a0d5-a8e4ceb99645|b823cfa6-d97e-4a12-bfee-aed6ab706c61",
-          ""
-        ],
-        [
-          "solder_mask_bridge|56360000|118600000|f8858a6d-676e-4641-98f7-9380b853d3af|70c63ea5-1ae2-49a8-9934-36d9b40e4aa7",
-          ""
-        ]
-      ],
+      "drc_exclusions": [],
       "meta": {
         "version": 2
       },
@@ -810,12 +801,6 @@
           "label": "Mouser_Part_Number",
           "name": "Mouser_Part_Number",
           "show": false
-        },
-        {
-          "group_by": false,
-          "label": "My Stock",
-          "name": "My Stock",
-          "show": true
         }
       ],
       "filter_string": "",
