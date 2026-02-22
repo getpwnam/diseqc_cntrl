@@ -2497,6 +2497,28 @@
 			(embedded_fonts no)
 		)
 	)
+	(rectangle
+		(start 233.68 91.44)
+		(end 269.24 119.38)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid f7586ba5-c603-4517-a03c-d732abb2df2f)
+	)
+	(text "Test Points"
+		(exclude_from_sim no)
+		(at 240.03 93.472 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "145ef3fb-11f6-45aa-9841-878b63149dde")
+	)
 	(text_box "TPS560200DBVR :: 3V3 @ 600mA\n\nV(out): 3V3\nL: 10u\nC(out): 10u & 10u\nResistor divider: 61k9 & 20k\n\n"
 		(exclude_from_sim no)
 		(at 35.56 124.46 0)
@@ -2538,6 +2560,12 @@
 		(uuid "f079a922-2bf3-4922-8e39-ac9b876faa60")
 	)
 	(junction
+		(at 82.55 39.37)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "11e4a015-7c0a-408e-b682-7f5d6f765845")
+	)
+	(junction
 		(at 20.32 110.49)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2550,6 +2578,12 @@
 		(uuid "163727fe-72b1-4468-8e57-e544589b2e94")
 	)
 	(junction
+		(at 95.25 39.37)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "25387ee7-d47b-4984-9766-7555fa825343")
+	)
+	(junction
 		(at 17.78 48.26)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2560,6 +2594,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "2c4167f6-4799-40f6-9737-0e659a0e1ae9")
+	)
+	(junction
+		(at 35.56 39.37)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2c83c7cb-0916-4a8f-98fc-3a1b939a4497")
 	)
 	(junction
 		(at 86.36 110.49)
@@ -2590,12 +2630,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "75b8e198-54b6-4c45-be8c-08d3d7356c20")
-	)
-	(junction
-		(at 81.28 39.37)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "75ed4b52-283a-4846-b5b0-bbb11ddf8540")
 	)
 	(junction
 		(at 115.57 110.49)
@@ -2652,12 +2686,6 @@
 		(uuid "d01447a3-ae93-4c81-8f1c-0aa731f12adf")
 	)
 	(junction
-		(at 62.23 39.37)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "d7172a92-29a0-43a2-90c7-3ea51a6fe4e0")
-	)
-	(junction
 		(at 26.67 39.37)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2681,7 +2709,7 @@
 	)
 	(wire
 		(pts
-			(xy 26.67 39.37) (xy 43.18 39.37)
+			(xy 26.67 39.37) (xy 35.56 39.37)
 		)
 		(stroke
 			(width 0)
@@ -2781,7 +2809,7 @@
 	)
 	(wire
 		(pts
-			(xy 81.28 39.37) (xy 81.28 41.91)
+			(xy 82.55 39.37) (xy 82.55 41.91)
 		)
 		(stroke
 			(width 0)
@@ -2798,16 +2826,6 @@
 			(type default)
 		)
 		(uuid "287cab45-71f0-4fdf-91db-b9443bf5b839")
-	)
-	(wire
-		(pts
-			(xy 81.28 39.37) (xy 104.14 39.37)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "289b4b20-90bc-44aa-a01c-c6ec9a9dc33a")
 	)
 	(wire
 		(pts
@@ -2891,16 +2909,6 @@
 	)
 	(wire
 		(pts
-			(xy 60.96 39.37) (xy 62.23 39.37)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "3b673506-b88e-484a-945a-b9e3a9e52118")
-	)
-	(wire
-		(pts
 			(xy 86.36 110.49) (xy 96.52 110.49)
 		)
 		(stroke
@@ -2961,6 +2969,16 @@
 	)
 	(wire
 		(pts
+			(xy 95.25 39.37) (xy 104.14 39.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5131ed63-5a96-47c3-9680-f81bc4165f9f")
+	)
+	(wire
+		(pts
 			(xy 118.11 41.91) (xy 119.38 41.91)
 		)
 		(stroke
@@ -3011,6 +3029,16 @@
 	)
 	(wire
 		(pts
+			(xy 82.55 39.37) (xy 95.25 39.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "61ac9f07-139b-4751-a666-1c19082f0078")
+	)
+	(wire
+		(pts
 			(xy 111.76 123.19) (xy 111.76 142.24)
 		)
 		(stroke
@@ -3031,26 +3059,6 @@
 	)
 	(wire
 		(pts
-			(xy 86.36 104.14) (xy 86.36 110.49)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6c936428-59eb-4129-ac32-bae7cc5a7771")
-	)
-	(wire
-		(pts
-			(xy 168.91 33.02) (xy 168.91 41.91)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6da45756-284c-470e-bd4b-41ae1539cf6e")
-	)
-	(wire
-		(pts
 			(xy 17.78 48.26) (xy 17.78 39.37)
 		)
 		(stroke
@@ -3061,7 +3069,7 @@
 	)
 	(wire
 		(pts
-			(xy 78.74 39.37) (xy 81.28 39.37)
+			(xy 78.74 39.37) (xy 82.55 39.37)
 		)
 		(stroke
 			(width 0)
@@ -3081,7 +3089,7 @@
 	)
 	(wire
 		(pts
-			(xy 81.28 57.15) (xy 81.28 58.42)
+			(xy 82.55 57.15) (xy 82.55 58.42)
 		)
 		(stroke
 			(width 0)
@@ -3221,6 +3229,16 @@
 	)
 	(wire
 		(pts
+			(xy 35.56 39.37) (xy 43.18 39.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c0372f9b-2382-4b08-a282-df9bcd2e6ab6")
+	)
+	(wire
+		(pts
 			(xy 111.76 110.49) (xy 115.57 110.49)
 		)
 		(stroke
@@ -3241,6 +3259,16 @@
 	)
 	(wire
 		(pts
+			(xy 95.25 30.48) (xy 95.25 39.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ce00e337-b497-4695-8776-5718e7e59682")
+	)
+	(wire
+		(pts
 			(xy 17.78 50.8) (xy 17.78 48.26)
 		)
 		(stroke
@@ -3258,6 +3286,16 @@
 			(type default)
 		)
 		(uuid "cf86af8d-5249-4f54-9b15-9cca823d9502")
+	)
+	(wire
+		(pts
+			(xy 35.56 30.48) (xy 35.56 39.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d048a5d0-734a-42ac-a2ca-439fc8c4398b")
 	)
 	(wire
 		(pts
@@ -3291,7 +3329,7 @@
 	)
 	(wire
 		(pts
-			(xy 62.23 39.37) (xy 63.5 39.37)
+			(xy 60.96 39.37) (xy 63.5 39.37)
 		)
 		(stroke
 			(width 0)
@@ -3379,6 +3417,26 @@
 		)
 		(uuid "ffb542bc-d46b-40aa-a172-897dd0b34830")
 	)
+	(label "+3V3"
+		(at 243.84 111.76 180)
+		(effects
+			(font
+				(size 0.762 0.762)
+			)
+			(justify right bottom)
+		)
+		(uuid "96c6f4b9-55d2-48d2-87f8-e9708c7db1c7")
+	)
+	(label "+12V"
+		(at 243.84 105.41 180)
+		(effects
+			(font
+				(size 0.762 0.762)
+			)
+			(justify right bottom)
+		)
+		(uuid "c3b4ecd5-4211-46ae-8e17-d85b3bdf0950")
+	)
 	(global_label "VIN_RAW"
 		(shape input)
 		(at 17.78 39.37 90)
@@ -3397,6 +3455,28 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "VIN_FUSED"
+		(shape input)
+		(at 243.84 99.06 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 0.762 0.762)
+			)
+			(justify right)
+		)
+		(uuid "b3c77e41-ef7d-46d0-ae43-ec7644ae1c6d")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 236.4177 99.06 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
 				(hide yes)
 			)
 		)
@@ -3837,7 +3917,7 @@
 	)
 	(symbol
 		(lib_id "diseqc_cntrl:GND")
-		(at 81.28 58.42 0)
+		(at 82.55 58.42 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -3846,7 +3926,7 @@
 		(fields_autoplaced yes)
 		(uuid "170bcd17-10b8-4508-acf2-ad38a0546908")
 		(property "Reference" "#PWR03"
-			(at 81.28 64.77 0)
+			(at 82.55 64.77 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3855,7 +3935,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 81.28 63.5 0)
+			(at 82.55 63.5 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3863,7 +3943,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 81.28 58.42 0)
+			(at 82.55 58.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3872,7 +3952,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 81.28 58.42 0)
+			(at 82.55 58.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3881,7 +3961,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 81.28 58.42 0)
+			(at 82.55 58.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4678,7 +4758,7 @@
 	)
 	(symbol
 		(lib_id "Connector:TestPoint")
-		(at 62.23 39.37 180)
+		(at 243.84 99.06 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -4687,25 +4767,25 @@
 		(fields_autoplaced yes)
 		(uuid "2c07b51f-2664-40da-ab40-5d907073a748")
 		(property "Reference" "TP1"
-			(at 64.77 41.4019 0)
+			(at 248.92 97.7899 90)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify right)
+				(justify left)
 			)
 		)
-		(property "Value" "TestPoint"
-			(at 64.77 43.9419 0)
+		(property "Value" "TP_VIN_FUSED"
+			(at 248.92 100.3299 90)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify right)
+				(justify left)
 			)
 		)
 		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
-			(at 57.15 39.37 0)
+			(at 243.84 104.14 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4714,7 +4794,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 57.15 39.37 0)
+			(at 243.84 104.14 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4723,7 +4803,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 62.23 39.37 0)
+			(at 243.84 99.06 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4745,7 +4825,7 @@
 	)
 	(symbol
 		(lib_id "diseqc_cntrl:SMBJ24D-M3_H")
-		(at 81.28 41.91 270)
+		(at 82.55 41.91 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -4754,7 +4834,7 @@
 		(fields_autoplaced yes)
 		(uuid "4ca56ecf-91dc-4ffb-9bba-70c4e1a2d3f8")
 		(property "Reference" "D2"
-			(at 85.09 47.7519 90)
+			(at 86.36 47.7519 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4763,7 +4843,7 @@
 			)
 		)
 		(property "Value" "SMBJ24D-M3_H"
-			(at 85.09 50.2919 90)
+			(at 86.36 50.2919 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4772,7 +4852,7 @@
 			)
 		)
 		(property "Footprint" "diseqc_cntrl:DIOM5436X244N"
-			(at -12.37 52.07 0)
+			(at -11.1 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4782,7 +4862,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.vishay.com/docs/87606/smbj5cdthrusmbj120cd.pdf"
-			(at -112.37 52.07 0)
+			(at -111.1 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4792,7 +4872,7 @@
 			)
 		)
 		(property "Description" "Vishay SMBJ24D-M3/H, Uni-Directional TVS Diode, 600W, 2-Pin DO-214AA"
-			(at 81.28 41.91 0)
+			(at 82.55 41.91 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4801,7 +4881,7 @@
 			)
 		)
 		(property "Height" "2.44"
-			(at -312.37 52.07 0)
+			(at -311.1 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4811,7 +4891,7 @@
 			)
 		)
 		(property "Mouser Part Number" "78-SMBJ24D-M3H"
-			(at -412.37 52.07 0)
+			(at -411.1 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4821,7 +4901,7 @@
 			)
 		)
 		(property "Mouser Price/Stock" "https://www.mouser.co.uk/ProductDetail/Vishay-General-Semiconductor/SMBJ24D-M3-H?qs=gNX%2FqcWHaklVZodqqN9ClA%3D%3D"
-			(at -512.37 52.07 0)
+			(at -511.1 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4831,7 +4911,7 @@
 			)
 		)
 		(property "Manufacturer_Name" "Vishay"
-			(at -612.37 52.07 0)
+			(at -611.1 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4841,7 +4921,7 @@
 			)
 		)
 		(property "Manufacturer_Part_Number" "SMBJ24D-M3/H"
-			(at -712.37 52.07 0)
+			(at -711.1 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4851,7 +4931,7 @@
 			)
 		)
 		(property "Manufacturer_Part_Code" ""
-			(at 81.28 41.91 90)
+			(at 82.55 41.91 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4860,7 +4940,7 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 81.28 41.91 90)
+			(at 82.55 41.91 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4951,7 +5031,7 @@
 	)
 	(symbol
 		(lib_id "Connector:TestPoint")
-		(at 86.36 104.14 0)
+		(at 243.84 111.76 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -4960,7 +5040,7 @@
 		(fields_autoplaced yes)
 		(uuid "5c53391a-5543-4236-897f-fcccaebdd512")
 		(property "Reference" "TP3"
-			(at 88.9 99.5679 0)
+			(at 248.92 110.4899 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4968,8 +5048,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" "TestPoint"
-			(at 88.9 102.1079 0)
+		(property "Value" "TP_+3V3"
+			(at 248.92 113.0299 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4978,7 +5058,7 @@
 			)
 		)
 		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
-			(at 91.44 104.14 0)
+			(at 243.84 116.84 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4987,7 +5067,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 91.44 104.14 0)
+			(at 243.84 116.84 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4996,7 +5076,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 86.36 104.14 0)
+			(at 243.84 111.76 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5683,7 +5763,7 @@
 	)
 	(symbol
 		(lib_id "Connector:TestPoint")
-		(at 168.91 33.02 0)
+		(at 243.84 105.41 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -5692,7 +5772,7 @@
 		(fields_autoplaced yes)
 		(uuid "8c46e837-dc31-456b-8635-d04d0be15bb3")
 		(property "Reference" "TP2"
-			(at 171.45 28.4479 0)
+			(at 248.92 104.1399 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5700,8 +5780,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" "TestPoint"
-			(at 171.45 30.9879 0)
+		(property "Value" "TP_+12V"
+			(at 248.92 106.6799 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5710,7 +5790,7 @@
 			)
 		)
 		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
-			(at 173.99 33.02 0)
+			(at 243.84 110.49 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5719,7 +5799,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 173.99 33.02 0)
+			(at 243.84 110.49 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5728,7 +5808,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 168.91 33.02 0)
+			(at 243.84 105.41 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6163,6 +6243,73 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 95.25 30.48 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "aeac69ac-9d41-49df-9823-b4bcacdc1a9c")
+		(property "Reference" "TP5"
+			(at 97.79 25.9079 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "TP_VIN_PROTECT"
+			(at 97.79 28.4479 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
+			(at 100.33 30.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 100.33 30.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "test point"
+			(at 95.25 30.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "c9f8d866-9aa5-4b72-b360-6f1d200259e1")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
+					(reference "TP5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "diseqc_cntrl:R")
 		(at 29.21 113.03 90)
 		(unit 1)
@@ -6326,6 +6473,73 @@
 			(project ""
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
 					(reference "#PWR08")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 35.56 30.48 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "b64029e7-e9f5-484f-b371-b2500bd1a974")
+		(property "Reference" "TP4"
+			(at 38.1 25.9079 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "TP_VIN_RAW"
+			(at 38.1 28.4479 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
+			(at 40.64 30.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 40.64 30.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "test point"
+			(at 35.56 30.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "d98810f8-230c-4afc-8738-b34e9b37a071")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
+					(reference "TP4")
 					(unit 1)
 				)
 			)

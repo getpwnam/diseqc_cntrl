@@ -37,9 +37,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 3.2,
-          "height": 3.2,
-          "width": 3.2
+          "drill": 0.5,
+          "height": 1.0,
+          "width": 1.0
         },
         "silk_line_width": 0.1,
         "silk_text_italic": false,
@@ -249,6 +249,10 @@
         "Deliberately modified for aesthetics"
       ],
       [
+        "lib_symbol_mismatch|1193800|393700|d553826c-07f4-4cfc-910e-31b47cdebc5f|00000000-0000-0000-0000-000000000000|||",
+        ""
+      ],
+      [
         "lib_symbol_mismatch|1219200|939800|d553826c-07f4-4cfc-910e-31b47cdebc5f|00000000-0000-0000-0000-000000000000|||",
         "Intentional"
       ],
@@ -275,6 +279,10 @@
       [
         "lib_symbol_mismatch|863600|1460500|182e0222-2b8f-4ad4-aef3-c6b7ea98fe3e|00000000-0000-0000-0000-000000000000|||",
         "Intentional"
+      ],
+      [
+        "power_pin_not_driven|520700|546100|c92c1630-7816-44a7-b408-e52e2e278abc|00000000-0000-0000-0000-000000000000|/82a905d8-f1d7-4995-9c16-94cf3cdcaad9|/82a905d8-f1d7-4995-9c16-94cf3cdcaad9|",
+        ""
       ]
     ],
     "meta": {
