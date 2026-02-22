@@ -1,6 +1,7 @@
 #!/bin/bash
 # nanoFramework Build Script for DiSEqC Controller
-# Builds firmware using Docker container
+# Builds firmware using Docker Compose V2
+# Uses: docker compose (not docker-compose)
 
 set -e  # Exit on error
 

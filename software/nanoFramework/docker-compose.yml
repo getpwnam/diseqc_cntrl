@@ -10,8 +10,7 @@ services:
       # Mount nf-interpreter (will be cloned if not exists)
       - nf-interpreter:/nf-interpreter
     working_dir: /work
-    command: /bin/bash -c "echo 'nanoFramework build container ready. Run: docker-compose run nanoframework-build ./build.sh'"
-    
+
 volumes:
   nf-interpreter:
     driver: local

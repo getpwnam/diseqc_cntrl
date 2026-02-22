@@ -27,6 +27,7 @@
     <Compile Include="Manager\RotorManager.cs" />
     <Compile Include="Manager\RotorManagerNative.cs" />
     <Compile Include="Native\DiSEqCNative.cs" />
+    <Compile Include="Native\LNBNative.cs" />
     <Compile Include="ParityHelper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

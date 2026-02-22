@@ -22,10 +22,11 @@ This setup provides:
 ### Required Software
 1. **Docker Desktop** (Windows/Mac) or **Docker Engine** (Linux)
    - Download: https://www.docker.com/get-started
-   
-2. **Docker Compose** (usually included with Docker Desktop)
+   - Includes Docker Compose V2 (modern `docker compose` command)
 
-3. **Git** (for cloning nf-interpreter)
+2. **Git** (for cloning nf-interpreter)
+
+**Note:** This uses Docker Compose V2 (`docker compose`, not `docker-compose`)
 
 ### Hardware
 - STM32F407VGT6 DiSEqC controller board
@@ -41,13 +42,14 @@ This setup provides:
 ```powershell
 # Make sure Docker Desktop is running
 docker --version
-docker-compose --version
+docker compose version
 ```
 
 **Linux/WSL:**
 ```bash
 sudo systemctl start docker
 docker --version
+docker compose version
 ```
 
 ### Step 2: Build Firmware
@@ -64,13 +66,13 @@ docker --version
 chmod +x build.sh
 
 # Run build
-docker-compose run --rm nanoframework-build /work/build.sh
+docker compose run --rm nanoframework-build /work/build.sh
 ```
 
 **Option C: Manual Docker Command**
 ```bash
-docker-compose up
-docker-compose run --rm nanoframework-build /work/build.sh
+docker compose up
+docker compose run --rm nanoframework-build /work/build.sh
 ```
 
 ### Step 3: Flash to Board
@@ -215,10 +217,10 @@ sudo docker-compose run --rm nanoframework-build /work/build.sh
 The Docker container should have all tools. Try:
 ```bash
 # Pull latest image
-docker-compose pull
+docker compose pull
 
 # Rebuild
-docker-compose build --no-cache
+docker compose build --no-cache
 ```
 
 ### Issue: "nanoCLR.bin not found"
@@ -226,7 +228,7 @@ docker-compose build --no-cache
 **Solution:**
 Check build logs for errors:
 ```bash
-docker-compose run --rm nanoframework-build /work/build.sh 2>&1 | tee build.log
+docker compose run --rm nanoframework-build /work/build.sh 2>&1 | tee build.log
 ```
 
 ### Issue: Flash fails - "st-flash not found"
