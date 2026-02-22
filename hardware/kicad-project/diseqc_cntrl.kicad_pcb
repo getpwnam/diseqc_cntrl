@@ -2153,7 +2153,7 @@
 			(uuid "c0c45ec6-7897-4ef8-8488-d64375fb8dc6")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3d_models/USB4110-GF-A.stp"
+		(model "${KIPRJMOD}/nonfree/3dmodels/USB4110-GF-A.stp"
 			(offset
 				(xyz 0 2.599999866 0)
 			)
@@ -5734,7 +5734,7 @@
 			(uuid "a1a9525d-5de2-4357-856f-dc6d3db5d7d5")
 		)
 		(embedded_fonts no)
-		(model "PCM12SMTBR.stp"
+		(model "${KIPRJMOD}/nonfree/3dmodels/PCM12SMTBR.stp"
 			(offset
 				(xyz 0 -0.02999999888 0.02999999888)
 			)
@@ -6864,7 +6864,7 @@
 			(uuid "70c63ea5-1ae2-49a8-9934-36d9b40e4aa7")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3d_models/RJCSE-5381-01.stp"
+		(model "${KIPRJMOD}/nonfree/3dmodels/RJCSE-5381-01.stp"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -7100,7 +7100,7 @@
 			)
 		)
 		(property "Value" "TPS560430XDBVR"
-			(at 0 0 270)
+			(at 0 0 90)
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "308b22da-a330-4908-b28f-3807b46794e0")
@@ -7112,7 +7112,7 @@
 			)
 		)
 		(property "Datasheet" "http://www.ti.com/lit/gpn/tps560430"
-			(at 0 0 270)
+			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "e61b3f75-b873-4b58-b087-e94a6c55d58e")
@@ -7124,7 +7124,7 @@
 			)
 		)
 		(property "Description" "SIMPLE SWITCHER 36-V, 600-mA Buck Regulator With High-Efficiency Sleep Mode"
-			(at 0 0 270)
+			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "2270b542-41da-4f6d-9dc7-4640f4d532d2")
@@ -7384,7 +7384,7 @@
 			(uuid "d0e5ffa6-bb56-411c-85f0-b311a746bcb8")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 270)
+			(at 0 0 90)
 			(layer "F.Fab")
 			(uuid "2c8bb6a7-3620-4d74-87b5-723778ea0e89")
 			(effects
@@ -7449,7 +7449,7 @@
 			(uuid "5f74620b-f14d-4031-8d6d-56934f7f26d2")
 		)
 		(embedded_fonts no)
-		(model "TPS560430X3FDBVT.stp"
+		(model "${KIPRJMOD}/nonfree/3dmodels/TPS560430X3FDBVT.stp"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -9515,7 +9515,7 @@
 			(uuid "bebe1d03-d124-4e13-a899-d39903e226f5")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3d_models/TSW-105-23-T-D.stp"
+		(model "${KIPRJMOD}/nonfree/3dmodels/TSW-105-23-T-D.stp"
 			(offset
 				(xyz 0 0 0)
 			)
