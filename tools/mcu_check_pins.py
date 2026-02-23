@@ -442,6 +442,22 @@ def build_connectivity(symbols, labels, global_labels, wires, no_connects, lib_s
                 root = uf.find(p['abs_pos'])
                 net_names[root].add(value)
 
+    # Assign synthetic names to unlabeled but connected roots.
+    # This prevents valid unlabeled analog/oscillator nodes from being
+    # interpreted as floating simply because they have no explicit net label.
+    root_to_pins = defaultdict(list)
+    for ref, pname, pnum, ppos, lid in all_pin_points:
+        root = uf.find(ppos)
+        root_to_pins[root].append((ref, pname, pnum))
+
+    unlabeled_idx = 1
+    for root in sorted(root_to_pins.keys()):
+        if net_names.get(root):
+            continue
+        if len(root_to_pins[root]) >= 2:
+            net_names[root].add(f'__UNLABELED_NET_{unlabeled_idx}')
+            unlabeled_idx += 1
+
     # Map each pin to net names
     pin_nets = {}
     for ref, pname, pnum, ppos, lid in all_pin_points:
