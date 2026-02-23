@@ -28,6 +28,7 @@
 - [x] Cover `RuntimeConfiguration` parsing/validation and `ParityHelper` behavior with unit tests.
 - [x] Add host-side interop contract tests for managed/native boundaries (starting with W5500 socket API status/parameter handling).
 - [ ] Add hardware smoke-test checklist for W5500 RX/TX and USB wire protocol after native implementation lands.
+- [ ] PAUSED: add further host-side test construction until Phase 3 native W5500 transport is implemented.
 
 ## Implementation Plan (Phased)
 
@@ -37,12 +38,13 @@
 - [x] Add pure-logic tests for configuration and parity behaviors.
 - [x] Document how to run unit tests in `software/nanoFramework/README.md`.
 
-### Phase 2: Interop Contract Tests (next)
+### Phase 2: Interop Contract Tests (paused)
 
 - [x] Add host-side tests for managed/native contract behavior of W5500/DiSEqC/LNB interop API (host-safe reflection contract checks).
 - [ ] Add runtime/on-device interop tests for parameter validation, lifecycle, and timeout/error paths (host CLR cannot invoke InternalCall methods).
+- [ ] PAUSED pending Phase 3: defer additional test expansion until real native transport behavior exists.
 
-### Phase 3: Real W5500 Native Transport
+### Phase 3: Real W5500 Native Transport (active focus)
 
 - [ ] Replace stub behavior in `nf-native/w5500_interop.cpp` with real RX/TX socket path.
 - [ ] Reconcile board-level pin/config definitions required by W5500 runtime path.
