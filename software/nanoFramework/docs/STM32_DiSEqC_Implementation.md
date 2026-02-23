@@ -2,7 +2,7 @@
 
 ## Hardware Configuration
 - **MCU**: STM32F407VGT6 @ 168MHz
-- **Timer**: TIM1 Channel 1 (PA8)
+- **Timer**: TIM4 Channel 1 (TIM4_CH1 pin per board routing)
 - **Output**: Connected to LNBH26 DSQIN pin
 - **System Clock**: 168MHz (PLL from 8MHz HSE)
 
@@ -10,7 +10,7 @@
 
 ### Single Timer + DMA Approach (Recommended)
 
-Use **TIM1** with DMA to generate:
+Use **TIM4** with DMA to generate:
 1. Continuous 22kHz carrier (50% duty PWM)
 2. OOK modulation by switching CCR between ON (50%) and OFF (0%)
 
@@ -108,7 +108,7 @@ static void add_byte_with_parity(DiSEqC_Handle_t *hdiseqc, uint8_t byte) {
 /**
  * @brief Initialize DiSEqC controller
  * @param hdiseqc DiSEqC handle
- * @param htim Timer handle (TIM1 configured for PWM on channel 1)
+ * @param htim Timer handle (TIM4 configured for PWM on channel 1)
  */
 void DiSEqC_Init(DiSEqC_Handle_t *hdiseqc, TIM_HandleTypeDef *htim) {
     hdiseqc->htim = htim;
@@ -123,7 +123,7 @@ void DiSEqC_Init(DiSEqC_Handle_t *hdiseqc, TIM_HandleTypeDef *htim) {
     // Use prescaler to get 1MHz tick rate: PSC = 168 - 1 = 167
     // At 1MHz: 22kHz period = 1MHz / 22kHz = 45.45 ≈ 45 ticks
     
-    uint32_t timer_clock = HAL_RCC_GetPCLK2Freq() * 2;  // TIM1 on APB2
+    uint32_t timer_clock = HAL_RCC_GetPCLK1Freq() * 2;  // TIM4 on APB1 (timer clock x2)
     uint16_t prescaler = (timer_clock / 1000000) - 1;    // 1µs tick rate
     
     hdiseqc->timer_period = 45;         // ~22kHz at 1MHz tick
@@ -157,8 +157,8 @@ void DiSEqC_TransmitBytes(DiSEqC_Handle_t *hdiseqc, const uint8_t *data, uint8_t
     
     // Configure DMA for CCR (duty cycle control)
     // Note: You need to configure DMA channels in CubeMX:
-    // - DMA2_Stream1 or DMA2_Stream5 for TIM1_CH1 (CCR1)
-    // - DMA2_Stream5 for TIM1_UP (ARR)
+    // - Select DMA stream/channel for TIM4_CH1 (CCR1)
+    // - Select DMA stream/channel for TIM4 update event (ARR), if used
     
     // Method 1: Update both CCR and ARR via DMA
     // This requires two DMA channels working in sync
@@ -224,8 +224,8 @@ For non-blocking operation, use DMA to update timer registers:
 /**
  * @brief Initialize DMA for DiSEqC transmission
  * Configure in CubeMX:
- * - DMA2 Stream 5, Channel 6: TIM1_UP → Memory-to-Peripheral, Half-word
- * - Link to TIM1 Update Event
+ * - Configure the DMA request mapped to TIM4 update event
+ * - Use Memory-to-Peripheral, Half-word transfers
  */
 void DiSEqC_Init_DMA(DiSEqC_Handle_t *hdiseqc) {
     // Enable DMA request on timer update
@@ -240,7 +240,7 @@ void DiSEqC_Init_DMA(DiSEqC_Handle_t *hdiseqc) {
  * @brief DMA Transfer Complete Callback
  */
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
-    if (htim->Instance == TIM1) {
+    if (htim->Instance == TIM4) {
         // Transmission complete
         htim->Instance->CCR1 = 0;  // Carrier OFF
         // Signal completion (semaphore, flag, etc.)
@@ -252,23 +252,23 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
 
 ```c
 /**
- * TIM1: Generate 22kHz carrier (continuous PWM)
- * TIM2: Control timing (trigger TIM1 gate via TRGO)
+ * TIM4: Generate 22kHz carrier (continuous PWM)
+ * TIM2: Control timing (trigger TIM4 gate via TRGO)
  * 
- * TIM1 configured in "Gated Mode" triggered by TIM2
+ * TIM4 configured in "Gated Mode" triggered by TIM2
  * DMA updates TIM2 ARR to control ON/OFF durations
  */
 
 void DiSEqC_Init_TwoTimer(void) {
-    // TIM1: 22kHz carrier
-    TIM1->PSC = 167;      // 1MHz tick
-    TIM1->ARR = 45;       // ~22kHz
-    TIM1->CCR1 = 22;      // 50% duty
-    TIM1->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2;  // PWM mode 1
-    TIM1->CCER = TIM_CCER_CC1E;
+    // TIM4: 22kHz carrier
+    TIM4->PSC = 83;       // 1MHz tick from 84MHz TIM4 clock
+    TIM4->ARR = 45;       // ~22kHz
+    TIM4->CCR1 = 22;      // 50% duty
+    TIM4->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2;  // PWM mode 1
+    TIM4->CCER = TIM_CCER_CC1E;
     
-    // Configure TIM1 as slave, gated by TIM2
-    TIM1->SMCR = (1 << TIM_SMCR_SMS_Pos) |   // Gated mode
+    // Configure TIM4 as slave, gated by TIM2
+    TIM4->SMCR = (1 << TIM_SMCR_SMS_Pos) |   // Gated mode
                  (0 << TIM_SMCR_TS_Pos);      // ITR0 = TIM2 TRGO
     
     // TIM2: Gate control
@@ -282,7 +282,7 @@ void DiSEqC_Init_TwoTimer(void) {
 
 ## STM32CubeMX Configuration
 
-### TIM1 Settings:
+### TIM4 Settings:
 - **Clock Source**: Internal Clock
 - **Channel 1**: PWM Generation CH1
 - **Prescaler**: 167 (for 168MHz → 1MHz tick)
@@ -290,7 +290,7 @@ void DiSEqC_Init_TwoTimer(void) {
 - **Pulse (CCR1)**: 22 (50% duty)
 
 ### GPIO Settings:
-- **PA8**: TIM1_CH1, Alternate Function Push-Pull, High Speed
+- **DiSEqC output pin**: TIM4_CH1, Alternate Function Push-Pull, High Speed
 
 ### DMA Settings (Optional for advanced implementation):
 - **DMA2 Stream 5**: TIM1_UP, Memory-to-Peripheral, Half-word
@@ -299,20 +299,20 @@ void DiSEqC_Init_TwoTimer(void) {
 
 ```c
 DiSEqC_Handle_t hdiseqc;
-TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim4;
 
 int main(void) {
     HAL_Init();
     SystemClock_Config();
     
     // Initialize peripherals (via CubeMX generated code)
-    MX_TIM1_Init();
+    MX_TIM4_Init();
     
     // Initialize DiSEqC
-    DiSEqC_Init(&hdiseqc, &htim1);
+    DiSEqC_Init(&hdiseqc, &htim4);
     
     // Start PWM
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
     
     while (1) {
         // Command via MQTT, etc.

@@ -31,6 +31,10 @@ const PALConfig pal_default_config = {
   {VAL_GPIOC_MODER, VAL_GPIOC_OTYPER, VAL_GPIOC_OSPEEDR, VAL_GPIOC_PUPDR,
    VAL_GPIOC_ODR, VAL_GPIOC_AFRL, VAL_GPIOC_AFRH},
 #endif
+#if STM32_HAS_GPIOD
+  {VAL_GPIOD_MODER, VAL_GPIOD_OTYPER, VAL_GPIOD_OSPEEDR, VAL_GPIOD_PUPDR,
+   VAL_GPIOD_ODR, VAL_GPIOD_AFRL, VAL_GPIOD_AFRH},
+#endif
 };
 #endif
 
@@ -40,7 +44,7 @@ const PALConfig pal_default_config = {
  */
 void boardInit(void) {
     // Initialize DiSEqC native driver
-    diseqc_init(&PWMD1, &GPTD2);
+  diseqc_init(&DISEQC_PWM_DRIVER, &DISEQC_GPT_DRIVER);
     
     // Initialize motor enable
     motor_enable_init(MOTOR_ENABLE_LINE);

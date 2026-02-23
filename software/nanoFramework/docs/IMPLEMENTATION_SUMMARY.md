@@ -24,7 +24,7 @@ A complete, production-ready DMA-based DiSEqC 1.2 controller implementation for 
 
 ### 1. **Interrupt-Driven DiSEqC Transmission**
 - ✅ Non-blocking operation
-- ✅ Precise 22kHz carrier generation using TIM1 PWM
+- ✅ Precise 22kHz carrier generation using TIM4 PWM
 - ✅ Automatic bit timing (1.5ms per bit)
 - ✅ Parity calculation and transmission
 - ✅ Completion callbacks
@@ -85,7 +85,7 @@ Your_Project/
 ### Your Board Connections
 ```
 STM32F407VGT6:
-  PA8  (TIM1_CH1) → LNBH26 DSQIN    [DiSEqC output]
+  DiSEqC output pin (TIM4_CH1) → LNBH26 DSQIN    [DiSEqC output]
   PB1  (GPIO)     → LNBH26 EXTM     [Motor enable]
   PA2  (USART2)   → Debug TX        [Optional debug]
   PA3  (USART2)   → Debug RX        [Optional debug]
@@ -105,10 +105,10 @@ Your board uses the LNBH26PQR for:
 ### Step 1: STM32CubeMX Configuration
 Follow `docs/STM32_CubeMX_Setup.md`:
 - Configure system clock to 168MHz
-- Set up TIM1 for PWM (Prescaler: 167, Period: 45)
-- Configure PA8 as TIM1_CH1
+- Set up TIM4 for PWM (Prescaler: 167, Period: 45)
+- Configure the DiSEqC output pin as TIM4_CH1
 - Configure PB1 as GPIO Output
-- Enable TIM1 update interrupt
+- Enable TIM4 update interrupt
 
 ### Step 2: Add Source Files
 Copy to your project:
@@ -126,8 +126,8 @@ Add initialization code from `src/main_integration.c`:
 ```c
 /* USER CODE BEGIN 2 */
 MotorEnable_Init(&hmotor, GPIOB, GPIO_PIN_1, NULL);
-DiSEqC_Init(&hdiseqc, &htim1, NULL);
-HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+DiSEqC_Init(&hdiseqc, &htim4, NULL);
+HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
 RotorManager_Init(&hrotor, &hdiseqc, &hmotor, 80.0f);
 /* USER CODE END 2 */
 ```
@@ -135,7 +135,7 @@ RotorManager_Init(&hrotor, &hdiseqc, &hmotor, 80.0f);
 ### Step 4: Add Interrupt Handlers
 ```c
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-    if (htim->Instance == TIM1) {
+    if (htim->Instance == TIM4) {
         DiSEqC_IRQHandler(&hdiseqc);
     }
 }
@@ -188,14 +188,14 @@ Duration: 5 bytes × 9 bits × 1.5ms = 67.5ms
 ## 🧪 Testing Procedure
 
 ### 1. Visual Inspection
-- [ ] PA8 configured as TIM1_CH1
+- [ ] DiSEqC output pin configured as TIM4_CH1
 - [ ] PB1 configured as GPIO Output
 - [ ] LNBH26 properly connected
 - [ ] Power supply providing correct voltages
 
 ### 2. Oscilloscope Verification
 ```
-Probe PA8:
+Probe DiSEqC output pin (TIM4_CH1):
   Idle: LOW (0V)
   Active: 22kHz bursts
   Bit pattern: Visible 1.5ms timing
@@ -239,19 +239,18 @@ mosquitto_sub -h broker.local -t "diseqc/position"
 
 ## 🔍 Troubleshooting Guide
 
-### Problem: No output on PA8
+### Problem: No output on TIM4_CH1 output pin
 **Checks:**
-1. TIM1 clock enabled (automatic in CubeMX)
-2. GPIO configured as AF1 (TIM1_CH1)
+1. TIM4 clock enabled (automatic in CubeMX)
+2. GPIO configured with the correct AF for TIM4_CH1 (typically AF2)
 3. PWM started with `HAL_TIM_PWM_Start()`
-4. MOE bit set for TIM1 (done in `DiSEqC_Init()`)
+4. Channel 1 output enabled by HAL timer init/start
 
 **Solution:**
 ```c
 // Verify in debugger:
-TIM1->CR1 & TIM_CR1_CEN      // Should be 1 (enabled)
-TIM1->BDTR & TIM_BDTR_MOE    // Should be 1 (main output enabled)
-TIM1->CCER & TIM_CCER_CC1E   // Should be 1 (channel 1 enabled)
+TIM4->CR1 & TIM_CR1_CEN      // Should be 1 (enabled)
+TIM4->CCER & TIM_CCER_CC1E   // Should be 1 (channel 1 enabled)
 ```
 
 ### Problem: Wrong carrier frequency
@@ -259,7 +258,7 @@ TIM1->CCER & TIM_CCER_CC1E   // Should be 1 (channel 1 enabled)
 
 **Checks:**
 1. System clock = 168MHz (verify with HSE)
-2. TIM1 on APB2 = 168MHz (or 84MHz × 2)
+2. TIM4 on APB1 timer clock = 84MHz (or 42MHz × 2)
 3. Prescaler = 167 → 1MHz tick rate
 4. ARR = 45 → 1MHz / 46 = 21.74kHz (close enough)
 
@@ -274,7 +273,7 @@ hdiseqc->carrier_duty = 22;     // Adjust for 50% duty
 **Possible causes:**
 
 1. **DiSEqC signal not reaching LNBH26:**
-   - Check PA8 to DSQIN connection
+  - Check TIM4_CH1 output pin to DSQIN connection
    - Verify LNBH26 powered (VCC1, VCC2)
 
 2. **Motor enable not working:**
@@ -301,7 +300,7 @@ void Debug_ToggleMotor(void) {
 **Symptoms:** `DiSEqC_IsBusy()` always returns true
 
 **Checks:**
-1. TIM1 update interrupt enabled in NVIC
+1. TIM4 update interrupt enabled in NVIC
 2. `HAL_TIM_PeriodElapsedCallback()` called
 3. `DiSEqC_IRQHandler()` executing
 

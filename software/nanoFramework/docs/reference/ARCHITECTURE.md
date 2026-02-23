@@ -51,7 +51,7 @@ While waiting for your PCB, we've designed the **complete software architecture*
 ### 5. **Hardware Configuration**
 - ✅ STM32F407VGT6 pin mappings
 - ✅ W5500 Ethernet (SPI1)
-- ✅ DiSEqC output (PA8 / TIM1_CH1)
+- ✅ DiSEqC output (TIM4_CH1)
 - ✅ LNBH26 integration (no motor enable needed!)
 
 **Files:**
@@ -91,7 +91,7 @@ While waiting for your PCB, we've designed the **complete software architecture*
 ┌──────────────────────↓──────────────────────────────────────┐
 │              Native Driver (C++ / ChibiOS)                   │
 │  - DiSEqC Protocol Engine                                    │
-│  - ChibiOS PWM (TIM1) → 22kHz carrier                       │
+│  - ChibiOS PWM (TIM4) → 22kHz carrier                       │
 │  - ChibiOS GPT (TIM2) → Bit timing                          │
 │  - ChibiOS Threads → Non-blocking TX                        │
 └──────────────────────┬──────────────────────────────────────┘
@@ -99,7 +99,7 @@ While waiting for your PCB, we've designed the **complete software architecture*
 ┌──────────────────────↓──────────────────────────────────────┐
 │                    Hardware                                  │
 │  - STM32F407VGT6 MCU                                         │
-│  - PA8 (TIM1_CH1) → LNBH26 DSQIN                            │
+│  - DiSEqC output pin (TIM4_CH1) → LNBH26 DSQIN              │
 │  - W5500 (SPI1)   → Ethernet                                │
 │  - PC4            → W5500 Reset                             │
 │  - PC5            → W5500 Interrupt                         │
@@ -218,7 +218,7 @@ http://192.168.1.100/api/config → REST API
 2. Look up angle in satellite database: 19.2°
 3. Publish status: "diseqc/status/state" = "moving"
 4. Call native driver: DiSEqC.GotoAngle(19.2f)
-5. Native driver sends DiSEqC command via PA8
+5. Native driver sends DiSEqC command via TIM4_CH1 output pin
 6. Update position: "diseqc/status/position/angle" = "19.2"
 7. Publish status: "diseqc/status/state" = "idle"
 8. Publish satellite: "diseqc/status/position/satellite" = "astra_19.2e"

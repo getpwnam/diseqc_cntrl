@@ -19,7 +19,7 @@ static PWMConfig pwm_config = {
     45,         // PWM period (45 ticks at 1MHz = ~22kHz)
     NULL,       // No period callback
     {
-        {PWM_OUTPUT_ACTIVE_HIGH, NULL},  // Channel 0 (TIM1_CH1)
+        {PWM_OUTPUT_ACTIVE_HIGH, NULL},  // Channel 0 (TIM4_CH1)
         {PWM_OUTPUT_DISABLED, NULL},
         {PWM_OUTPUT_DISABLED, NULL},
         {PWM_OUTPUT_DISABLED, NULL}

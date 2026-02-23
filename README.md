@@ -38,7 +38,7 @@ Enables remote control of LNB power supply voltage (13 V / 18 V polarization sel
 | I2C1 | LNBH26PQR LNB supply controller |
 | I2C3 | FM24CL16B 16 Kb F-RAM and expansion header |
 | SPI | W5500 Ethernet controller |
-| TIM1 CH1 | DiSEqC 22 kHz tone generation |
+| TIM4 CH1 | DiSEqC 22 kHz tone generation |
 | USART3 | Serial debug / expansion (pin header J2) |
 | USB OTG FS | USB 2.0 device (USB-C) |
 | SWD | Debug port (2×5 pin header J5) |
@@ -67,7 +67,7 @@ A filtered +3V3_ANA rail is derived from +3.3 V via a ferrite bead for the MCU a
 - Dual LNB supply regulator with integrated step-up converter (ST LNBH26PQR, QFN-24)
 - Powered from the +12 V rail
 - Generates switchable 13 V / 18 V output for LNB polarization selection
-- Built-in DiSEqC 1.x/2.x 22 kHz tone modulation, driven from TIM1 CH1
+- Built-in DiSEqC 1.x/2.x 22 kHz tone modulation, driven from TIM4 CH1
 - Fault output routed to MCU GPIO
 - External boost components: STPS130A Schottky, US1A rectifier, 33 µH inductor, 100 µF bulk caps
 - DiSEqC envelope detection via BAT43XV2 small-signal Schottky

@@ -164,7 +164,7 @@ mosquitto_sub -h localhost -t 'diseqc/status/#' -v
 
 ```
 Oscilloscope Setup:
-- Channel 1: PA8 (DiSEqC output)
+- Channel 1: TIM4_CH1 output pin (DiSEqC output)
 - Channel 2: GND
 - Trigger: Rising edge, 1V
 - Timebase: 100µs/div
@@ -220,7 +220,7 @@ D0 = Direction (East) + angle high bits
 ❌ **Troubleshooting:**
 | Issue | Fix |
 |-------|-----|
-| No output | Check TIM1 initialization, PA8 GPIO config |
+| No output | Check TIM4 initialization and TIM4_CH1 GPIO/AF config |
 | Wrong frequency | Verify 168MHz system clock, check PSC/ARR |
 | Distorted signal | Check LNBH26 connections, power supply |
 
@@ -281,7 +281,7 @@ mosquitto_pub -h localhost -t 'diseqc/command/halt' -m ''
 
 ```
 LNBH26 Connections:
-- DSQIN (from PA8) → Rotor DiSEqC input
+- DSQIN (from TIM4_CH1 output pin) → Rotor DiSEqC input
 - LNB_OUT → LNB coax
 - VCC → 18V power supply
 - GND → Common ground
@@ -443,7 +443,7 @@ done
 - [  ] Serial debug output works
 - [  ] W5500 Ethernet link LED on
 - [  ] DHCP address acquired
-- [  ] PA8 outputs 22kHz DiSEqC signal
+- [  ] TIM4_CH1 output pin produces 22kHz DiSEqC signal
 - [  ] LNBH26 provides LNB power
 
 ### Software
@@ -487,7 +487,7 @@ done
 
 ### Issue: "No DiSEqC output"
 **Solution:**
-- Verify PA8 is TIM1_CH1 alternate function
+- Verify the DiSEqC output pin is configured for TIM4_CH1 alternate function
 - Check native driver initialized
 - Use oscilloscope to verify signal
 - Check LNBH26 power supply

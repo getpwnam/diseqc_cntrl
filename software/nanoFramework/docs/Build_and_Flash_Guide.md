@@ -125,9 +125,9 @@ ITM_SendChar('X');  // Send character to SWO
 
 ### Oscilloscope Setup
 ```
-Channel 1: PA8 (DiSEqC output)
+Channel 1: TIM4_CH1 output pin (DiSEqC output)
 Channel 2: PB1 (Motor enable)
-Trigger: Rising edge on PA8
+Trigger: Rising edge on TIM4_CH1 output pin
 Timebase: 2ms/div
 Voltage: 1V/div (or 5V/div if using line driver)
 
@@ -141,7 +141,7 @@ Expected:
 ```
 Sample Rate: 10MHz minimum (prefer 50MHz+)
 Channels:
-- D0: PA8 (DiSEqC)
+- D0: TIM4_CH1 output pin (DiSEqC)
 - D1: PB1 (Motor enable)
 
 Decode:

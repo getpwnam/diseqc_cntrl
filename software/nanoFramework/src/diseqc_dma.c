@@ -129,14 +129,16 @@ DiSEqC_Status_t DiSEqC_Init(DiSEqC_HandleTypeDef *hdiseqc,
     hdiseqc->tx_complete_callback = NULL;
     
     // Calculate timer values for 22kHz carrier at 1MHz tick rate
-    // Timer clock = 168MHz (APB2)
-    // Prescaler = 168 - 1 = 167 → 1MHz tick rate (1µs per tick)
+    // Prescaler is computed from selected timer input clock.
     // At 1MHz: 22kHz period = 1000000 / 22000 = 45.45 ticks ≈ 45
     // For 50% duty: CCR1 = 22 (or 23 for better approximation)
     
-    uint32_t timer_clock = HAL_RCC_GetPCLK2Freq();
-    if (htim->Instance == TIM1 || htim->Instance == TIM8) {
-        timer_clock *= 2;  // APB2 timers run at 2x when APB2 prescaler > 1
+    uint32_t timer_clock;
+    if (htim->Instance == TIM1 || htim->Instance == TIM8 ||
+        htim->Instance == TIM9 || htim->Instance == TIM10 || htim->Instance == TIM11) {
+        timer_clock = HAL_RCC_GetPCLK2Freq() * 2U;
+    } else {
+        timer_clock = HAL_RCC_GetPCLK1Freq() * 2U;
     }
     
     uint16_t prescaler = (timer_clock / 1000000) - 1;  // 1MHz = 1µs tick
@@ -167,7 +169,7 @@ DiSEqC_Status_t DiSEqC_Init(DiSEqC_HandleTypeDef *hdiseqc,
     // Generate update event to load all registers
     htim->Instance->EGR = TIM_EGR_UG;
     
-    // Enable main output (required for TIM1)
+    // Enable main output (required for advanced timers only)
     if (htim->Instance == TIM1 || htim->Instance == TIM8) {
         htim->Instance->BDTR |= TIM_BDTR_MOE;
     }

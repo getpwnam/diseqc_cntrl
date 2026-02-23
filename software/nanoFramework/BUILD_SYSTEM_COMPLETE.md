@@ -76,9 +76,9 @@ st-flash write build/nanoCLR.bin 0x08000000
 ## 🎯 What's Enabled in Firmware
 
 ### DiSEqC Features
-- ✅ TIM1 (PWM) for 22kHz carrier
+- ✅ TIM4 (PWM) for 22kHz carrier
 - ✅ TIM2 (GPT) for bit timing
-- ✅ PA8 output to LNBH26
+- ✅ TIM4_CH1 output pin to LNBH26
 
 ### LNB Control
 - ✅ I2C1 (PB8/PB9) for LNBH26PQR
@@ -126,7 +126,7 @@ Edit `build/mcuconf.h`:
 ```c
 #define STM32_I2C_USE_I2C1  TRUE   # Enable I2C1
 #define STM32_SPI_USE_SPI1  TRUE   # Enable SPI1
-#define STM32_PWM_USE_TIM1  TRUE   # Enable TIM1 PWM
+#define STM32_PWM_USE_TIM4  TRUE   # Enable TIM4 PWM
 ```
 
 ---
@@ -197,7 +197,7 @@ git commit -m "feat: Add Docker build system for nanoFramework
 - Complete build documentation
 
 Features enabled:
-- DiSEqC rotor control (TIM1 PWM + TIM2 GPT)
+- DiSEqC rotor control (TIM4 PWM + TIM2 GPT)
 - LNB I2C control (I2C1 for LNBH26PQR)
 - W5500 Ethernet (SPI1)
 - MQTT client with networking stack

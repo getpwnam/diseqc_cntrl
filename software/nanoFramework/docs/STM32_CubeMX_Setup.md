@@ -3,7 +3,7 @@
 ## Target Hardware
 - **MCU**: STM32F407VGT6
 - **System Clock**: 168MHz (HSE 8MHz + PLL)
-- **DiSEqC Output**: PA8 (TIM1_CH1) → LNBH26 DSQIN
+- **DiSEqC Output**: TIM4_CH1 output pin → LNBH26 DSQIN
 
 ---
 
@@ -25,13 +25,13 @@
 - HCLK: 168MHz
 - APB1: 42MHz
 - APB2: 84MHz
-- **APB2 Timer Clocks: 168MHz** (important for TIM1)
+- **APB1 Timer Clocks: 84MHz** (important for TIM4 base clocking)
 
-### 2. TIM1 Configuration
+### 2. TIM4 Configuration
 
 **Mode and Configuration:**
 ```
-Pinout & Configuration → Timers → TIM1
+Pinout & Configuration → Timers → TIM4
 ├── Clock Source: Internal Clock
 ├── Channel 1: PWM Generation CH1
 └── Configuration:
@@ -65,7 +65,7 @@ Parameter Settings
 **NVIC Settings Tab:**
 ```
 NVIC Settings
-└── TIM1 update interrupt and TIM10 global interrupt
+└── TIM4 global interrupt
     └── ☑ Enabled
     └── Priority: 5 (adjust as needed)
 ```
@@ -73,8 +73,8 @@ NVIC Settings
 **GPIO Settings Tab:**
 ```
 GPIO Settings
-└── PA8
-    ├── Signal: TIM1_CH1
+└── <your DiSEqC output pin>
+    ├── Signal: TIM4_CH1
     ├── GPIO mode: Alternate Function Push Pull
     ├── GPIO Pull-up/Pull-down: No pull-up and no pull-down
     ├── Maximum output speed: Very High
@@ -88,7 +88,7 @@ For the current interrupt-based implementation, DMA is **not required**.
 For future full DMA implementation:
 ```
 DMA Settings → Add
-├── DMA Request: TIM1_UP
+├── DMA Request: TIM4_UP (if supported/mapped in your configuration)
 ├── Stream: DMA2 Stream 5
 ├── Direction: Memory To Peripheral
 ├── Priority: High
@@ -173,12 +173,12 @@ DiSEqC_HandleTypeDef hdiseqc;
 /* USER CODE BEGIN 2 */
 
 // Initialize DiSEqC controller
-if (DiSEqC_Init(&hdiseqc, &htim1, NULL) != DISEQC_OK) {
+if (DiSEqC_Init(&hdiseqc, &htim4, NULL) != DISEQC_OK) {
     Error_Handler();
 }
 
 // Start PWM output
-HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
 
 // Optional: Set completion callback
 // DiSEqC_SetCallback(&hdiseqc, MyCallback);
@@ -214,7 +214,7 @@ extern DiSEqC_HandleTypeDef hdiseqc;
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    if (htim->Instance == TIM1) {
+    if (htim->Instance == TIM4) {
         DiSEqC_IRQHandler(&hdiseqc);
     }
 }
@@ -266,7 +266,7 @@ STM32_Programmer_CLI -c port=SWD -d build/yourproject.bin 0x08000000
 
 ### 2. Oscilloscope Verification
 
-**Expected signals on PA8:**
+**Expected signals on TIM4_CH1 output pin:**
 - **Idle**: Logic LOW (0V or 3.3V depending on your circuit)
 - **During transmission**:
   - 22kHz carrier bursts
@@ -286,7 +286,7 @@ Add debug UART output to verify timing:
 ```c
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    if (htim->Instance == TIM1) {
+    if (htim->Instance == TIM4) {
         // Toggle debug pin for oscilloscope
         // HAL_GPIO_TogglePin(DEBUG_GPIO_Port, DEBUG_Pin);
         
@@ -299,11 +299,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 ## Troubleshooting
 
-### Issue: No output on PA8
+### Issue: No output on TIM4_CH1 output pin
 **Check:**
-- TIM1 clock enabled (should be automatic)
+- TIM4 clock enabled (should be automatic)
 - GPIO alternate function configured
-- MOE bit set (Main Output Enable for TIM1)
 - PWM started with HAL_TIM_PWM_Start()
 
 ### Issue: Wrong carrier frequency
@@ -315,7 +314,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 ### Issue: Transmission doesn't complete
 **Check:**
-- TIM1 update interrupt enabled
+- TIM4 interrupt enabled
 - HAL_TIM_PeriodElapsedCallback() called
 - DiSEqC_IRQHandler() receiving calls
 - segment_index incrementing

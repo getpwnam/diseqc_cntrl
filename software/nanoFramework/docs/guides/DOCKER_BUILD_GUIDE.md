@@ -333,7 +333,7 @@ rm -rf build/nanoCLR.*
 | RTOS | ChibiOS |
 | Network | W5500 (SPI1) |
 | Debug | UART2 @ 115200 |
-| DiSEqC | TIM1 (PWM) + TIM2 (GPT) |
+| DiSEqC | TIM4 (PWM) + TIM2 (GPT) |
 | LNB | I2C1 (PB8/PB9) |
 
 ---

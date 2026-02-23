@@ -11,8 +11,8 @@
 
 /* Private variables */
 DiSEqC_HandleTypeDef hdiseqc;
-extern TIM_HandleTypeDef htim1;
-extern DMA_HandleTypeDef hdma_tim1_up;
+extern TIM_HandleTypeDef htim4;
+extern DMA_HandleTypeDef hdma_tim4_up;
 
 /* Private function prototypes */
 void DiSEqC_TransmitComplete(void);
@@ -20,14 +20,14 @@ void MQTT_OnAngleCommand(float angle);
 
 /**
  * @brief Initialize DiSEqC controller
- * Call this after MX_TIM1_Init() in main.c
+ * Call this after MX_TIM4_Init() in main.c
  */
 void DiSEqC_Setup(void)
 {
     DiSEqC_Status_t status;
     
     // Initialize DiSEqC controller
-    status = DiSEqC_Init(&hdiseqc, &htim1, NULL);
+    status = DiSEqC_Init(&hdiseqc, &htim4, NULL);
     
     if (status != DISEQC_OK) {
         // Handle initialization error
@@ -38,7 +38,7 @@ void DiSEqC_Setup(void)
     DiSEqC_SetCallback(&hdiseqc, DiSEqC_TransmitComplete);
     
     // Start PWM output
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
 }
 
 /**
@@ -91,7 +91,7 @@ void MQTT_OnAngleCommand(float angle)
  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    if (htim->Instance == TIM1) {
+    if (htim->Instance == TIM4) {
         // Handle DiSEqC timing
         DiSEqC_IRQHandler(&hdiseqc);
     }

@@ -14,7 +14,7 @@ Your DiSEqC satellite dish controller is **architecturally complete** and ready 
 - ✅ **StepEast/West** - Fine-tuning (1-128 steps)
 - ✅ **DriveEast/West** - Continuous movement
 - ✅ **Halt** - Emergency stop
-- ✅ **22kHz carrier** - Hardware PWM (TIM1) at perfect frequency
+- ✅ **22kHz carrier** - Hardware PWM (TIM4) at perfect frequency
 - ✅ **Precise timing** - ChibiOS GPT for bit-accurate DiSEqC protocol
 
 ### 2. **LNB Control (LNBH26PQR via I2C)**
@@ -74,7 +74,7 @@ Your DiSEqC satellite dish controller is **architecturally complete** and ready 
 ┌──────────────────────↓──────────────────────────────────────┐
 │         NATIVE DRIVERS (C++ / ChibiOS)                       │
 │  diseqc_native.cpp:                                          │
-│    - PWM carrier generation (TIM1 @ 22kHz)                   │
+│    - PWM carrier generation (TIM4 @ 22kHz)                   │
 │    - GPT bit timing (TIM2)                                   │
 │    - Protocol encoding (GotoX, Drive, Step)                  │
 │    - Thread-safe transmission                                │
@@ -88,7 +88,7 @@ Your DiSEqC satellite dish controller is **architecturally complete** and ready 
 ┌──────────────────────↓──────────────────────────────────────┐
 │                     HARDWARE                                 │
 │  STM32F407VGT6:                                              │
-│    PA8 (TIM1_CH1) → LNBH26 DSQIN (DiSEqC data)             │
+│    DiSEqC output pin (TIM4_CH1) → LNBH26 DSQIN (DiSEqC data)│
 │    PB8 (I2C1_SCL) → LNBH26 SCL (control)                   │
 │    PB9 (I2C1_SDA) → LNBH26 SDA (control)                   │
 │    PA5-PA7 (SPI1) → W5500 (Ethernet)                        │
@@ -211,7 +211,7 @@ diseqc/status/error                 # Last error message
 ### STM32F407VGT6 Pin Assignments
 ```
 DiSEqC Output:
-  PA8 (TIM1_CH1) → LNBH26 DSQIN
+  DiSEqC output pin (TIM4_CH1) → LNBH26 DSQIN
 
 LNB Control (I2C):
   PB8 (I2C1_SCL) → LNBH26 SCL

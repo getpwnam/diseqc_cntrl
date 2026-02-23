@@ -5,9 +5,9 @@
  * 
  * Hardware Configuration:
  * - MCU: STM32F407VGT6 @ 168MHz
- * - Timer: TIM1 Channel 1 (PA8) → LNBH26 DSQIN
- * - DMA: DMA2 Stream 5, Channel 6 (TIM1_CH1/TIM1_UP)
- * - System Clock: 168MHz, APB2 Timer Clock: 168MHz
+ * - Timer: TIM4 Channel 1 (PD12) → LNBH26 DSQIN
+ * - DMA: Configure stream/channel per CubeMX mapping for TIM4_CH1/TIM4_UP
+ * - System Clock: 168MHz, APB1 Timer Clock: 84MHz
  * 
  * Features:
  * - Non-blocking DMA-driven transmission
@@ -59,7 +59,7 @@ typedef struct {
 
 /* DiSEqC Handle Structure */
 typedef struct {
-    TIM_HandleTypeDef *htim;            // Timer handle (TIM1)
+    TIM_HandleTypeDef *htim;            // Timer handle (TIM4)
     DMA_HandleTypeDef *hdma_update;     // DMA handle for timer update
     
     DiSEqC_Segment_t segments[DISEQC_MAX_SEGMENTS];  // Transmission segments
@@ -79,8 +79,8 @@ typedef struct {
 /**
  * @brief Initialize DiSEqC controller with DMA
  * @param hdiseqc Pointer to DiSEqC handle
- * @param htim Pointer to TIM1 handle (must be configured)
- * @param hdma_update Pointer to DMA handle for TIM1_UP
+ * @param htim Pointer to TIM4 handle (must be configured)
+ * @param hdma_update Pointer to DMA handle for TIM4_UP
  * @return DISEQC_OK on success
  */
 DiSEqC_Status_t DiSEqC_Init(DiSEqC_HandleTypeDef *hdiseqc, 

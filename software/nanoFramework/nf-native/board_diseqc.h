@@ -43,9 +43,9 @@
 /*
  * DiSEqC Configuration
  */
-#define DISEQC_PWM_DRIVER           PWMD1    // TIM1 for DiSEqC carrier
+#define DISEQC_PWM_DRIVER           PWMD4    // TIM4 for DiSEqC carrier
 #define DISEQC_GPT_DRIVER           GPTD2    // TIM2 for bit timing
-#define DISEQC_OUTPUT_LINE          PAL_LINE(GPIOA, 8U)  // PA8 = TIM1_CH1
+#define DISEQC_OUTPUT_LINE          PAL_LINE(GPIOD, 12U)  // PD12 = TIM4_CH1
 
 // Note: No motor enable pin - LNBH26 handles power control automatically
 // DiSEqC commands control rotor movement directly
@@ -88,7 +88,7 @@
 #define GPIOA_PIN5                  5U  // SPI1_SCK
 #define GPIOA_PIN6                  6U  // SPI1_MISO
 #define GPIOA_PIN7                  7U  // SPI1_MOSI
-#define GPIOA_PIN8                  8U  // TIM1_CH1 (DiSEqC output)
+#define GPIOA_PIN8                  8U
 #define GPIOA_PIN9                  9U
 #define GPIOA_PIN10                 10U
 #define GPIOA_PIN11                 11U // USB_DM (if used)
@@ -131,6 +131,23 @@
 #define GPIOC_PIN14                 14U
 #define GPIOC_PIN15                 15U
 
+#define GPIOD_PIN0                  0U
+#define GPIOD_PIN1                  1U
+#define GPIOD_PIN2                  2U
+#define GPIOD_PIN3                  3U
+#define GPIOD_PIN4                  4U
+#define GPIOD_PIN5                  5U
+#define GPIOD_PIN6                  6U
+#define GPIOD_PIN7                  7U
+#define GPIOD_PIN8                  8U
+#define GPIOD_PIN9                  9U
+#define GPIOD_PIN10                 10U
+#define GPIOD_PIN11                 11U
+#define GPIOD_PIN12                 12U  // TIM4_CH1 (DiSEqC output)
+#define GPIOD_PIN13                 13U
+#define GPIOD_PIN14                 14U
+#define GPIOD_PIN15                 15U
+
 /*
  * I/O ports initial setup, this configuration is established soon after reset
  * in the initialization code
@@ -158,7 +175,6 @@
  * PA5  - Alternate SPI1_SCK
  * PA6  - Alternate SPI1_MISO
  * PA7  - Alternate SPI1_MOSI
- * PA8  - Alternate TIM1_CH1 (DiSEqC output)
  * PA2  - Alternate USART2_TX (debug)
  * PA3  - Alternate USART2_RX (debug)
  */
@@ -166,32 +182,31 @@
                                      PIN_MODE_ALTERNATE(GPIOA_PIN5) |           \
                                      PIN_MODE_ALTERNATE(GPIOA_PIN6) |           \
                                      PIN_MODE_ALTERNATE(GPIOA_PIN7) |           \
-                                     PIN_MODE_ALTERNATE(GPIOA_PIN8) |           \
                                      PIN_MODE_ALTERNATE(GPIOA_PIN2) |           \
                                      PIN_MODE_ALTERNATE(GPIOA_PIN3) |           \
                                      PIN_MODE_ALTERNATE(GPIOA_PIN13) |          \
                                      PIN_MODE_ALTERNATE(GPIOA_PIN14))
 #define VAL_GPIOA_OTYPER            (PIN_OTYPE_PUSHPULL(GPIOA_PIN4) |           \
-                                     PIN_OTYPE_PUSHPULL(GPIOA_PIN8))
+                                     PIN_OTYPE_PUSHPULL(GPIOA_PIN2) |           \
+                                     PIN_OTYPE_PUSHPULL(GPIOA_PIN3) |           \
+                                     PIN_OTYPE_PUSHPULL(GPIOA_PIN5) |           \
+                                     PIN_OTYPE_PUSHPULL(GPIOA_PIN6) |           \
+                                     PIN_OTYPE_PUSHPULL(GPIOA_PIN7))
 #define VAL_GPIOA_OSPEEDR           (PIN_OSPEED_HIGH(GPIOA_PIN4) |              \
                                      PIN_OSPEED_HIGH(GPIOA_PIN5) |              \
                                      PIN_OSPEED_HIGH(GPIOA_PIN6) |              \
-                                     PIN_OSPEED_HIGH(GPIOA_PIN7) |              \
-                                     PIN_OSPEED_HIGH(GPIOA_PIN8))
+                                     PIN_OSPEED_HIGH(GPIOA_PIN7))
 #define VAL_GPIOA_PUPDR             (PIN_PUPDR_FLOATING(GPIOA_PIN4) |           \
                                      PIN_PUPDR_FLOATING(GPIOA_PIN5) |           \
                                      PIN_PUPDR_FLOATING(GPIOA_PIN6) |           \
-                                     PIN_PUPDR_FLOATING(GPIOA_PIN7) |           \
-                                     PIN_PUPDR_FLOATING(GPIOA_PIN8))
-#define VAL_GPIOA_ODR               (PIN_ODR_HIGH(GPIOA_PIN4) |                 \
-                                     PIN_ODR_LOW(GPIOA_PIN8))
+                                     PIN_PUPDR_FLOATING(GPIOA_PIN7))
+#define VAL_GPIOA_ODR               (PIN_ODR_HIGH(GPIOA_PIN4))
 #define VAL_GPIOA_AFRL              (PIN_AFIO_AF(GPIOA_PIN2, 7U) |              \
                                      PIN_AFIO_AF(GPIOA_PIN3, 7U) |              \
                                      PIN_AFIO_AF(GPIOA_PIN5, 5U) |              \
                                      PIN_AFIO_AF(GPIOA_PIN6, 5U) |              \
                                      PIN_AFIO_AF(GPIOA_PIN7, 5U))
-#define VAL_GPIOA_AFRH              (PIN_AFIO_AF(GPIOA_PIN8, 1U) |              \
-                                     PIN_AFIO_AF(GPIOA_PIN13, 0U) |             \
+#define VAL_GPIOA_AFRH              (PIN_AFIO_AF(GPIOA_PIN13, 0U) |             \
                                      PIN_AFIO_AF(GPIOA_PIN14, 0U))
 
 /*
@@ -226,6 +241,18 @@
 #define VAL_GPIOC_ODR               (PIN_ODR_LOW(GPIOC_PIN4))
 #define VAL_GPIOC_AFRL              (0x00000000)
 #define VAL_GPIOC_AFRH              (0x00000000)
+
+/*
+ * GPIOD setup:
+ * PD12 - Alternate TIM4_CH1 (DiSEqC output)
+ */
+#define VAL_GPIOD_MODER             (PIN_MODE_ALTERNATE(GPIOD_PIN12))
+#define VAL_GPIOD_OTYPER            (PIN_OTYPE_PUSHPULL(GPIOD_PIN12))
+#define VAL_GPIOD_OSPEEDR           (PIN_OSPEED_HIGH(GPIOD_PIN12))
+#define VAL_GPIOD_PUPDR             (PIN_PUPDR_FLOATING(GPIOD_PIN12))
+#define VAL_GPIOD_ODR               (PIN_ODR_LOW(GPIOD_PIN12))
+#define VAL_GPIOD_AFRL              (0x00000000)
+#define VAL_GPIOD_AFRH              (PIN_AFIO_AF(GPIOD_PIN12, 2U))
 
 #if !defined(_FROM_ASM_)
 #ifdef __cplusplus

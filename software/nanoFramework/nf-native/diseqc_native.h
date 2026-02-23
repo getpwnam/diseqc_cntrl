@@ -3,13 +3,13 @@
  * @brief Native DiSEqC driver for nanoFramework on STM32F407VGT6
  * 
  * This native driver uses ChibiOS (which nanoFramework is built on) to:
- * - Generate precise 22kHz DiSEqC carrier using TIM1 PWM
+ * - Generate precise 22kHz DiSEqC carrier using TIM4 PWM
  * - Transmit DiSEqC 1.2 protocol commands
  * - Control motor enable with automatic timing
  * - Expose clean API to C# via nanoFramework interop
  * 
  * Hardware:
- * - PA8 (TIM1_CH1) → LNBH26 DSQIN
+ * - PD12 (TIM4_CH1) → LNBH26 DSQIN
  * - PB1 (GPIO)     → Motor Enable
  */
 
@@ -54,7 +54,7 @@ typedef struct {
 
 /* DiSEqC Driver Handle */
 typedef struct {
-    PWMDriver *pwm_driver;                          // ChibiOS PWM driver (TIM1)
+    PWMDriver *pwm_driver;                          // ChibiOS PWM driver (TIM4)
     GPTDriver *gpt_driver;                          // ChibiOS GPT for timing
     
     diseqc_segment_t segments[DISEQC_MAX_SEGMENTS]; // Transmission buffer
@@ -88,7 +88,7 @@ extern motor_enable_handle_t g_motor;
 
 /**
  * @brief Initialize DiSEqC driver
- * @param pwm_driver Pointer to PWM driver (PWMD1 for TIM1)
+ * @param pwm_driver Pointer to PWM driver (PWMD4 for TIM4)
  * @param gpt_driver Pointer to GPT driver for timing
  * @return DISEQC_OK on success
  */
