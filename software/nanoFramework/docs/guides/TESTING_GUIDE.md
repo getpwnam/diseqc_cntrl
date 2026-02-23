@@ -13,7 +13,7 @@ Bring up and validate board behavior in a staged way: power, flash, protocol out
 
 ### Hardware Needed
 - ✅ STM32F407VGT6 DiSEqC controller board (assembled)
-- ✅ USB-to-Serial adapter (for debug output) - UART2 on PA2/PA3
+- ✅ USB-to-Serial adapter (for debug output) - USART3 on PB10/PB11
 - ✅ ST-Link V2 (for programming)
 - ✅ Ethernet cable
 - ✅ Router/switch with DHCP
@@ -38,8 +38,8 @@ Bring up and validate board behavior in a staged way: power, flash, protocol out
 ```
 STM32 Board          USB-Serial Adapter
 -----------          ------------------
-PA2 (TX) --------→   RX
-PA3 (RX) ←--------   TX
+PB10 (TX) -------→   RX
+PB11 (RX) ←-------   TX
 GND      ←-------→   GND
 ```
 
@@ -212,7 +212,7 @@ config fram-clear ERASE
 ```
 
 Expected debug output includes:
-- `[SERIAL] Command interface active on COM2 @ 115200`
+- `[SERIAL] Command interface active on COM3 @ 115200`
 - `[SERIAL] Command: config get`
 - `[CMD] Config updated: ...`
 - `[CONFIG] FRAM dump (0..63)`
@@ -538,7 +538,7 @@ done
 ### Issue: "Network not ready"
 **Solution:**
 - Check Ethernet cable
-- Verify W5500 SPI connections (PA4-PA7, PC4-PC5)
+- Verify W5500 SPI connections (PB12-PB15, PC6-PC7)
 - Test with static IP instead of DHCP
 
 ### Issue: "MQTT connection failed"

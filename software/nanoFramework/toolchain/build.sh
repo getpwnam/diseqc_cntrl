@@ -157,7 +157,9 @@ if [ -d "$REFERENCE_BOARD" ]; then
 #define STM32_SPI_USE_SPI1                  TRUE
 
 #undef STM32_SERIAL_USE_USART2
-#define STM32_SERIAL_USE_USART2             TRUE
+#define STM32_SERIAL_USE_USART2             FALSE
+#undef STM32_SERIAL_USE_USART3
+#define STM32_SERIAL_USE_USART3             TRUE
 EOF_MCU_OVERRIDES
 
             cat >> "$mcu" << EOF_MCU_PROFILE_OVERRIDES
@@ -176,6 +178,20 @@ EOF_MCU_PROFILE_OVERRIDES
     # Provide wire protocol serial configuration header expected by ChibiOS common sources
     if [ -f "$NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F411_DISCOVERY/common/serialcfg.h" ]; then
         cp "$NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F411_DISCOVERY/common/serialcfg.h" "$TARGET_DIR/common/" 2>/dev/null || true
+    fi
+
+    # Align wire protocol serial driver with board mapping (USART3)
+    if [ -f "$TARGET_DIR/common/serialcfg.h" ]; then
+        sed -E -i 's/^#define[[:space:]]+SERIAL_DRIVER[[:space:]]+SD2/#define SERIAL_DRIVER           SD3/' "$TARGET_DIR/common/serialcfg.h"
+    else
+        cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG'
+#ifndef SERIALCFG_H
+#define SERIALCFG_H
+
+#define SERIAL_DRIVER           SD3
+
+#endif // SERIALCFG_H
+EOF_SERIALCFG
     fi
 fi
 

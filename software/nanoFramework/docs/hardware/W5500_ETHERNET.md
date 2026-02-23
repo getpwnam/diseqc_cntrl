@@ -16,16 +16,16 @@ Based on your `diseqc_cntrl` KiCad schematic:
 ### SPI1 Connections
 | Signal | STM32 Pin | W5500 Pin | Description |
 |--------|-----------|-----------|-------------|
-| SCK    | PA5       | SCLK      | SPI Clock |
-| MISO   | PA6       | MISO      | Master In Slave Out |
-| MOSI   | PA7       | MOSI      | Master Out Slave In |
-| CS     | PA4       | SCSN      | Chip Select (active low) |
+| SCK    | PB13      | SCLK      | SPI Clock |
+| MISO   | PB14      | MISO      | Master In Slave Out |
+| MOSI   | PB15      | MOSI      | Master Out Slave In |
+| CS     | PB12      | SCSN      | Chip Select (active low) |
 
 ### Control Signals
 | Signal | STM32 Pin | W5500 Pin | Description |
 |--------|-----------|-----------|-------------|
-| RESET  | PC4       | RSTN      | Reset (active low) |
-| INT    | PC5       | INTN      | Interrupt (active low) |
+| RESET  | PC6       | RSTN      | Reset (active low) |
+| INT    | PC7       | INTN      | Interrupt (active low) |
 
 ## ✅ Updated Files
 
@@ -33,9 +33,9 @@ Based on your `diseqc_cntrl` KiCad schematic:
 ```c
 // W5500 configuration
 #define W5500_SPI_DRIVER            SPID1               // SPI1
-#define W5500_CS_LINE               PAL_LINE(GPIOA, 4U) // PA4 = SCSN
-#define W5500_RESET_LINE            PAL_LINE(GPIOC, 4U) // PC4 = W5500_RST
-#define W5500_INT_LINE              PAL_LINE(GPIOC, 5U) // PC5 = W5500_INT
+#define W5500_CS_LINE               PAL_LINE(GPIOB, 12U) // PB12 = SCSN
+#define W5500_RESET_LINE            PAL_LINE(GPIOC, 6U)  // PC6 = W5500_RST
+#define W5500_INT_LINE              PAL_LINE(GPIOC, 7U)  // PC7 = W5500_INT
 ```
 
 ### 2. `DiSEqC_Control/packages.config`
@@ -54,9 +54,9 @@ using System.Net.NetworkInformation;
 using nanoFramework.M2Mqtt;
 
 // W5500 SPI Configuration
-const int W5500_CS_PIN = 4;  // PA4
+const int W5500_CS_PIN = 12;  // PB12
 
-var spiConfig = new SpiConnectionSettings(1, W5500_CS_PIN)  // SPI1, PA4
+var spiConfig = new SpiConnectionSettings(1, W5500_CS_PIN)  // SPI1, PB12
 {
     ClockFrequency = 2_000_000,  // 2MHz
     Mode = SpiMode.Mode0,
@@ -141,8 +141,8 @@ mqtt.Publish("diseqc/status", Encoding.UTF8.GetBytes("online"));
 ## 🐛 Troubleshooting
 
 ### W5500 Not Responding
-- Check PC4 (RESET) is HIGH after initialization
-- Verify PA4 (CS) toggles during SPI transfer
+- Check PC6 (RESET) is HIGH after initialization
+- Verify PB12 (CS) toggles during SPI transfer
 - Measure SPI signals with oscilloscope
 - Check 3.3V power supply to W5500
 

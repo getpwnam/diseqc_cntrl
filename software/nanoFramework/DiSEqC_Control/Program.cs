@@ -21,7 +21,7 @@ namespace DiSEqC_Control
         private static RuntimeConfiguration _savedConfig = RuntimeConfiguration.CreateDefaults();
         private static FramConfigurationStorage _configStorage;
         private static SerialPort _serialCommandPort;
-        private const string SERIAL_COMMAND_PORT = "COM2";
+        private const string SERIAL_COMMAND_PORT = "COM3";
         private const int SERIAL_COMMAND_BAUD = 115200;
         private const int FRAM_I2C_BUS = 3;
         private const int FRAM_DUMP_DEFAULT_BYTES = 64;

@@ -4,11 +4,14 @@
  */
 
 #include "diseqc_native.h"
+#include "board_diseqc.h"
 #include <string.h>
 #include <math.h>
 
 void ConfigPins_I2C3(void)
 {
+    palSetLineMode(PAL_LINE(GPIOA, 8U), PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_PUPDR_PULLUP);
+    palSetLineMode(PAL_LINE(GPIOC, 9U), PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_PUPDR_PULLUP);
 }
 
 /* Global handles */

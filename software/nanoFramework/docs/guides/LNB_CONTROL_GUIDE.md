@@ -42,8 +42,8 @@ The LNBH26PQR is controlled via **I2C interface**:
 ### I2C Configuration
 ```
 I2C Bus: I2C1
-SCL Pin: PB8 (I2C1_SCL)
-SDA Pin: PB9 (I2C1_SDA)
+SCL Pin: PB6 (I2C1_SCL)
+SDA Pin: PB7 (I2C1_SDA)
 I2C Address: 0x08 (7-bit address)
 I2C Speed: 100kHz (standard mode)
 ```
