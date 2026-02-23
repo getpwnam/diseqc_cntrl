@@ -29,6 +29,39 @@
 - [ ] Add host-side interop contract tests for managed/native boundaries (starting with W5500 socket API status/parameter handling).
 - [ ] Add hardware smoke-test checklist for W5500 RX/TX and USB wire protocol after native implementation lands.
 
+## Implementation Plan (Phased)
+
+### Phase 1: Managed Test Foundation (completed)
+
+- [x] Create host-only unit test project and run in Linux CI/local.
+- [x] Add pure-logic tests for configuration and parity behaviors.
+- [x] Document how to run unit tests in `software/nanoFramework/README.md`.
+
+### Phase 2: Interop Contract Tests (next)
+
+- [ ] Add host-side tests for managed/native contract behavior of W5500 interop API:
+	- [ ] Parameter validation and return-code mapping expectations.
+	- [ ] Socket lifecycle contract (`Open`/`Connect`/`Send`/`Receive`/`Close`).
+	- [ ] Timeout/error path expectations used by managed callers.
+
+### Phase 3: Real W5500 Native Transport
+
+- [ ] Replace stub behavior in `nf-native/w5500_interop.cpp` with real RX/TX socket path.
+- [ ] Reconcile board-level pin/config definitions required by W5500 runtime path.
+- [ ] Verify `w5500-native` firmware profile build remains green in Docker.
+
+### Phase 4: USB Wire Protocol Migration
+
+- [ ] Define target USB behavior for deployment/debug wire protocol (native USB as primary interface).
+- [ ] Implement required firmware startup/config changes for USB wire protocol.
+- [ ] Update docs and test procedures for USB-first workflow.
+
+### Phase 5: Hardware Validation
+
+- [ ] Run board-level smoke tests for W5500 connectivity and stability.
+- [ ] Validate USB wire protocol end-to-end (connect/deploy/debug).
+- [ ] Capture known-good validation matrix and rollback notes in docs.
+
 ## Deferred: Align to Latest Stable Everywhere
 
 - [ ] Inventory latest stable versions for all nanoFramework packages in use.
