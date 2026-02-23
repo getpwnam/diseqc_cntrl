@@ -18,6 +18,7 @@ nf-interpreter/
 *.user
 *.userosscache
 *.sln.docstates
+*.DotSettings
 bin/
 obj/
 packages/
