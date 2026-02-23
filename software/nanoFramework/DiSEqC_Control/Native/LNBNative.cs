@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace DiseqC.Native
+namespace DiSEqC_Control.Native
 {
     /// <summary>
     /// LNB (Low Noise Block) Control

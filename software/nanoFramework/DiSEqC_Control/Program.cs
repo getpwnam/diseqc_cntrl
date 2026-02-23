@@ -1,33 +1,35 @@
 using System;
-using System.Device.Gpio;
 using System.Diagnostics;
+using System.IO.Ports;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading;
-using DiseqC.Manager;
-using DiseqC.Native;
+using DiSEqC_Control.Manager;
+using DiSEqC_Control.Native;
 using nanoFramework.M2Mqtt;
 using nanoFramework.M2Mqtt.Messages;
 
-namespace DiseqC
+namespace DiSEqC_Control
 {
     public class Program
     {
-        // Configuration - TODO: Move to ConfigurationManager
-        private const string MQTT_BROKER = "192.168.1.50";
-        private const int MQTT_PORT = 1883;
-        private const string MQTT_CLIENT_ID = "diseqc_controller";
-        private const string MQTT_USERNAME = "";  // Optional
-        private const string MQTT_PASSWORD = "";  // Optional
-
-        // MQTT Topics
-        private const string TOPIC_PREFIX = "diseqc";
-        private const string TOPIC_AVAILABILITY = TOPIC_PREFIX + "/availability";
-
         // Global instances
         private static MqttClient _mqttClient;
         private static RotorManager _rotor;
         private static bool _isConnected = false;
+        private static RuntimeConfiguration _runtimeConfig = RuntimeConfiguration.CreateDefaults();
+        private static RuntimeConfiguration _savedConfig = RuntimeConfiguration.CreateDefaults();
+        private static FramConfigurationStorage _configStorage;
+        private static SerialPort _serialCommandPort;
+        private const string SERIAL_COMMAND_PORT = "COM2";
+        private const int SERIAL_COMMAND_BAUD = 115200;
+        private const int FRAM_I2C_BUS = 3;
+        private const int FRAM_DUMP_DEFAULT_BYTES = 64;
+        private const int FRAM_DUMP_MAX_BYTES = 256;
+        private const string FRAM_CLEAR_CONFIRMATION_TOKEN = "ERASE";
+
+        private static string TopicPrefix => _runtimeConfig.MqttTopicPrefix;
+        private static string TopicAvailability => TopicPrefix + "/availability";
 
         public static void Main()
         {
@@ -36,12 +38,18 @@ namespace DiseqC
             Debug.WriteLine("STM32F407VGT6 + W5500 + nanoFramework");
             Debug.WriteLine("==============================================");
 
+            // Initialize runtime configuration and persistent storage
+            InitializeConfiguration();
+
             // Initialize hardware
             InitializeNetwork();
 
             // Initialize rotor manager (native driver)
             Debug.WriteLine("Initializing DiSEqC native driver...");
             _rotor = new RotorManager();
+
+            // Start serial command listener (MVP config channel)
+            StartSerialCommandListener();
 
             // Connect to MQTT
             ConnectToMqtt();
@@ -52,6 +60,32 @@ namespace DiseqC
         }
 
         #region Network Initialization
+
+        private static void InitializeConfiguration()
+        {
+            _runtimeConfig = RuntimeConfiguration.CreateDefaults();
+            _savedConfig = _runtimeConfig.Clone();
+
+            try
+            {
+                _configStorage = new FramConfigurationStorage(FRAM_I2C_BUS);
+
+                if (_configStorage.TryLoad(out RuntimeConfiguration persisted, out string loadError))
+                {
+                    _runtimeConfig = persisted;
+                    _savedConfig = persisted.Clone();
+                    Debug.WriteLine("[CONFIG] Loaded persisted configuration from FRAM");
+                }
+                else
+                {
+                    Debug.WriteLine($"[CONFIG] No persisted config loaded: {loadError}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[CONFIG] FRAM storage unavailable: {ex.Message}");
+            }
+        }
 
         private static void InitializeNetwork()
         {
@@ -71,9 +105,16 @@ namespace DiseqC
             Debug.WriteLine($"Network Interface: {netIf.NetworkInterfaceType}");
             Debug.WriteLine($"MAC Address: {GetMacAddress(netIf)}");
 
-            // Enable DHCP
-            Debug.WriteLine("Requesting DHCP address...");
-            netIf.EnableDhcp();
+            if (_runtimeConfig.UseDhcp)
+            {
+                Debug.WriteLine("Requesting DHCP address...");
+                netIf.EnableDhcp();
+            }
+            else
+            {
+                Debug.WriteLine("Applying configured static IP...");
+                netIf.EnableStaticIPv4(_runtimeConfig.StaticIp, _runtimeConfig.StaticSubnetMask, _runtimeConfig.StaticGateway);
+            }
 
             // Wait for valid IP
             int retries = 0;
@@ -91,7 +132,7 @@ namespace DiseqC
                 Debug.WriteLine("Falling back to static IP...");
 
                 // Fallback to static IP
-                netIf.EnableStaticIPv4("192.168.1.100", "255.255.255.0", "192.168.1.1");
+                netIf.EnableStaticIPv4(_runtimeConfig.StaticIp, _runtimeConfig.StaticSubnetMask, _runtimeConfig.StaticGateway);
                 Thread.Sleep(2000);
             }
 
@@ -111,51 +152,184 @@ namespace DiseqC
 
         #endregion
 
+        #region Serial Command Interface
+
+        private static void StartSerialCommandListener()
+        {
+            try
+            {
+                _serialCommandPort = new SerialPort(SERIAL_COMMAND_PORT, SERIAL_COMMAND_BAUD, Parity.None, 8, StopBits.One);
+                _serialCommandPort.ReadTimeout = 500;
+                _serialCommandPort.Open();
+
+                Debug.WriteLine($"[SERIAL] Command interface active on {SERIAL_COMMAND_PORT} @ {SERIAL_COMMAND_BAUD}");
+                Debug.WriteLine("[SERIAL] Commands: config get | config set key=value | config save | config reset | config reload | config fram-dump [bytes] | config fram-clear ERASE");
+
+                new Thread(SerialCommandLoop).Start();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[SERIAL] Command interface unavailable: {ex.Message}");
+            }
+        }
+
+        private static void SerialCommandLoop()
+        {
+            byte[] oneByte = new byte[1];
+            StringBuilder buffer = new StringBuilder();
+
+            while (true)
+            {
+                try
+                {
+                    int bytesRead = _serialCommandPort.Read(oneByte, 0, 1);
+                    if (bytesRead == 0)
+                    {
+                        continue;
+                    }
+
+                    char c = (char)oneByte[0];
+
+                    if (c == '\r')
+                    {
+                        continue;
+                    }
+
+                    if (c == '\n')
+                    {
+                        string command = buffer.ToString().Trim();
+                        buffer.Clear();
+
+                        if (!string.IsNullOrEmpty(command))
+                        {
+                            HandleSerialCommand(command);
+                        }
+
+                        continue;
+                    }
+
+                    buffer.Append(c);
+                }
+                catch
+                {
+                    Thread.Sleep(50);
+                }
+            }
+        }
+
+        private static void HandleSerialCommand(string command)
+        {
+            string normalized = command.ToLower();
+            Debug.WriteLine($"[SERIAL] Command: {command}");
+
+            if (normalized == "help" || normalized == "?")
+            {
+                Debug.WriteLine("[SERIAL] config get");
+                Debug.WriteLine("[SERIAL] config set <key>=<value>");
+                Debug.WriteLine("[SERIAL] config save");
+                Debug.WriteLine("[SERIAL] config reset");
+                Debug.WriteLine("[SERIAL] config reload");
+                Debug.WriteLine("[SERIAL] config fram-dump [bytes]");
+                Debug.WriteLine("[SERIAL] config fram-clear ERASE");
+                return;
+            }
+
+            if (normalized == "config get")
+            {
+                HandleConfigGet(string.Empty);
+                return;
+            }
+
+            if (normalized == "config save")
+            {
+                HandleConfigSave();
+                return;
+            }
+
+            if (normalized == "config reset")
+            {
+                HandleConfigReset();
+                return;
+            }
+
+            if (normalized == "config reload")
+            {
+                HandleConfigReload();
+                return;
+            }
+
+            if (normalized.StartsWith("config fram-dump"))
+            {
+                string payload = string.Empty;
+                if (command.Length > "config fram-dump".Length)
+                {
+                    payload = command.Substring("config fram-dump".Length).Trim();
+                }
+
+                HandleConfigFramDump(payload);
+                return;
+            }
+
+            if (normalized.StartsWith("config fram-clear"))
+            {
+                string payload = string.Empty;
+                if (command.Length > "config fram-clear".Length)
+                {
+                    payload = command.Substring("config fram-clear".Length).Trim();
+                }
+
+                HandleConfigFramClear(payload);
+                return;
+            }
+
+            if (normalized.StartsWith("config set "))
+            {
+                string payload = command.Substring("config set ".Length).Trim();
+                HandleConfigSet(payload);
+                return;
+            }
+
+            Debug.WriteLine("[SERIAL] Unknown command. Type 'help'.");
+        }
+
+        #endregion
+
         #region MQTT Connection
 
         private static void ConnectToMqtt()
         {
             Debug.WriteLine("\n--- MQTT Initialization ---");
-            Debug.WriteLine($"Broker: {MQTT_BROKER}:{MQTT_PORT}");
+            Debug.WriteLine($"Broker: {_runtimeConfig.MqttBroker}:{_runtimeConfig.MqttPort}");
 
             try
             {
                 // Create MQTT client
-                _mqttClient = new MqttClient(MQTT_BROKER, MQTT_PORT, false, null, null, MqttSslProtocols.None);
+                _mqttClient = new MqttClient(_runtimeConfig.MqttBroker, _runtimeConfig.MqttPort, false, null, null, MqttSslProtocols.None);
 
                 // Set event handlers
                 _mqttClient.MqttMsgPublishReceived += OnMqttMessageReceived;
                 _mqttClient.ConnectionClosed += OnMqttConnectionClosed;
 
                 // Connect with LWT (Last Will and Testament)
-                byte willQos = MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE;
+                MqttQoSLevel willQos = MqttQoSLevel.AtLeastOnce;
                 bool willRetain = true;
 
-                byte connectResult;
-                if (string.IsNullOrEmpty(MQTT_USERNAME))
-                {
-                    connectResult = _mqttClient.Connect(
-                        MQTT_CLIENT_ID,
-                        TOPIC_AVAILABILITY,         // Will topic
-                        Encoding.UTF8.GetBytes("offline"), // Will message
-                        willQos,
-                        willRetain
-                    );
-                }
-                else
-                {
-                    connectResult = _mqttClient.Connect(
-                        MQTT_CLIENT_ID,
-                        MQTT_USERNAME,
-                        MQTT_PASSWORD,
-                        TOPIC_AVAILABILITY,
-                        willQos,
-                        willRetain,
-                        Encoding.UTF8.GetBytes("offline")
-                    );
-                }
+                MqttReasonCode connectResult;
+                bool hasCredentials = !string.IsNullOrEmpty(_runtimeConfig.MqttUsername);
+                connectResult = _mqttClient.Connect(
+                    _runtimeConfig.MqttClientId,
+                    hasCredentials ? _runtimeConfig.MqttUsername : null,
+                    hasCredentials ? _runtimeConfig.MqttPassword : null,
+                    willRetain,
+                    willQos,
+                    true,
+                    TopicAvailability,
+                    "offline",
+                    true,
+                    60
+                );
 
-                if (connectResult == 0)
+                if (connectResult == MqttReasonCode.Success)
                 {
                     Debug.WriteLine("✓ Connected to MQTT broker!");
                     _isConnected = true;
@@ -189,32 +363,36 @@ namespace DiseqC
             string[] topics = new[]
             {
                 // Position control
-                TOPIC_PREFIX + "/command/goto/angle",
-                TOPIC_PREFIX + "/command/goto/satellite",
-                TOPIC_PREFIX + "/command/halt",
+                TopicPrefix + "/command/goto/angle",
+                TopicPrefix + "/command/goto/satellite",
+                TopicPrefix + "/command/halt",
 
                 // Manual control
-                TOPIC_PREFIX + "/command/manual/step_east",
-                TOPIC_PREFIX + "/command/manual/step_west",
-                TOPIC_PREFIX + "/command/manual/drive_east",
-                TOPIC_PREFIX + "/command/manual/drive_west",
+                TopicPrefix + "/command/manual/step_east",
+                TopicPrefix + "/command/manual/step_west",
+                TopicPrefix + "/command/manual/drive_east",
+                TopicPrefix + "/command/manual/drive_west",
 
                 // LNB control
-                TOPIC_PREFIX + "/command/lnb/voltage",
-                TOPIC_PREFIX + "/command/lnb/polarization",
-                TOPIC_PREFIX + "/command/lnb/tone",
-                TOPIC_PREFIX + "/command/lnb/band",
+                TopicPrefix + "/command/lnb/voltage",
+                TopicPrefix + "/command/lnb/polarization",
+                TopicPrefix + "/command/lnb/tone",
+                TopicPrefix + "/command/lnb/band",
 
                 // Configuration
-                TOPIC_PREFIX + "/command/config/save",
-                TOPIC_PREFIX + "/command/config/reset",
-                TOPIC_PREFIX + "/command/calibrate/reference"
+                TopicPrefix + "/command/config/get",
+                TopicPrefix + "/command/config/set",
+                TopicPrefix + "/command/config/save",
+                TopicPrefix + "/command/config/reset",
+                TopicPrefix + "/command/config/reload",
+                TopicPrefix + "/command/config/fram_clear",
+                TopicPrefix + "/command/calibrate/reference"
             };
 
-            byte[] qosLevels = new byte[topics.Length];
+            MqttQoSLevel[] qosLevels = new MqttQoSLevel[topics.Length];
             for (int i = 0; i < topics.Length; i++)
             {
-                qosLevels[i] = MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE;
+                qosLevels[i] = MqttQoSLevel.AtLeastOnce;
             }
 
             _mqttClient.Subscribe(topics, qosLevels);
@@ -226,9 +404,11 @@ namespace DiseqC
         {
             string payload = online ? "online" : "offline";
             _mqttClient.Publish(
-                TOPIC_AVAILABILITY,
+                TopicAvailability,
                 Encoding.UTF8.GetBytes(payload),
-                MqttMsgBase.QOS_LEVEL_AT_LEAST_ONCE,
+                null,
+                null,
+                MqttQoSLevel.AtLeastOnce,
                 true  // Retained
             );
             Debug.WriteLine($"Published availability: {payload}");
@@ -259,6 +439,8 @@ namespace DiseqC
             PublishStatus("lnb/polarization", polarization == LNB.Polarization.Vertical ? "vertical" : "horizontal");
             PublishStatus("lnb/band", band == LNB.Band.Low ? "low" : "high");
 
+            PublishEffectiveConfig();
+
             Debug.WriteLine("✓ Initial status published");
         }
 
@@ -269,7 +451,7 @@ namespace DiseqC
         private static void OnMqttMessageReceived(object sender, MqttMsgPublishEventArgs e)
         {
             string topic = e.Topic;
-            string payload = Encoding.UTF8.GetString(e.Message);
+            string payload = Encoding.UTF8.GetString(e.Message, 0, e.Message.Length);
 
             Debug.WriteLine($"\n[MQTT] Topic: {topic}");
             Debug.WriteLine($"[MQTT] Payload: {payload}");
@@ -321,6 +503,14 @@ namespace DiseqC
                 {
                     HandleLnbBand(payload);
                 }
+                else if (topic.Contains("/command/config/get"))
+                {
+                    HandleConfigGet(payload);
+                }
+                else if (topic.Contains("/command/config/set"))
+                {
+                    HandleConfigSet(payload);
+                }
                 else if (topic.Contains("/command/config/save"))
                 {
                     HandleConfigSave();
@@ -328,6 +518,14 @@ namespace DiseqC
                 else if (topic.Contains("/command/config/reset"))
                 {
                     HandleConfigReset();
+                }
+                else if (topic.Contains("/command/config/reload"))
+                {
+                    HandleConfigReload();
+                }
+                else if (topic.Contains("/command/config/fram_clear"))
+                {
+                    HandleConfigFramClear(payload);
                 }
                 else if (topic.Contains("/command/calibrate/reference"))
                 {
@@ -670,15 +868,211 @@ namespace DiseqC
         private static void HandleConfigSave()
         {
             Debug.WriteLine("[CMD] Saving configuration...");
-            // TODO: Implement configuration save
+            _savedConfig = _runtimeConfig.Clone();
+
+            bool persisted = false;
+            if (_configStorage != null)
+            {
+                if (_configStorage.TrySave(_savedConfig, out string persistenceError))
+                {
+                    persisted = true;
+                }
+                else
+                {
+                    Debug.WriteLine($"[CONFIG] Persist save failed: {persistenceError}");
+                }
+            }
+
             PublishStatus("config/saved", "true");
+            PublishStatus("config/save_result", "ok");
+            PublishStatus("config/persisted", persisted ? "true" : "false");
         }
 
         private static void HandleConfigReset()
         {
             Debug.WriteLine("[CMD] Resetting to factory defaults...");
-            // TODO: Implement configuration reset
+            _runtimeConfig = RuntimeConfiguration.CreateDefaults();
             PublishStatus("config/reset", "true");
+            PublishEffectiveConfig();
+        }
+
+        private static void HandleConfigReload()
+        {
+            Debug.WriteLine("[CMD] Reloading last saved configuration...");
+
+            bool loadedFromFram = false;
+            if (_configStorage != null && _configStorage.TryLoad(out RuntimeConfiguration persisted, out string loadError))
+            {
+                _runtimeConfig = persisted;
+                _savedConfig = persisted.Clone();
+                loadedFromFram = true;
+            }
+            else
+            {
+                _runtimeConfig = _savedConfig.Clone();
+
+                if (_configStorage != null)
+                {
+                    Debug.WriteLine($"[CONFIG] FRAM reload fallback to RAM snapshot");
+                }
+            }
+
+            PublishStatus("config/reloaded", "true");
+            PublishStatus("config/reload_source", loadedFromFram ? "fram" : "ram");
+            PublishEffectiveConfig();
+        }
+
+        private static void HandleConfigGet(string payload)
+        {
+            Debug.WriteLine("[CMD] Returning effective configuration");
+            PublishEffectiveConfig();
+        }
+
+        private static void HandleConfigSet(string payload)
+        {
+            if (string.IsNullOrEmpty(payload))
+            {
+                PublishError("Config set payload must be key=value");
+                return;
+            }
+
+            int separator = payload.IndexOf('=');
+            if (separator <= 0 || separator >= payload.Length - 1)
+            {
+                PublishError("Config set payload must be key=value");
+                return;
+            }
+
+            string key = payload.Substring(0, separator).Trim();
+            string value = payload.Substring(separator + 1).Trim();
+
+            if (!_runtimeConfig.TrySetValue(key, value, out string error))
+            {
+                PublishError(error);
+                return;
+            }
+
+            Debug.WriteLine($"[CMD] Config updated: {key}={value}");
+            PublishStatus("config/updated", key);
+            PublishEffectiveConfig();
+        }
+
+        private static void HandleConfigFramDump(string payload)
+        {
+            if (_configStorage == null)
+            {
+                Debug.WriteLine("[CONFIG] FRAM storage unavailable");
+                return;
+            }
+
+            int bytesToRead = FRAM_DUMP_DEFAULT_BYTES;
+            if (!string.IsNullOrEmpty(payload))
+            {
+                if (!int.TryParse(payload, out bytesToRead))
+                {
+                    Debug.WriteLine("[CONFIG] fram-dump expects optional integer byte count");
+                    return;
+                }
+
+                if (bytesToRead <= 0)
+                {
+                    Debug.WriteLine("[CONFIG] fram-dump byte count must be > 0");
+                    return;
+                }
+
+                if (bytesToRead > FRAM_DUMP_MAX_BYTES)
+                {
+                    bytesToRead = FRAM_DUMP_MAX_BYTES;
+                }
+            }
+
+            if (!_configStorage.TryReadRaw(0, bytesToRead, out byte[] data, out string error))
+            {
+                Debug.WriteLine($"[CONFIG] FRAM dump failed: {error}");
+                return;
+            }
+
+            Debug.WriteLine($"[CONFIG] FRAM dump (0..{bytesToRead - 1})");
+
+            if (data.Length >= 9)
+            {
+                bool magicValid = data[0] == (byte)'D' && data[1] == (byte)'C' && data[2] == (byte)'F' && data[3] == (byte)'G';
+                int version = data[4];
+                int payloadLength = data[5] | (data[6] << 8);
+                int checksum = data[7] | (data[8] << 8);
+
+                Debug.WriteLine($"[CONFIG] Header magic={(magicValid ? "DCFG" : "invalid")}, version={version}, length={payloadLength}, checksum=0x{checksum:X4}");
+            }
+
+            for (int offset = 0; offset < data.Length; offset += 16)
+            {
+                int chunk = data.Length - offset;
+                if (chunk > 16)
+                {
+                    chunk = 16;
+                }
+
+                StringBuilder line = new StringBuilder();
+                line.Append("[FRAM] ");
+                line.Append(offset.ToString("X4"));
+                line.Append(": ");
+
+                for (int i = 0; i < chunk; i++)
+                {
+                    if (i > 0)
+                    {
+                        line.Append(' ');
+                    }
+
+                    line.Append(data[offset + i].ToString("X2"));
+                }
+
+                Debug.WriteLine(line.ToString());
+            }
+        }
+
+        private static void HandleConfigFramClear(string payload)
+        {
+            if (_configStorage == null)
+            {
+                Debug.WriteLine("[CONFIG] FRAM storage unavailable");
+                return;
+            }
+
+            if (payload != FRAM_CLEAR_CONFIRMATION_TOKEN)
+            {
+                Debug.WriteLine($"[CONFIG] Refusing FRAM clear. Use: config fram-clear {FRAM_CLEAR_CONFIRMATION_TOKEN}");
+                return;
+            }
+
+            if (!_configStorage.TryClear(out string error))
+            {
+                Debug.WriteLine($"[CONFIG] FRAM clear failed: {error}");
+                return;
+            }
+
+            _runtimeConfig = RuntimeConfiguration.CreateDefaults();
+            _savedConfig = _runtimeConfig.Clone();
+
+            Debug.WriteLine("[CONFIG] FRAM cleared; runtime config reset to defaults");
+            PublishStatus("config/fram_cleared", "true");
+            PublishEffectiveConfig();
+        }
+
+        private static void PublishEffectiveConfig()
+        {
+            PublishStatus("config/effective/network/use_dhcp", _runtimeConfig.UseDhcp ? "true" : "false");
+            PublishStatus("config/effective/network/static_ip", _runtimeConfig.StaticIp);
+            PublishStatus("config/effective/network/static_subnet", _runtimeConfig.StaticSubnetMask);
+            PublishStatus("config/effective/network/static_gateway", _runtimeConfig.StaticGateway);
+
+            PublishStatus("config/effective/mqtt/broker", _runtimeConfig.MqttBroker);
+            PublishStatus("config/effective/mqtt/port", _runtimeConfig.MqttPort.ToString());
+            PublishStatus("config/effective/mqtt/client_id", _runtimeConfig.MqttClientId);
+            PublishStatus("config/effective/mqtt/topic_prefix", _runtimeConfig.MqttTopicPrefix);
+
+            PublishStatus("config/effective/system/device_name", _runtimeConfig.DeviceName);
+            PublishStatus("config/effective/system/location", _runtimeConfig.DeviceLocation);
         }
 
         private static void HandleCalibrateReference()
@@ -696,14 +1090,16 @@ namespace DiseqC
         {
             if (!_isConnected) return;
 
-            string topic = $"{TOPIC_PREFIX}/status/{subtopic}";
+            string topic = $"{TopicPrefix}/status/{subtopic}";
 
             try
             {
                 _mqttClient.Publish(
                     topic,
                     Encoding.UTF8.GetBytes(value),
-                    MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE,
+                    null,
+                    null,
+                    MqttQoSLevel.AtMostOnce,
                     true  // Retained
                 );
             }
@@ -780,7 +1176,5 @@ namespace DiseqC
         }
 
         #endregion
-    }
-}
     }
 }

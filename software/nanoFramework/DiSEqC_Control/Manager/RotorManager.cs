@@ -4,7 +4,7 @@ using System;
 using System.Device.Gpio;
 using System.Threading;
 
-namespace DiseqC.Manager
+namespace DiSEqC_Control.Manager
 {
     internal class RotorManager
     {

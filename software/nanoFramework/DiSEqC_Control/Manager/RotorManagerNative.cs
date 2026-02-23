@@ -1,7 +1,7 @@
-using DiseqC.Native;
+using DiSEqC_Control.Native;
 using System;
 
-namespace DiseqC.Manager
+namespace DiSEqC_Control.Manager
 {
     /// <summary>
     /// High-level Rotor Manager - uses native DiSEqC driver

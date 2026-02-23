@@ -25,6 +25,12 @@ HRESULT Library_diseqc_interop_MotorEnable_NativeStartTracking___STATIC__VOID(CL
 HRESULT Library_diseqc_interop_MotorEnable_NativeStopTracking___STATIC__VOID(CLR_RT_StackFrame& stack);
 HRESULT Library_diseqc_interop_MotorEnable_NativeForceOff___STATIC__VOID(CLR_RT_StackFrame& stack);
 HRESULT Library_diseqc_interop_MotorEnable_NativeIsOn___STATIC__BOOLEAN(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_U1__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARRAY_U1__I4__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_W5500Socket_NativeClose___STATIC__I4__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4(CLR_RT_StackFrame& stack);
 
 /* Library information */
 static const CLR_RT_MethodHandler method_lookup[] = 
@@ -46,11 +52,17 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_diseqc_interop_MotorEnable_NativeStopTracking___STATIC__VOID,
     Library_diseqc_interop_MotorEnable_NativeForceOff___STATIC__VOID,
     Library_diseqc_interop_MotorEnable_NativeIsOn___STATIC__BOOLEAN,
+    Library_diseqc_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4,
+    Library_diseqc_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4,
+    Library_diseqc_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_U1__I4__I4__BYREF_I4,
+    Library_diseqc_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARRAY_U1__I4__I4__I4__BYREF_I4,
+    Library_diseqc_interop_W5500Socket_NativeClose___STATIC__I4__I4,
+    Library_diseqc_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4,
 };
 
 const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_DiseqC_Interop =
 {
-    "DiseqC.Interop",
+    "DiSEqC_Control.Interop",
     0x12345678,  // TODO: Generate proper checksum
     method_lookup,
     { 1, 0, 0, 0 }  // Version 1.0.0.0

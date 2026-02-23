@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace DiseqC.Native
+namespace DiSEqC_Control.Native
 {
     /// <summary>
     /// Native DiSEqC controller - uses STM32 TIM1 + ChibiOS for precise timing

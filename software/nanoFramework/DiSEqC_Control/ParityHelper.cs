@@ -1,4 +1,4 @@
-﻿namespace DiseqC
+﻿namespace DiSEqC_Control
 {
     public class ParityHelper
     {
