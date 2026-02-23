@@ -26,7 +26,7 @@
 
 - [x] Add host-only unit test project for pure managed logic (`tests/DiSEqC_Control.Tests`) and run it on Linux.
 - [x] Cover `RuntimeConfiguration` parsing/validation and `ParityHelper` behavior with unit tests.
-- [ ] Add host-side interop contract tests for managed/native boundaries (starting with W5500 socket API status/parameter handling).
+- [x] Add host-side interop contract tests for managed/native boundaries (starting with W5500 socket API status/parameter handling).
 - [ ] Add hardware smoke-test checklist for W5500 RX/TX and USB wire protocol after native implementation lands.
 
 ## Implementation Plan (Phased)
@@ -39,10 +39,8 @@
 
 ### Phase 2: Interop Contract Tests (next)
 
-- [ ] Add host-side tests for managed/native contract behavior of W5500 interop API:
-	- [ ] Parameter validation and return-code mapping expectations.
-	- [ ] Socket lifecycle contract (`Open`/`Connect`/`Send`/`Receive`/`Close`).
-	- [ ] Timeout/error path expectations used by managed callers.
+- [x] Add host-side tests for managed/native contract behavior of W5500/DiSEqC/LNB interop API (host-safe reflection contract checks).
+- [ ] Add runtime/on-device interop tests for parameter validation, lifecycle, and timeout/error paths (host CLR cannot invoke InternalCall methods).
 
 ### Phase 3: Real W5500 Native Transport
 
