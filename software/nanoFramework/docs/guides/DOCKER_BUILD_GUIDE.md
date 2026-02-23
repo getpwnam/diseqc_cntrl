@@ -6,7 +6,7 @@ Build firmware artifacts for the `M0DMF_DISEQC_F407` target using Docker, withou
 
 ## Current Profile Status
 
-- This guide reflects the validated profile in `build.sh`.
+- This guide reflects the validated profile in `toolchain/build.sh`.
 - `System.Net` is currently disabled in that profile.
 - Upstream `nf-interpreter` is fetched during build.
 
@@ -31,6 +31,21 @@ This setup provides:
    - Includes Docker Compose V2 (modern `docker compose` command)
 
 2. **Git** (for cloning nf-interpreter)
+
+3. **Linux host tools for managed build scripts** (required for `toolchain/compile-managed.sh` and `toolchain/build-chain.sh`)
+    - Install Mono/MSBuild:
+       - `sudo apt update && sudo apt install -y mono-complete`
+    - Install `nanoff` CLI:
+       - `dotnet tool install -g nanoff` (or `dotnet tool update -g nanoff`)
+    - Add `xbuild` compatibility shim to `msbuild`:
+       - `sudo ln -sf "$(command -v msbuild)" /usr/local/bin/xbuild`
+    - Verify:
+       - `msbuild --version`
+       - `xbuild --version`
+       - `nanoff --help`
+      - Troubleshooting:
+         - If you get `xbuild: command not found`, recreate the shim:
+            - `sudo ln -sf "$(command -v msbuild)" /usr/local/bin/xbuild`
 
 **Note:** This uses Docker Compose V2 (`docker compose`, not `docker-compose`)
 **Note:** No Docker Hub login is required for the build container in this project.
@@ -64,28 +79,28 @@ docker compose version
 **Option A: PowerShell (Windows/WSL)**
 ```powershell
 # In your project directory
-./build.ps1
+./toolchain/build.ps1
 ```
 
 **Option B: Bash (Linux/WSL/Mac)**
 ```bash
 # Make script executable
-chmod +x build.sh
+chmod +x toolchain/build.sh
 
 # Run build (default minimal profile)
-docker compose run --build --rm nanoframework-build /work/build.sh
+docker compose run --build --rm nanoframework-build /work/toolchain/build.sh
 
 # Run build (w5500-native scaffold profile)
-docker compose run --build --rm -e NF_BUILD_PROFILE=w5500-native nanoframework-build /work/build.sh
+docker compose run --build --rm -e NF_BUILD_PROFILE=w5500-native nanoframework-build /work/toolchain/build.sh
 
 # Run build (deprecated transitional profile)
-docker compose run --build --rm -e NF_BUILD_PROFILE=network nanoframework-build /work/build.sh
+docker compose run --build --rm -e NF_BUILD_PROFILE=network nanoframework-build /work/toolchain/build.sh
 ```
 
 **Option C: Manual Docker Command**
 ```bash
 docker compose up
-docker compose run --build --rm nanoframework-build /work/build.sh
+docker compose run --build --rm nanoframework-build /work/toolchain/build.sh
 ```
 
 ### Step 3: Flash to Board
@@ -153,8 +168,9 @@ software/nanoFramework/
 │   └── mcuconf.h              # MCU peripheral config
 │
 ├── docker-compose.yml         # Docker configuration
-├── build.sh                   # Bash build script
-├── build.ps1                  # PowerShell build script
+├── toolchain/
+│   ├── build.sh               # Bash build script
+│   └── build.ps1              # PowerShell build script
 │
 ├── nf-native/                 # Your native code
 │   ├── board_diseqc.h
@@ -162,7 +178,7 @@ software/nanoFramework/
 │   ├── lnb_control.cpp
 │   └── *_interop.cpp
 │
-└── DiseqC/                    # Your C# code
+└── DiSEqC_Control/            # Your C# code
     └── Program.cs
 ```
 
@@ -172,7 +188,7 @@ software/nanoFramework/
 
 ### Change Build Type
 
-Edit `build.sh`:
+Edit `toolchain/build.sh`:
 ```bash
 BUILD_TYPE="Debug"   # For debugging
 BUILD_TYPE="Release" # For production (default)
@@ -221,7 +237,7 @@ sudo usermod -aG docker $USER
 sudo usermod -aG docker $USER
 
 # Or run with sudo
-sudo docker compose run --build --rm nanoframework-build /work/build.sh
+sudo docker compose run --build --rm nanoframework-build /work/toolchain/build.sh
 ```
 
 ### Issue: Build fails - "CMake not found"
@@ -238,7 +254,7 @@ docker compose build --no-cache
 **Solution:**
 Check build logs for errors:
 ```bash
-docker compose run --build --rm nanoframework-build /work/build.sh 2>&1 | tee build.log
+docker compose run --build --rm nanoframework-build /work/toolchain/build.sh 2>&1 | tee build.log
 ```
 
 ### Issue: Flash fails - "st-flash not found"
@@ -302,7 +318,7 @@ To flash to board:
    ```
 
 2. **Deploy C# application** (from Visual Studio)
-   - Open DiseqC.sln
+   - Open `DiSEqC_Control/DiSEqC_Control.sln`
    - Deploy to device
 
 3. **Test** using MQTT
@@ -324,10 +340,10 @@ After first build, you can rebuild quickly:
 ```bash
 # Clean build (full rebuild)
 rm -rf build/nanoCLR.*
-./build.ps1
+./toolchain/build.ps1
 
 # Incremental build (faster)
-./build.ps1
+./toolchain/build.ps1
 ```
 
 ---
@@ -367,6 +383,6 @@ file build/nanoCLR.bin
 
 **Your Docker build environment is ready!** 🐳
 
-To build firmware: `./build.ps1`
+To build firmware: `./toolchain/build.ps1`
 
 For detailed testing, see: `docs/guides/TESTING_GUIDE.md`

@@ -8,6 +8,53 @@ Define configuration domains and expected runtime behavior for settings manageme
 
 - `NF_FEATURE_HAS_CONFIG_BLOCK` is currently disabled in the validated build profile.
 - Treat persistence behavior as profile-dependent unless re-enabled and validated.
+- Current MVP persists config snapshots to FM24CL16B F-RAM on I2C3 (power-cycle persistent), with RAM snapshot fallback if FRAM is unavailable.
+
+## Implemented MVP Interface
+
+- MQTT commands:
+  - `.../command/config/get`
+  - `.../command/config/set` with payload `key=value`
+  - `.../command/config/save`
+  - `.../command/config/reset`
+  - `.../command/config/reload`
+  - `.../command/config/fram_clear` with payload `ERASE` (guarded destructive operation)
+- Serial command interface (same command set):
+  - `config get`
+  - `config set key=value`
+  - `config save`
+  - `config reset`
+  - `config reload`
+  - `config fram-dump [bytes]` (debug: dumps raw FRAM bytes from address `0x0000`)
+  - `config fram-clear ERASE` (debug: clears FRAM and resets runtime config to defaults)
+
+## Implemented Runtime Keys (MVP)
+
+- `network.use_dhcp`
+- `network.static_ip`
+- `network.static_subnet`
+- `network.static_gateway`
+- `mqtt.broker`
+- `mqtt.port`
+- `mqtt.client_id`
+- `mqtt.username`
+- `mqtt.password`
+- `mqtt.topic_prefix`
+- `system.device_name`
+- `system.location`
+
+## Persistence Backend (MVP)
+
+- Device: `FM24CL16B` (16 Kb / 2048-byte I2C F-RAM)
+- Bus: I2C3
+- Format: key-value UTF-8 payload with header (`DCFG` magic, version, length, checksum)
+- Save behavior:
+  - `config/save` updates RAM snapshot and attempts FRAM persist
+  - status `config/persisted` reports `true|false`
+- Reload behavior:
+  - `config/reload` attempts FRAM load first
+  - falls back to RAM snapshot when FRAM read/validation fails
+  - status `config/reload_source` reports `fram|ram`
 
 ## Configuration Domains
 

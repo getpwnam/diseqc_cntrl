@@ -6,10 +6,54 @@
 
 See [QUICK_START.md](QUICK_START.md) for build instructions.
 
+## Build Status (Managed vs Full Build)
+
+Current local status on Linux:
+
+- Managed C# compile is stable and should be used as the pre-commit gate:
+	- `./toolchain/compile-managed.sh`
+- Full nanoFramework build (PE generation) currently fails in metadata processing:
+	- `./toolchain/build-chain.sh`
+	- failure point: `NFProjectSystem.MDP.targets` cannot load `System.Drawing.Common` during `MetaDataProcessorTask`
+
+### Known Limitation
+
+On this Linux host/toolchain combination, `msbuild /t:Build` reaches metadata processing and then fails with:
+
+- `Could not load file or assembly 'System.Drawing.Common ...'`
+
+This is a build-chain/runtime dependency issue in the nanoFramework metadata processor path, not a managed code compile error in this project.
+
+Tracking:
+
+- See [TODO.md](TODO.md), section **Current Focus: Build Chain Reliability**.
+
+## Host Prerequisites (Linux)
+
+Before running managed build scripts on Linux, ensure these host tools are available:
+
+- Mono/MSBuild toolchain:
+	- `sudo apt update && sudo apt install -y mono-complete`
+- `nanoff` CLI:
+	- `dotnet tool install -g nanoff` (or `dotnet tool update -g nanoff`)
+- Compatibility shim for build flows that still invoke `xbuild`:
+	- `sudo ln -sf "$(command -v msbuild)" /usr/local/bin/xbuild`
+
+Sanity check:
+
+- `msbuild --version`
+- `xbuild --version`
+- `nanoff --help`
+
+Troubleshooting:
+
+- If you see `xbuild: command not found`, recreate the shim:
+	- `sudo ln -sf "$(command -v msbuild)" /usr/local/bin/xbuild`
+
 ## Scope
 
 This folder contains:
-- managed application code (`DiseqC/`),
+- managed application code (`DiSEqC_Control/`),
 - native integration code (`nf-native/`), and
 - build orchestration/scripts for generating firmware artifacts.
 
@@ -25,7 +69,7 @@ The upstream `nf-interpreter` codebase is fetched during Docker build; it is not
 
 ## Build Notes (M0DMF_DISEQC_F407 target)
 
-`build.sh` supports three profiles via `NF_BUILD_PROFILE`:
+`toolchain/build.sh` supports three profiles via `NF_BUILD_PROFILE`:
 
 - `minimal` (default)
 	- `System.Net`: OFF
@@ -47,9 +91,9 @@ The upstream `nf-interpreter` codebase is fetched during Docker build; it is not
 
 Build commands:
 
-- Minimal: `docker compose run --rm nanoframework-build /work/build.sh`
-- W5500-native: `docker compose run --rm -e NF_BUILD_PROFILE=w5500-native nanoframework-build /work/build.sh`
-- Network: `docker compose run --rm -e NF_BUILD_PROFILE=network nanoframework-build /work/build.sh`
+- Minimal: `docker compose run --rm nanoframework-build /work/toolchain/build.sh`
+- W5500-native: `docker compose run --rm -e NF_BUILD_PROFILE=w5500-native nanoframework-build /work/toolchain/build.sh`
+- Network: `docker compose run --rm -e NF_BUILD_PROFILE=network nanoframework-build /work/toolchain/build.sh`
 
 Common target notes:
 

@@ -38,7 +38,7 @@ Based on your `diseqc_cntrl` KiCad schematic:
 #define W5500_INT_LINE              PAL_LINE(GPIOC, 5U) // PC5 = W5500_INT
 ```
 
-### 2. `DiseqC/packages.config`
+### 2. `DiSEqC_Control/packages.config`
 Added W5500 networking packages:
 - `nanoFramework.System.Net.Sockets.TcpClient` - TCP socket support
 - `nanoFramework.System.Device.Model` - Device bindings

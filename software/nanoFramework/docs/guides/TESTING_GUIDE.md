@@ -88,7 +88,7 @@ Broker: 192.168.1.50:1883
 Published availability: online
 
 --- Subscribing to MQTT Topics ---
-✓ Subscribed to 10 topics
+✓ Subscribed to 18 topics
 
 --- Publishing Initial Status ---
 ✓ Initial status published
@@ -160,6 +160,64 @@ mosquitto_sub -h localhost -t 'diseqc/status/#' -v
 - MQTT messages published correctly
 - Commands received and logged
 - Status updates appear
+
+### Step 2.3: Test Runtime Configuration Commands
+
+```bash
+# Request effective runtime configuration snapshot
+mosquitto_pub -h localhost -t 'diseqc/command/config/get' -m ''
+
+# Update broker and topic prefix
+mosquitto_pub -h localhost -t 'diseqc/command/config/set' -m 'mqtt.broker=192.168.1.60'
+mosquitto_pub -h localhost -t 'diseqc/command/config/set' -m 'mqtt.topic_prefix=diseqc_lab'
+
+# Save then reset and reload
+mosquitto_pub -h localhost -t 'diseqc/command/config/save' -m ''
+mosquitto_pub -h localhost -t 'diseqc/command/config/reset' -m ''
+mosquitto_pub -h localhost -t 'diseqc/command/config/reload' -m ''
+
+# Guarded FRAM clear (DANGEROUS)
+mosquitto_pub -h localhost -t 'diseqc/command/config/fram_clear' -m 'ERASE'
+```
+
+Expected status topics include:
+- `diseqc/status/config/updated`
+- `diseqc/status/config/saved`
+- `diseqc/status/config/reset`
+- `diseqc/status/config/reloaded`
+- `diseqc/status/config/persisted`
+- `diseqc/status/config/reload_source`
+- `diseqc/status/config/fram_cleared`
+- `diseqc/status/config/effective/...`
+
+Persistence check:
+- After `config/save`, power-cycle the board and publish `diseqc/command/config/get`
+- Confirm saved values are still present and `config/reload_source` reports `fram` during reload
+
+### Step 2.4: Test Serial Config Commands (MVP)
+
+On the UART terminal (same link used for debug output), send:
+
+```text
+help
+config get
+config set network.use_dhcp=false
+config set network.static_ip=192.168.1.120
+config save
+config reset
+config reload
+config fram-dump
+config fram-dump 128
+config fram-clear ERASE
+```
+
+Expected debug output includes:
+- `[SERIAL] Command interface active on COM2 @ 115200`
+- `[SERIAL] Command: config get`
+- `[CMD] Config updated: ...`
+- `[CONFIG] FRAM dump (0..63)`
+- `[FRAM] 0000: ...`
+- `[CONFIG] FRAM cleared; runtime config reset to defaults`
 
 ---
 

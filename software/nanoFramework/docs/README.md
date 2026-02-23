@@ -4,7 +4,7 @@ This folder is the canonical documentation root for the `software/nanoFramework`
 
 ## Documentation Conventions
 
-- Keep build/run guidance aligned with `../build.sh` and `../QUICK_START.md`.
+- Keep build/run guidance aligned with `../toolchain/build.sh` and `../QUICK_START.md`.
 - Mark speculative or future features explicitly as optional.
 - Keep hardware manufacturing details out of this tree (place them under `../../hardware/`).
 - Prefer concise, task-oriented sections: Purpose, Prerequisites, Steps, Validation, Troubleshooting.

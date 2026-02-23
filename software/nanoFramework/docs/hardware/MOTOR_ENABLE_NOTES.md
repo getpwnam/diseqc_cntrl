@@ -86,7 +86,7 @@ void boardInit(void) {
 ### C# Usage
 
 ```csharp
-using DiseqC.Native;
+using DiSEqC_Control.Native;
 
 // Just use DiSEqC directly
 DiSEqC.GotoAngle(45.0f);

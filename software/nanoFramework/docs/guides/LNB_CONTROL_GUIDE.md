@@ -74,7 +74,7 @@ Register 0x01 (Status):
 
 ### Namespace
 ```csharp
-using DiseqC.Native;
+using DiSEqC_Control.Native;
 ```
 
 ### Enums
@@ -481,10 +481,10 @@ done
    - `nf-native/lnb_interop.cpp` - C# interop
 
 2. **C# Wrapper:**
-   - `DiseqC/Native/LNBNative.cs` - C# API
+  - `DiSEqC_Control/Native/LNBNative.cs` - C# API
 
 3. **Application:**
-   - `DiseqC/Program.cs` - MQTT handlers added
+  - `DiSEqC_Control/Program.cs` - MQTT handlers added
 
 4. **Documentation:**
    - `nf-native/LNB_CONTROL_GUIDE.md` - This file!

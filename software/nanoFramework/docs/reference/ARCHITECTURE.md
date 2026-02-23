@@ -7,14 +7,14 @@ Define the software boundaries, control flow, and ownership for the `software/na
 ## Current Build Profile
 
 - Target: `M0DMF_DISEQC_F407`
-- Build orchestrator: `build.sh`
+- Build orchestrator: `toolchain/build.sh`
 - Networking (`System.Net`): **disabled** in the currently validated profile
 - Firmware outputs: `build/nanoCLR.bin`, `build/nanoCLR.hex`, `build/nanoCLR.elf`
 
 ## Layered Model
 
 1. **Application Layer (C#)**
-   - Location: `DiseqC/`
+  - Location: `DiSEqC_Control/`
    - Responsibilities:
      - command routing
      - high-level rotor/LNB workflows
@@ -47,7 +47,7 @@ Define the software boundaries, control flow, and ownership for the `software/na
 
 ### Build Flow
 
-`docker compose run ... /work/build.sh` → clone/update `nf-interpreter` → inject target/integration files → CMake/Ninja build → copy artifacts to `build/`
+`docker compose run ... /work/toolchain/build.sh` → clone/update `nf-interpreter` → inject target/integration files → CMake/Ninja build → copy artifacts to `build/`
 
 ## Hardware Integration Points
 

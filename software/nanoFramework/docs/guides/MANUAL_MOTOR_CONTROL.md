@@ -30,7 +30,7 @@ This guide covers DiSEqC manual movement commands exposed by the native/C# integ
 ### Low-Level API (DiSEqC.Native)
 
 ```csharp
-using DiseqC.Native;
+using DiSEqC_Control.Native;
 
 // Step movements (incremental)
 DiSEqC.StepEast(1);      // Move 1 step East (~1°)
@@ -54,7 +54,7 @@ bool busy = DiSEqC.IsBusy();
 ### High-Level API (RotorManager)
 
 ```csharp
-using DiseqC.Manager;
+using DiSEqC_Control.Manager;
 
 var rotor = new RotorManager();
 
@@ -79,7 +79,7 @@ rotor.Halt();            // Stop
 ### Example 1: Fine-Tuning Position
 
 ```csharp
-using DiseqC.Manager;
+using DiSEqC_Control.Manager;
 
 var rotor = new RotorManager();
 

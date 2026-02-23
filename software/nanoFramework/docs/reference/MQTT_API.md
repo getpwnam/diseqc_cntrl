@@ -57,9 +57,44 @@ Root prefix: `diseqc/`
 
 ### Configuration/Calibration
 
+- `diseqc/command/config/get`
+  - payload: ignored
+  - action: publish effective runtime config to `diseqc/status/config/effective/...`
+
+- `diseqc/command/config/set`
+  - payload: `key=value`
+  - example: `mqtt.broker=192.168.1.60`
+  - key set (MVP):
+    - `network.use_dhcp`
+    - `network.static_ip`
+    - `network.static_subnet`
+    - `network.static_gateway`
+    - `mqtt.broker`
+    - `mqtt.port`
+    - `mqtt.client_id`
+    - `mqtt.username`
+    - `mqtt.password`
+    - `mqtt.topic_prefix`
+    - `system.device_name`
+    - `system.location`
+
 - `diseqc/command/config/save`
+  - payload: ignored
+  - action: snapshot current runtime config as last-saved config (in-memory)
+
 - `diseqc/command/config/reset`
+  - payload: ignored
+  - action: reset runtime config to factory defaults
+
 - `diseqc/command/config/reload`
+  - payload: ignored
+  - action: restore runtime config from last-saved snapshot (in-memory)
+
+- `diseqc/command/config/fram_clear`
+  - payload: `ERASE`
+  - action: clears FRAM and resets runtime config defaults
+  - safety: ignored unless payload exactly matches `ERASE`
+
 - `diseqc/command/calibrate/reference`
 
 Payload for these commands is ignored unless otherwise documented by implementation.
@@ -83,6 +118,17 @@ Payload for these commands is ignored unless otherwise documented by implementat
 ### Diagnostics
 
 - `diseqc/status/error` (last error or empty)
+
+### Runtime Configuration
+
+- `diseqc/status/config/saved` (`true` when save command succeeds)
+- `diseqc/status/config/reset` (`true` when reset command succeeds)
+- `diseqc/status/config/reloaded` (`true` when reload command succeeds)
+- `diseqc/status/config/updated` (last updated key)
+- `diseqc/status/config/persisted` (`true|false`, FRAM persist result for `config/save`)
+- `diseqc/status/config/reload_source` (`fram|ram`)
+- `diseqc/status/config/fram_cleared` (`true` when FRAM clear succeeds)
+- `diseqc/status/config/effective/...` (effective runtime config snapshot)
 
 ### Availability
 
