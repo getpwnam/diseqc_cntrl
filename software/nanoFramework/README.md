@@ -20,6 +20,17 @@ Command:
 
 Use this as the local pre-commit gate for managed code changes.
 
+#### Managed Unit Tests (host-only)
+
+Run host-only unit tests for pure managed logic (currently `RuntimeConfiguration` and `ParityHelper`):
+
+- `cd tests/DiSEqC_Control.Tests && dotnet test -v minimal`
+
+Recommended local sequence before commit:
+
+1. `./toolchain/compile-managed.sh`
+2. `cd tests/DiSEqC_Control.Tests && dotnet test -v minimal`
+
 ### 2) Firmware Build (nf-interpreter / nanoCLR)
 
 Builds firmware artifacts by fetching/using `nf-interpreter` inside Docker and compiling the `M0DMF_DISEQC_F407` target.

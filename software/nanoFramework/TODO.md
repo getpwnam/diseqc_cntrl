@@ -22,6 +22,13 @@
 - [ ] Revisit remaining remap warnings only after full build chain is stable.
 - [x] Keep `./toolchain/compile-managed.sh` as the safe pre-commit gate until metadata processor issue is fixed.
 
+## Managed/Interop Test Coverage
+
+- [x] Add host-only unit test project for pure managed logic (`tests/DiSEqC_Control.Tests`) and run it on Linux.
+- [x] Cover `RuntimeConfiguration` parsing/validation and `ParityHelper` behavior with unit tests.
+- [ ] Add host-side interop contract tests for managed/native boundaries (starting with W5500 socket API status/parameter handling).
+- [ ] Add hardware smoke-test checklist for W5500 RX/TX and USB wire protocol after native implementation lands.
+
 ## Deferred: Align to Latest Stable Everywhere
 
 - [ ] Inventory latest stable versions for all nanoFramework packages in use.
