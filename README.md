@@ -10,6 +10,22 @@ This project is in development. No hardware or software testing has been perform
 
 Enables remote control of LNB power supply voltage (13 V / 18 V polarization selection), DiSEqC 1.x command generation, and IF signal routing — all manageable over a 10/100 Mbps Ethernet link or USB.
 
+## Repository Structure
+
+The project is intentionally split into separate domains:
+
+1. `hardware/`  
+	KiCad schematics, PCB layout, fabrication outputs, and hardware-specific assets.
+2. `software/nanoFramework/`  
+	Managed application + native integration layer used by this project.
+3. `nf-interpreter` (external dependency at build time)  
+	The nanoFramework/ChibiOS firmware base is cloned during build and patched with this repository's target files.
+
+See:
+- `hardware/README.md`
+- `software/README.md`
+- `software/nanoFramework/README.md`
+
 ![3D render - top](docs/images/3d_1.png)
 
 ![3D render - perspective](docs/images/3d_2.png)
