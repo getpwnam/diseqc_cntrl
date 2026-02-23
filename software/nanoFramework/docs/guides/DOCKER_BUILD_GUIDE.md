@@ -1,15 +1,21 @@
-# Docker Build Guide - DiSEqC Controller
+# Docker Build Guide
 
-## 🐳 Complete Docker Build Setup
+## Purpose
 
-Your DiSEqC controller firmware can now be built using Docker - **no local toolchain installation required!**
+Build firmware artifacts for the `M0DMF_DISEQC_F407` target using Docker, without installing a local ARM toolchain.
+
+## Current Profile Status
+
+- This guide reflects the validated profile in `build.sh`.
+- `System.Net` is currently disabled in that profile.
+- Upstream `nf-interpreter` is fetched during build.
 
 ---
 
-## ✅ What's Included
+## What's Included
 
 This setup provides:
-- ✅ **Docker-based build** - Uses nanoFramework's official build container
+- ✅ **Docker-based build** - Uses a local build container from `Dockerfile.build`
 - ✅ **Automated build script** - One command to build everything
 - ✅ **CMake configuration** - Custom board definition
 - ✅ **MCU configuration** - STM32F407 peripherals configured
@@ -17,7 +23,7 @@ This setup provides:
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 ### Required Software
 1. **Docker Desktop** (Windows/Mac) or **Docker Engine** (Linux)
@@ -27,6 +33,7 @@ This setup provides:
 2. **Git** (for cloning nf-interpreter)
 
 **Note:** This uses Docker Compose V2 (`docker compose`, not `docker-compose`)
+**Note:** No Docker Hub login is required for the build container in this project.
 
 ### Hardware
 - STM32F407VGT6 DiSEqC controller board
@@ -65,14 +72,20 @@ docker compose version
 # Make script executable
 chmod +x build.sh
 
-# Run build
-docker compose run --rm nanoframework-build /work/build.sh
+# Run build (default minimal profile)
+docker compose run --build --rm nanoframework-build /work/build.sh
+
+# Run build (w5500-native scaffold profile)
+docker compose run --build --rm -e NF_BUILD_PROFILE=w5500-native nanoframework-build /work/build.sh
+
+# Run build (deprecated transitional profile)
+docker compose run --build --rm -e NF_BUILD_PROFILE=network nanoframework-build /work/build.sh
 ```
 
 **Option C: Manual Docker Command**
 ```bash
 docker compose up
-docker compose run --rm nanoframework-build /work/build.sh
+docker compose run --build --rm nanoframework-build /work/build.sh
 ```
 
 ### Step 3: Flash to Board
@@ -92,9 +105,9 @@ openocd -f interface/stlink.cfg -f target/stm32f4x.cfg \
 
 ### What the Build Does
 
-1. **Pulls Docker Image**
-   - `nanoframework/dev-container:latest`
-   - Contains ARM GCC compiler, CMake, Ninja
+1. **Builds Docker Image Locally**
+   - Uses `Dockerfile.build` in this repository
+   - Installs ARM GCC compiler, CMake, Ninja, and required build tools
    
 2. **Clones nf-interpreter** (first time only)
    - Official nanoFramework runtime
@@ -108,8 +121,8 @@ openocd -f interface/stlink.cfg -f target/stm32f4x.cfg \
    - `*_interop.cpp` - C# bindings
    
 4. **Configures with CMake**
-   - Target: STM32F407VG
-   - Enables: GPIO, SPI, I2C, Networking
+   - Target: `M0DMF_DISEQC_F407`
+   - Enables: GPIO, SPI, I2C (networking currently disabled in this profile)
    - DiSEqC + LNB drivers linked
    
 5. **Builds with Ninja**
@@ -171,7 +184,7 @@ Edit `build/CMakeLists.txt`:
 ```cmake
 set(NF_FEATURE_DEBUGGER ON)      # Enable debug
 set(API_System.Device.Gpio ON)   # Enable GPIO API
-set(API_nanoFramework.System.Net ON)  # Enable networking
+set(API_System.Net OFF)          # Networking is disabled in the current target profile
 ```
 
 ### Modify Peripheral Configuration
@@ -195,7 +208,7 @@ https://www.docker.com/products/docker-desktop
 
 # Linux: Install Docker Engine
 sudo apt update
-sudo apt install docker.io docker-compose
+sudo apt install docker.io docker-compose-plugin
 sudo usermod -aG docker $USER
 # Log out and back in
 ```
@@ -208,7 +221,7 @@ sudo usermod -aG docker $USER
 sudo usermod -aG docker $USER
 
 # Or run with sudo
-sudo docker-compose run --rm nanoframework-build /work/build.sh
+sudo docker compose run --build --rm nanoframework-build /work/build.sh
 ```
 
 ### Issue: Build fails - "CMake not found"
@@ -216,10 +229,7 @@ sudo docker-compose run --rm nanoframework-build /work/build.sh
 **Solution:**
 The Docker container should have all tools. Try:
 ```bash
-# Pull latest image
-docker compose pull
-
-# Rebuild
+# Rebuild local image
 docker compose build --no-cache
 ```
 
@@ -228,7 +238,7 @@ docker compose build --no-cache
 **Solution:**
 Check build logs for errors:
 ```bash
-docker compose run --rm nanoframework-build /work/build.sh 2>&1 | tee build.log
+docker compose run --build --rm nanoframework-build /work/build.sh 2>&1 | tee build.log
 ```
 
 ### Issue: Flash fails - "st-flash not found"
@@ -259,7 +269,7 @@ Setting up target directory...
 Copying board configuration files...
 Creating build directory...
 Configuring with CMake...
--- Target: DISEQC_STM32F407
+-- Target: M0DMF_DISEQC_F407
 -- MCU: STM32F407VG
 -- Features enabled:
    - DiSEqC native driver

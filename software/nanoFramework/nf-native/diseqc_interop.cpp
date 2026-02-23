@@ -11,6 +11,21 @@
 #include <nanoCLR_Checks.h>
 #include "diseqc_native.h"
 
+HRESULT Library_diseqc_interop_DiseqC_NativeGotoAngle___STATIC__I4__R4(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_DiseqC_NativeTransmit___STATIC__I4__SZARRAY_U1(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_DiseqC_NativeHalt___STATIC__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_DiseqC_NativeDriveEast___STATIC__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_DiseqC_NativeDriveWest___STATIC__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_DiseqC_NativeStepEast___STATIC__I4__U1(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_DiseqC_NativeStepWest___STATIC__I4__U1(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_DiseqC_NativeIsBusy___STATIC__BOOLEAN(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_DiseqC_NativeGetCurrentAngle___STATIC__R4(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_MotorEnable_NativeTurnOn___STATIC__VOID__U4(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_MotorEnable_NativeStartTracking___STATIC__VOID(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_MotorEnable_NativeStopTracking___STATIC__VOID(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_MotorEnable_NativeForceOff___STATIC__VOID(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_MotorEnable_NativeIsOn___STATIC__BOOLEAN(CLR_RT_StackFrame& stack);
+
 /* Library information */
 static const CLR_RT_MethodHandler method_lookup[] = 
 {
@@ -77,6 +92,7 @@ HRESULT Library_diseqc_interop_DiseqC_NativeTransmit___STATIC__I4__SZARRAY_U1(CL
     CLR_RT_HeapBlock_Array* dataArray;
     uint8_t* data;
     uint32_t length;
+    diseqc_status_t status = DISEQC_OK;
     
     // Get byte array from C#
     dataArray = pArgs[0].DereferenceArray();
@@ -90,7 +106,7 @@ HRESULT Library_diseqc_interop_DiseqC_NativeTransmit___STATIC__I4__SZARRAY_U1(CL
     }
     
     // Call native function
-    diseqc_status_t status = diseqc_transmit(data, (uint8_t)length);
+    status = diseqc_transmit(data, (uint8_t)length);
     
     // Return status to C#
     stack.SetResult_I4((int32_t)status);
@@ -233,6 +249,7 @@ HRESULT Library_diseqc_interop_MotorEnable_NativeTurnOn___STATIC__VOID__U4(CLR_R
 HRESULT Library_diseqc_interop_MotorEnable_NativeStartTracking___STATIC__VOID(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
+    (void)stack;
     
     motor_enable_start_tracking();
     
@@ -246,6 +263,7 @@ HRESULT Library_diseqc_interop_MotorEnable_NativeStartTracking___STATIC__VOID(CL
 HRESULT Library_diseqc_interop_MotorEnable_NativeStopTracking___STATIC__VOID(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
+    (void)stack;
     
     motor_enable_stop_tracking();
     
@@ -259,6 +277,7 @@ HRESULT Library_diseqc_interop_MotorEnable_NativeStopTracking___STATIC__VOID(CLR
 HRESULT Library_diseqc_interop_MotorEnable_NativeForceOff___STATIC__VOID(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
+    (void)stack;
     
     motor_enable_force_off();
     

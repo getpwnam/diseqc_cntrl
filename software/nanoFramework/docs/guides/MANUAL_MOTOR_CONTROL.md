@@ -1,10 +1,14 @@
-# Manual Motor Control - Usage Guide
+# Manual Motor Control Guide
 
-## 🎮 Manual Control Functions Added
+## Purpose
 
-You can now manually control the satellite dish rotor with step-by-step or continuous movement!
+Provide direct rotor movement commands for calibration and fine tuning.
 
-## 📋 DiSEqC 1.2 Manual Commands
+## Scope
+
+This guide covers DiSEqC manual movement commands exposed by the native/C# integration layer.
+
+## DiSEqC 1.2 Manual Commands
 
 ### Available Commands
 

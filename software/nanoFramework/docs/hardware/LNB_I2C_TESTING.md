@@ -1,12 +1,20 @@
-# LNBH26PQR I2C Control - Testing & Verification Guide
+# LNBH26PQR I2C Testing Guide
 
-## ✅ Corrected Implementation
+## Purpose
 
-The LNBH26PQR uses **I2C control** (NOT GPIO). This has been corrected in all files.
+Validate LNBH26PQR control paths and expected behavior over I2C.
+
+## Scope
+
+This guide focuses on local driver/hardware validation. MQTT steps are optional if networking is disabled in the active build profile.
+
+## Implementation Note
+
+The LNBH26PQR is controlled over I2C (not GPIO).
 
 ---
 
-## 🔌 I2C Configuration
+## I2C Configuration
 
 ```
 I2C Bus: I2C1

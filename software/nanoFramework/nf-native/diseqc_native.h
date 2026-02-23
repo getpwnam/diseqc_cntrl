@@ -34,6 +34,10 @@ extern "C" {
 #define DISEQC_MAX_BYTES            6           // Max command bytes
 #define DISEQC_MAX_SEGMENTS         (DISEQC_MAX_BYTES * 9 * 2)  // 9 bits × 2 segments
 
+#define DISEQC_PWM_DRIVER           PWMD4
+#define DISEQC_GPT_DRIVER           GPTD5
+#define DISEQC_OUTPUT_LINE          PAL_LINE(GPIOD, 12U)
+
 /* Motor Enable Configuration */
 #define MOTOR_ENABLE_PAD            GPIOB_PIN1  // Adjust to your board
 #define MOTOR_STARTUP_TIME_MS       2000        // Motor startup delay

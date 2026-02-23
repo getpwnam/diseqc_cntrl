@@ -1,6 +1,15 @@
-# W5500 Ethernet Configuration for DiSEqC Controller
+# W5500 Ethernet Integration Notes
 
-## 📌 Pin Assignments (From Schematic)
+## Purpose
+
+Document W5500 pin mapping and integration notes for this board.
+
+## Current Profile Notes
+
+- The current validated firmware build profile has networking disabled.
+- This file documents wiring/integration details for when networking is enabled.
+
+## Pin Assignments (From Schematic)
 
 Based on your `diseqc_cntrl` KiCad schematic:
 

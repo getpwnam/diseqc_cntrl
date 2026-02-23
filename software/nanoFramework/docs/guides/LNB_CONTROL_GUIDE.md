@@ -1,8 +1,17 @@
-# LNB Control - Complete Guide (I2C Version)
+# LNB Control Guide (I2C)
 
-## 🎯 Overview
+## Purpose
 
-Your DiSEqC controller includes **complete LNB (Low Noise Block) control** via **I2C** for the LNBH26PQR:
+Describe how LNBH26PQR control is implemented and validated through I2C.
+
+## Current Profile Notes
+
+- The current validated build profile has networking disabled.
+- MQTT examples remain valid as integration examples, but require networking to be enabled.
+
+## Overview
+
+The controller supports LNB control via **I2C** for the LNBH26PQR:
 - ✅ **Voltage selection (13V/18V)** → Polarization control via I2C
 - ✅ **22kHz tone** → Band selection via I2C
 - ✅ **Current limiting** → Programmable via I2C

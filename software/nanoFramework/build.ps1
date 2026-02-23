@@ -9,7 +9,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 # Run Docker build
 Write-Host "`nStarting Docker build container..." -ForegroundColor Yellow
 
-docker compose run --rm nanoframework-build /work/build.sh
+docker compose run --build --rm nanoframework-build /work/build.sh
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`n========================================"  -ForegroundColor Green

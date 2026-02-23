@@ -23,6 +23,7 @@
 #define MCUCONF_H
 
 #define STM32F4xx_MCUCONF
+#define STM32F407_MCUCONF
 
 /*
  * HAL driver system settings
@@ -74,13 +75,39 @@
 #define STM32_IRQ_EXTI22_PRIORITY           15
 
 /*
+ * STM32 timer IRQ priorities required by ChibiOS STM32F4 ISR mappings
+ */
+#define STM32_IRQ_TIM1_BRK_TIM9_PRIORITY    10
+#define STM32_IRQ_TIM1_UP_TIM10_PRIORITY    10
+#define STM32_IRQ_TIM1_TRG_COM_TIM11_PRIORITY 10
+#define STM32_IRQ_TIM1_TRGCO_TIM11_PRIORITY  10
+#define STM32_IRQ_TIM1_CC_PRIORITY          10
+#define STM32_IRQ_TIM2_PRIORITY             10
+#define STM32_IRQ_TIM3_PRIORITY             10
+#define STM32_IRQ_TIM4_PRIORITY             10
+#define STM32_IRQ_TIM5_PRIORITY             10
+#define STM32_IRQ_TIM6_PRIORITY             10
+#define STM32_IRQ_TIM7_PRIORITY             10
+#define STM32_IRQ_TIM8_BRK_TIM12_PRIORITY   10
+#define STM32_IRQ_TIM8_UP_TIM13_PRIORITY    10
+#define STM32_IRQ_TIM8_TRGCO_TIM14_PRIORITY 10
+#define STM32_IRQ_TIM8_CC_PRIORITY          10
+
+#define STM32_IRQ_USART1_PRIORITY           10
+#define STM32_IRQ_USART2_PRIORITY           10
+#define STM32_IRQ_USART3_PRIORITY           10
+#define STM32_IRQ_UART4_PRIORITY            10
+#define STM32_IRQ_UART5_PRIORITY            10
+#define STM32_IRQ_USART6_PRIORITY           10
+
+/*
  * GPT driver system settings
  */
 #define STM32_GPT_USE_TIM1                  FALSE
-#define STM32_GPT_USE_TIM2                  TRUE   // DiSEqC bit timing
+#define STM32_GPT_USE_TIM2                  FALSE
 #define STM32_GPT_USE_TIM3                  FALSE
 #define STM32_GPT_USE_TIM4                  FALSE
-#define STM32_GPT_USE_TIM5                  FALSE
+#define STM32_GPT_USE_TIM5                  TRUE   // DiSEqC bit timing
 #define STM32_GPT_USE_TIM6                  FALSE
 #define STM32_GPT_USE_TIM7                  FALSE
 #define STM32_GPT_USE_TIM8                  FALSE

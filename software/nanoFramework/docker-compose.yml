@@ -1,8 +1,9 @@
-version: '3.8'
-
 services:
   nanoframework-build:
-    image: nanoframework/dev-container:latest
+    image: diseqc/nanoframework-build:local
+    build:
+      context: .
+      dockerfile: Dockerfile.build
     container_name: diseqc-build
     volumes:
       # Mount your project directory

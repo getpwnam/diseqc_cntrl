@@ -15,8 +15,14 @@
 /*
  * Board identifier
  */
-#define BOARD_DISEQC_STM32F407
+#define BOARD_M0DMF_DISEQC_F407
 #define BOARD_NAME                  "DiSEqC Controller STM32F407VGT6"
+
+/*
+ * Ethernet PHY type (required by ChibiOS MAC driver when networking is enabled)
+ */
+#define BOARD_PHY_ID                MII_LAN8742A_ID
+#define BOARD_PHY_RMII
 
 /*
  * Board oscillators-related settings
@@ -41,11 +47,17 @@
 #define STM32F407xx
 
 /*
+ * Default wire protocol serial channel (nanoBooter/nanoCLR)
+ */
+#define SERIAL_DRIVER               SD2
+
+/*
  * DiSEqC Configuration
  */
 #define DISEQC_PWM_DRIVER           PWMD4    // TIM4 for DiSEqC carrier
-#define DISEQC_GPT_DRIVER           GPTD2    // TIM2 for bit timing
+#define DISEQC_GPT_DRIVER           GPTD5    // TIM5 for bit timing
 #define DISEQC_OUTPUT_LINE          PAL_LINE(GPIOD, 12U)  // PD12 = TIM4_CH1
+#define MOTOR_ENABLE_LINE           PAL_LINE(GPIOB, 1U)
 
 // Note: No motor enable pin - LNBH26 handles power control automatically
 // DiSEqC commands control rotor movement directly

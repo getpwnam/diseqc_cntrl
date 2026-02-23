@@ -25,6 +25,7 @@ static PWMConfig pwm_config = {
         {PWM_OUTPUT_DISABLED, NULL}
     },
     0,
+    0,
     0
 };
 
@@ -329,7 +330,7 @@ float diseqc_get_current_angle(void)
  * Motor Enable Functions
  * ======================================================================== */
 
-static void motor_timeout_callback(void *arg);
+static void motor_timeout_callback(virtual_timer_t *vtp, void *arg);
 
 /**
  * @brief Initialize motor enable
@@ -354,8 +355,9 @@ diseqc_status_t motor_enable_init(ioline_t enable_line)
 /**
  * @brief Motor timeout callback
  */
-static void motor_timeout_callback(void *arg)
+static void motor_timeout_callback(virtual_timer_t *vtp, void *arg)
 {
+    (void)vtp;
     (void)arg;
     
     if (!g_motor.tracking_mode) {

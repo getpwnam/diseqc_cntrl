@@ -1,10 +1,14 @@
-# Motor Enable Functionality - Not Needed for Your Board
+# Motor Enable Notes
 
-## ⚠️ Important Note
+## Purpose
 
-**Motor enable functionality has been REMOVED from your board configuration.**
+Clarify why external motor-enable control is not used for the current board design.
 
-### Why?
+## Current Decision
+
+Motor-enable GPIO control is not used for this hardware profile.
+
+### Why
 
 1. **PB1 is NC (Not Connected)** in your schematic
 2. **LNBH26 handles power automatically** - it provides 13V/18V to the LNB based on the VSEL pin

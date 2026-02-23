@@ -1,10 +1,15 @@
-# Testing Guide - DiSEqC Controller
+# Testing Guide
 
-## 🎯 Complete Testing Plan
+## Purpose
 
-When your PCB arrives, follow this guide to bring up and test your DiSEqC controller.
+Bring up and validate board behavior in a staged way: power, flash, protocol output, and functional control.
 
-## 📋 Prerequisites
+## Current Profile Notes
+
+- The currently validated build profile has `System.Net` disabled.
+- MQTT/network test phases in this guide are optional unless networking is re-enabled in the build profile.
+
+## Prerequisites
 
 ### Hardware Needed
 - ✅ STM32F407VGT6 DiSEqC controller board (assembled)
