@@ -6,23 +6,47 @@
 
 See [QUICK_START.md](QUICK_START.md) for build instructions.
 
-## Build Status (Managed vs Full Build)
+## Build Components (Build Separately)
 
-Current local status on Linux:
+This project has two independent build components. Run them separately.
 
-- Managed C# compile is stable and should be used as the pre-commit gate:
-	- `./toolchain/compile-managed.sh`
-- Full nanoFramework build (PE generation) currently fails in metadata processing:
-	- `./toolchain/build-chain.sh`
-	- failure point: `NFProjectSystem.MDP.targets` cannot load `System.Drawing.Common` during `MetaDataProcessorTask`
+### 1) Managed Application Build (C# project)
 
-### Known Limitation
+Builds the managed application in `DiSEqC_Control/` and validates C# compile health.
 
-On this Linux host/toolchain combination, `msbuild /t:Build` reaches metadata processing and then fails with:
+Command:
 
-- `Could not load file or assembly 'System.Drawing.Common ...'`
+- `./toolchain/compile-managed.sh`
 
-This is a build-chain/runtime dependency issue in the nanoFramework metadata processor path, not a managed code compile error in this project.
+Use this as the local pre-commit gate for managed code changes.
+
+### 2) Firmware Build (nf-interpreter / nanoCLR)
+
+Builds firmware artifacts by fetching/using `nf-interpreter` inside Docker and compiling the `M0DMF_DISEQC_F407` target.
+
+Commands:
+
+- Minimal profile: `docker compose run --rm nanoframework-build /work/toolchain/build.sh`
+- W5500-native profile: `docker compose run --rm -e NF_BUILD_PROFILE=w5500-native nanoframework-build /work/toolchain/build.sh`
+- Network profile (deprecated transitional path): `docker compose run --rm -e NF_BUILD_PROFILE=network nanoframework-build /work/toolchain/build.sh`
+
+Expected firmware outputs in `build/`:
+
+- `nanoCLR.bin`
+- `nanoCLR.hex`
+- `nanoCLR.elf`
+
+## Optional Local Full Build-Chain Check
+
+This path includes metadata/PE generation and is currently known to fail on this Linux toolchain.
+
+Command:
+
+- `./toolchain/build-chain.sh`
+
+Known limitation:
+
+- Fails in `NFProjectSystem.MDP.targets` when loading `System.Drawing.Common` during `MetaDataProcessorTask`.
 
 Tracking:
 
@@ -66,48 +90,3 @@ The upstream `nf-interpreter` codebase is fetched during Docker build; it is not
 - [Testing Guide](docs/guides/TESTING_GUIDE.md)
 - [MQTT API](docs/reference/MQTT_API.md)
 - [Architecture](docs/reference/ARCHITECTURE.md)
-
-## Build Notes (M0DMF_DISEQC_F407 target)
-
-`toolchain/build.sh` supports three profiles via `NF_BUILD_PROFILE`:
-
-- `minimal` (default)
-	- `System.Net`: OFF
-	- `NF_FEATURE_HAS_CONFIG_BLOCK`: OFF
-	- current low-risk profile for non-network firmware work
-
-- `network`
-	- `System.Net`: ON
-	- `NF_FEATURE_HAS_CONFIG_BLOCK`: ON
-	- `NF_SECURITY_MBEDTLS`: OFF (size/stability tradeoff)
-	- currently compiles and links, but still uses interim compatibility settings while full W5500 runtime validation is in progress
-	- **deprecated**: transitional profile kept only until `w5500-native` is validated
-
-- `w5500-native`
-	- `System.Net`: OFF
-	- `NF_FEATURE_HAS_CONFIG_BLOCK`: OFF
-	- intended target profile for direct/native W5500 transport work (no lwIP/internal-MAC path)
-	- currently scaffolded for migration
-
-Build commands:
-
-- Minimal: `docker compose run --rm nanoframework-build /work/toolchain/build.sh`
-- W5500-native: `docker compose run --rm -e NF_BUILD_PROFILE=w5500-native nanoframework-build /work/toolchain/build.sh`
-- Network: `docker compose run --rm -e NF_BUILD_PROFILE=network nanoframework-build /work/toolchain/build.sh`
-
-Common target notes:
-
-- nanoCLR uses a custom serial-only entry point (`build/nanoCLR_main.c`) and does not rely on USB CDC startup.
-- Debugger support is enabled.
-- Target block storage definitions include `common/Device_BlockStorage.c`.
-- nanoCLR linker split is adjusted to prioritize code space:
-	- `flash0`: 496 KB
-	- `deployment`: 512 KB
-
-### Last validated result
-
-- Docker build completes successfully.
-- Artifacts are copied to `build/`:
-	- `nanoCLR.bin`
-	- `nanoCLR.hex`
-	- `nanoCLR.elf`
