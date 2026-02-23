@@ -8,6 +8,7 @@ namespace DiSEqC_Control
         public string StaticIp = "192.168.1.100";
         public string StaticSubnetMask = "255.255.255.0";
         public string StaticGateway = "192.168.1.1";
+        public string NetworkMac = "02:08:DC:00:00:01";
 
         public string MqttBroker = "192.168.1.50";
         public int MqttPort = 1883;
@@ -32,6 +33,7 @@ namespace DiSEqC_Control
                 StaticIp = StaticIp,
                 StaticSubnetMask = StaticSubnetMask,
                 StaticGateway = StaticGateway,
+                NetworkMac = NetworkMac,
                 MqttBroker = MqttBroker,
                 MqttPort = MqttPort,
                 MqttClientId = MqttClientId,
@@ -94,6 +96,15 @@ namespace DiSEqC_Control
                         return false;
                     }
                     StaticGateway = value;
+                    break;
+
+                case "network.mac":
+                    if (!IsValidMac(value))
+                    {
+                        error = "network.mac is not a valid MAC address (format: XX:XX:XX:XX:XX:XX)";
+                        return false;
+                    }
+                    NetworkMac = value;
                     break;
 
                 case "mqtt.broker":
@@ -169,6 +180,7 @@ namespace DiSEqC_Control
                 "network.static_ip=" + StaticIp + "\n" +
                 "network.static_subnet=" + StaticSubnetMask + "\n" +
                 "network.static_gateway=" + StaticGateway + "\n" +
+                "network.mac=" + NetworkMac + "\n" +
                 "mqtt.broker=" + MqttBroker + "\n" +
                 "mqtt.port=" + MqttPort + "\n" +
                 "mqtt.client_id=" + MqttClientId + "\n" +
@@ -256,6 +268,43 @@ namespace DiSEqC_Control
                 if (!int.TryParse(parts[i], out int octet) || octet < 0 || octet > 255)
                 {
                     return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool IsValidMac(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return false;
+            }
+
+            string[] parts = value.Split(':');
+            if (parts.Length != 6)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < parts.Length; i++)
+            {
+                string part = parts[i];
+                if (part.Length != 2)
+                {
+                    return false;
+                }
+
+                for (int j = 0; j < 2; j++)
+                {
+                    char c = part[j];
+                    bool isHex = (c >= '0' && c <= '9') ||
+                                 (c >= 'A' && c <= 'F') ||
+                                 (c >= 'a' && c <= 'f');
+                    if (!isHex)
+                    {
+                        return false;
+                    }
                 }
             }
 

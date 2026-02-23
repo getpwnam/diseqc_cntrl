@@ -28,6 +28,17 @@ namespace DiSEqC_Control.Native
             return (Status)result;
         }
 
+        public static Status ConfigureNetwork(string localIp, string subnetMask, string gateway, string macAddress)
+        {
+            if (string.IsNullOrEmpty(localIp) || string.IsNullOrEmpty(subnetMask) || string.IsNullOrEmpty(gateway) || string.IsNullOrEmpty(macAddress))
+            {
+                return Status.InvalidParam;
+            }
+
+            int result = NativeConfigureNetwork(localIp, subnetMask, gateway, macAddress);
+            return (Status)result;
+        }
+
         public static Status Connect(int socketHandle, string host, int port, int timeoutMs)
         {
             if (string.IsNullOrEmpty(host) || port < 1 || port > 65535 || timeoutMs < 0)
@@ -78,6 +89,9 @@ namespace DiSEqC_Control.Native
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern int NativeOpen(out int socketHandle);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern int NativeConfigureNetwork(string localIp, string subnetMask, string gateway, string macAddress);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern int NativeConnect(int socketHandle, string host, int port, int timeoutMs);

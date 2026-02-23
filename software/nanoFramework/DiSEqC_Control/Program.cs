@@ -91,6 +91,14 @@ namespace DiSEqC_Control
         {
             Debug.WriteLine("\n--- Network Initialization ---");
 
+            var nativeNetworkConfigStatus = W5500Socket.ConfigureNetwork(
+                _runtimeConfig.StaticIp,
+                _runtimeConfig.StaticSubnetMask,
+                _runtimeConfig.StaticGateway,
+                _runtimeConfig.NetworkMac);
+
+            Debug.WriteLine($"[W5500] Native network config status: {nativeNetworkConfigStatus}");
+
             // Get network interface (W5500)
             NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
 
@@ -1065,6 +1073,7 @@ namespace DiSEqC_Control
             PublishStatus("config/effective/network/static_ip", _runtimeConfig.StaticIp);
             PublishStatus("config/effective/network/static_subnet", _runtimeConfig.StaticSubnetMask);
             PublishStatus("config/effective/network/static_gateway", _runtimeConfig.StaticGateway);
+            PublishStatus("config/effective/network/mac", _runtimeConfig.NetworkMac);
 
             PublishStatus("config/effective/mqtt/broker", _runtimeConfig.MqttBroker);
             PublishStatus("config/effective/mqtt/port", _runtimeConfig.MqttPort.ToString());

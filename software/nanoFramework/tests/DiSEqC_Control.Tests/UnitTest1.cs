@@ -11,6 +11,7 @@ public class RuntimeConfigurationTests
         Assert.Equal("192.168.1.100", config.StaticIp);
         Assert.Equal("255.255.255.0", config.StaticSubnetMask);
         Assert.Equal("192.168.1.1", config.StaticGateway);
+        Assert.Equal("02:08:DC:00:00:01", config.NetworkMac);
         Assert.Equal("192.168.1.50", config.MqttBroker);
         Assert.Equal(1883, config.MqttPort);
         Assert.Equal("diseqc_controller", config.MqttClientId);
@@ -48,6 +49,37 @@ public class RuntimeConfigurationTests
     }
 
     [Theory]
+    [InlineData("02:08:DC:00:00:01")]
+    [InlineData("aa:bb:cc:dd:ee:ff")]
+    [InlineData("AA:BB:CC:DD:EE:FF")]
+    public void TrySetValue_AcceptsValidMac(string value)
+    {
+        var config = RuntimeConfiguration.CreateDefaults();
+
+        var ok = config.TrySetValue("network.mac", value, out var error);
+
+        Assert.True(ok);
+        Assert.Null(error);
+        Assert.Equal(value, config.NetworkMac);
+    }
+
+    [Theory]
+    [InlineData("02:08:DC:00:00")]
+    [InlineData("02-08-DC-00-00-01")]
+    [InlineData("GG:08:DC:00:00:01")]
+    [InlineData("0208DC000001")]
+    [InlineData("")]
+    public void TrySetValue_RejectsInvalidMac(string value)
+    {
+        var config = RuntimeConfiguration.CreateDefaults();
+
+        var ok = config.TrySetValue("network.mac", value, out var error);
+
+        Assert.False(ok);
+        Assert.Equal("network.mac is not a valid MAC address (format: XX:XX:XX:XX:XX:XX)", error);
+    }
+
+    [Theory]
     [InlineData("0")]
     [InlineData("65536")]
     [InlineData("not-a-number")]
@@ -78,6 +110,7 @@ public class RuntimeConfigurationTests
         var config = RuntimeConfiguration.CreateDefaults();
         config.TrySetValue("network.use_dhcp", "false", out _);
         config.TrySetValue("network.static_ip", "10.1.2.3", out _);
+        config.TrySetValue("network.mac", "12:34:56:78:9A:BC", out _);
         config.TrySetValue("mqtt.port", "1884", out _);
         config.TrySetValue("mqtt.client_id", "unit-test-client", out _);
         config.TrySetValue("system.location", "lab", out _);
@@ -89,6 +122,7 @@ public class RuntimeConfigurationTests
         Assert.Null(error);
         Assert.False(rehydrated.UseDhcp);
         Assert.Equal("10.1.2.3", rehydrated.StaticIp);
+        Assert.Equal("12:34:56:78:9A:BC", rehydrated.NetworkMac);
         Assert.Equal(1884, rehydrated.MqttPort);
         Assert.Equal("unit-test-client", rehydrated.MqttClientId);
         Assert.Equal("lab", rehydrated.DeviceLocation);

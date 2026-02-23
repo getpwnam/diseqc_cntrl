@@ -46,7 +46,8 @@
 
 ### Phase 3: Real W5500 Native Transport (active focus)
 
-- [ ] Replace stub behavior in `nf-native/w5500_interop.cpp` with real RX/TX socket path.
+- [x] Replace stub behavior in `nf-native/w5500_interop.cpp` with real RX/TX socket path.
+- [x] Wire W5500 local IP/subnet/gateway/MAC defaults to runtime config + FRAM (`network.*`) via native `ConfigureNetwork` interop.
 - [x] Reconcile board-level pin/config definitions required by W5500 runtime path.
 - [x] Verify `w5500-native` firmware profile build remains green in Docker.
 
@@ -80,6 +81,6 @@
 
 ## Native/W5500 Follow-up
 
-- [ ] Replace W5500 interop stub behavior with real RX/TX socket path.
+- [x] Replace W5500 interop stub behavior with real RX/TX socket path.
 - [x] Implement real board pin configuration in `ConfigPins_I2C3()` (PA8/PC9 I2C3 open-drain AF4 setup).
 - [ ] Validate runtime networking path on hardware once board is available.

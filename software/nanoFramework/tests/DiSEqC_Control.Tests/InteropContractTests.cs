@@ -19,6 +19,7 @@ public class W5500SocketContractTests
 
     [Theory]
     [InlineData("NativeOpen")]
+    [InlineData("NativeConfigureNetwork")]
     [InlineData("NativeConnect")]
     [InlineData("NativeSend")]
     [InlineData("NativeReceive")]
@@ -38,22 +39,29 @@ public class W5500SocketContractTests
     public void PublicMethodSignatures_AreStable()
     {
         var connect = typeof(W5500Socket).GetMethod(nameof(W5500Socket.Connect), BindingFlags.Public | BindingFlags.Static);
+        var configureNetwork = typeof(W5500Socket).GetMethod(nameof(W5500Socket.ConfigureNetwork), BindingFlags.Public | BindingFlags.Static);
         var send = typeof(W5500Socket).GetMethod(nameof(W5500Socket.Send), BindingFlags.Public | BindingFlags.Static);
         var receive = typeof(W5500Socket).GetMethod(nameof(W5500Socket.Receive), BindingFlags.Public | BindingFlags.Static);
         var close = typeof(W5500Socket).GetMethod(nameof(W5500Socket.Close), BindingFlags.Public | BindingFlags.Static);
         var isConnected = typeof(W5500Socket).GetMethod(nameof(W5500Socket.IsConnected), BindingFlags.Public | BindingFlags.Static);
 
         Assert.NotNull(connect);
+        Assert.NotNull(configureNetwork);
         Assert.NotNull(send);
         Assert.NotNull(receive);
         Assert.NotNull(close);
         Assert.NotNull(isConnected);
 
         Assert.Equal(typeof(W5500Socket.Status), connect.ReturnType);
+        Assert.Equal(typeof(W5500Socket.Status), configureNetwork.ReturnType);
         Assert.Equal(typeof(W5500Socket.Status), send.ReturnType);
         Assert.Equal(typeof(W5500Socket.Status), receive.ReturnType);
         Assert.Equal(typeof(W5500Socket.Status), close.ReturnType);
         Assert.Equal(typeof(bool), isConnected.ReturnType);
+
+        var configureParams = configureNetwork.GetParameters();
+        Assert.Equal(4, configureParams.Length);
+        Assert.All(configureParams, p => Assert.Equal(typeof(string), p.ParameterType));
     }
 }
 
