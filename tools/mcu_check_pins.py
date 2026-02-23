@@ -14,7 +14,7 @@ import math
 from pathlib import Path
 from collections import defaultdict
 
-BASE = Path("/home/cp/Dev/diseqc_cntrl/hardware/kicad-project")
+BASE = Path(__file__).resolve().parents[1] / "hardware" / "kicad-project"
 TOLERANCE = 0.05
 
 # ---- STM32F407VGT6 Alternate Function Table ----
