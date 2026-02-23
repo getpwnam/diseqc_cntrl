@@ -7,6 +7,10 @@
 #include <string.h>
 #include <math.h>
 
+void ConfigPins_I2C3(void)
+{
+}
+
 /* Global handles */
 diseqc_handle_t g_diseqc;
 motor_enable_handle_t g_motor;

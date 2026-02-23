@@ -173,30 +173,3 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__
 
     NANOCLR_NOCLEANUP();
 }
-
-
-    stack.Arg5().NumericByRef().s4 = 0;
-    stack.SetResult_I4((int32_t)W5500_SOCKET_NOT_SUPPORTED);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_diseqc_interop_W5500Socket_NativeClose___STATIC__I4__I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-    (void)stack;
-
-    stack.SetResult_I4((int32_t)W5500_SOCKET_NOT_SUPPORTED);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_diseqc_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-    (void)stack;
-
-    stack.SetResult_Boolean(false);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}

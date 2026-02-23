@@ -41,4 +41,5 @@
 ## Native/W5500 Follow-up
 
 - [ ] Replace W5500 interop stub behavior with real RX/TX socket path.
+- [ ] Implement real board pin configuration in `ConfigPins_I2C3()` (current symbol is a link-fix stub only).
 - [ ] Validate runtime networking path on hardware once board is available.
