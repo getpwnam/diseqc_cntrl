@@ -5942,10 +5942,6 @@
 		(uuid "b586e774-d0a6-4709-9bee-f9623a7701df")
 	)
 	(no_connect
-		(at 77.47 110.49)
-		(uuid "b8416a2f-9b5b-4b51-924f-f008f7f74ea2")
-	)
-	(no_connect
 		(at 77.47 123.19)
 		(uuid "bc30aed3-24ca-4f37-9ad2-20f2b97941fd")
 	)
@@ -5956,6 +5952,10 @@
 	(no_connect
 		(at 77.47 115.57)
 		(uuid "bd035df6-10a9-431f-9da5-bb2237db25e8")
+	)
+	(no_connect
+		(at 153.67 83.82)
+		(uuid "c1c0b197-cbf7-4374-8928-cbf8f2f77bf8")
 	)
 	(no_connect
 		(at 125.73 50.8)
@@ -6360,16 +6360,6 @@
 			(type default)
 		)
 		(uuid "2801a14e-e712-451f-b83d-f10c16e17326")
-	)
-	(wire
-		(pts
-			(xy 170.18 22.86) (xy 125.73 22.86)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "2ad6d721-f7e9-46ea-91ad-325d08de8182")
 	)
 	(wire
 		(pts
@@ -6963,16 +6953,6 @@
 	)
 	(wire
 		(pts
-			(xy 170.18 78.74) (xy 170.18 22.86)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "92ad4961-9bae-4a37-adf7-bc85c082e4e1")
-	)
-	(wire
-		(pts
 			(xy 236.22 86.36) (xy 237.49 86.36)
 		)
 		(stroke
@@ -7030,16 +7010,6 @@
 			(type default)
 		)
 		(uuid "957698ce-cb35-4088-8008-7d4fa79de41f")
-	)
-	(wire
-		(pts
-			(xy 153.67 78.74) (xy 162.56 78.74)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "9980371e-ff18-41ff-a943-49ed6811c07b")
 	)
 	(wire
 		(pts
@@ -7393,6 +7363,16 @@
 	)
 	(wire
 		(pts
+			(xy 125.73 22.86) (xy 129.54 22.86)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dedb5881-6a50-4839-bb98-361f89ac2ce2")
+	)
+	(wire
+		(pts
 			(xy 262.89 104.14) (xy 267.97 104.14)
 		)
 		(stroke
@@ -7671,6 +7651,16 @@
 		)
 		(uuid "050a8428-ccec-421e-8539-e332f247e0cb")
 	)
+	(label "TIM4_CH1"
+		(at 77.47 110.49 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "12a13fee-3078-4028-ac42-3f081729ad0f")
+	)
 	(label "SWCLK"
 		(at 146.05 50.8 90)
 		(effects
@@ -7681,8 +7671,8 @@
 		)
 		(uuid "1ab3587b-d336-4a06-b210-27bd781efefe")
 	)
-	(label "TIM1_CH1_DSQ"
-		(at 154.94 22.86 0)
+	(label "TIM4_CH1"
+		(at 137.16 22.86 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -7801,6 +7791,16 @@
 		)
 		(uuid "8ab29f48-e558-4373-b0cf-71334595c5ef")
 	)
+	(label "I2C3_SCL"
+		(at 153.67 78.74 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "8ba5e30b-84fb-4acb-9a45-84bcfa496587")
+	)
 	(label "SWCLK"
 		(at 275.59 27.94 0)
 		(effects
@@ -7860,16 +7860,6 @@
 			(justify left bottom)
 		)
 		(uuid "cf5fc590-de72-4992-9ad3-2e35a478de0b")
-	)
-	(label "I2C3_SCL"
-		(at 153.67 83.82 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "d0bc35e2-8222-4dda-92dd-a58290c0feae")
 	)
 	(label "I2C1_SCL"
 		(at 25.4 144.78 270)
@@ -9650,7 +9640,7 @@
 	)
 	(symbol
 		(lib_id "diseqc_cntrl:C")
-		(at 166.37 78.74 90)
+		(at 133.35 22.86 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -9658,7 +9648,7 @@
 		(dnp no)
 		(uuid "14288da8-45f9-46f9-aac1-f7d56aeb50b1")
 		(property "Reference" "C23"
-			(at 170.18 81.534 90)
+			(at 133.35 26.67 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9666,7 +9656,7 @@
 			)
 		)
 		(property "Value" "1n"
-			(at 170.18 84.074 90)
+			(at 133.604 28.956 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9674,7 +9664,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
-			(at 170.18 77.7748 0)
+			(at 137.16 21.8948 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9683,7 +9673,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.mouser.co.uk/datasheet/3/76/1/GRM188R71H102KA01-01.pdf"
-			(at 166.37 78.74 0)
+			(at 133.35 22.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9692,7 +9682,7 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
-			(at 166.37 78.74 0)
+			(at 133.35 22.86 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9701,7 +9691,7 @@
 			)
 		)
 		(property "Maufacturer_Part_Number" ""
-			(at 166.37 78.74 90)
+			(at 133.35 22.86 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9710,7 +9700,7 @@
 			)
 		)
 		(property "Manufacturer_Part_Code" ""
-			(at 166.37 78.74 90)
+			(at 133.35 22.86 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9719,7 +9709,7 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 166.37 78.74 90)
+			(at 133.35 22.86 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9728,7 +9718,7 @@
 			)
 		)
 		(property "Mouser Part Number" "81-GRM39X102K050"
-			(at 166.37 78.74 90)
+			(at 133.35 22.86 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9743,7 +9733,7 @@
 			(uuid "a760bb30-5f36-4798-b6ef-c603481b1bd2")
 		)
 		(instances
-			(project ""
+			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
 					(reference "C23")
 					(unit 1)
