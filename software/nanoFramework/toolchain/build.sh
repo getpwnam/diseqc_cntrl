@@ -99,6 +99,7 @@ cp /work/nf-native/lnb_control.h $TARGET_DIR/common/
 cp /work/nf-native/lnb_control.cpp $TARGET_DIR/common/
 cp /work/nf-native/diseqc_interop.cpp $TARGET_DIR/nanoCLR/
 cp /work/nf-native/lnb_interop.cpp $TARGET_DIR/nanoCLR/
+cp /work/nf-native/w5500_interop.cpp $TARGET_DIR/nanoCLR/
 
 # Copy required ChibiOS target config files from an STM32F4 reference target
 REFERENCE_BOARD="$NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F4_DISCOVERY"
@@ -206,6 +207,7 @@ list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/main.c")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/nanoHAL.cpp")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/diseqc_interop.cpp")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/lnb_interop.cpp")
+list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/w5500_interop.cpp")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/diseqc_native.cpp")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/lnb_control.cpp")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/Device_BlockStorage.c")

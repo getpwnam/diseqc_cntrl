@@ -24,9 +24,9 @@ obj/
 packages/
 
 # C# build artifacts
-DiseqC/bin/
-DiseqC/obj/
-DiseqC/*.csproj.user
+DiSEqC_Control/bin/
+DiSEqC_Control/obj/
+DiSEqC_Control/*.csproj.user
 
 # Temporary files
 *.tmp
