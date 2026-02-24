@@ -30,6 +30,10 @@ case "$BUILD_PROFILE" in
         ENABLE_MBEDTLS="OFF"
         ENABLE_HAL_MAC="FALSE"
         ENABLE_STM32_MAC_ETH="FALSE"
+        ENABLE_OTG1="FALSE"
+        ENABLE_OTG2="FALSE"
+        ENABLE_HAL_USB="FALSE"
+        ENABLE_HAL_SERIAL_USB="FALSE"
         PROFILE_STATUS="stable"
         PROFILE_NOTE="Minimal non-network firmware profile"
         ;;
@@ -40,8 +44,26 @@ case "$BUILD_PROFILE" in
         ENABLE_MBEDTLS="OFF"
         ENABLE_HAL_MAC="FALSE"
         ENABLE_STM32_MAC_ETH="FALSE"
+        ENABLE_OTG1="FALSE"
+        ENABLE_OTG2="FALSE"
+        ENABLE_HAL_USB="FALSE"
+        ENABLE_HAL_SERIAL_USB="FALSE"
         PROFILE_STATUS="scaffold"
         PROFILE_NOTE="Native W5500 transport scaffold (System.Net/lwIP disabled)"
+        ;;
+    usb-first)
+        ENABLE_SYSTEM_NET="OFF"
+        ENABLE_CONFIG_BLOCK="OFF"
+        ENABLE_SNTP="OFF"
+        ENABLE_MBEDTLS="OFF"
+        ENABLE_HAL_MAC="FALSE"
+        ENABLE_STM32_MAC_ETH="FALSE"
+        ENABLE_OTG1="TRUE"
+        ENABLE_OTG2="FALSE"
+        ENABLE_HAL_USB="TRUE"
+        ENABLE_HAL_SERIAL_USB="TRUE"
+        PROFILE_STATUS="experimental"
+        PROFILE_NOTE="USB-first bring-up profile (OTG1 enabled, UART wire protocol fallback retained)"
         ;;
     network)
         ENABLE_SYSTEM_NET="ON"
@@ -50,11 +72,15 @@ case "$BUILD_PROFILE" in
         ENABLE_MBEDTLS="OFF"
         ENABLE_HAL_MAC="TRUE"
         ENABLE_STM32_MAC_ETH="TRUE"
+        ENABLE_OTG1="FALSE"
+        ENABLE_OTG2="FALSE"
+        ENABLE_HAL_USB="FALSE"
+        ENABLE_HAL_SERIAL_USB="FALSE"
         PROFILE_STATUS="deprecated"
         PROFILE_NOTE="Temporary compatibility profile; scheduled for removal after native W5500 path is validated"
         ;;
     *)
-        echo -e "${RED}Unknown NF_BUILD_PROFILE='$BUILD_PROFILE'. Use 'minimal', 'w5500-native', or 'network'.${NC}"
+        echo -e "${RED}Unknown NF_BUILD_PROFILE='$BUILD_PROFILE'. Use 'minimal', 'w5500-native', 'usb-first', or 'network'.${NC}"
         exit 1
         ;;
 esac
@@ -261,9 +287,9 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
         cat >> "$cfg" << EOF_HAL_OVERRIDES
 
 #undef HAL_USE_USB
-#define HAL_USE_USB                         FALSE
+#define HAL_USE_USB                         ${ENABLE_HAL_USB}
 #undef HAL_USE_SERIAL_USB
-#define HAL_USE_SERIAL_USB                  FALSE
+#define HAL_USE_SERIAL_USB                  ${ENABLE_HAL_SERIAL_USB}
 #undef HAL_USE_SERIAL
 #define HAL_USE_SERIAL                      TRUE
 #undef HAL_USE_GPT
@@ -277,6 +303,19 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
 #undef HAL_USE_WDG
 #define HAL_USE_WDG                         FALSE
 EOF_HAL_OVERRIDES
+    fi
+done
+
+# Ensure USB OTG usage flags match selected build profile
+for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h"; do
+    if [ -f "$mcu" ]; then
+        cat >> "$mcu" << EOF_MCU_USB_OVERRIDES
+
+#undef STM32_USB_USE_OTG1
+#define STM32_USB_USE_OTG1                  ${ENABLE_OTG1}
+#undef STM32_USB_USE_OTG2
+#define STM32_USB_USE_OTG2                  ${ENABLE_OTG2}
+EOF_MCU_USB_OVERRIDES
     fi
 done
 

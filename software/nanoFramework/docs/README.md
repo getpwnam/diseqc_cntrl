@@ -14,6 +14,7 @@ This folder is the canonical documentation root for the `software/nanoFramework`
 - Build + flash quick path: `../QUICK_START.md`
 - Full Docker build flow: `guides/DOCKER_BUILD_GUIDE.md`
 - Functional/system testing: `guides/TESTING_GUIDE.md`
+- USB-first migration checklist: `guides/USB_FIRST_PROFILE_CHECKLIST.md`
 
 ## User Guides
 

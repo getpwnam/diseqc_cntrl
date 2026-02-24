@@ -76,7 +76,7 @@ Verification:
 
 ## Optional Local Full Build-Chain Check
 
-This path includes metadata/PE generation and is currently known to fail on this Linux toolchain.
+This path includes metadata/PE generation and now includes a Linux host workaround for metadata processor dependencies.
 
 Command:
 
@@ -84,7 +84,12 @@ Command:
 
 Known limitation:
 
-- Fails in `NFProjectSystem.MDP.targets` when loading `System.Drawing.Common` during `MetaDataProcessorTask`.
+- May still emit assembly remap warnings (`MSB3276`) that are non-blocking for current local build workflow.
+
+Linux metadata processor workaround:
+
+- `toolchain/build-chain.sh` now creates a temporary metadata processor override folder and injects Mono `System.Drawing.dll`, then sets `NF_MDP_MSBUILDTASK_PATH` for the `/t:Build` step.
+- This avoids editing the VS Code extension install and keeps the workaround local/scripted.
 
 Tracking:
 

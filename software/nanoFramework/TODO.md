@@ -9,9 +9,9 @@
 - Generate deployable PE artifacts from a known-good packaging environment (e.g., Windows CI/dev box) until Linux metadata processor path is fixed.
 - Do **not** rely on `libgdiplus` as the primary fix path for the current failure mode.
 
-- [ ] Make full `msbuild ... /t:Build` pass on Linux host (not only `/t:Compile`).
-- [ ] Resolve `System.Drawing.Common` load failure in nanoFramework metadata processor (`NFProjectSystem.MDP.targets`).
-- [ ] Validate fix path for Linux-hosted metadata processor (current extension bundle includes a Windows-targeted `System.Drawing.Common` assembly).
+- [x] Make full `msbuild ... /t:Build` pass on Linux host (not only `/t:Compile`) via scripted Linux MDP override in `toolchain/build-chain.sh`.
+- [x] Resolve `System.Drawing.Common` load failure in nanoFramework metadata processor (`NFProjectSystem.MDP.targets`) using `NF_MDP_MSBUILDTASK_PATH` + Mono `System.Drawing.dll` overlay.
+- [x] Validate fix path for Linux-hosted metadata processor (current extension bundle includes a Windows-targeted `System.Drawing.Common` assembly).
 - [x] Add a reproducible local build wrapper for full build (with required env vars/paths).
 - [x] Document known-good build commands and prerequisites in `software/nanoFramework/README.md`.
 
@@ -19,7 +19,7 @@
 
 - [x] Remove unused direct references/packages not required by current managed code.
 - [x] Keep `System.Net` aligned to M2Mqtt expected version (`1.11.36`) to avoid CS1702 mismatch.
-- [ ] Revisit remaining remap warnings only after full build chain is stable.
+- [ ] Revisit remaining remap warnings now that full build chain is stable.
 - [x] Keep `./toolchain/compile-managed.sh` as the safe pre-commit gate until metadata processor issue is fixed.
 
 ## Managed/Interop Test Coverage
@@ -63,9 +63,10 @@
 
 ### Phase 4: USB Wire Protocol Migration
 
-- [ ] Define target USB behavior for deployment/debug wire protocol (native USB as primary interface).
-- [ ] Implement required firmware startup/config changes for USB wire protocol.
+- [x] Define target USB behavior for deployment/debug wire protocol (native USB as primary interface). See `docs/guides/USB_FIRST_PROFILE_CHECKLIST.md`.
+- [ ] Implement required firmware startup/config changes for USB wire protocol. (Stage A implemented: `usb-first` profile + OTG/HAL USB flag wiring in `toolchain/build.sh`.)
 - [ ] Update docs and test procedures for USB-first workflow.
+- [ ] PAUSED: hardware-dependent USB validation is deferred until first working board is available.
 
 ### Phase 5: Hardware Validation
 
