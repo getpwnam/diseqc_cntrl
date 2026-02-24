@@ -67,8 +67,76 @@ Register 0x01 (Status):
 - ✅ **Software-controlled** voltage and tone
 - ✅ **Status monitoring** (overcurrent, temperature)
 - ✅ **Current limiting** programmable
-- ✅ **No PWM needed** for 22kHz tone (generated internally)
+- ✅ **No MCU PWM needed for continuous band tone** (LNBH26 can generate this internally)
 - ✅ **DiSEqC mode** can be enabled/disabled
+
+## 🔊 How DiSEqC Signal Generation Works (Beginner-Friendly)
+
+If you are new to timers/DMA, this is the practical view of what happens.
+
+### End-to-End Signal Path
+
+```
+Managed command (C#)
+  -> native DiSEqC builder (creates bits from command bytes)
+  -> STM32 TIM4 output on PD12 (22kHz bursts)
+  -> LNBH26 DSQIN input
+  -> LNBH26 injects DiSEqC bursts onto the coax line
+  -> downstream device (rotor/switch/LNB path) decodes DiSEqC command
+```
+
+### What “timer” means here (without hardware jargon)
+
+- A timer is just a very accurate metronome inside the STM32.
+- We use two metronomes:
+  - **TIM4/PWM** to create the 22kHz carrier wave.
+  - **TIM5/GPT** to decide exactly how long each ON/OFF burst lasts.
+
+### Step 1: Create the 22kHz carrier
+
+- In native code, TIM4 is configured to output ~22kHz.
+- This appears on **PD12 (TIM4_CH1)**.
+- Think of this as a “tone source” that can be turned ON or OFF quickly.
+
+### Step 2: Convert bits into ON/OFF durations
+
+DiSEqC bit timing is encoded by burst length:
+
+- **Bit 0** = 1.0ms ON + 0.5ms OFF
+- **Bit 1** = 0.5ms ON + 1.0ms OFF
+
+For each bit, firmware appends two timing segments (ON then OFF). TIM5 triggers when each segment ends, and software advances to the next segment.
+
+### Step 3: Convert bytes to transmitted bits
+
+- Each command byte is sent MSB-first.
+- A parity bit is appended per byte (odd parity on the wire).
+- Example command (GotoX) is encoded into bytes, then into timed ON/OFF segments.
+
+### Step 4: What the LNBH26 does with DSQIN
+
+- LNBH26 does **not** build DiSEqC protocol bytes itself.
+- It takes the electrical DiSEqC burst input at **DSQIN** and couples it onto the LNB/coax output path.
+- In other words:
+  - STM32 builds protocol timing.
+  - LNBH26 acts as the power/line interface that carries those bursts to the cable.
+  - The downstream DiSEqC device interprets the command semantics.
+
+### Is DMA used?
+
+- **No**, current DiSEqC generation does not use DMA.
+- Timing is handled by:
+  - PWM carrier enable/disable updates in software.
+  - GPT one-shot callbacks and a small transmission thread.
+- This design is simpler to debug and currently sufficient for DiSEqC message rates.
+
+### Where this is implemented
+
+- Carrier + segment timing + transmit sequencing:
+  - `nf-native/diseqc_native.cpp`
+  - Key functions: `diseqc_init`, `add_bit`, `add_byte_with_parity`, `diseqc_tx_thread`
+- LNBH26 control register programming (EN/VSEL/TONE/DISEQC):
+  - `nf-native/lnb_control.cpp`
 
 ## 💻 C# API Reference
 
