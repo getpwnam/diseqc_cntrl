@@ -28,6 +28,11 @@
     <Compile Include="Native\DiSEqCNative.cs" />
     <Compile Include="Native\LNBNative.cs" />
     <Compile Include="Native\W5500SocketNative.cs" />
+    <Compile Include="Mqtt\IW5500SocketApi.cs" />
+    <Compile Include="Mqtt\MqttClientChannelInjector.cs" />
+    <Compile Include="Mqtt\W5500MqttNetworkChannel.cs" />
+    <Compile Include="Mqtt\W5500MqttNetworkChannelCore.cs" />
+    <Compile Include="Mqtt\W5500SocketApi.cs" />
     <Compile Include="ParityHelper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="RuntimeConfiguration.cs" />

@@ -47,6 +47,33 @@ Expected firmware outputs in `build/`:
 - `nanoCLR.hex`
 - `nanoCLR.elf`
 
+## MQTT Transport Mode (Phase 3.5)
+
+Runtime config key:
+
+- `mqtt.transport_mode=system-net|w5500-native`
+
+Current behavior:
+
+- `system-net` (default): use standard `MqttClient` network channel path.
+- `w5500-native`: request injected W5500-backed `IMqttNetworkChannel` path.
+- If channel injection fails at runtime, code logs the reason and continues on the `system-net` fallback path.
+
+Set mode via MQTT config command:
+
+- `mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/set' -m 'mqtt.transport_mode=w5500-native'`
+- `mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/save' -m ''`
+
+Rollback to default:
+
+- `mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/set' -m 'mqtt.transport_mode=system-net'`
+- `mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/save' -m ''`
+
+Verification:
+
+- Request effective config and check `diseqc/status/config/effective/mqtt/transport_mode`.
+- For full on-device smoke steps, see `docs/guides/TESTING_GUIDE.md` (Step 2.5).
+
 ## Optional Local Full Build-Chain Check
 
 This path includes metadata/PE generation and is currently known to fail on this Linux toolchain.

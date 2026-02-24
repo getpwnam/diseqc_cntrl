@@ -5,6 +5,7 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading;
 using DiSEqC_Control.Manager;
+using DiSEqC_Control.Mqtt;
 using DiSEqC_Control.Native;
 using nanoFramework.M2Mqtt;
 using nanoFramework.M2Mqtt.Messages;
@@ -30,6 +31,7 @@ namespace DiSEqC_Control
 
         private static string TopicPrefix => _runtimeConfig.MqttTopicPrefix;
         private static string TopicAvailability => TopicPrefix + "/availability";
+        private static bool UseW5500NativeMqtt => _runtimeConfig.MqttTransportMode == "w5500-native";
 
         public static void Main()
         {
@@ -308,11 +310,12 @@ namespace DiSEqC_Control
         {
             Debug.WriteLine("\n--- MQTT Initialization ---");
             Debug.WriteLine($"Broker: {_runtimeConfig.MqttBroker}:{_runtimeConfig.MqttPort}");
+            Debug.WriteLine($"Transport mode: {_runtimeConfig.MqttTransportMode}");
 
             try
             {
                 // Create MQTT client
-                _mqttClient = new MqttClient(_runtimeConfig.MqttBroker, _runtimeConfig.MqttPort, false, null, null, MqttSslProtocols.None);
+                _mqttClient = CreateMqttClient();
 
                 // Set event handlers
                 _mqttClient.MqttMsgPublishReceived += OnMqttMessageReceived;
@@ -362,6 +365,33 @@ namespace DiSEqC_Control
                 Debug.WriteLine($"ERROR: MQTT exception: {ex.Message}");
                 _isConnected = false;
             }
+        }
+
+        private static MqttClient CreateMqttClient()
+        {
+            MqttClient client = new MqttClient(_runtimeConfig.MqttBroker, _runtimeConfig.MqttPort, false, null, null, MqttSslProtocols.None);
+
+            if (UseW5500NativeMqtt)
+            {
+                Debug.WriteLine("[MQTT] transport_mode=w5500-native requested");
+
+                var w5500Channel = new W5500MqttNetworkChannel(
+                    _runtimeConfig.MqttBroker,
+                    _runtimeConfig.MqttPort,
+                    client.Settings.TimeoutOnConnection,
+                    client.Settings.TimeoutOnReceiving);
+
+                if (MqttClientChannelInjector.TryInject(client, w5500Channel, out string error))
+                {
+                    Debug.WriteLine("[MQTT] W5500 IMqttNetworkChannel injected");
+                }
+                else
+                {
+                    Debug.WriteLine($"[MQTT] W5500 injection failed, using system-net fallback: {error}");
+                }
+            }
+
+            return client;
         }
 
         private static void SubscribeToTopics()
@@ -1079,6 +1109,7 @@ namespace DiSEqC_Control
             PublishStatus("config/effective/mqtt/port", _runtimeConfig.MqttPort.ToString());
             PublishStatus("config/effective/mqtt/client_id", _runtimeConfig.MqttClientId);
             PublishStatus("config/effective/mqtt/topic_prefix", _runtimeConfig.MqttTopicPrefix);
+            PublishStatus("config/effective/mqtt/transport_mode", _runtimeConfig.MqttTransportMode);
 
             PublishStatus("config/effective/system/device_name", _runtimeConfig.DeviceName);
             PublishStatus("config/effective/system/location", _runtimeConfig.DeviceLocation);

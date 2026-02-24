@@ -16,6 +16,7 @@ public class RuntimeConfigurationTests
         Assert.Equal(1883, config.MqttPort);
         Assert.Equal("diseqc_controller", config.MqttClientId);
         Assert.Equal("diseqc", config.MqttTopicPrefix);
+        Assert.Equal("system-net", config.MqttTransportMode);
         Assert.Equal("diseqc-ctrl", config.DeviceName);
     }
 
@@ -104,6 +105,36 @@ public class RuntimeConfigurationTests
         Assert.Equal("Unknown config key: system.unknown", error);
     }
 
+    [Theory]
+    [InlineData("system-net")]
+    [InlineData("w5500-native")]
+    [InlineData("SYSTEM-NET")]
+    [InlineData("W5500-NATIVE")]
+    public void TrySetValue_AcceptsTransportModes(string value)
+    {
+        var config = RuntimeConfiguration.CreateDefaults();
+
+        var ok = config.TrySetValue("mqtt.transport_mode", value, out var error);
+
+        Assert.True(ok);
+        Assert.Null(error);
+        Assert.True(config.MqttTransportMode == "system-net" || config.MqttTransportMode == "w5500-native");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("native")]
+    [InlineData("w5500")]
+    public void TrySetValue_RejectsInvalidTransportMode(string value)
+    {
+        var config = RuntimeConfiguration.CreateDefaults();
+
+        var ok = config.TrySetValue("mqtt.transport_mode", value, out var error);
+
+        Assert.False(ok);
+        Assert.Equal("mqtt.transport_mode must be system-net or w5500-native", error);
+    }
+
     [Fact]
     public void KeyValueRoundTrip_PreservesConfiguredValues()
     {
@@ -113,6 +144,7 @@ public class RuntimeConfigurationTests
         config.TrySetValue("network.mac", "12:34:56:78:9A:BC", out _);
         config.TrySetValue("mqtt.port", "1884", out _);
         config.TrySetValue("mqtt.client_id", "unit-test-client", out _);
+        config.TrySetValue("mqtt.transport_mode", "w5500-native", out _);
         config.TrySetValue("system.location", "lab", out _);
 
         var content = config.ToKeyValueLines();
@@ -125,6 +157,7 @@ public class RuntimeConfigurationTests
         Assert.Equal("12:34:56:78:9A:BC", rehydrated.NetworkMac);
         Assert.Equal(1884, rehydrated.MqttPort);
         Assert.Equal("unit-test-client", rehydrated.MqttClientId);
+        Assert.Equal("w5500-native", rehydrated.MqttTransportMode);
         Assert.Equal("lab", rehydrated.DeviceLocation);
     }
 

@@ -16,6 +16,7 @@ namespace DiSEqC_Control
         public string MqttUsername = "";
         public string MqttPassword = "";
         public string MqttTopicPrefix = "diseqc";
+        public string MqttTransportMode = "system-net";
 
         public string DeviceName = "diseqc-ctrl";
         public string DeviceLocation = "default";
@@ -40,6 +41,7 @@ namespace DiSEqC_Control
                 MqttUsername = MqttUsername,
                 MqttPassword = MqttPassword,
                 MqttTopicPrefix = MqttTopicPrefix,
+                MqttTransportMode = MqttTransportMode,
                 DeviceName = DeviceName,
                 DeviceLocation = DeviceLocation
             };
@@ -151,6 +153,17 @@ namespace DiSEqC_Control
                     MqttTopicPrefix = value;
                     break;
 
+                case "mqtt.transport_mode":
+                    string normalizedTransportMode = value.ToLower();
+                    if (normalizedTransportMode != "system-net" && normalizedTransportMode != "w5500-native")
+                    {
+                        error = "mqtt.transport_mode must be system-net or w5500-native";
+                        return false;
+                    }
+
+                    MqttTransportMode = normalizedTransportMode;
+                    break;
+
                 case "system.device_name":
                     if (string.IsNullOrEmpty(value))
                     {
@@ -187,6 +200,7 @@ namespace DiSEqC_Control
                 "mqtt.username=" + MqttUsername + "\n" +
                 "mqtt.password=" + MqttPassword + "\n" +
                 "mqtt.topic_prefix=" + MqttTopicPrefix + "\n" +
+                "mqtt.transport_mode=" + MqttTransportMode + "\n" +
                 "system.device_name=" + DeviceName + "\n" +
                 "system.location=" + DeviceLocation;
         }

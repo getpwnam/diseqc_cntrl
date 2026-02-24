@@ -75,6 +75,7 @@ Root prefix: `diseqc/`
     - `mqtt.username`
     - `mqtt.password`
     - `mqtt.topic_prefix`
+    - `mqtt.transport_mode` (`system-net` or `w5500-native`)
     - `system.device_name`
     - `system.location`
 

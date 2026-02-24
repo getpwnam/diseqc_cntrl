@@ -51,15 +51,15 @@
 - [x] Reconcile board-level pin/config definitions required by W5500 runtime path.
 - [x] Verify `w5500-native` firmware profile build remains green in Docker.
 
-### Phase 3.5: M2Mqtt Adapter Integration (recommended next)
+### Phase 3.5: M2Mqtt Adapter Integration (in progress)
 
-- [ ] Create in-repo managed adapter implementing `nanoFramework.M2Mqtt.IMqttNetworkChannel` backed by `DiSEqC_Control.Native.W5500Socket`.
-- [ ] Add minimal M2Mqtt entry point to accept injected channel (small fork/overlay of package source in repo).
-- [ ] Keep current host/port constructor path intact as fallback to reduce rollout risk.
-- [ ] Update `Program.cs` to select transport mode (`system-net` fallback vs `w5500-native` adapter) via runtime config key.
-- [ ] Add host contract tests for adapter behavior (connect/send/receive/close call routing + status mapping).
-- [ ] Add on-device MQTT smoke test against broker using W5500 adapter path.
-- [ ] Document adapter mode usage and rollback steps in `README.md` and testing guide.
+- [x] Create in-repo managed adapter implementing `nanoFramework.M2Mqtt.IMqttNetworkChannel` backed by `DiSEqC_Control.Native.W5500Socket`.
+- [x] Add minimal M2Mqtt entry point to accept injected channel (in-repo overlay helper injecting `IMqttNetworkChannel`).
+- [x] Keep current host/port constructor path intact as fallback to reduce rollout risk.
+- [x] Update `Program.cs` to select transport mode (`system-net` fallback vs `w5500-native` adapter) via runtime config key.
+- [x] Add host contract tests for adapter behavior (connect/send/receive/close call routing + status mapping).
+- [x] Add on-device MQTT smoke test against broker using W5500 adapter path.
+- [x] Document adapter mode usage and rollback steps in `README.md` and testing guide.
 
 ### Phase 4: USB Wire Protocol Migration
 

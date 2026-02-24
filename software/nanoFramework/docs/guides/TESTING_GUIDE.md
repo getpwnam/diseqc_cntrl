@@ -170,6 +170,7 @@ mosquitto_pub -h localhost -t 'diseqc/command/config/get' -m ''
 # Update broker and topic prefix
 mosquitto_pub -h localhost -t 'diseqc/command/config/set' -m 'mqtt.broker=192.168.1.60'
 mosquitto_pub -h localhost -t 'diseqc/command/config/set' -m 'mqtt.topic_prefix=diseqc_lab'
+mosquitto_pub -h localhost -t 'diseqc/command/config/set' -m 'mqtt.transport_mode=w5500-native'
 
 # Save then reset and reload
 mosquitto_pub -h localhost -t 'diseqc/command/config/save' -m ''
@@ -218,6 +219,59 @@ Expected debug output includes:
 - `[CONFIG] FRAM dump (0..63)`
 - `[FRAM] 0000: ...`
 - `[CONFIG] FRAM cleared; runtime config reset to defaults`
+
+### Step 2.5: On-Device W5500 Adapter MQTT Smoke Test
+
+Use this test to validate that MQTT traffic can run through the injected `w5500-native` channel path.
+
+1) Start two broker-side monitors (separate terminals):
+
+```bash
+mosquitto_sub -h <broker-ip> -t 'diseqc/availability' -v
+mosquitto_sub -h <broker-ip> -t 'diseqc/status/#' -v
+```
+
+2) Set adapter mode and persist it:
+
+```bash
+mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/set' -m 'mqtt.transport_mode=w5500-native'
+mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/save' -m ''
+```
+
+3) Reboot/power-cycle the board.
+
+4) Verify UART boot logs include:
+
+```text
+Transport mode: w5500-native
+[MQTT] transport_mode=w5500-native requested
+[MQTT] W5500 IMqttNetworkChannel injected
+✓ Connected to MQTT broker!
+```
+
+5) Verify broker-side smoke behavior:
+
+```bash
+# command path check
+mosquitto_pub -h <broker-ip> -t 'diseqc/command/halt' -m ''
+
+# observe config echo (effective config includes transport mode)
+mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/get' -m ''
+```
+
+Expected outcomes:
+- `diseqc/availability` reports `online` after reboot.
+- `diseqc/status/config/effective/mqtt/transport_mode` reports `w5500-native`.
+- Command/status round-trip works (`halt` command handled and status still publishing).
+
+Rollback (safe fallback):
+
+```bash
+mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/set' -m 'mqtt.transport_mode=system-net'
+mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/save' -m ''
+```
+
+After reboot, verify UART line `Transport mode: system-net`.
 
 ---
 

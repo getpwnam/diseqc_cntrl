@@ -24,6 +24,8 @@
     <Compile Include="../../DiSEqC_Control/RuntimeConfiguration.cs" Link="Production/RuntimeConfiguration.cs" />
     <Compile Include="../../DiSEqC_Control/ParityHelper.cs" Link="Production/ParityHelper.cs" />
     <Compile Include="../../DiSEqC_Control/Native/W5500SocketNative.cs" Link="Production/Native/W5500SocketNative.cs" />
+    <Compile Include="../../DiSEqC_Control/Mqtt/IW5500SocketApi.cs" Link="Production/Mqtt/IW5500SocketApi.cs" />
+    <Compile Include="../../DiSEqC_Control/Mqtt/W5500MqttNetworkChannelCore.cs" Link="Production/Mqtt/W5500MqttNetworkChannelCore.cs" />
     <Compile Include="../../DiSEqC_Control/Native/DiSEqCNative.cs" Link="Production/Native/DiSEqCNative.cs" />
     <Compile Include="../../DiSEqC_Control/Native/LNBNative.cs" Link="Production/Native/LNBNative.cs" />
   </ItemGroup>
