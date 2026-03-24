@@ -2656,6 +2656,12 @@
 		(uuid "bc618b56-b09c-4d6f-a7cf-749b4f16d6ea")
 	)
 	(junction
+		(at 111.76 123.19)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "ccadf93e-5249-4b1f-abba-293ddc3cada6")
+	)
+	(junction
 		(at 154.94 41.91)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2765,7 +2771,7 @@
 	)
 	(wire
 		(pts
-			(xy 125.73 120.65) (xy 125.73 125.73)
+			(xy 125.73 120.65) (xy 125.73 123.19)
 		)
 		(stroke
 			(width 0)
@@ -2972,6 +2978,16 @@
 			(type default)
 		)
 		(uuid "54dab757-2dc7-4ff4-bd51-5b661bc6e77e")
+	)
+	(wire
+		(pts
+			(xy 111.76 123.19) (xy 125.73 123.19)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5656f75c-3f4a-42f9-bac5-640682438cb3")
 	)
 	(wire
 		(pts
@@ -4333,72 +4349,6 @@
 	)
 	(symbol
 		(lib_id "diseqc_cntrl:GND")
-		(at 125.73 125.73 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "1cd2297e-a937-41a0-a34d-9d981fb5eb54")
-		(property "Reference" "#PWR09"
-			(at 125.73 132.08 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "GND"
-			(at 125.73 130.81 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 125.73 125.73 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 125.73 125.73 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 125.73 125.73 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "4fe4563b-8b02-48c7-b9d8-743ab771a7c3")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
-					(reference "#PWR09")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "diseqc_cntrl:GND")
 		(at 186.69 62.23 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -5365,9 +5315,9 @@
 		(at 125.73 116.84 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(fields_autoplaced yes)
 		(uuid "7e03591d-32dc-44a9-a69f-7d89bafbc5dd")
 		(property "Reference" "C4"
@@ -5379,7 +5329,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "1u"
+		(property "Value" "22pF DNP"
 			(at 129.54 118.1099 0)
 			(effects
 				(font
