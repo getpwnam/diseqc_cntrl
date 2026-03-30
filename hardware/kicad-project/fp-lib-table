@@ -2,4 +2,5 @@
   (version 7)
   (lib (name "diseqc_cntrl")(type "KiCad")(uri "${KIPRJMOD}/nonfree/footprints/diseqc_cntrl.pretty")(options "")(descr ""))
   (lib (name "private")(type "KiCad")(uri "${KIPRJMOD}/nonfree/footprints")(options "")(descr ""))
+  (lib (name "Tag-Connect")(type "KiCad")(uri "${KIPRJMOD}/nonfree/footprints/Tag-Connect.pretty")(options "")(descr ""))
 )
