@@ -6067,20 +6067,12 @@
 		(uuid "c48659e6-6efb-4d48-afde-bb3f03974d22")
 	)
 	(no_connect
-		(at 153.67 76.2)
-		(uuid "c73f5900-6a00-47de-b8c6-585628bca8b6")
-	)
-	(no_connect
 		(at 140.97 50.8)
 		(uuid "ca0b0a89-d971-4798-92f8-506575f18357")
 	)
 	(no_connect
 		(at 77.47 120.65)
 		(uuid "ca2034c6-5be8-4804-a6ea-87e31280c31b")
-	)
-	(no_connect
-		(at 153.67 93.98)
-		(uuid "d16e3ced-94bd-4858-8ba5-58e3b80c15ff")
 	)
 	(no_connect
 		(at 77.47 135.89)
@@ -6241,6 +6233,16 @@
 			(type default)
 		)
 		(uuid "0ecdc133-8845-4bed-8a63-f353ba9ed449")
+	)
+	(wire
+		(pts
+			(xy 172.72 76.2) (xy 172.72 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0fc0afe3-5a39-4346-896c-f6ef67be3070")
 	)
 	(wire
 		(pts
@@ -6804,6 +6806,16 @@
 	)
 	(wire
 		(pts
+			(xy 171.45 76.2) (xy 172.72 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6861b5c2-ec40-486d-bd4a-6ee00b5695d5")
+	)
+	(wire
+		(pts
 			(xy 15.24 101.6) (xy 15.24 104.14)
 		)
 		(stroke
@@ -6921,6 +6933,16 @@
 			(type default)
 		)
 		(uuid "7644fedf-5510-4864-80b7-e5c0406340e4")
+	)
+	(wire
+		(pts
+			(xy 157.48 93.98) (xy 157.48 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "79a0a68e-fb68-48cc-bc3e-4e466fc037ae")
 	)
 	(wire
 		(pts
@@ -7344,6 +7366,16 @@
 	)
 	(wire
 		(pts
+			(xy 153.67 76.2) (xy 163.83 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c7bffc3f-0329-4ca5-9891-539135c0460f")
+	)
+	(wire
+		(pts
 			(xy 15.24 91.44) (xy 15.24 96.52)
 		)
 		(stroke
@@ -7574,6 +7606,16 @@
 	)
 	(wire
 		(pts
+			(xy 153.67 93.98) (xy 157.48 93.98)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ef0b1e65-0d2c-4907-ae99-981328838592")
+	)
+	(wire
+		(pts
 			(xy 102.87 147.32) (xy 102.87 165.1)
 		)
 		(stroke
@@ -7791,6 +7833,16 @@
 			(justify left bottom)
 		)
 		(uuid "44075b77-12fa-4eb4-8d4b-a83dec52f62f")
+	)
+	(label "VBUS_SENSE"
+		(at 153.67 76.2 0)
+		(effects
+			(font
+				(size 0.508 0.508)
+			)
+			(justify left bottom)
+		)
+		(uuid "49debb7c-5235-44fb-98a2-92e6a42e911b")
 	)
 	(label "NRST"
 		(at 77.47 72.39 180)
@@ -11548,6 +11600,72 @@
 		)
 	)
 	(symbol
+		(lib_id "diseqc_cntrl:VBUS")
+		(at 172.72 73.66 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "5b4e7631-8320-47a4-a1b9-03f228886aea")
+		(property "Reference" "#PWR033"
+			(at 172.72 77.47 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "VBUS"
+			(at 172.72 68.58 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 172.72 73.66 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 172.72 73.66 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"VBUS\""
+			(at 172.72 73.66 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "6c574418-0db9-46f8-b72b-62800691536a")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
+					(reference "#PWR033")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "diseqc_cntrl:+3V3")
 		(at 17.78 22.86 0)
 		(unit 1)
@@ -13816,6 +13934,83 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
 					(reference "R8")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "diseqc_cntrl:R")
+		(at 167.64 76.2 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "ca519b68-8f39-4d72-84d3-4c0061cafea5")
+		(property "Reference" "R31"
+			(at 167.64 69.85 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "100k"
+			(at 167.64 72.39 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(at 167.64 77.978 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "https://www.mouser.com/catalog/specsheets/YAGEO_PYu_RC_Group_51_RoHS_L_12.pdf"
+			(at 167.64 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor"
+			(at 167.64 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Mouser Part Number" "603-RC0603JR-07100KL"
+			(at 167.64 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "d2c2d489-edc8-4c43-aa18-a9753a9ea30a")
+		)
+		(pin "2"
+			(uuid "edf1700a-501d-4a59-a3e8-4aa4628ada0a")
+		)
+		(instances
+			(project ""
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
+					(reference "R31")
 					(unit 1)
 				)
 			)
