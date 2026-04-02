@@ -428,12 +428,8 @@ EOF_MCU_HSI_PLL
         sed -E -i 's/768[Kk]/512k/g' "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld"
     fi
 
-    # Provide wire protocol serial configuration header expected by ChibiOS common sources
-    if [ -f "$REFERENCE_BOARD/common/serialcfg.h" ]; then
-        cp "$REFERENCE_BOARD/common/serialcfg.h" "$TARGET_DIR/common/" 2>/dev/null || true
-    fi
-
-    # Align wire protocol serial driver with selected transport.
+    # Provide a deterministic wire-protocol serial configuration header.
+    # Do not inherit reference-board SERIAL_DRIVER values.
     if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
         cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG_USB'
 #ifndef SERIALCFG_H
@@ -443,8 +439,6 @@ EOF_MCU_HSI_PLL
 
 #endif // SERIALCFG_H
 EOF_SERIALCFG_USB
-    elif [ -f "$TARGET_DIR/common/serialcfg.h" ]; then
-        sed -E -i 's/^#define[[:space:]]+SERIAL_DRIVER[[:space:]]+SD2/#define SERIAL_DRIVER           SD3/' "$TARGET_DIR/common/serialcfg.h"
     else
         cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG_UART'
 #ifndef SERIALCFG_H
