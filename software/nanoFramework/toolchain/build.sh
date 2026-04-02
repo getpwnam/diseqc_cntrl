@@ -34,7 +34,7 @@ TARGET_NAME="M0DMF_DISEQC_F407"
 BUILD_TYPE="Release"
 BUILD_PROFILE="${NF_BUILD_PROFILE:-${1:-minimal}}"
 
-ENABLE_HSI_PLL="0"
+ENABLE_HSI_PLL="1"  # board has no HSE crystal; all profiles use HSI PLL
 
 case "$BUILD_PROFILE" in
     minimal)
@@ -255,14 +255,8 @@ if [ "$ENABLE_USB_NO_VBUS_SENSE" = "TRUE" ] && [ -f "$TARGET_DIR/board.h" ]; the
             next;
         }
 
-            # Default values overridden per-profile below
-            # (declare before case so all paths have ENABLE_HSI_PLL defined)
         skip_moder == 1 {
-        ENABLE_HSI_PLL="0"
-
-        case "$BUILD_PROFILE" in
-                skip_moder = 0;
-            }
+            skip_moder = 0;
             next;
         }
 
