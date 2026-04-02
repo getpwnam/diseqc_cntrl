@@ -348,6 +348,14 @@ if [ -n "$REFERENCE_BOARD" ]; then
         cp "$REFERENCE_BOARD/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h" 2>/dev/null || true
     fi
 
+    # If a workspace mcuconf is provided, use it as the base before appending
+    # profile-specific overrides below.
+    if [ -f /work/build/mcuconf.h ]; then
+        cp /work/build/mcuconf.h "$TARGET_DIR/"
+        cp /work/build/mcuconf.h "$TARGET_DIR/nanoCLR/"
+        cp /work/build/mcuconf.h "$TARGET_DIR/nanoBooter/"
+    fi
+
     # Apply board-specific peripheral usage overrides
     for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h"; do
         if [ -f "$mcu" ]; then
@@ -532,14 +540,9 @@ endif()
 set(NANOBOOTER_PROJECT_SOURCES ${NANOBOOTER_PROJECT_SOURCES} CACHE INTERNAL "make global")
 EOF_NANOBOOTER_CMAKE
 
-# Copy CMake and config files (if we create them)
+# Copy CMake file override (if provided)
 if [ -f /work/build/CMakeLists.txt ]; then
     cp /work/build/CMakeLists.txt $TARGET_DIR/
-fi
-if [ -f /work/build/mcuconf.h ]; then
-    cp /work/build/mcuconf.h $TARGET_DIR/
-    cp /work/build/mcuconf.h $TARGET_DIR/nanoCLR/
-    cp /work/build/mcuconf.h $TARGET_DIR/nanoBooter/
 fi
 
 # Ensure HAL settings match this board capabilities in both firmware images
