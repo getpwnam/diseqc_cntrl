@@ -107,11 +107,13 @@ docker compose run --build --rm nanoframework-build /work/toolchain/build.sh
 
 ```bash
 # Using st-flash (install: apt install stlink-tools)
-st-flash write build/nanoCLR.bin 0x08000000
+st-flash write build/nanoBooter.bin 0x08000000
+st-flash write build/nanoCLR.bin 0x08004000
 
 # Or using OpenOCD
 openocd -f interface/stlink.cfg -f target/stm32f4x.cfg \
-    -c "program build/nanoCLR.bin 0x08000000 verify reset exit"
+    -c "program build/nanoBooter.bin 0x08000000 verify" \
+    -c "program build/nanoCLR.bin 0x08004000 verify reset exit"
 ```
 
 ---
@@ -300,12 +302,16 @@ Build SUCCESS!
 ========================================
 
 Firmware files copied to: /work/build/
+  - nanoBooter.bin
+  - nanoBooter.hex
+  - nanoBooter.elf
   - nanoCLR.bin
   - nanoCLR.hex
   - nanoCLR.elf
 
 To flash to board:
-  st-flash write build/nanoCLR.bin 0x08000000
+  st-flash write build/nanoBooter.bin 0x08000000
+  st-flash write build/nanoCLR.bin 0x08004000
 ```
 
 ---
@@ -314,7 +320,8 @@ To flash to board:
 
 1. **Flash firmware** to board
    ```bash
-   st-flash write build/nanoCLR.bin 0x08000000
+   st-flash write build/nanoBooter.bin 0x08000000
+   st-flash write build/nanoCLR.bin 0x08004000
    ```
 
 2. **Deploy C# application** (from Visual Studio)

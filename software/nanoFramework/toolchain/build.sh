@@ -5,6 +5,18 @@
 
 set -e  # Exit on error
 
+# ── Host bootstrap ──────────────────────────────────────────────────────────
+# This script is designed to run inside the Docker build container.
+# If called from the host (/.dockerenv absent), re-invoke via docker compose.
+if [ ! -f "/.dockerenv" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    COMPOSE_DIR="$(dirname "$SCRIPT_DIR")"
+    exec docker compose -f "$COMPOSE_DIR/docker-compose.yml" run --rm \
+        -e NF_BUILD_PROFILE="${1:-${NF_BUILD_PROFILE:-minimal}}" \
+        nanoframework-build /work/toolchain/build.sh
+fi
+# ────────────────────────────────────────────────────────────────────────────
+
 echo "========================================"
 echo "nanoFramework DiSEqC Controller Build"
 echo "========================================"
@@ -20,12 +32,14 @@ NF_INTERPRETER_REPO="https://github.com/nanoframework/nf-interpreter.git"
 NF_INTERPRETER_DIR="/nf-interpreter"
 TARGET_NAME="M0DMF_DISEQC_F407"
 BUILD_TYPE="Release"
-BUILD_PROFILE="${NF_BUILD_PROFILE:-minimal}"
+BUILD_PROFILE="${NF_BUILD_PROFILE:-${1:-minimal}}"
+
+ENABLE_HSI_PLL="0"
 
 case "$BUILD_PROFILE" in
     minimal)
         ENABLE_SYSTEM_NET="OFF"
-        ENABLE_CONFIG_BLOCK="OFF"
+        ENABLE_CONFIG_BLOCK="ON"
         ENABLE_SNTP="OFF"
         ENABLE_MBEDTLS="OFF"
         ENABLE_HAL_MAC="FALSE"
@@ -34,6 +48,12 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="FALSE"
         ENABLE_HAL_SERIAL_USB="FALSE"
+        ENABLE_USB_NO_VBUS_SENSE="FALSE"
+        ENABLE_BRINGUP_SMOKE="FALSE"
+        ENABLE_BRINGUP_HARDALIVE="FALSE"
+        ENABLE_FEATURE_RTC="ON"
+        ENABLE_HAL_RTC="TRUE"
+        ENABLE_HSI_PLL="1"
         PROFILE_STATUS="stable"
         PROFILE_NOTE="Minimal non-network firmware profile"
         ;;
@@ -48,8 +68,53 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="FALSE"
         ENABLE_HAL_SERIAL_USB="FALSE"
+        ENABLE_USB_NO_VBUS_SENSE="FALSE"
+        ENABLE_BRINGUP_SMOKE="FALSE"
+        ENABLE_BRINGUP_HARDALIVE="FALSE"
+        ENABLE_FEATURE_RTC="ON"
+        ENABLE_HAL_RTC="TRUE"
         PROFILE_STATUS="scaffold"
         PROFILE_NOTE="Native W5500 transport scaffold (System.Net/lwIP disabled)"
+        ;;
+    bringup-smoke)
+        ENABLE_SYSTEM_NET="OFF"
+        ENABLE_CONFIG_BLOCK="OFF"
+        ENABLE_SNTP="OFF"
+        ENABLE_MBEDTLS="OFF"
+        ENABLE_HAL_MAC="FALSE"
+        ENABLE_STM32_MAC_ETH="FALSE"
+        ENABLE_OTG1="FALSE"
+        ENABLE_OTG2="FALSE"
+        ENABLE_HAL_USB="FALSE"
+        ENABLE_HAL_SERIAL_USB="FALSE"
+        ENABLE_USB_NO_VBUS_SENSE="FALSE"
+        ENABLE_BRINGUP_SMOKE="TRUE"
+        ENABLE_BRINGUP_HARDALIVE="FALSE"
+        ENABLE_FEATURE_RTC="OFF"
+        ENABLE_HAL_RTC="FALSE"
+        ENABLE_HSI_PLL="1"
+        PROFILE_STATUS="experimental"
+        PROFILE_NOTE="Hardware bring-up smoke profile (PA2 blink + USART3 heartbeat)"
+        ;;
+    bringup-hardalive)
+        ENABLE_SYSTEM_NET="OFF"
+        ENABLE_CONFIG_BLOCK="OFF"
+        ENABLE_SNTP="OFF"
+        ENABLE_MBEDTLS="OFF"
+        ENABLE_HAL_MAC="FALSE"
+        ENABLE_STM32_MAC_ETH="FALSE"
+        ENABLE_OTG1="FALSE"
+        ENABLE_OTG2="FALSE"
+        ENABLE_HAL_USB="FALSE"
+        ENABLE_HAL_SERIAL_USB="FALSE"
+        ENABLE_USB_NO_VBUS_SENSE="FALSE"
+        ENABLE_BRINGUP_SMOKE="FALSE"
+        ENABLE_BRINGUP_HARDALIVE="TRUE"
+        ENABLE_FEATURE_RTC="OFF"
+        ENABLE_HAL_RTC="FALSE"
+        ENABLE_HSI_PLL="1"
+        PROFILE_STATUS="experimental"
+        PROFILE_NOTE="Bare-metal bring-up profile (PA2 + PB10 hard toggle, no RTOS/CLR startup)"
         ;;
     usb-first)
         ENABLE_SYSTEM_NET="OFF"
@@ -62,8 +127,32 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="TRUE"
         ENABLE_HAL_SERIAL_USB="TRUE"
+        ENABLE_USB_NO_VBUS_SENSE="FALSE"
+        ENABLE_BRINGUP_SMOKE="FALSE"
+        ENABLE_BRINGUP_HARDALIVE="FALSE"
+        ENABLE_FEATURE_RTC="ON"
+        ENABLE_HAL_RTC="TRUE"
         PROFILE_STATUS="experimental"
         PROFILE_NOTE="USB-first bring-up profile (OTG1 enabled, UART wire protocol fallback retained)"
+        ;;
+    usb-no-vbus-sense)
+        ENABLE_SYSTEM_NET="OFF"
+        ENABLE_CONFIG_BLOCK="OFF"
+        ENABLE_SNTP="OFF"
+        ENABLE_MBEDTLS="OFF"
+        ENABLE_HAL_MAC="FALSE"
+        ENABLE_STM32_MAC_ETH="FALSE"
+        ENABLE_OTG1="TRUE"
+        ENABLE_OTG2="FALSE"
+        ENABLE_HAL_USB="TRUE"
+        ENABLE_HAL_SERIAL_USB="TRUE"
+        ENABLE_USB_NO_VBUS_SENSE="TRUE"
+        ENABLE_BRINGUP_SMOKE="FALSE"
+        ENABLE_BRINGUP_HARDALIVE="FALSE"
+        ENABLE_FEATURE_RTC="ON"
+        ENABLE_HAL_RTC="TRUE"
+        PROFILE_STATUS="experimental"
+        PROFILE_NOTE="USB bring-up profile for boards without PA9 VBUS_SENSE wiring (forces PA9 pulldown)"
         ;;
     network)
         ENABLE_SYSTEM_NET="ON"
@@ -76,11 +165,16 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="FALSE"
         ENABLE_HAL_SERIAL_USB="FALSE"
+        ENABLE_USB_NO_VBUS_SENSE="FALSE"
+        ENABLE_BRINGUP_SMOKE="FALSE"
+        ENABLE_BRINGUP_HARDALIVE="FALSE"
+        ENABLE_FEATURE_RTC="ON"
+        ENABLE_HAL_RTC="TRUE"
         PROFILE_STATUS="deprecated"
         PROFILE_NOTE="Temporary compatibility profile; scheduled for removal after native W5500 path is validated"
         ;;
     *)
-        echo -e "${RED}Unknown NF_BUILD_PROFILE='$BUILD_PROFILE'. Use 'minimal', 'w5500-native', 'usb-first', or 'network'.${NC}"
+        echo -e "${RED}Unknown NF_BUILD_PROFILE='$BUILD_PROFILE'. Use 'minimal', 'w5500-native', 'bringup-smoke', 'bringup-hardalive', 'usb-first', 'usb-no-vbus-sense', or 'network'.${NC}"
         exit 1
         ;;
 esac
@@ -102,17 +196,28 @@ if [ ! -d "$NF_INTERPRETER_DIR/.git" ]; then
     git submodule update --init --recursive
 else
     echo -e "${GREEN}nf-interpreter already exists${NC}"
+
+    # Keep an existing clone up to date to reduce mismatches between target
+    # templates and ChibiOS package revisions.
+    cd "$NF_INTERPRETER_DIR"
+    git fetch --all --tags --prune || true
+    git checkout develop || true
+    git pull --ff-only || true
+    git submodule update --init --recursive || true
+    git checkout -- CMake/Modules/FindChibiOS.cmake || true
 fi
 
 # Create target directory structure
 echo -e "${YELLOW}Setting up target directory...${NC}"
 TARGET_DIR="$NF_INTERPRETER_DIR/targets/ChibiOS/$TARGET_NAME"
 
-if [ ! -d "$TARGET_DIR" ]; then
-    mkdir -p $TARGET_DIR
-    mkdir -p $TARGET_DIR/nanoCLR
-    mkdir -p $TARGET_DIR/common
-fi
+# Recreate target directory on each run to avoid stale config/header files
+# persisting in the Docker volume between builds.
+rm -rf "$TARGET_DIR"
+mkdir -p "$TARGET_DIR"
+mkdir -p "$TARGET_DIR/nanoCLR"
+mkdir -p "$TARGET_DIR/nanoBooter"
+mkdir -p "$TARGET_DIR/common"
 
 # Copy board files
 echo -e "${YELLOW}Copying board configuration files...${NC}"
@@ -127,9 +232,72 @@ cp /work/nf-native/diseqc_interop.cpp $TARGET_DIR/nanoCLR/
 cp /work/nf-native/lnb_interop.cpp $TARGET_DIR/nanoCLR/
 cp /work/nf-native/w5500_interop.cpp $TARGET_DIR/nanoCLR/
 
+# Select wire-protocol transport at board level to avoid SERIAL_DRIVER
+# redefinition conflicts when USB serial is enabled.
+if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ] && [ -f "$TARGET_DIR/board.h" ]; then
+    sed -E -i 's/^#define[[:space:]]+SERIAL_DRIVER[[:space:]]+SD3/#define SERIAL_DRIVER               SDU1/' "$TARGET_DIR/board.h"
+fi
+
+# Hardware revision without VBUS_SENSE connected: force PA9 to pulldown so
+# USB FS VBUS input does not float during bring-up.
+if [ "$ENABLE_USB_NO_VBUS_SENSE" = "TRUE" ] && [ -f "$TARGET_DIR/board.h" ]; then
+    tmp_board_h="$(mktemp)"
+    awk '
+        BEGIN { skip_moder = 0; skip_pupdr = 0 }
+
+        /^#define VAL_GPIOA_MODER/ {
+            print "#define VAL_GPIOA_MODER             (PIN_MODE_OUTPUT(GPIOA_PIN2) |              \\";
+            print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN8) |           \\";
+            print "                                     PIN_MODE_ANALOG(GPIOA_PIN9) |              \\";
+            print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN13) |          \\";
+            print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN14))";
+            skip_moder = 1;
+            next;
+        }
+
+            # Default values overridden per-profile below
+            # (declare before case so all paths have ENABLE_HSI_PLL defined)
+        skip_moder == 1 {
+        ENABLE_HSI_PLL="0"
+
+        case "$BUILD_PROFILE" in
+                skip_moder = 0;
+            }
+            next;
+        }
+
+        /^#define VAL_GPIOA_PUPDR/ {
+            print "#define VAL_GPIOA_PUPDR             (PIN_PUPDR_FLOATING(GPIOA_PIN2) |           \\";
+            print "                                     PIN_PUPDR_PULLUP(GPIOA_PIN8) |             \\";
+            print "                                     PIN_PUPDR_PULLDOWN(GPIOA_PIN9))";
+            skip_pupdr = 1;
+            next;
+        }
+
+        skip_pupdr == 1 {
+            if ($0 ~ /GPIOA_PIN8\)\)/) {
+                skip_pupdr = 0;
+            }
+            next;
+        }
+
+        { print }
+    ' "$TARGET_DIR/board.h" > "$tmp_board_h"
+    mv "$tmp_board_h" "$TARGET_DIR/board.h"
+fi
+
 # Copy required ChibiOS target config files from an STM32F4 reference target
-REFERENCE_BOARD="$NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F4_DISCOVERY"
-if [ -d "$REFERENCE_BOARD" ]; then
+REFERENCE_BOARD=""
+for candidate in \
+    "$NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F4_DISCOVERY" \
+    "$NF_INTERPRETER_DIR/targets/ChibiOS/ST_STM32F429I_DISCOVERY"; do
+    if [ -d "$candidate" ]; then
+        REFERENCE_BOARD="$candidate"
+        break
+    fi
+done
+
+if [ -n "$REFERENCE_BOARD" ]; then
     echo -e "${YELLOW}Copying reference target config files...${NC}"
 
     mkdir -p "$TARGET_DIR/nanoCLR" "$TARGET_DIR/nanoBooter"
@@ -140,6 +308,10 @@ if [ -d "$REFERENCE_BOARD" ]; then
     cp "$REFERENCE_BOARD"/target_*.cpp "$TARGET_DIR/" 2>/dev/null || true
     cp "$REFERENCE_BOARD/target_common.h.in" "$TARGET_DIR/" 2>/dev/null || true
     cp "$REFERENCE_BOARD/common/Device_BlockStorage.c" "$TARGET_DIR/common/" 2>/dev/null || true
+    if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
+        cp "$REFERENCE_BOARD/common/usbcfg.c" "$TARGET_DIR/common/" 2>/dev/null || true
+        cp "$REFERENCE_BOARD/common/usbcfg.h" "$TARGET_DIR/common/" 2>/dev/null || true
+    fi
 
     # ChibiOS/HAL configuration files
     cp "$REFERENCE_BOARD/nanoCLR/halconf.h" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
@@ -156,10 +328,31 @@ if [ -d "$REFERENCE_BOARD" ]; then
     cp "$REFERENCE_BOARD/nanoBooter/STM32F407xG_booter.ld" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
     cp "$REFERENCE_BOARD/nanoBooter/main.c" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
 
+    # Ensure linker scripts exist with the exact names expected by /work/build/CMakeLists.txt
+    if [ ! -f "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld" ]; then
+        REF_CLR_LD="$(find "$REFERENCE_BOARD/nanoCLR" -maxdepth 1 -type f -name '*_CLR.ld' | head -n1)"
+        if [ -n "$REF_CLR_LD" ]; then
+            cp "$REF_CLR_LD" "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld"
+        fi
+    fi
+
+    if [ ! -f "$TARGET_DIR/nanoBooter/STM32F407xG_booter.ld" ]; then
+        REF_BOOTER_LD="$(find "$REFERENCE_BOARD/nanoBooter" -maxdepth 1 -type f -name '*_booter.ld' | head -n1)"
+        if [ -n "$REF_BOOTER_LD" ]; then
+            cp "$REF_BOOTER_LD" "$TARGET_DIR/nanoBooter/STM32F407xG_booter.ld"
+        fi
+    fi
+
     # Use complete reference mcuconf as base to satisfy all STM32F4 required definitions
-    cp "$REFERENCE_BOARD/mcuconf.h" "$TARGET_DIR/mcuconf.h" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h" 2>/dev/null || true
+    if [ -f "$REFERENCE_BOARD/mcuconf.h" ]; then
+        cp "$REFERENCE_BOARD/mcuconf.h" "$TARGET_DIR/mcuconf.h" 2>/dev/null || true
+        cp "$REFERENCE_BOARD/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" 2>/dev/null || true
+        cp "$REFERENCE_BOARD/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h" 2>/dev/null || true
+    elif [ -f "$REFERENCE_BOARD/nanoCLR/mcuconf.h" ]; then
+        cp "$REFERENCE_BOARD/nanoCLR/mcuconf.h" "$TARGET_DIR/mcuconf.h" 2>/dev/null || true
+        cp "$REFERENCE_BOARD/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" 2>/dev/null || true
+        cp "$REFERENCE_BOARD/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h" 2>/dev/null || true
+    fi
 
     # Apply board-specific peripheral usage overrides
     for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h"; do
@@ -192,7 +385,30 @@ EOF_MCU_OVERRIDES
 
 #undef STM32_MAC_USE_ETH
 #define STM32_MAC_USE_ETH                  ${ENABLE_STM32_MAC_ETH}
+
 EOF_MCU_PROFILE_OVERRIDES
+
+            if [ "${ENABLE_HSI_PLL}" = "1" ]; then
+                cat >> "$mcu" << 'EOF_MCU_HSI_PLL'
+// HSI PLL override: HSE crystal absent/unverified.
+// HSI=16MHz, PLLM=8 -> VCO_in=2MHz, PLLN=168, PLLP=2 -> SYSCLK=168MHz.
+// APB1 (/4) = 42MHz, APB2 (/2) = 84MHz - matches reference clock tree.
+#undef STM32_HSE_ENABLED
+#define STM32_HSE_ENABLED                   FALSE
+#undef STM32_LSE_ENABLED
+#define STM32_LSE_ENABLED                   FALSE
+#undef STM32_PLLSRC
+#define STM32_PLLSRC                        STM32_PLLSRC_HSI
+#undef STM32_PLLM_VALUE
+#define STM32_PLLM_VALUE                    8
+#undef STM32_PLLN_VALUE
+#define STM32_PLLN_VALUE                    168
+#undef STM32_PLLP_VALUE
+#define STM32_PLLP_VALUE                    2
+#undef STM32_PLLQ_VALUE
+#define STM32_PLLQ_VALUE                    7
+EOF_MCU_HSI_PLL
+            fi
         fi
     done
 
@@ -202,31 +418,70 @@ EOF_MCU_PROFILE_OVERRIDES
     fi
 
     # Provide wire protocol serial configuration header expected by ChibiOS common sources
-    if [ -f "$NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F411_DISCOVERY/common/serialcfg.h" ]; then
-        cp "$NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F411_DISCOVERY/common/serialcfg.h" "$TARGET_DIR/common/" 2>/dev/null || true
+    if [ -f "$REFERENCE_BOARD/common/serialcfg.h" ]; then
+        cp "$REFERENCE_BOARD/common/serialcfg.h" "$TARGET_DIR/common/" 2>/dev/null || true
     fi
 
-    # Align wire protocol serial driver with board mapping (USART3)
-    if [ -f "$TARGET_DIR/common/serialcfg.h" ]; then
+    # Align wire protocol serial driver with selected transport.
+    if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
+        cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG_USB'
+#ifndef SERIALCFG_H
+#define SERIALCFG_H
+
+#define SERIAL_DRIVER           SDU1
+
+#endif // SERIALCFG_H
+EOF_SERIALCFG_USB
+    elif [ -f "$TARGET_DIR/common/serialcfg.h" ]; then
         sed -E -i 's/^#define[[:space:]]+SERIAL_DRIVER[[:space:]]+SD2/#define SERIAL_DRIVER           SD3/' "$TARGET_DIR/common/serialcfg.h"
     else
-        cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG'
+        cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG_UART'
 #ifndef SERIALCFG_H
 #define SERIALCFG_H
 
 #define SERIAL_DRIVER           SD3
 
 #endif // SERIALCFG_H
-EOF_SERIALCFG
+EOF_SERIALCFG_UART
     fi
 fi
 
-if [ -f /work/build/nanoBooter_main.c ]; then
-    cp /work/build/nanoBooter_main.c "$TARGET_DIR/nanoBooter/main.c"
+if [ ! -d "$REFERENCE_BOARD" ]; then
+    echo -e "${RED}Reference board files not found in expected locations.${NC}"
+    echo -e "${RED}Checked:${NC}"
+    echo -e "${RED}  - $NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F4_DISCOVERY${NC}"
+    echo -e "${RED}  - $NF_INTERPRETER_DIR/targets/ChibiOS/ST_STM32F429I_DISCOVERY${NC}"
+    exit 1
 fi
 
-if [ -f /work/build/nanoCLR_main.c ]; then
-    cp /work/build/nanoCLR_main.c "$TARGET_DIR/nanoCLR/main.c"
+if [ ! -f "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld" ] || [ ! -f "$TARGET_DIR/nanoBooter/STM32F407xG_booter.ld" ]; then
+    echo -e "${RED}Missing required linker scripts after reference copy.${NC}"
+    echo -e "${RED}Expected:${NC}"
+    echo -e "${RED}  - $TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld${NC}"
+    echo -e "${RED}  - $TARGET_DIR/nanoBooter/STM32F407xG_booter.ld${NC}"
+    exit 1
+fi
+
+if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
+    echo -e "${YELLOW}USB serial profile: keeping reference USB nanoCLR main.${NC}"
+
+    # Reference nanoBooter mains often depend on board-specific button/LED macros.
+    # Use this target's minimal booter main to keep boot path board-agnostic.
+    if [ -f /work/build/nanoBooter_main.c ]; then
+        cp /work/build/nanoBooter_main.c "$TARGET_DIR/nanoBooter/main.c"
+    fi
+else
+    if [ -f /work/build/nanoBooter_main.c ]; then
+        cp /work/build/nanoBooter_main.c "$TARGET_DIR/nanoBooter/main.c"
+    fi
+
+    if [ "$ENABLE_BRINGUP_HARDALIVE" = "TRUE" ] && [ -f /work/build/nanoCLR_hardalive_main.c ]; then
+        cp /work/build/nanoCLR_hardalive_main.c "$TARGET_DIR/nanoCLR/main.c"
+    elif [ "$ENABLE_BRINGUP_SMOKE" = "TRUE" ] && [ -f /work/build/nanoCLR_bringup_main.c ]; then
+        cp /work/build/nanoCLR_bringup_main.c "$TARGET_DIR/nanoCLR/main.c"
+    elif [ -f /work/build/nanoCLR_main.c ]; then
+        cp /work/build/nanoCLR_main.c "$TARGET_DIR/nanoCLR/main.c"
+    fi
 fi
 
 # Ensure target subdirectory CMakeLists exist and include custom sources
@@ -253,6 +508,9 @@ list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/w5500_interop.c
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/diseqc_native.cpp")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/lnb_control.cpp")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/Device_BlockStorage.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../common/usbcfg.c")
+    list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/usbcfg.c")
+endif()
 set(NANOCLR_PROJECT_SOURCES ${NANOCLR_PROJECT_SOURCES} CACHE INTERNAL "make global")
 EOF_NANOCLR_CMAKE
 
@@ -264,6 +522,9 @@ cat > "$TARGET_DIR/nanoBooter/CMakeLists.txt" << 'EOF_NANOBOOTER_CMAKE'
 
 # append nanoBooter source files
 list(APPEND NANOBOOTER_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/main.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../common/usbcfg.c")
+    list(APPEND NANOBOOTER_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/usbcfg.c")
+endif()
 # make var global
 set(NANOBOOTER_PROJECT_SOURCES ${NANOBOOTER_PROJECT_SOURCES} CACHE INTERNAL "make global")
 EOF_NANOBOOTER_CMAKE
@@ -277,13 +538,18 @@ if [ -f /work/build/mcuconf.h ]; then
     cp /work/build/mcuconf.h $TARGET_DIR/nanoCLR/
     cp /work/build/mcuconf.h $TARGET_DIR/nanoBooter/
 fi
-if [ -f /work/build/halconf.h ]; then
-    cp /work/build/halconf.h $TARGET_DIR/
-fi
 
 # Ensure HAL settings match this board capabilities in both firmware images
 for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; do
     if [ -f "$cfg" ]; then
+        # ChibiOS 9.x requires these markers in halconf.h.
+        if ! grep -q "_CHIBIOS_HAL_CONF_" "$cfg"; then
+            sed -i '/#define HALCONF_H/a #define _CHIBIOS_HAL_CONF_' "$cfg"
+        fi
+        if ! grep -q "_CHIBIOS_HAL_CONF_VER_9_1_" "$cfg"; then
+            sed -i '/#define _CHIBIOS_HAL_CONF_/a #define _CHIBIOS_HAL_CONF_VER_9_1_' "$cfg"
+        fi
+
         cat >> "$cfg" << EOF_HAL_OVERRIDES
 
 #undef HAL_USE_USB
@@ -298,6 +564,8 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
 #define HAL_USE_PWM                         TRUE
 #undef HAL_USE_PAL
 #define HAL_USE_PAL                         TRUE
+#undef HAL_USE_RTC
+#define HAL_USE_RTC                         ${ENABLE_HAL_RTC}
 #undef HAL_USE_MAC
 #define HAL_USE_MAC                         ${ENABLE_HAL_MAC}
 #undef HAL_USE_WDG
@@ -316,6 +584,28 @@ for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/
 #undef STM32_USB_USE_OTG2
 #define STM32_USB_USE_OTG2                  ${ENABLE_OTG2}
 EOF_MCU_USB_OVERRIDES
+
+        if [ "${ENABLE_HSI_PLL}" = "1" ]; then
+            cat >> "$mcu" << 'EOF_MCU_HSI_PLL_FINAL'
+// HSI PLL override: HSE crystal absent/unverified.
+// HSI=16MHz, PLLM=8 -> VCO_in=2MHz, PLLN=168, PLLP=2 -> SYSCLK=168MHz.
+// APB1 (/4) = 42MHz, APB2 (/2) = 84MHz - matches reference clock tree.
+#undef STM32_HSE_ENABLED
+#define STM32_HSE_ENABLED                   FALSE
+#undef STM32_LSE_ENABLED
+#define STM32_LSE_ENABLED                   FALSE
+#undef STM32_PLLSRC
+#define STM32_PLLSRC                        STM32_PLLSRC_HSI
+#undef STM32_PLLM_VALUE
+#define STM32_PLLM_VALUE                    8
+#undef STM32_PLLN_VALUE
+#define STM32_PLLN_VALUE                    168
+#undef STM32_PLLP_VALUE
+#define STM32_PLLP_VALUE                    2
+#undef STM32_PLLQ_VALUE
+#define STM32_PLLQ_VALUE                    7
+EOF_MCU_HSI_PLL_FINAL
+        fi
     fi
 done
 
@@ -372,7 +662,7 @@ cmake -G Ninja \
     -DTARGET_BOARD=$TARGET_NAME \
     -DSUPPORT_ANY_BASE_CONVERSION=OFF \
     -DNF_FEATURE_DEBUGGER=ON \
-    -DNF_FEATURE_RTC=ON \
+    -DNF_FEATURE_RTC=$ENABLE_FEATURE_RTC \
     -DNF_FEATURE_WATCHDOG=OFF \
     -DNF_FEATURE_HAS_CONFIG_BLOCK=$ENABLE_CONFIG_BLOCK \
     -DAPI_System.Device.Gpio=ON \
@@ -406,15 +696,32 @@ if [ -f "nanoCLR.bin" ]; then
     cp nanoCLR.bin /work/build/nanoCLR.bin
     cp nanoCLR.hex /work/build/nanoCLR.hex
     cp nanoCLR.elf /work/build/nanoCLR.elf
+    if [ -f "nanoBooter.bin" ]; then
+        cp nanoBooter.bin /work/build/nanoBooter.bin
+    fi
+    if [ -f "nanoBooter.hex" ]; then
+        cp nanoBooter.hex /work/build/nanoBooter.hex
+    fi
+    if [ -f "nanoBooter.elf" ]; then
+        cp nanoBooter.elf /work/build/nanoBooter.elf
+    fi
     
     echo -e "${GREEN}Firmware files copied to: /work/build/${NC}"
+    if [ -f "nanoBooter.bin" ]; then
+        echo -e "${GREEN}  - nanoBooter.bin${NC}"
+        echo -e "${GREEN}  - nanoBooter.hex${NC}"
+        echo -e "${GREEN}  - nanoBooter.elf${NC}"
+    fi
     echo -e "${GREEN}  - nanoCLR.bin${NC}"
     echo -e "${GREEN}  - nanoCLR.hex${NC}"
     echo -e "${GREEN}  - nanoCLR.elf${NC}"
     
     echo ""
     echo "To flash to board:"
-    echo "  st-flash write build/nanoCLR.bin 0x08000000"
+    if [ -f "nanoBooter.bin" ]; then
+        echo "  st-flash write build/nanoBooter.bin 0x08000000"
+    fi
+    echo "  st-flash write build/nanoCLR.bin 0x08004000"
 else
     echo -e "${RED}========================================${NC}"
     echo -e "${RED}Build FAILED${NC}"

@@ -15,7 +15,7 @@ namespace DiSEqC_Control
     public class Program
     {
         // Global instances
-        private static MqttClient _mqttClient;
+        private static IMqttClientFacade _mqttClient;
         private static RotorManager _rotor;
         private static bool _isConnected = false;
         private static RuntimeConfiguration _runtimeConfig = RuntimeConfiguration.CreateDefaults();
@@ -318,7 +318,7 @@ namespace DiSEqC_Control
                 _mqttClient = CreateMqttClient();
 
                 // Set event handlers
-                _mqttClient.MqttMsgPublishReceived += OnMqttMessageReceived;
+                _mqttClient.MessageReceived += OnMqttMessageReceived;
                 _mqttClient.ConnectionClosed += OnMqttConnectionClosed;
 
                 // Connect with LWT (Last Will and Testament)
@@ -367,7 +367,7 @@ namespace DiSEqC_Control
             }
         }
 
-        private static MqttClient CreateMqttClient()
+        private static IMqttClientFacade CreateMqttClient()
         {
             MqttClient client = new MqttClient(_runtimeConfig.MqttBroker, _runtimeConfig.MqttPort, false, null, null, MqttSslProtocols.None);
 
@@ -391,7 +391,7 @@ namespace DiSEqC_Control
                 }
             }
 
-            return client;
+            return new MqttClientFacade(client);
         }
 
         private static void SubscribeToTopics()
@@ -441,14 +441,7 @@ namespace DiSEqC_Control
         private static void PublishAvailability(bool online)
         {
             string payload = online ? "online" : "offline";
-            _mqttClient.Publish(
-                TopicAvailability,
-                Encoding.UTF8.GetBytes(payload),
-                null,
-                null,
-                MqttQoSLevel.AtLeastOnce,
-                true  // Retained
-            );
+            _mqttClient.Publish(TopicAvailability, Encoding.UTF8.GetBytes(payload), MqttQoSLevel.AtLeastOnce, true);
             Debug.WriteLine($"Published availability: {payload}");
         }
 
@@ -496,80 +489,36 @@ namespace DiSEqC_Control
 
             try
             {
-                // Route to appropriate handler
-                if (topic.Contains("/command/goto/angle"))
+                if (MqttConfigCommandProcessor.TryHandle(
+                    topic,
+                    payload,
+                    _runtimeConfig,
+                    PublishStatus,
+                    PublishError,
+                    PublishEffectiveConfig,
+                    HandleConfigSave,
+                    HandleConfigReset,
+                    HandleConfigReload,
+                    HandleConfigFramClear))
                 {
-                    HandleGotoAngle(payload);
+                    return;
                 }
-                else if (topic.Contains("/command/goto/satellite"))
-                {
-                    HandleGotoSatellite(payload);
-                }
-                else if (topic.Contains("/command/halt"))
-                {
-                    HandleHalt();
-                }
-                else if (topic.Contains("/command/manual/step_east"))
-                {
-                    HandleStepEast(payload);
-                }
-                else if (topic.Contains("/command/manual/step_west"))
-                {
-                    HandleStepWest(payload);
-                }
-                else if (topic.Contains("/command/manual/drive_east"))
-                {
-                    HandleDriveEast();
-                }
-                else if (topic.Contains("/command/manual/drive_west"))
-                {
-                    HandleDriveWest();
-                }
-                else if (topic.Contains("/command/lnb/voltage"))
-                {
-                    HandleLnbVoltage(payload);
-                }
-                else if (topic.Contains("/command/lnb/polarization"))
-                {
-                    HandleLnbPolarization(payload);
-                }
-                else if (topic.Contains("/command/lnb/tone"))
-                {
-                    HandleLnbTone(payload);
-                }
-                else if (topic.Contains("/command/lnb/band"))
-                {
-                    HandleLnbBand(payload);
-                }
-                else if (topic.Contains("/command/config/get"))
-                {
-                    HandleConfigGet(payload);
-                }
-                else if (topic.Contains("/command/config/set"))
-                {
-                    HandleConfigSet(payload);
-                }
-                else if (topic.Contains("/command/config/save"))
-                {
-                    HandleConfigSave();
-                }
-                else if (topic.Contains("/command/config/reset"))
-                {
-                    HandleConfigReset();
-                }
-                else if (topic.Contains("/command/config/reload"))
-                {
-                    HandleConfigReload();
-                }
-                else if (topic.Contains("/command/config/fram_clear"))
-                {
-                    HandleConfigFramClear(payload);
-                }
-                else if (topic.Contains("/command/calibrate/reference"))
-                {
-                    HandleCalibrateReference();
-                }
-                else
+
+                if (!MqttCommandRouter.TryHandle(
+                    topic,
+                    payload,
+                    HandleGotoAngle,
+                    HandleGotoSatellite,
+                    HandleHalt,
+                    HandleStepEast,
+                    HandleStepWest,
+                    HandleDriveEast,
+                    HandleDriveWest,
+                    HandleLnbVoltage,
+                    HandleLnbPolarization,
+                    HandleLnbTone,
+                    HandleLnbBand,
+                    HandleCalibrateReference))
                 {
                     Debug.WriteLine($"[MQTT] Unknown topic: {topic}");
                 }
@@ -1134,14 +1083,7 @@ namespace DiSEqC_Control
 
             try
             {
-                _mqttClient.Publish(
-                    topic,
-                    Encoding.UTF8.GetBytes(value),
-                    null,
-                    null,
-                    MqttQoSLevel.AtMostOnce,
-                    true  // Retained
-                );
+                _mqttClient.Publish(topic, Encoding.UTF8.GetBytes(value), MqttQoSLevel.AtMostOnce, true);
             }
             catch (Exception ex)
             {

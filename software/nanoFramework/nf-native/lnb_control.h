@@ -8,7 +8,7 @@
  * - Current limiting and protection
  * 
  * I2C Address: 0x08 (7-bit address)
- * I2C Bus: I2C1 (PB8=SCL, PB9=SDA)
+ * I2C Bus: I2C1 (PB6=SCL, PB7=SDA)
  * 
  * Register Map:
  * - Register 0x00: Control register (VSEL, Tone, Enable, etc.)

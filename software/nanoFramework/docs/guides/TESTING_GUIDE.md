@@ -52,12 +52,14 @@ GND      ←-------→   GND
 ### Step 1.2: Flash Firmware
 
 ```bash
-# Using ST-Link
-st-flash write nanoCLR.bin 0x08000000
+# Using ST-Link (flash both images)
+st-flash write nanoBooter.bin 0x08000000
+st-flash write nanoCLR.bin 0x08004000
 
 # Or using OpenOCD
 openocd -f interface/stlink.cfg -f target/stm32f4x.cfg \
-    -c "program nanoCLR.bin 0x08000000 verify reset exit"
+    -c "program nanoBooter.bin 0x08000000 verify" \
+    -c "program nanoCLR.bin 0x08004000 verify reset exit"
 ```
 
 ### Step 1.3: Verify Boot Sequence

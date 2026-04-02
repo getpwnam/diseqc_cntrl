@@ -31,29 +31,43 @@ From `software/nanoFramework/`:
 2. Full build-chain check (includes metadata processor):
 	- `./toolchain/build-chain.sh`
 
-Current known limitation on this Linux toolchain:
+Managed full-build note:
 
-- full `msbuild /t:Build` fails in `NFProjectSystem.MDP.targets` due to `System.Drawing.Common` load failure during metadata processing.
-- managed compile (`/t:Compile`) remains healthy and is the current reliable gate.
+- `toolchain/build-chain.sh`, `toolchain/build-managed-cli.sh`, and `toolchain/compile-blink-test.sh` include Linux metadata-processor workarounds.
+- If you still hit metadata processor errors, use the dedicated script outputs and post the failing command/output.
 
-## Build (Docker)
+## Build (Firmware Profiles)
 
 From `software/nanoFramework/`:
 
 1. Build firmware (default `minimal` profile):
-	- `docker compose run --rm nanoframework-build /work/toolchain/build.sh`
+	- `./toolchain/build.sh minimal`
 2. Build firmware (`w5500-native` scaffold profile):
-	- `docker compose run --rm -e NF_BUILD_PROFILE=w5500-native nanoframework-build /work/toolchain/build.sh`
-3. Build firmware (`network` profile, deprecated transitional path):
-	- `docker compose run --rm -e NF_BUILD_PROFILE=network nanoframework-build /work/toolchain/build.sh`
-4. Confirm output artifacts exist in `build/`:
+	- `./toolchain/build.sh w5500-native`
+3. Build firmware (`bringup-smoke` hardware proof profile):
+	- `./toolchain/build.sh bringup-smoke`
+4. Build firmware (`bringup-hardalive` bare-metal proof profile):
+	- `./toolchain/build.sh bringup-hardalive`
+5. Build firmware (`network` profile, deprecated transitional path):
+	- `./toolchain/build.sh network`
+6. Confirm output artifacts exist in `build/`:
 	- `nanoCLR.bin`
 	- `nanoCLR.hex`
 	- `nanoCLR.elf`
 
+## Build Managed Test App (BlinkBringup)
+
+From `software/nanoFramework/`:
+
+1. Build managed test app:
+	- `./toolchain/compile-blink-test.sh`
+2. Confirm artifact exists:
+	- `tests/BlinkBringup/bin/Release/BlinkBringup.pe`
+
 ## Flash
 
-- `st-flash write build/nanoCLR.bin 0x08000000`
+- `st-flash write build/nanoBooter.bin 0x08000000`
+- `st-flash write build/nanoCLR.bin 0x08004000`
 
 ## Verify Basic Command Path
 

@@ -36,6 +36,9 @@ fp-info-cache
 # Archived Backups (KiCad 6.0)
 **/*-backups/*.zip
 
+# Generated fabrication exports; commit only curated release bundles intentionally.
+production/diseqc_cntrl/
+
 # Local project settings
 *.kicad_prl
 

@@ -31,7 +31,19 @@ int main(void)
     crcStart(NULL);
 #endif
 
-    sdStart(&SERIAL_DRIVER, NULL);
+    // Explicit 115200 8N1 config — do not pass NULL, ChibiOS default may differ.
+    static const SerialConfig usart3_cfg = {
+        115200,
+        0,
+        USART_CR2_STOP1_BITS,
+        0
+    };
+
+    // Ensure PB10/PB11 are in USART3 alternate function before starting the driver.
+    palSetLineMode(PAL_LINE(GPIOB, 10U), PAL_MODE_ALTERNATE(7));  // PB10 = USART3_TX
+    palSetLineMode(PAL_LINE(GPIOB, 11U), PAL_MODE_ALTERNATE(7));  // PB11 = USART3_RX
+
+    sdStart(&SERIAL_DRIVER, &usart3_cfg);
 
     osThreadCreate(osThread(ReceiverThread), NULL);
 

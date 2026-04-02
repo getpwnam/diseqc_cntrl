@@ -15,9 +15,10 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "`n========================================"  -ForegroundColor Green
     Write-Host "Build completed successfully!" -ForegroundColor Green
     Write-Host "========================================" -ForegroundColor Green
-    Write-Host "`nFirmware location: build/nanoCLR.bin" -ForegroundColor Green
+    Write-Host "`nFirmware location: build/ (nanoBooter.bin + nanoCLR.bin)" -ForegroundColor Green
     Write-Host "`nTo flash to board:" -ForegroundColor Yellow
-    Write-Host "  st-flash write build/nanoCLR.bin 0x08000000" -ForegroundColor White
+    Write-Host "  st-flash write build/nanoBooter.bin 0x08000000" -ForegroundColor White
+    Write-Host "  st-flash write build/nanoCLR.bin 0x08004000" -ForegroundColor White
 } else {
     Write-Host "`n========================================"  -ForegroundColor Red
     Write-Host "Build failed!" -ForegroundColor Red

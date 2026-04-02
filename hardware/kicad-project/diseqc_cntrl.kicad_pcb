@@ -1483,7 +1483,7 @@
 		(descr "USB4110-GF-A-1")
 		(tags "Connector")
 		(property "Reference" "J4"
-			(at 0 -0.536 90)
+			(at -0.085 1.222 90)
 			(layer "F.SilkS")
 			(uuid "a291602e-4313-4957-9d45-8bdec2684e76")
 			(effects
@@ -1942,7 +1942,7 @@
 			(uuid "f3041f23-243a-453c-a864-ed434f36d8e2")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 -0.536 90)
+			(at -0.055 1.162 90)
 			(layer "F.Fab")
 			(uuid "34051923-eb68-4931-bdcf-fc6f34f63bef")
 			(effects
@@ -37020,14 +37020,6 @@
 		(uuid "f46cb098-31fa-4aa1-aa8e-5797dcc51aba")
 	)
 	(segment
-		(start 70.45 127.31)
-		(end 72.9375 127.31)
-		(width 0.2)
-		(layer "F.Cu")
-		(net 25)
-		(uuid "05e33f6c-6dfe-4039-8e4d-9ee59b739d27")
-	)
-	(segment
 		(start 55.002 130.356)
 		(end 56.5606 131.915)
 		(width 0.2)
@@ -37052,20 +37044,20 @@
 		(uuid "3d98c47d-220b-44dd-a566-2dbe16035bd8")
 	)
 	(segment
-		(start 72.9375 127.31)
-		(end 73.1275 127.5)
-		(width 0.2)
-		(layer "F.Cu")
-		(net 25)
-		(uuid "433ef69f-54fd-4a07-93d5-7a56616c6226")
-	)
-	(segment
 		(start 58.38 132.215)
 		(end 58.38 131.915)
 		(width 0.2)
 		(layer "F.Cu")
 		(net 25)
 		(uuid "44fb804f-8d64-400a-aad2-7a0648f44cfc")
+	)
+	(segment
+		(start 72.9375 127.31)
+		(end 73.1275 127.5)
+		(width 0.2)
+		(layer "F.Cu")
+		(net 25)
+		(uuid "7f3d90d8-1e36-4ce9-bf42-3ca8b0f8eff5")
 	)
 	(segment
 		(start 58.38 127.14)
@@ -37098,6 +37090,14 @@
 		(layer "F.Cu")
 		(net 25)
 		(uuid "b7ed064b-f908-41e0-802e-4d3d3194d44b")
+	)
+	(segment
+		(start 70.45 127.31)
+		(end 72.9375 127.31)
+		(width 0.2)
+		(layer "F.Cu")
+		(net 25)
+		(uuid "f0b1f445-f93a-4152-b3ed-87d62a4aaf1e")
 	)
 	(segment
 		(start 55.002 129.615)
@@ -39505,15 +39505,7 @@
 		(width 0.2)
 		(layer "F.Cu")
 		(net 92)
-		(uuid "2f7462c9-4852-481c-8880-8a4731d43fb9")
-	)
-	(segment
-		(start 109.088 83.712)
-		(end 111.82 83.712)
-		(width 0.2)
-		(layer "F.Cu")
-		(net 92)
-		(uuid "9af4ecf5-1a50-4995-a3fc-f02b7156f506")
+		(uuid "4c10a4d9-d310-4ee4-a9c1-45c1fd2dd2f6")
 	)
 	(segment
 		(start 74.9525 127.5)
@@ -39522,6 +39514,14 @@
 		(layer "F.Cu")
 		(net 92)
 		(uuid "9cedfba2-c909-42dc-b1a4-216c7db26580")
+	)
+	(segment
+		(start 109.088 83.712)
+		(end 111.82 83.712)
+		(width 0.2)
+		(layer "F.Cu")
+		(net 92)
+		(uuid "b5493229-6de3-4afa-b276-ddb766da52ed")
 	)
 	(segment
 		(start 77.26 127.5)

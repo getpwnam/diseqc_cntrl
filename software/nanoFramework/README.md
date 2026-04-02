@@ -31,21 +31,68 @@ Recommended local sequence before commit:
 1. `./toolchain/compile-managed.sh`
 2. `cd tests/DiSEqC_Control.Tests && dotnet test -v minimal`
 
+#### Managed Build + Optional Deploy (CLI helper)
+
+Use the helper script when you want a single command path for full managed build (`/t:Build`) and optional deploy via `nanoff`:
+
+- Build only:
+	- `./toolchain/build-managed-cli.sh`
+- Build and deploy:
+	- `./toolchain/build-managed-cli.sh --deploy --serialport /dev/ttyUSB0 --address 0x080C0000`
+
+Notes:
+
+- Deployment requires a valid target deployment address for your firmware layout.
+- Use `./toolchain/build-managed-cli.sh --help` for all options.
+
+Windows PowerShell (outside WSL):
+
+- Build only:
+	- `powershell -ExecutionPolicy Bypass -File .\toolchain\build-managed-cli.ps1`
+- Build and deploy:
+	- `powershell -ExecutionPolicy Bypass -File .\toolchain\build-managed-cli.ps1 -Deploy -SerialPort COM5 -Address 0x080C0000`
+
+PowerShell script auto-detects `NanoFrameworkProjectSystemPath` from the installed VS Code extension, or you can override with `-NanoPsPath`.
+If `nuget.exe` is not in PATH, the script automatically falls back to MSBuild restore. It resolves MSBuild in this order: `msbuild` from PATH, Visual Studio Build Tools via `vswhere`, then `dotnet msbuild`.
+
+If `dotnet msbuild` fails with the known `System.Drawing.Common` metadata processor error while running from a `\\wsl.localhost\...` workspace path, the script automatically retries managed build through WSL using `toolchain/build-managed-cli.sh`. If that retry fails, it performs a second retry through `toolchain/build-chain.sh` (which includes the metadata-processor workaround used on Linux).
+
+If VS Code extension is installed in WSL (remote) rather than Windows, pass it explicitly, for example:
+
+- `powershell -ExecutionPolicy Bypass -File .\toolchain\build-managed-cli.ps1 -NanoPsPath "\\wsl.localhost\Debian\home\cp\.vscode-server\extensions\nanoframework.vscode-nanoframework-1.0.189\dist\utils\nanoFramework\v1.0"`
+
 ### 2) Firmware Build (nf-interpreter / nanoCLR)
 
 Builds firmware artifacts by fetching/using `nf-interpreter` inside Docker and compiling the `M0DMF_DISEQC_F407` target.
 
-Commands:
+Commands (recommended wrapper):
 
-- Minimal profile: `docker compose run --rm nanoframework-build /work/toolchain/build.sh`
-- W5500-native profile: `docker compose run --rm -e NF_BUILD_PROFILE=w5500-native nanoframework-build /work/toolchain/build.sh`
-- Network profile (deprecated transitional path): `docker compose run --rm -e NF_BUILD_PROFILE=network nanoframework-build /work/toolchain/build.sh`
+- Minimal profile: `./toolchain/build.sh minimal`
+- W5500-native profile: `./toolchain/build.sh w5500-native`
+- Bring-up smoke profile (PA2 blink + USART3 heartbeat): `./toolchain/build.sh bringup-smoke`
+- Bring-up hardalive profile (PA2 + PB10 hard toggle, no RTOS/CLR): `./toolchain/build.sh bringup-hardalive`
+- USB no-VBUS-sense profile (current board revision): `./toolchain/build.sh usb-no-vbus-sense`
+- Network profile (deprecated transitional path): `./toolchain/build.sh network`
+
+The wrapper auto-runs inside Docker when invoked from host Linux/WSL, and also works when already inside the container.
 
 Expected firmware outputs in `build/`:
 
 - `nanoCLR.bin`
 - `nanoCLR.hex`
 - `nanoCLR.elf`
+
+### Managed Test Applications
+
+Current managed test application(s):
+
+- `tests/BlinkBringup/`:
+	- Purpose: first wire-protocol deployment target that only blinks PA2.
+	- Build: `./toolchain/compile-blink-test.sh`
+	- Output: `tests/BlinkBringup/bin/Release/BlinkBringup.pe`
+	- Deploy over USART3 wire protocol with `nanoff` to `0x080C0000`.
+
+This app intentionally avoids serial output so it does not interfere with wire-protocol traffic.
 
 ## MQTT Transport Mode (Phase 3.5)
 
