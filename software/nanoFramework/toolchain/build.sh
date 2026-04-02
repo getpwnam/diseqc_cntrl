@@ -34,7 +34,7 @@ TARGET_NAME="M0DMF_DISEQC_F407"
 BUILD_TYPE="Release"
 BUILD_PROFILE="${NF_BUILD_PROFILE:-${1:-minimal}}"
 
-ENABLE_HSI_PLL="1"  # board has no HSE crystal; all profiles use HSI PLL
+ENABLE_HSI_PLL="0"  # HSE 8MHz crystal fitted; individual profiles override to HSI if needed
 
 case "$BUILD_PROFILE" in
     minimal)
@@ -53,7 +53,7 @@ case "$BUILD_PROFILE" in
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
-        ENABLE_HSI_PLL="1"
+        ENABLE_HSI_PLL="0"
         PROFILE_STATUS="stable"
         PROFILE_NOTE="Minimal non-network firmware profile"
         ;;
@@ -92,7 +92,7 @@ case "$BUILD_PROFILE" in
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="OFF"
         ENABLE_HAL_RTC="FALSE"
-        ENABLE_HSI_PLL="1"
+        ENABLE_HSI_PLL="0"
         PROFILE_STATUS="experimental"
         PROFILE_NOTE="Hardware bring-up smoke profile (PA2 blink + USART3 heartbeat)"
         ;;
@@ -112,7 +112,7 @@ case "$BUILD_PROFILE" in
         ENABLE_BRINGUP_HARDALIVE="TRUE"
         ENABLE_FEATURE_RTC="OFF"
         ENABLE_HAL_RTC="FALSE"
-        ENABLE_HSI_PLL="1"
+        ENABLE_HSI_PLL="0"
         PROFILE_STATUS="experimental"
         PROFILE_NOTE="Bare-metal bring-up profile (PA2 + PB10 hard toggle, no RTOS/CLR startup)"
         ;;
@@ -379,6 +379,15 @@ EOF_MCU_OVERRIDES
 
 #undef STM32_MAC_USE_ETH
 #define STM32_MAC_USE_ETH                  ${ENABLE_STM32_MAC_ETH}
+
+// RTC clock source: use internal LSI; this board does not require LSE.
+// Keeps main system clock on HSE+PLL while avoiding RTC init hangs.
+#undef STM32_LSI_ENABLED
+#define STM32_LSI_ENABLED                  TRUE
+#undef STM32_LSE_ENABLED
+#define STM32_LSE_ENABLED                  FALSE
+#undef STM32_RTCSEL
+#define STM32_RTCSEL                       STM32_RTCSEL_LSI
 
 EOF_MCU_PROFILE_OVERRIDES
 

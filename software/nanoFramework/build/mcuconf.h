@@ -31,13 +31,13 @@
 #define STM32_NO_INIT                       FALSE
 #define STM32_HSI_ENABLED                   TRUE
 #define STM32_LSI_ENABLED                   TRUE
-#define STM32_HSE_ENABLED                   FALSE  /* no HSE crystal fitted */
+#define STM32_HSE_ENABLED                   TRUE
 #define STM32_LSE_ENABLED                   FALSE
 #define STM32_CLOCK48_REQUIRED              TRUE
 #define STM32_SW                            STM32_SW_PLL
-#define STM32_PLLSRC                        STM32_PLLSRC_HSI  /* HSI 16MHz -> PLLM=8 -> VCO_in=2MHz */
+#define STM32_PLLSRC                        STM32_PLLSRC_HSE  /* 8MHz crystal -> PLLM=8 -> VCO_in=1MHz */
 #define STM32_PLLM_VALUE                    8
-#define STM32_PLLN_VALUE                    168  /* VCO_out=336MHz, SYSCLK=168MHz */
+#define STM32_PLLN_VALUE                    336  /* VCO_out=336MHz, SYSCLK=168MHz */
 #define STM32_PLLP_VALUE                    2
 #define STM32_PLLQ_VALUE                    7  /* USB=48MHz */
 #define STM32_HPRE                          STM32_HPRE_DIV1
