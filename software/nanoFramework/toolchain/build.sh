@@ -548,6 +548,11 @@ fi
 # Ensure HAL settings match this board capabilities in both firmware images
 for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; do
     if [ -f "$cfg" ]; then
+        RTC_HAL_SETTING="$ENABLE_HAL_RTC"
+        if [[ "$cfg" == *"/nanoBooter/"* ]]; then
+            RTC_HAL_SETTING="FALSE"
+        fi
+
         # ChibiOS 9.x requires these markers in halconf.h.
         if ! grep -q "_CHIBIOS_HAL_CONF_" "$cfg"; then
             sed -i '/#define HALCONF_H/a #define _CHIBIOS_HAL_CONF_' "$cfg"
@@ -571,7 +576,7 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
 #undef HAL_USE_PAL
 #define HAL_USE_PAL                         TRUE
 #undef HAL_USE_RTC
-#define HAL_USE_RTC                         ${ENABLE_HAL_RTC}
+#define HAL_USE_RTC                         ${RTC_HAL_SETTING}
 #undef HAL_USE_MAC
 #define HAL_USE_MAC                         ${ENABLE_HAL_MAC}
 #undef HAL_USE_WDG
