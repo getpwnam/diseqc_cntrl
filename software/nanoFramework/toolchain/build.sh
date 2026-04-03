@@ -423,9 +423,14 @@ EOF_MCU_HSI_PLL
         fi
     done
 
-    # Increase nanoCLR code space for this custom target by reducing deployment region.
+    # Normalize CLR/deployment layout for STM32F407xG.
+    # - Keep managed deployment at 0x080C0000 (256KB)
+    # - Allocate remaining flash after booter to nanoCLR (752KB)
     if [ -f "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld" ]; then
-        sed -E -i 's/768[Kk]/512k/g' "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld"
+        sed -E -i \
+            -e 's|^(\s*flash0\s*\(rx\)\s*:\s*org\s*=\s*0x08004000,\s*len\s*=\s*).*$|\1 1M - 16k - 256k     /* flash size less the space reserved for nanoBooter and application deployment*/|' \
+            -e 's|^(\s*deployment\s*\(rx\)\s*:\s*org\s*=\s*)0x[0-9A-Fa-f]+,\s*len\s*=\s*[^ ]+.*$|\10x080C0000, len = 256k                /* space reserved for application deployment */|' \
+            "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld"
     fi
 
     # Provide a deterministic wire-protocol serial configuration header.
