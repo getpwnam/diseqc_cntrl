@@ -632,6 +632,27 @@ BUILD_DIR="$NF_INTERPRETER_DIR/build/$TARGET_NAME"
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 
+# Full clean when switching build profiles to prevent incremental build contamination.
+# Switching profiles changes the linker script layout, entry-point binary size, and
+# CMake option flags; cached object files from a previous profile produce corrupt
+# binaries whose reset-handler vectors point outside the new binary.
+PROFILE_MARKER_FILE="$BUILD_DIR/.last_profile"
+LAST_PROFILE=""
+if [ -f "$PROFILE_MARKER_FILE" ]; then
+    LAST_PROFILE=$(cat "$PROFILE_MARKER_FILE")
+fi
+if [ "$LAST_PROFILE" != "$BUILD_PROFILE" ]; then
+    if [ -n "$LAST_PROFILE" ]; then
+        echo -e "${YELLOW}Build profile changed from '$LAST_PROFILE' to '$BUILD_PROFILE' — full clean.${NC}"
+    else
+        echo -e "${YELLOW}No previous profile marker — full clean for safety.${NC}"
+    fi
+    rm -rf "$BUILD_DIR"
+    mkdir -p "$BUILD_DIR"
+    cd $BUILD_DIR
+fi
+echo "$BUILD_PROFILE" > "$PROFILE_MARKER_FILE"
+
 # Clear stale CMake cache when options/toolchain change
 rm -f CMakeCache.txt
 rm -rf CMakeFiles
