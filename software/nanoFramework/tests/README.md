@@ -7,7 +7,7 @@ This folder contains managed test applications, host unit tests, and MQTT smoke 
 Purpose:
 
 - Minimal managed deployment target for first wire-protocol validation.
-- Toggles PA2 continuously with no serial output.
+- Toggles PA2 continuously and emits managed runtime diagnostics.
 
 Build:
 

@@ -22,6 +22,10 @@
 - [ ] Revisit remaining remap warnings now that full build chain is stable.
 - [x] Keep `./toolchain/compile-managed.sh` as the safe pre-commit gate until metadata processor issue is fixed.
 
+## STM32-Only Cleanup
+
+- [ ] Remove residual ESP32 references from tooling/docs/scripts and enforce STM32-only terminology in this repository.
+
 ## Managed/Interop Test Coverage
 
 - [x] Add host-only unit test project for pure managed logic (`tests/DiSEqC_Control.Tests`) and run it on Linux.

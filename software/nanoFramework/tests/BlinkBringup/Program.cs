@@ -6,21 +6,23 @@ namespace BlinkBringup
 {
     public static class Program
     {
-        // Board status LED is wired to PA2, which maps to pin number 2.
-        private const int LedPin = 2;
+        // STM32 managed pin encoding in nanoFramework is linear: (portIndex * 16) + pin.
+        // PA2 = 2.
+        private const int StatusLedPin = 2;
 
         public static void Main()
         {
             var gpio = new GpioController();
-            gpio.OpenPin(LedPin, PinMode.Output);
-
-            var state = PinValue.Low;
+            gpio.OpenPin(StatusLedPin, PinMode.Output);
+            gpio.SetPinMode(StatusLedPin, PinMode.Output);
 
             while (true)
             {
-                state = state == PinValue.Low ? PinValue.High : PinValue.Low;
-                gpio.Write(LedPin, state);
-                Thread.Sleep(250);
+                gpio.Write(StatusLedPin, PinValue.High);
+                Thread.Sleep(1000);
+
+                gpio.Write(StatusLedPin, PinValue.Low);
+                Thread.Sleep(1000);
             }
         }
     }

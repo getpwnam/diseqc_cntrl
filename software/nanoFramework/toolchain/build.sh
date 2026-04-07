@@ -355,7 +355,62 @@ if [ "$ENABLE_USB_NO_VBUS_SENSE" = "TRUE" ] && [ -f "$TARGET_DIR/board.h" ]; the
     mv "$tmp_board_h" "$TARGET_DIR/board.h"
 fi
 
-# Copy required ChibiOS target config files from an STM32F4 reference target
+# Copy required ChibiOS target config files from local overrides first,
+# then fill missing files from an STM32F4 reference target.
+LOCAL_TARGET_OVERRIDES_DIR="/work/nf-native/target-overrides"
+
+copy_if_absent() {
+    local src="$1"
+    local dst="$2"
+
+    if [ -f "$src" ] && [ ! -f "$dst" ]; then
+        cp "$src" "$dst"
+    fi
+}
+
+copy_glob_if_absent() {
+    local pattern="$1"
+    local dst_dir="$2"
+    local src
+
+    for src in $pattern; do
+        [ -f "$src" ] || continue
+        copy_if_absent "$src" "$dst_dir/$(basename "$src")"
+    done
+}
+
+mkdir -p "$TARGET_DIR/common" "$TARGET_DIR/nanoCLR" "$TARGET_DIR/nanoBooter"
+
+if [ -d "$LOCAL_TARGET_OVERRIDES_DIR" ]; then
+    echo -e "${YELLOW}Applying local target overrides from $LOCAL_TARGET_OVERRIDES_DIR...${NC}"
+
+    # Core target configuration sources used by API find modules.
+    cp "$LOCAL_TARGET_OVERRIDES_DIR"/target_*.c "$TARGET_DIR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR"/target_*.h "$TARGET_DIR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR"/target_*.cpp "$TARGET_DIR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/target_common.h.in" "$TARGET_DIR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/common/Device_BlockStorage.c" "$TARGET_DIR/common/" 2>/dev/null || true
+    if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
+        cp "$LOCAL_TARGET_OVERRIDES_DIR/common/usbcfg.c" "$TARGET_DIR/common/" 2>/dev/null || true
+        cp "$LOCAL_TARGET_OVERRIDES_DIR/common/usbcfg.h" "$TARGET_DIR/common/" 2>/dev/null || true
+    fi
+
+    # ChibiOS/HAL configuration files.
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/halconf_nf.h" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/chconf.h" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/main.c" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/nanoHAL.cpp" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/target_board.h.in" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/STM32F407xG_CLR.ld" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoBooter/halconf.h" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoBooter/halconf_nf.h" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoBooter/chconf.h" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoBooter/target_board.h.in" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoBooter/STM32F407xG_booter.ld" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoBooter/main.c" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
+fi
+
 REFERENCE_BOARD=""
 for candidate in \
     "$NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F4_DISCOVERY" \
@@ -367,35 +422,33 @@ for candidate in \
 done
 
 if [ -n "$REFERENCE_BOARD" ]; then
-    echo -e "${YELLOW}Copying reference target config files...${NC}"
+    echo -e "${YELLOW}Backfilling missing target files from reference: $REFERENCE_BOARD${NC}"
 
-    mkdir -p "$TARGET_DIR/nanoCLR" "$TARGET_DIR/nanoBooter"
-
-    # Core target configuration sources used by API find modules
-    cp "$REFERENCE_BOARD"/target_*.c "$TARGET_DIR/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD"/target_*.h "$TARGET_DIR/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD"/target_*.cpp "$TARGET_DIR/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/target_common.h.in" "$TARGET_DIR/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/common/Device_BlockStorage.c" "$TARGET_DIR/common/" 2>/dev/null || true
+    # Core target configuration sources used by API find modules.
+    copy_glob_if_absent "$REFERENCE_BOARD/target_*.c" "$TARGET_DIR"
+    copy_glob_if_absent "$REFERENCE_BOARD/target_*.h" "$TARGET_DIR"
+    copy_glob_if_absent "$REFERENCE_BOARD/target_*.cpp" "$TARGET_DIR"
+    copy_if_absent "$REFERENCE_BOARD/target_common.h.in" "$TARGET_DIR/target_common.h.in"
+    copy_if_absent "$REFERENCE_BOARD/common/Device_BlockStorage.c" "$TARGET_DIR/common/Device_BlockStorage.c"
     if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
-        cp "$REFERENCE_BOARD/common/usbcfg.c" "$TARGET_DIR/common/" 2>/dev/null || true
-        cp "$REFERENCE_BOARD/common/usbcfg.h" "$TARGET_DIR/common/" 2>/dev/null || true
+        copy_if_absent "$REFERENCE_BOARD/common/usbcfg.c" "$TARGET_DIR/common/usbcfg.c"
+        copy_if_absent "$REFERENCE_BOARD/common/usbcfg.h" "$TARGET_DIR/common/usbcfg.h"
     fi
 
-    # ChibiOS/HAL configuration files
-    cp "$REFERENCE_BOARD/nanoCLR/halconf.h" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/nanoCLR/halconf_nf.h" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/nanoCLR/chconf.h" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/nanoCLR/main.c" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/nanoCLR/nanoHAL.cpp" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/nanoCLR/target_board.h.in" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/nanoCLR/STM32F407xG_CLR.ld" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/nanoBooter/halconf.h" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/nanoBooter/halconf_nf.h" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/nanoBooter/chconf.h" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/nanoBooter/target_board.h.in" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/nanoBooter/STM32F407xG_booter.ld" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
-    cp "$REFERENCE_BOARD/nanoBooter/main.c" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
+    # ChibiOS/HAL configuration files.
+    copy_if_absent "$REFERENCE_BOARD/nanoCLR/halconf.h" "$TARGET_DIR/nanoCLR/halconf.h"
+    copy_if_absent "$REFERENCE_BOARD/nanoCLR/halconf_nf.h" "$TARGET_DIR/nanoCLR/halconf_nf.h"
+    copy_if_absent "$REFERENCE_BOARD/nanoCLR/chconf.h" "$TARGET_DIR/nanoCLR/chconf.h"
+    copy_if_absent "$REFERENCE_BOARD/nanoCLR/main.c" "$TARGET_DIR/nanoCLR/main.c"
+    copy_if_absent "$REFERENCE_BOARD/nanoCLR/nanoHAL.cpp" "$TARGET_DIR/nanoCLR/nanoHAL.cpp"
+    copy_if_absent "$REFERENCE_BOARD/nanoCLR/target_board.h.in" "$TARGET_DIR/nanoCLR/target_board.h.in"
+    copy_if_absent "$REFERENCE_BOARD/nanoCLR/STM32F407xG_CLR.ld" "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld"
+    copy_if_absent "$REFERENCE_BOARD/nanoBooter/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"
+    copy_if_absent "$REFERENCE_BOARD/nanoBooter/halconf_nf.h" "$TARGET_DIR/nanoBooter/halconf_nf.h"
+    copy_if_absent "$REFERENCE_BOARD/nanoBooter/chconf.h" "$TARGET_DIR/nanoBooter/chconf.h"
+    copy_if_absent "$REFERENCE_BOARD/nanoBooter/target_board.h.in" "$TARGET_DIR/nanoBooter/target_board.h.in"
+    copy_if_absent "$REFERENCE_BOARD/nanoBooter/STM32F407xG_booter.ld" "$TARGET_DIR/nanoBooter/STM32F407xG_booter.ld"
+    copy_if_absent "$REFERENCE_BOARD/nanoBooter/main.c" "$TARGET_DIR/nanoBooter/main.c"
 
     # Ensure linker scripts exist with the exact names expected by /work/build/CMakeLists.txt
     if [ ! -f "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld" ]; then
@@ -659,6 +712,7 @@ CONFIG_RTOS_CHIBIOS=y
 CONFIG_TARGET_BOARD="$TARGET_NAME"
 CONFIG_TARGET_SERIES="STM32F4xx"
 CONFIG_NF_FEATURE_DEBUGGER=y
+CONFIG_NF_DEBUG_ASSERT=y
 CONFIG_API_HARDWARE_STM32=y
 CONFIG_API_SYSTEM_DEVICE_GPIO=y
 CONFIG_API_SYSTEM_DEVICE_I2C=y
