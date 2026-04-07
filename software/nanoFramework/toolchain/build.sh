@@ -13,6 +13,8 @@ if [ ! -f "/.dockerenv" ]; then
     COMPOSE_DIR="$(dirname "$SCRIPT_DIR")"
     exec docker compose -f "$COMPOSE_DIR/docker-compose.yml" run --rm \
         -e NF_BUILD_PROFILE="${1:-${NF_BUILD_PROFILE:-minimal}}" \
+    -e NF_INTERPRETER_REF="${NF_INTERPRETER_REF:-main}" \
+    -e NF_UPDATE_INTERPRETER="${NF_UPDATE_INTERPRETER:-1}" \
         nanoframework-build /work/toolchain/build.sh
 fi
 # ────────────────────────────────────────────────────────────────────────────
@@ -30,9 +32,20 @@ NC='\033[0m' # No Color
 # Configuration
 NF_INTERPRETER_REPO="https://github.com/nanoframework/nf-interpreter.git"
 NF_INTERPRETER_DIR="/nf-interpreter"
+NF_INTERPRETER_REF="${NF_INTERPRETER_REF:-main}"
 TARGET_NAME="M0DMF_DISEQC_F407"
 BUILD_TYPE="Release"
 BUILD_PROFILE="${NF_BUILD_PROFILE:-${1:-minimal}}"
+
+# Performance knobs (override via environment variables).
+# - NF_BUILD_JOBS: parallel compile jobs (default: all host cores)
+# - NF_INCREMENTAL_BUILD: 1 keeps CMake cache between same-profile builds, 0 forces cache clean
+# - NF_CLEAN_FETCHCONTENT: 1 purges _deps/chibios fetch state, 0 keeps it for faster rebuilds
+# - NF_UPDATE_INTERPRETER: 1 runs git fetch/pull on nf-interpreter, 0 skips network update
+BUILD_JOBS="${NF_BUILD_JOBS:-$(nproc)}"
+INCREMENTAL_BUILD="${NF_INCREMENTAL_BUILD:-1}"
+CLEAN_FETCHCONTENT="${NF_CLEAN_FETCHCONTENT:-0}"
+UPDATE_INTERPRETER="${NF_UPDATE_INTERPRETER:-0}"
 
 ENABLE_HSI_PLL="0"  # HSE 8MHz crystal fitted; individual profiles override to HSI if needed
 
@@ -53,9 +66,9 @@ case "$BUILD_PROFILE" in
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
-        ENABLE_HSI_PLL="0"
+        ENABLE_HSI_PLL="1"
         PROFILE_STATUS="stable"
-        PROFILE_NOTE="Minimal non-network firmware profile"
+        PROFILE_NOTE="Minimal non-network firmware profile (HSI PLL forced for clock isolation)"
         ;;
     w5500-native)
         ENABLE_SYSTEM_NET="OFF"
@@ -192,20 +205,82 @@ if [ ! -d "$NF_INTERPRETER_DIR/.git" ]; then
     echo -e "${YELLOW}Cloning nf-interpreter repository...${NC}"
     git clone --recursive $NF_INTERPRETER_REPO $NF_INTERPRETER_DIR
     cd $NF_INTERPRETER_DIR
-    git checkout develop
+    git fetch --all --tags --prune || true
+    git checkout "$NF_INTERPRETER_REF"
     git submodule update --init --recursive
 else
     echo -e "${GREEN}nf-interpreter already exists${NC}"
 
-    # Keep an existing clone up to date to reduce mismatches between target
-    # templates and ChibiOS package revisions.
+    # Optionally update existing clone. Skipped by default for faster local rebuilds.
     cd "$NF_INTERPRETER_DIR"
-    git fetch --all --tags --prune || true
-    git checkout develop || true
-    git pull --ff-only || true
-    git submodule update --init --recursive || true
-    git checkout -- CMake/Modules/FindChibiOS.cmake || true
+    git checkout -- CMake/Modules/FindChibiOS.cmake src/CLR/Core/TypeSystem.cpp src/CLR/Startup/CLRStartup.cpp || true
+    if [ "$UPDATE_INTERPRETER" = "1" ]; then
+        echo -e "${YELLOW}Updating nf-interpreter (NF_UPDATE_INTERPRETER=1)...${NC}"
+        git fetch --all --tags --prune || true
+        git checkout "$NF_INTERPRETER_REF"
+        git pull --ff-only || true
+        git submodule update --init --recursive || true
+    else
+        echo -e "${YELLOW}Skipping nf-interpreter update (NF_UPDATE_INTERPRETER=0).${NC}"
+        git fetch --tags --prune || true
+        git checkout "$NF_INTERPRETER_REF"
+        git submodule update --init --recursive || true
+    fi
+
+    if ! git rev-parse --verify --quiet "$NF_INTERPRETER_REF" >/dev/null; then
+        echo -e "${RED}Unable to verify nf-interpreter ref '$NF_INTERPRETER_REF'.${NC}"
+        exit 1
+    fi
+
+    CURRENT_REF="$(git rev-parse --short HEAD)"
+    echo -e "${YELLOW}Using nf-interpreter ref: $NF_INTERPRETER_REF ($CURRENT_REF)${NC}"
 fi
+
+# Keep the generated nanoCLR target header globally visible for CLR support
+# libraries, but do not export the nanoBooter target header globally. When
+# both are present the shared CLR sources can resolve the wrong target_board.h
+# based on include order.
+echo -e "${YELLOW}Patching ChibiOS include path leakage...${NC}"
+sed -i '\|list(APPEND CHIBIOS_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/targets/ChibiOS/${TARGET_BOARD}/nanoBooter)|d' \
+    "$NF_INTERPRETER_DIR/CMake/Modules/FindChibiOS.cmake"
+
+# Older interpreter refs contain a typo that seeds CHIBIOS source lookup with
+# an invalid NOTFOUND token, which later propagates to target_sources().
+sed -i 's/set(CHIBIOS_SRC_FILE SRC_FILE -NOTFOUND)/set(CHIBIOS_SRC_FILE SRC_FILE-NOTFOUND)/' \
+    "$NF_INTERPRETER_DIR/CMake/Modules/FindChibiOS.cmake"
+
+# ChibiOS stable_21.11.x provides newlib syscall stubs under
+# os/various/newlib_bindings; older FindChibiOS snapshots only search
+# os/various (non-recursive) and miss this path.
+if ! grep -Fq '/os/various/newlib_bindings' "$NF_INTERPRETER_DIR/CMake/Modules/FindChibiOS.cmake"; then
+    sed -i '/${chibios_SOURCE_DIR}\/os\/various/a\            ${chibios_SOURCE_DIR}/os/various/newlib_bindings' \
+        "$NF_INTERPRETER_DIR/CMake/Modules/FindChibiOS.cmake"
+fi
+
+# Upstream _nanoCLR CMake appends into INTERNAL cache lists without clearing.
+# On repeated configure runs this can retain stale sources (e.g. watchdog) even
+# after options are turned off. Force-reset those lists each configure.
+if ! grep -Fq 'reset nanoCLR source cache lists' "$NF_INTERPRETER_DIR/targets/ChibiOS/_nanoCLR/CMakeLists.txt"; then
+    sed -i '/# append nanoHAL/i \
+# reset nanoCLR source cache lists\
+set(TARGET_CHIBIOS_NANOCLR_SOURCES "" CACHE INTERNAL "reset nanoCLR sources" FORCE)\
+set(TARGET_CHIBIOS_NANOCLR_INCLUDE_DIRS "" CACHE INTERNAL "reset nanoCLR includes" FORCE)\
+' "$NF_INTERPRETER_DIR/targets/ChibiOS/_nanoCLR/CMakeLists.txt"
+fi
+
+if grep -Fq 'list(APPEND CHIBIOS_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/targets/ChibiOS/${TARGET_BOARD}/nanoBooter)' \
+    "$NF_INTERPRETER_DIR/CMake/Modules/FindChibiOS.cmake"; then
+    echo -e "${RED}Failed to remove leaked nanoBooter ChibiOS include path.${NC}"
+    exit 1
+fi
+
+if ! grep -Fq 'list(APPEND CHIBIOS_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/targets/ChibiOS/${TARGET_BOARD}/nanoCLR)' \
+    "$NF_INTERPRETER_DIR/CMake/Modules/FindChibiOS.cmake"; then
+    echo -e "${RED}Missing required nanoCLR ChibiOS include path.${NC}"
+    exit 1
+fi
+
+echo -e "${YELLOW}Using upstream CLR assembly loader (no legacy runtime patching).${NC}"
 
 # Create target directory structure
 echo -e "${YELLOW}Setting up target directory...${NC}"
@@ -433,6 +508,42 @@ EOF_MCU_HSI_PLL
             "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld"
     fi
 
+    # Keep block-storage regions aligned with the linker layout.
+    # Reference STM32F4 Discovery storage map reserves deployment at 0x08040000,
+    # but this target keeps nanoCLR up to 0x080C0000 and deploys into the last
+    # two 128KB sectors (0x080C0000-0x080FFFFF).
+    
+    # Comprehensive block-storage patching: apply to Device_BlockStorage.c AND any target_*.c files
+    BLOCK_STORAGE_PATCH_PATTERN='-E -i -e "s|\{[[:space:]]*BlockRange_BLOCKTYPE_CODE[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*0x08020000[[:space:]]*nanoCLR|{BlockRange_BLOCKTYPE_CODE, 0, 4},      // 0x08020000 nanoCLR|" -e "s#\{[[:space:]]*BlockRange_BLOCKTYPE_DEPLOYMENT[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*(0x08040000|0x080C0000)[[:space:]]*deployment#{BlockRange_BLOCKTYPE_DEPLOYMENT, 5, 6} // 0x080C0000 deployment#"'
+    
+    if [ -f "$TARGET_DIR/common/Device_BlockStorage.c" ]; then
+        sed -E -i \
+            -e 's|\{[[:space:]]*BlockRange_BLOCKTYPE_CODE[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*0x08020000[[:space:]]*nanoCLR|{BlockRange_BLOCKTYPE_CODE, 0, 4},      // 0x08020000 nanoCLR|' \
+            -e 's#\{[[:space:]]*BlockRange_BLOCKTYPE_DEPLOYMENT[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*(0x08040000|0x080C0000)[[:space:]]*deployment#{BlockRange_BLOCKTYPE_DEPLOYMENT, 5, 6} // 0x080C0000 deployment#' \
+            "$TARGET_DIR/common/Device_BlockStorage.c"
+
+        if ! grep -Eq '\{BlockRange_BLOCKTYPE_CODE,[[:space:]]*0,[[:space:]]*4\}' "$TARGET_DIR/common/Device_BlockStorage.c"; then
+            echo -e "${RED}Device_BlockStorage.c patch failed: expected CODE range 0..4 was not found.${NC}"
+            exit 1
+        fi
+
+        if ! grep -Eq '\{BlockRange_BLOCKTYPE_DEPLOYMENT,[[:space:]]*5,[[:space:]]*6\}' "$TARGET_DIR/common/Device_BlockStorage.c"; then
+            echo -e "${RED}Device_BlockStorage.c patch failed: expected DEPLOYMENT range 5..6 was not found.${NC}"
+            exit 1
+        fi
+    fi
+    
+    # Also patch any target_*.c files that may contain BlockRange definitions
+    for target_storage_file in "$TARGET_DIR"/target_*.c; do
+        if [ -f "$target_storage_file" ] && grep -q "BlockRange_BLOCKTYPE" "$target_storage_file"; then
+            echo -e "${YELLOW}Patching block-storage in $(basename $target_storage_file)...${NC}"
+            sed -E -i \
+                -e 's|\{[[:space:]]*BlockRange_BLOCKTYPE_CODE[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*0x08020000[[:space:]]*nanoCLR|{BlockRange_BLOCKTYPE_CODE, 0, 4},      // 0x08020000 nanoCLR|' \
+                -e 's#\{[[:space:]]*BlockRange_BLOCKTYPE_DEPLOYMENT[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*(0x08040000|0x080C0000)[[:space:]]*deployment#{BlockRange_BLOCKTYPE_DEPLOYMENT, 5, 6} // 0x080C0000 deployment#' \
+                "$target_storage_file"
+        fi
+    done
+
     # Provide a deterministic wire-protocol serial configuration header.
     # Do not inherit reference-board SERIAL_DRIVER values.
     if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
@@ -538,6 +649,55 @@ endif()
 # make var global
 set(NANOBOOTER_PROJECT_SOURCES ${NANOBOOTER_PROJECT_SOURCES} CACHE INTERNAL "make global")
 EOF_NANOBOOTER_CMAKE
+
+# nf-interpreter main uses Kconfig to generate nf_config.h, which is included
+# by generated target_os.h. Provide a board-specific defconfig for this custom
+# target so the header is always produced.
+cat > "$TARGET_DIR/defconfig" << EOF_DEFCONFIG
+# defconfig for $TARGET_NAME (generated by toolchain/build.sh)
+CONFIG_RTOS_CHIBIOS=y
+CONFIG_TARGET_BOARD="$TARGET_NAME"
+CONFIG_TARGET_SERIES="STM32F4xx"
+CONFIG_NF_FEATURE_DEBUGGER=y
+CONFIG_API_HARDWARE_STM32=y
+CONFIG_API_SYSTEM_DEVICE_GPIO=y
+CONFIG_API_SYSTEM_DEVICE_I2C=y
+CONFIG_API_SYSTEM_DEVICE_SPI=y
+CONFIG_API_SYSTEM_MATH=y
+CONFIG_API_NANOFRAMEWORK_RUNTIME_EVENTS=y
+CONFIG_API_SYSTEM_RUNTIME_SERIALIZATION=y
+# CONFIG_NF_FEATURE_WATCHDOG is not set
+EOF_DEFCONFIG
+
+if [ "$ENABLE_SYSTEM_NET" = "ON" ]; then
+    echo "CONFIG_API_SYSTEM_NET=y" >> "$TARGET_DIR/defconfig"
+else
+    echo "# CONFIG_API_SYSTEM_NET is not set" >> "$TARGET_DIR/defconfig"
+fi
+
+if [ "$ENABLE_CONFIG_BLOCK" = "ON" ]; then
+    echo "CONFIG_NF_FEATURE_HAS_CONFIG_BLOCK=y" >> "$TARGET_DIR/defconfig"
+else
+    echo "# CONFIG_NF_FEATURE_HAS_CONFIG_BLOCK is not set" >> "$TARGET_DIR/defconfig"
+fi
+
+if [ "$ENABLE_FEATURE_RTC" = "ON" ]; then
+    echo "CONFIG_NF_FEATURE_RTC=y" >> "$TARGET_DIR/defconfig"
+else
+    echo "# CONFIG_NF_FEATURE_RTC is not set" >> "$TARGET_DIR/defconfig"
+fi
+
+if [ "$ENABLE_SNTP" = "ON" ]; then
+    echo "CONFIG_NF_NETWORKING_SNTP=y" >> "$TARGET_DIR/defconfig"
+else
+    echo "# CONFIG_NF_NETWORKING_SNTP is not set" >> "$TARGET_DIR/defconfig"
+fi
+
+if [ "$ENABLE_MBEDTLS" = "ON" ]; then
+    echo "CONFIG_NF_SECURITY_MBEDTLS=y" >> "$TARGET_DIR/defconfig"
+else
+    echo "# CONFIG_NF_SECURITY_MBEDTLS is not set" >> "$TARGET_DIR/defconfig"
+fi
 
 # Copy CMake file override (if provided)
 if [ -f /work/build/CMakeLists.txt ]; then
@@ -653,13 +813,16 @@ if [ "$LAST_PROFILE" != "$BUILD_PROFILE" ]; then
 fi
 echo "$BUILD_PROFILE" > "$PROFILE_MARKER_FILE"
 
-# Clear stale CMake cache when options/toolchain change
-rm -f CMakeCache.txt
-rm -rf CMakeFiles
+# Keep CMake cache for incremental builds when profile is unchanged.
+if [ "$INCREMENTAL_BUILD" = "0" ]; then
+    echo -e "${YELLOW}NF_INCREMENTAL_BUILD=0 -> clearing CMake cache.${NC}"
+    rm -f CMakeCache.txt
+    rm -rf CMakeFiles
+fi
 
-# Clear stale ChibiOS FetchContent state (handles interrupted/locked SVN checkouts)
-if [ -d "$BUILD_DIR/_deps" ]; then
-    echo -e "${YELLOW}Cleaning stale ChibiOS fetch state...${NC}"
+# Clear ChibiOS FetchContent state only on demand.
+if [ "$CLEAN_FETCHCONTENT" = "1" ] && [ -d "$BUILD_DIR/_deps" ]; then
+    echo -e "${YELLOW}NF_CLEAN_FETCHCONTENT=1 -> cleaning ChibiOS fetch state...${NC}"
     for wc in "$BUILD_DIR"/_deps/chibios-src*; do
         if [ -d "$wc/.svn" ]; then
             svn cleanup "$wc" >/dev/null 2>&1 || true
@@ -691,10 +854,12 @@ cmake -G Ninja \
     -DTARGET_SERIES=STM32F4xx \
     -DRTOS=ChibiOS \
     -DTARGET_BOARD=$TARGET_NAME \
+    -DNF_TARGET_DEFCONFIG=targets/ChibiOS/$TARGET_NAME/defconfig \
     -DSUPPORT_ANY_BASE_CONVERSION=OFF \
     -DNF_FEATURE_DEBUGGER=ON \
     -DNF_FEATURE_RTC=$ENABLE_FEATURE_RTC \
     -DNF_FEATURE_WATCHDOG=OFF \
+    -DHAL_USE_WDG_OPTION=FALSE \
     -DNF_FEATURE_HAS_CONFIG_BLOCK=$ENABLE_CONFIG_BLOCK \
     -DAPI_System.Device.Gpio=ON \
     -DAPI_System.Device.Spi=ON \
@@ -715,7 +880,8 @@ fi
 
 # Build
 echo -e "${YELLOW}Building firmware...${NC}"
-cmake --build . --config $BUILD_TYPE
+echo -e "${YELLOW}Using $BUILD_JOBS parallel jobs (NF_BUILD_JOBS).${NC}"
+cmake --build . --config $BUILD_TYPE --parallel "$BUILD_JOBS"
 
 # Check if build succeeded
 if [ -f "nanoCLR.bin" ]; then

@@ -23,6 +23,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libstdc++-arm-none-eabi-newlib \
     && rm -rf /var/lib/apt/lists/*
 
+# Upstream nf-interpreter main currently requires CMake >= 3.31.
+RUN python3 -m pip install --break-system-packages --no-cache-dir "cmake>=3.31"
+
+# Kconfig-based configuration flow in nf-interpreter main requires kconfiglib.
+RUN python3 -m pip install --break-system-packages --no-cache-dir "kconfiglib>=14.1"
+
 WORKDIR /work
 
 CMD ["bash"]

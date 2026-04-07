@@ -4,6 +4,7 @@ param(
     [string]$Solution,
     [string]$NanoPsPath,
     [string]$Image,
+    [switch]$DeployOnly,
     [switch]$Deploy,
     [string]$SerialPort,
     [string]$Address,
@@ -70,7 +71,17 @@ function Get-WslPathInfo {
         return $null
     }
 
-    if ($Path -match '^\\\\wsl\.localhost\\([^\\]+)\\(.+)$') {
+    $normalizedPath = $Path
+
+    if ($normalizedPath.StartsWith('Microsoft.PowerShell.Core\\FileSystem::')) {
+        $normalizedPath = $normalizedPath.Substring('Microsoft.PowerShell.Core\\FileSystem::'.Length)
+    }
+
+    if ($normalizedPath.StartsWith('Microsoft.PowerShell.Core\FileSystem::')) {
+        $normalizedPath = $normalizedPath.Substring('Microsoft.PowerShell.Core\FileSystem::'.Length)
+    }
+
+    if ($normalizedPath -match '^\\\\wsl\.localhost\\([^\\]+)\\(.+)$') {
         $distro = $matches[1]
         $linuxPath = "/" + $matches[2].Replace('\', '/')
         return [PSCustomObject]@{
@@ -80,6 +91,73 @@ function Get-WslPathInfo {
     }
 
     return $null
+}
+
+function Resolve-ProviderPath {
+    param([string]$Path)
+
+    if (-not $Path) {
+        return $Path
+    }
+
+    if ($Path.StartsWith('Microsoft.PowerShell.Core\\FileSystem::')) {
+        return $Path.Substring('Microsoft.PowerShell.Core\\FileSystem::'.Length)
+    }
+
+    if ($Path.StartsWith('Microsoft.PowerShell.Core\FileSystem::')) {
+        return $Path.Substring('Microsoft.PowerShell.Core\FileSystem::'.Length)
+    }
+
+    return $Path
+}
+
+function Resolve-InputPath {
+    param(
+        [string]$Path,
+        [string]$BaseDir,
+        [switch]$MustExist
+    )
+
+    if (-not $Path) {
+        return $Path
+    }
+
+    $normalized = Resolve-ProviderPath -Path $Path
+
+    if ([System.IO.Path]::IsPathRooted($normalized)) {
+        return $normalized
+    }
+
+    $candidates = @()
+
+    try {
+        $cwd = (Get-Location).ProviderPath
+        if ($cwd) {
+            $candidates += (Join-Path $cwd $normalized)
+        }
+    }
+    catch {
+        # Ignore location lookup failures and continue with BaseDir fallback.
+    }
+
+    if ($BaseDir) {
+        $candidates += (Join-Path $BaseDir $normalized)
+    }
+
+    $candidates += $normalized
+    $candidates = $candidates | Select-Object -Unique
+
+    if (-not $MustExist) {
+        return $candidates[0]
+    }
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+
+    return $candidates[-1]
 }
 
 function Invoke-WslManagedBuildFallback {
@@ -268,6 +346,15 @@ if (-not $Project) {
 if (-not $Solution) {
     $Solution = Join-Path $rootDir "DiSEqC_Control\DiSEqC_Control.sln"
 }
+
+$Project = Resolve-InputPath -Path $Project -BaseDir $rootDir -MustExist
+$Solution = Resolve-InputPath -Path $Solution -BaseDir $rootDir -MustExist
+if ($Image) {
+    $Image = Resolve-InputPath -Path $Image -BaseDir $rootDir -MustExist
+}
+if ($NanoPsPath) {
+    $NanoPsPath = Resolve-InputPath -Path $NanoPsPath -BaseDir $rootDir
+}
 $resolvedScriptPath = $null
 if ($PSCommandPath) {
     $resolvedScriptPath = $PSCommandPath
@@ -279,6 +366,7 @@ if ($PSCommandPath) {
 
 $NanoPsPath = Resolve-NanoProjectSystemPath -OverridePath $NanoPsPath -ScriptPath $resolvedScriptPath
 $msbuildCommand = Resolve-MsBuildCommand
+$imageProvidedByUser = -not [string]::IsNullOrWhiteSpace($Image)
 
 if (-not (Test-Path $Project)) {
     throw "Project not found: $Project"
@@ -290,68 +378,99 @@ if (-not (Test-Path $NanoPsPath)) {
     throw "NanoFrameworkProjectSystemPath not found: $NanoPsPath"
 }
 
+$projectDir = Split-Path -Parent $Project
 $targetName = [System.IO.Path]::GetFileNameWithoutExtension($Project)
+$imageDefaultBin = Join-Path $projectDir "bin\$Configuration\$targetName.bin"
+$imageFallback = Join-Path $projectDir "bin\$Configuration\$targetName.pe"
+$imageNfmrk2 = Join-Path $projectDir "bin\$Configuration\$targetName.nfmrk2.bin"
 if (-not $Image) {
-    $projectDir = Split-Path -Parent $Project
-    $Image = Join-Path $projectDir "bin\$Configuration\$targetName.pe"
-}
-
-Write-Host "[1/3] Restoring packages" -ForegroundColor Yellow
-if (Get-Command nuget -ErrorAction SilentlyContinue) {
-    & nuget restore $Solution
-    if ($LASTEXITCODE -ne 0) {
-        throw "NuGet restore failed."
+    if (Test-Path $imageDefaultBin) {
+        $Image = $imageDefaultBin
     }
-}
-else {
-    Write-Host "nuget.exe not found in PATH; falling back to MSBuild restore ($($msbuildCommand.DisplayName))" -ForegroundColor Yellow
-    Invoke-MsBuild -MsBuildCommand $msbuildCommand -Arguments @(
-        $Solution,
-        "/t:Restore",
-        "-verbosity:minimal"
-    )
-    if ($LASTEXITCODE -ne 0) {
-        throw "Package restore failed (nuget missing, msbuild restore fallback failed)."
+    elseif (Test-Path $imageFallback) {
+        $Image = $imageFallback
+    }
+    else {
+        $Image = $imageNfmrk2
     }
 }
 
-Write-Host "[2/3] Building managed project ($Configuration)" -ForegroundColor Yellow
-Write-Host "Using MSBuild command: $($msbuildCommand.DisplayName)" -ForegroundColor DarkGray
-$buildOutput = Invoke-MsBuild -MsBuildCommand $msbuildCommand -Arguments @(
-    $Project,
-    "/t:Build",
-    "/p:Configuration=$Configuration",
-    "/p:NanoFrameworkProjectSystemPath=$NanoPsPath\",
-    "-verbosity:minimal"
-) 2>&1
-$buildExitCode = $LASTEXITCODE
-$buildOutput | ForEach-Object { Write-Host $_ }
-
-if ($buildExitCode -ne 0) {
-    $buildFailedWithSystemDrawingCommon = ($buildOutput | Out-String) -match "System\.Drawing\.Common"
-    $usingDotnetMsbuild = $msbuildCommand.PrefixArgs -contains "msbuild"
-
-    if ($usingDotnetMsbuild -and $buildFailedWithSystemDrawingCommon) {
-        Write-Host "Detected dotnet-msbuild metadata processor dependency failure (System.Drawing.Common)." -ForegroundColor Yellow
-        $wslFallbackOk = Invoke-WslManagedBuildFallback `
-            -ScriptPath $resolvedScriptPath `
-            -ProjectPath $Project `
-            -SolutionPath $Solution `
-            -NanoProjectSystemPath $NanoPsPath `
-            -BuildConfiguration $Configuration `
-            -ImagePath $Image
-
-        if (-not $wslFallbackOk) {
-            throw "Managed build failed (dotnet msbuild metadata processor dependency issue). Install Visual Studio Build Tools (MSBuild) or run from WSL/Linux toolchain."
+if (-not $DeployOnly) {
+    Write-Host "[1/3] Restoring packages" -ForegroundColor Yellow
+    if (Get-Command nuget -ErrorAction SilentlyContinue) {
+        & nuget restore $Solution
+        if ($LASTEXITCODE -ne 0) {
+            throw "NuGet restore failed."
         }
     }
     else {
-        throw "Managed build failed."
+        Write-Host "nuget.exe not found in PATH; falling back to MSBuild restore ($($msbuildCommand.DisplayName))" -ForegroundColor Yellow
+        Invoke-MsBuild -MsBuildCommand $msbuildCommand -Arguments @(
+            $Solution,
+            "/t:Restore",
+            "-verbosity:minimal"
+        )
+        if ($LASTEXITCODE -ne 0) {
+            throw "Package restore failed (nuget missing, msbuild restore fallback failed)."
+        }
     }
+    Write-Host "[2/3] Building managed project ($Configuration)" -ForegroundColor Yellow
+    Write-Host "Using MSBuild command: $($msbuildCommand.DisplayName)" -ForegroundColor DarkGray
+    $buildOutput = Invoke-MsBuild -MsBuildCommand $msbuildCommand -Arguments @(
+        $Project,
+        "/t:Build",
+        "/p:Configuration=$Configuration",
+        "/p:NanoFrameworkProjectSystemPath=$NanoPsPath\",
+        "-verbosity:minimal"
+    ) 2>&1
+    $buildExitCode = $LASTEXITCODE
+    $buildOutput | ForEach-Object { Write-Host $_ }
+
+    if ($buildExitCode -ne 0) {
+        $buildFailedWithSystemDrawingCommon = ($buildOutput | Out-String) -match "System\.Drawing\.Common"
+        $usingDotnetMsbuild = $msbuildCommand.PrefixArgs -contains "msbuild"
+
+        if ($usingDotnetMsbuild -and $buildFailedWithSystemDrawingCommon) {
+            Write-Host "Detected dotnet-msbuild metadata processor dependency failure (System.Drawing.Common)." -ForegroundColor Yellow
+            $wslFallbackOk = Invoke-WslManagedBuildFallback `
+                -ScriptPath $resolvedScriptPath `
+                -ProjectPath $Project `
+                -SolutionPath $Solution `
+                -NanoProjectSystemPath $NanoPsPath `
+                -BuildConfiguration $Configuration `
+                -ImagePath $Image
+
+            if (-not $wslFallbackOk) {
+                throw "Managed build failed (dotnet msbuild metadata processor dependency issue). Install Visual Studio Build Tools (MSBuild) or run from WSL/Linux toolchain."
+            }
+        }
+        else {
+            throw "Managed build failed."
+        }
+    }
+}
+else {
+    Write-Host "[1/3] Build skipped (-DeployOnly)." -ForegroundColor Yellow
 }
 
 if (-not (Test-Path $Image)) {
-    throw "Managed image not found after build: $Image"
+    if (-not $imageProvidedByUser) {
+        if (Test-Path $imageDefaultBin) {
+            $Image = $imageDefaultBin
+        }
+        elseif (Test-Path $imageFallback) {
+            $Image = $imageFallback
+        }
+        elseif (Test-Path $imageNfmrk2) {
+            $Image = $imageNfmrk2
+        }
+        else {
+            throw "Managed image not found after build: $Image"
+        }
+    }
+    else {
+        throw "Managed image not found after build: $Image"
+    }
 }
 
 Write-Host "Managed image ready: $Image" -ForegroundColor Green

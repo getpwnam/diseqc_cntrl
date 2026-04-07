@@ -12,6 +12,10 @@
 #include <nanoCLR_Application.h>
 #include <nanoHAL_v2.h>
 
+#ifndef SWO_OUTPUT
+#define SWO_OUTPUT 0
+#endif
+
 osThreadDef(ReceiverThread, osPriorityHigh, 2048, "ReceiverThread");
 osThreadDef(CLRStartupThread, osPriorityNormal, 4096, "CLRStartupThread");
 

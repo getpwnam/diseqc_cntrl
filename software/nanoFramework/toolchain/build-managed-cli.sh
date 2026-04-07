@@ -5,14 +5,53 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT="${PROJECT:-$ROOT_DIR/DiSEqC_Control/DiSEqC_Control.nfproj}"
 SOLUTION="${SOLUTION:-$ROOT_DIR/DiSEqC_Control/DiSEqC_Control.sln}"
-NANO_PS_PATH="${NANO_PS_PATH:-/home/cp/.vscode-server/extensions/nanoframework.vscode-nanoframework-1.0.189/dist/utils/nanoFramework/v1.0/}"
+
+resolve_nano_ps_path() {
+  local root="/home/cp/.vscode-server/extensions"
+  local latest=""
+
+  if [[ -d "$root" ]]; then
+    latest="$(ls -1d "$root"/nanoframework.vscode-nanoframework-* 2>/dev/null | sort -V | tail -n 1)"
+    if [[ -n "$latest" && -d "$latest/dist/utils/nanoFramework/v1.0" ]]; then
+      echo "$latest/dist/utils/nanoFramework/v1.0/"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+if [[ -n "${NANO_PS_PATH:-}" ]]; then
+  NANO_PS_PATH="$NANO_PS_PATH"
+else
+  NANO_PS_PATH="$(resolve_nano_ps_path || true)"
+fi
+
+# If caller/environment provided a stale path, try auto-detect before failing.
+if [[ -n "$NANO_PS_PATH" && ! -d "$NANO_PS_PATH" ]]; then
+  AUTO_NANO_PS_PATH="$(resolve_nano_ps_path || true)"
+  if [[ -n "$AUTO_NANO_PS_PATH" && -d "$AUTO_NANO_PS_PATH" ]]; then
+    NANO_PS_PATH="$AUTO_NANO_PS_PATH"
+  fi
+fi
+
 CONFIGURATION="${CONFIGURATION:-Release}"
 IMAGE_PATH=""
+IMAGE_ARG_SET="false"
+NF_MDP_MSBUILDTASK_PATH_EFFECTIVE="${NF_MDP_MSBUILDTASK_PATH:-}"
+NF_MDP_TEMP_DIR=""
 SERIAL_PORT=""
 DEPLOY_ADDRESS=""
 BAUD="115200"
 DO_DEPLOY="false"
 DO_RESET="false"
+
+cleanup() {
+  if [[ -n "$NF_MDP_TEMP_DIR" && -d "$NF_MDP_TEMP_DIR" ]]; then
+    rm -rf "$NF_MDP_TEMP_DIR"
+  fi
+}
+trap cleanup EXIT
 
 usage() {
   cat << 'EOF'
@@ -30,7 +69,7 @@ Options:
   --project <path>                    Path to .nfproj file
   --solution <path>                   Path to .sln file for restore
   --nano-ps-path <path>               nanoFramework project system path
-  --image <path>                      PE image path for deployment (default: bin/<Configuration>/<Target>.pe)
+  --image <path>                      Managed image path for deployment (default: bin/<Configuration>/<Target>.bin, fallback to .pe)
   --deploy                            Deploy managed image after successful build
   --serialport <port>                 Serial wire-protocol port for deployment
   --address <hex>                     Deployment address, e.g. 0x080C0000
@@ -39,7 +78,7 @@ Options:
   --help                              Show this help message
 
 Notes:
-  - This script performs a full managed Build (/t:Build), producing .pe artifacts.
+  - This script performs a full managed Build (/t:Build), producing .pe and (for app projects) .bin artifacts.
   - Deployment uses nanoff: --nanodevice --deploy --image --address --serialport.
   - You must provide a valid deployment address for your firmware memory layout.
 EOF
@@ -65,6 +104,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --image)
       IMAGE_PATH="$2"
+      IMAGE_ARG_SET="true"
       shift 2
       ;;
     --deploy)
@@ -109,14 +149,44 @@ if [[ ! -f "$SOLUTION" ]]; then
   exit 1
 fi
 
-if [[ ! -d "$NANO_PS_PATH" ]]; then
+if [[ -z "$NANO_PS_PATH" || ! -d "$NANO_PS_PATH" ]]; then
   echo "NanoFrameworkProjectSystemPath not found: $NANO_PS_PATH" >&2
+  echo "Install the nanoFramework VS Code extension in this WSL environment, or pass --nano-ps-path explicitly." >&2
   exit 2
 fi
 
+# Linux host workaround for nanoFramework metadata processor dependency.
+if [[ -z "$NF_MDP_MSBUILDTASK_PATH_EFFECTIVE" ]]; then
+  MONO_SYSTEM_DRAWING=""
+  if [[ -f "/usr/lib/mono/4.5/System.Drawing.dll" ]]; then
+    MONO_SYSTEM_DRAWING="/usr/lib/mono/4.5/System.Drawing.dll"
+  else
+    MONO_SYSTEM_DRAWING="$(find /usr/lib/mono -name System.Drawing.dll | head -n 1 || true)"
+  fi
+
+  if [[ -n "$MONO_SYSTEM_DRAWING" ]]; then
+    NF_MDP_TEMP_DIR="$(mktemp -d /tmp/nf-mdp-managed-XXXXXX)"
+    cp -a "$NANO_PS_PATH"/* "$NF_MDP_TEMP_DIR"/
+    cp "$MONO_SYSTEM_DRAWING" "$NF_MDP_TEMP_DIR/System.Drawing.dll"
+    NF_MDP_MSBUILDTASK_PATH_EFFECTIVE="$NF_MDP_TEMP_DIR"
+  else
+    echo "[warn] Mono System.Drawing.dll not found; build may fail with System.Drawing.Common load error." >&2
+  fi
+fi
+
 TARGET_NAME="$(basename "$PROJECT" .nfproj)"
+IMAGE_DEFAULT_BIN_PATH="$(dirname "$PROJECT")/bin/$CONFIGURATION/$TARGET_NAME.bin"
+IMAGE_FALLBACK_PATH="$(dirname "$PROJECT")/bin/$CONFIGURATION/$TARGET_NAME.pe"
+IMAGE_NFMRK2_PATH="$(dirname "$PROJECT")/bin/$CONFIGURATION/$TARGET_NAME.nfmrk2.bin"
+
 if [[ -z "$IMAGE_PATH" ]]; then
-  IMAGE_PATH="$(dirname "$PROJECT")/bin/$CONFIGURATION/$TARGET_NAME.pe"
+  if [[ -f "$IMAGE_DEFAULT_BIN_PATH" ]]; then
+    IMAGE_PATH="$IMAGE_DEFAULT_BIN_PATH"
+  elif [[ -f "$IMAGE_FALLBACK_PATH" ]]; then
+    IMAGE_PATH="$IMAGE_FALLBACK_PATH"
+  else
+    IMAGE_PATH="$IMAGE_NFMRK2_PATH"
+  fi
 fi
 
 echo "[1/3] Restoring packages"
@@ -127,11 +197,25 @@ echo "[2/3] Building managed project ($CONFIGURATION)"
   /t:Build \
   -p:Configuration="$CONFIGURATION" \
   "-p:NanoFrameworkProjectSystemPath=$NANO_PS_PATH" \
+  "-p:NF_MDP_MSBUILDTASK_PATH=$NF_MDP_MSBUILDTASK_PATH_EFFECTIVE" \
   -verbosity:minimal
 
 if [[ ! -f "$IMAGE_PATH" ]]; then
-  echo "Managed image not found after build: $IMAGE_PATH" >&2
-  exit 1
+  if [[ "$IMAGE_ARG_SET" == "false" ]]; then
+    if [[ -f "$IMAGE_DEFAULT_BIN_PATH" ]]; then
+      IMAGE_PATH="$IMAGE_DEFAULT_BIN_PATH"
+    elif [[ -f "$IMAGE_FALLBACK_PATH" ]]; then
+      IMAGE_PATH="$IMAGE_FALLBACK_PATH"
+    elif [[ -f "$IMAGE_NFMRK2_PATH" ]]; then
+      IMAGE_PATH="$IMAGE_NFMRK2_PATH"
+    else
+      echo "Managed image not found after build: $IMAGE_PATH" >&2
+      exit 1
+    fi
+  else
+    echo "Managed image not found after build: $IMAGE_PATH" >&2
+    exit 1
+  fi
 fi
 
 echo "Managed image ready: $IMAGE_PATH"

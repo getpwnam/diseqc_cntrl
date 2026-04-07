@@ -89,10 +89,22 @@ Current managed test application(s):
 - `tests/BlinkBringup/`:
 	- Purpose: first wire-protocol deployment target that only blinks PA2.
 	- Build: `./toolchain/compile-blink-test.sh`
-	- Output: `tests/BlinkBringup/bin/Release/BlinkBringup.pe`
+	- Output: prefer `tests/BlinkBringup/bin/Release/BlinkBringup.bin` when produced; otherwise deploy `BlinkBringup.pe`
 	- Deploy over USART3 wire protocol with `nanoff` to `0x080C0000`.
 
 This app intentionally avoids serial output so it does not interfere with wire-protocol traffic.
+
+### Bring-up Session Logging
+
+To keep debugging history stable across long sessions and context compaction, append test outcomes to:
+
+- `docs/BRINGUP_TEST_LOG.md`
+
+Helper command:
+
+- `./toolchain/bringup_log_append.sh --result PASS|FAIL|INFO --conclusion "one-line conclusion"`
+
+Use `--help` for optional fields (`--commands`, `--artifact`, `--breakpoints`, `--note`).
 
 ## MQTT Transport Mode (Phase 3.5)
 

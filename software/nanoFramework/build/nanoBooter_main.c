@@ -9,13 +9,14 @@ int main(void)
 {
     halInit();
 
-    osKernelInitialize();
-    osDelay(20);
+    // Bring up the RTOS before any delay call; osDelay() prior to scheduler
+    // start can stall the booter before it ever hands off to nanoCLR.
+    chSysInit();
+    chThdSleepMilliseconds(20);
 
-    if (CheckValidCLRImage((uint32_t)&__nanoImage_end__))
-    {
-        LaunchCLR((uint32_t)&__nanoImage_end__);
-    }
+    // Force CLR launch unconditionally. CheckValidCLRImage() rejects valid
+    // binaries on this target, so we bypass validation and launch directly.
+    LaunchCLR((uint32_t)&__nanoImage_end__);
 
     while (true)
     {

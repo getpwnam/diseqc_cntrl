@@ -82,6 +82,8 @@ nanoFramework deploys managed code via **Wire Protocol** over UART (USART3).
 2. **Verify boot** via USART3 (115200 8N1)
    - Should see wire protocol ready message or clean boot without errors
    - If RTC hangs (20s+ delay): enable HSI_PLL for that profile
+   - `nanoff --devicedetails` should report `nanoCLR running @ M0DMF_DISEQC_F407`
+   - At this stage, `Native Assemblies` populated with `Assemblies:` still empty is normal until you redeploy a managed app image
 
 ### Deploy Managed Application
 
@@ -112,6 +114,34 @@ From [DiSEqC_Control/](../DiSEqC_Control/) project directory:
 
 **Address**: `0x080C0000` is the managed deployment region (see QUICK_START.md for layout).
 
+### Build In WSL, Flash In Windows (Recommended Hybrid Flow)
+
+Use this when your source tree is in WSL/Linux but your USB serial device is exposed as a Windows COM port.
+
+1. **Build in WSL (no deploy):**
+   ```bash
+   cd /home/cp/Dev/diseqc_cntrl/software/nanoFramework
+   ./toolchain/build-managed-cli.sh \
+     --project tests/BlinkBringup/BlinkBringup.nfproj \
+     --solution DiSEqC_Control/DiSEqC_Control.sln
+   ```
+
+2. **Deploy from Windows PowerShell (COM port):**
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\toolchain\build-managed-cli.ps1 `
+       -Project .\tests\BlinkBringup\BlinkBringup.nfproj `
+       -Solution .\DiSEqC_Control\DiSEqC_Control.sln `
+      -Image .\tests\BlinkBringup\bin\Release\BlinkBringup.pe `
+      -DeployOnly -Deploy -SerialPort COM7 -Address 0x080C0000 -Reset
+   ```
+
+   `-DeployOnly` skips restore/build on Windows and only flashes the prebuilt image.
+
+3. **Important:**
+   - Do not run `./toolchain/build-managed-cli.sh` directly from Windows PowerShell on a `\\wsl.localhost\...` path.
+   - If you need the Bash script from Windows, launch it with `wsl -d Debian -- bash -lc "..."`.
+   - For this target bring-up path, prefer `.bin` when the build produces it. Otherwise deploy the raw `.pe` image. Use `.nfmrk2.bin` only for tooling flows that explicitly require it.
+
 ---
 
 ## Troubleshooting
@@ -140,6 +170,11 @@ From [DiSEqC_Control/](../DiSEqC_Control/) project directory:
 1. Verify managed app (C#) compiles cleanly in Visual Studio
 2. Check app entry point (Program.cs Main()) and required namespaces
 3. Review nanoff log for warnings about missing assemblies
+
+### `devicedetails` Shows Only Native Assemblies
+1. This is expected immediately after flashing `nanoBooter.bin` and `nanoCLR.bin`.
+2. Re-run managed deployment for your app image, for example `tests/BlinkBringup/bin/Release/BlinkBringup.bin`.
+3. Run `nanoff --devicedetails` again after deploy; the managed assembly should then appear under `Assemblies:`.
 
 ---
 
