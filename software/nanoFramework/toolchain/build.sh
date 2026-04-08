@@ -381,12 +381,12 @@ if [ "$ENABLE_USB_NO_VBUS_SENSE" = "TRUE" ] && [ -f "$TARGET_DIR/board.h" ]; the
             print "                                     PIN_MODE_ANALOG(GPIOA_PIN9) |              \\";
             print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN13) |          \\";
             print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN14))";
-            skip_moder = 1;
+            skip_moder = 3;
             next;
         }
 
-        skip_moder == 1 {
-            skip_moder = 0;
+        skip_moder > 0 {
+            skip_moder--;
             next;
         }
 
@@ -394,14 +394,12 @@ if [ "$ENABLE_USB_NO_VBUS_SENSE" = "TRUE" ] && [ -f "$TARGET_DIR/board.h" ]; the
             print "#define VAL_GPIOA_PUPDR             (PIN_PUPDR_FLOATING(GPIOA_PIN2) |           \\";
             print "                                     PIN_PUPDR_PULLUP(GPIOA_PIN8) |             \\";
             print "                                     PIN_PUPDR_PULLDOWN(GPIOA_PIN9))";
-            skip_pupdr = 1;
+            skip_pupdr = 2;
             next;
         }
 
-        skip_pupdr == 1 {
-            if ($0 ~ /GPIOA_PIN8\)\)/) {
-                skip_pupdr = 0;
-            }
+        skip_pupdr > 0 {
+            skip_pupdr--;
             next;
         }
 
