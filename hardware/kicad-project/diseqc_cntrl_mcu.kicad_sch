@@ -6126,7 +6126,7 @@
 	)
 	(wire
 		(pts
-			(xy 220.98 53.34) (xy 227.33 53.34)
+			(xy 194.31 54.61) (xy 200.66 54.61)
 		)
 		(stroke
 			(width 0)
@@ -6213,16 +6213,6 @@
 			(type default)
 		)
 		(uuid "0d20b041-5575-462a-b4c8-a96af8a9fa54")
-	)
-	(wire
-		(pts
-			(xy 195.58 39.37) (xy 198.12 39.37)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "0e5d0871-b31d-4618-bf03-68caaab1e14c")
 	)
 	(wire
 		(pts
@@ -6656,7 +6646,7 @@
 	)
 	(wire
 		(pts
-			(xy 227.33 53.34) (xy 227.33 52.07)
+			(xy 200.66 54.61) (xy 200.66 53.34)
 		)
 		(stroke
 			(width 0)
@@ -6666,7 +6656,7 @@
 	)
 	(wire
 		(pts
-			(xy 223.52 60.96) (xy 220.98 60.96)
+			(xy 196.85 62.23) (xy 194.31 62.23)
 		)
 		(stroke
 			(width 0)
@@ -7126,16 +7116,6 @@
 	)
 	(wire
 		(pts
-			(xy 201.93 31.75) (xy 201.93 30.48)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "9aab9863-2c57-42ec-a92b-1abde72d6e82")
-	)
-	(wire
-		(pts
 			(xy 234.95 33.02) (xy 234.95 38.1)
 		)
 		(stroke
@@ -7586,16 +7566,6 @@
 	)
 	(wire
 		(pts
-			(xy 195.58 31.75) (xy 201.93 31.75)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ebdd4300-f555-4823-855a-1ba4a6ee0e36")
-	)
-	(wire
-		(pts
 			(xy 144.78 147.32) (xy 144.78 154.94)
 		)
 		(stroke
@@ -7814,6 +7784,16 @@
 		)
 		(uuid "1ab3587b-d336-4a06-b210-27bd781efefe")
 	)
+	(label "USART3_RX"
+		(at 187.96 33.02 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "211acb37-9b68-498e-9e80-168cf7e161af")
+	)
 	(label "TIM4_CH1"
 		(at 137.16 22.86 0)
 		(effects
@@ -7853,16 +7833,6 @@
 			(justify right bottom)
 		)
 		(uuid "4b586839-367f-4073-ae29-47cbcaa83fac")
-	)
-	(label "USART3_TX"
-		(at 195.58 34.29 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "4dfcf88d-e6b4-4483-a9bb-78dfd9482c36")
 	)
 	(label "USART3_RX"
 		(at 135.89 147.32 270)
@@ -7914,6 +7884,16 @@
 		)
 		(uuid "7341461b-9e29-4ef9-bc4c-9c40b7ea6e67")
 	)
+	(label "USART3_TX"
+		(at 187.96 29.21 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "815685b1-0e8c-47f2-a408-aa42a530abc2")
+	)
 	(label "I2C1_SDA"
 		(at 17.78 144.78 270)
 		(effects
@@ -7925,7 +7905,7 @@
 		(uuid "89dc7e5a-59cd-4856-adc9-36dfe87d1cf8")
 	)
 	(label "I2C3_SCL"
-		(at 220.98 55.88 0)
+		(at 194.31 57.15 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -8065,7 +8045,7 @@
 		(uuid "d9ad5ef0-0372-4b8c-9d9c-55b0039e59b1")
 	)
 	(label "I2C3_SDA"
-		(at 220.98 58.42 0)
+		(at 194.31 59.69 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -8083,16 +8063,6 @@
 			(justify right bottom)
 		)
 		(uuid "e01277ea-4011-455b-b971-ed1694be7056")
-	)
-	(label "USART3_RX"
-		(at 195.58 36.83 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "e2836d29-4cda-40e9-9102-123a392ddb77")
 	)
 	(label "CC1"
 		(at 262.89 81.28 0)
@@ -9501,74 +9471,8 @@
 		)
 	)
 	(symbol
-		(lib_id "diseqc_cntrl:+3V3")
-		(at 201.93 30.48 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "0a07f96f-f48f-437f-9870-e66596767d53")
-		(property "Reference" "#PWR030"
-			(at 201.93 34.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "+3V3"
-			(at 201.93 25.4 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 201.93 30.48 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 201.93 30.48 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"+3V3\""
-			(at 201.93 30.48 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "df955200-409b-4049-8e62-0764bb00480a")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
-					(reference "#PWR030")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "diseqc_cntrl:GND")
-		(at 223.52 60.96 0)
+		(at 196.85 62.23 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -9577,7 +9481,7 @@
 		(fields_autoplaced yes)
 		(uuid "0eaf4c61-cb6d-408e-ab30-f52b0b393142")
 		(property "Reference" "#PWR029"
-			(at 223.52 67.31 0)
+			(at 196.85 68.58 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9586,7 +9490,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 223.52 66.04 0)
+			(at 196.85 67.31 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9594,7 +9498,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 223.52 60.96 0)
+			(at 196.85 62.23 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9603,7 +9507,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 223.52 60.96 0)
+			(at 196.85 62.23 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9612,7 +9516,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 223.52 60.96 0)
+			(at 196.85 62.23 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10400,72 +10304,6 @@
 			(project ""
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
 					(reference "#FLG04")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "diseqc_cntrl:GND")
-		(at 198.12 39.37 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "243f4516-4e0a-4ad2-afd8-5e226e27b17b")
-		(property "Reference" "#PWR028"
-			(at 198.12 45.72 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "GND"
-			(at 198.12 44.45 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 198.12 39.37 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 198.12 39.37 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 198.12 39.37 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "14ce3e60-4048-44c6-9acf-28c4274c401e")
-		)
-		(instances
-			(project ""
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
-					(reference "#PWR028")
 					(unit 1)
 				)
 			)
@@ -14806,117 +14644,7 @@
 	)
 	(symbol
 		(lib_id "diseqc_cntrl:Conn_01x04_Pin")
-		(at 190.5 34.29 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "dd9fb1df-30be-44be-8f6f-1a3b1d6a6b3f")
-		(property "Reference" "J2"
-			(at 191.135 26.67 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "Conn_01x04_Pin"
-			(at 191.135 29.21 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinHeader_2.00mm:PinHeader_1x04_P2.00mm_Vertical_SMD_Pin1Left"
-			(at 190.5 34.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 190.5 34.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Generic connector, single row, 01x04, script generated"
-			(at 190.5 34.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Maufacturer_Part_Number" ""
-			(at 190.5 34.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Manufacturer_Part_Code" ""
-			(at 190.5 34.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Mouser_Part_Number" ""
-			(at 190.5 34.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Mouser Part Number" "200-TMM10501TSSM"
-			(at 190.5 34.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "2"
-			(uuid "d73c6007-587d-4190-8547-c698e30e7bef")
-		)
-		(pin "4"
-			(uuid "7bec62bb-7f10-4b9a-b0b3-2fd2f138669c")
-		)
-		(pin "3"
-			(uuid "47bb2c90-c789-44a0-9eae-d69ca527b34f")
-		)
-		(pin "1"
-			(uuid "30347e1d-e105-4bdf-b36b-2f27bcbed524")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
-					(reference "J2")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "diseqc_cntrl:Conn_01x04_Pin")
-		(at 215.9 55.88 0)
+		(at 189.23 57.15 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -14925,7 +14653,7 @@
 		(fields_autoplaced yes)
 		(uuid "df5c146b-2189-4402-a6d7-31e03dbb5ec0")
 		(property "Reference" "J3"
-			(at 216.535 48.26 0)
+			(at 189.865 49.53 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14933,7 +14661,7 @@
 			)
 		)
 		(property "Value" "Conn_01x04_Pin"
-			(at 216.535 50.8 0)
+			(at 189.865 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14941,7 +14669,7 @@
 			)
 		)
 		(property "Footprint" "Connector_PinHeader_2.00mm:PinHeader_1x04_P2.00mm_Vertical_SMD_Pin1Left"
-			(at 215.9 55.88 0)
+			(at 189.23 57.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14950,7 +14678,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 215.9 55.88 0)
+			(at 189.23 57.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14959,7 +14687,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x04, script generated"
-			(at 215.9 55.88 0)
+			(at 189.23 57.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14968,7 +14696,7 @@
 			)
 		)
 		(property "Maufacturer_Part_Number" ""
-			(at 215.9 55.88 0)
+			(at 189.23 57.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14977,7 +14705,7 @@
 			)
 		)
 		(property "Manufacturer_Part_Code" ""
-			(at 215.9 55.88 0)
+			(at 189.23 57.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14986,7 +14714,7 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 215.9 55.88 0)
+			(at 189.23 57.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14995,7 +14723,7 @@
 			)
 		)
 		(property "Mouser Part Number" "200-TMM10501TSSM"
-			(at 215.9 55.88 0)
+			(at 189.23 57.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15265,7 +14993,7 @@
 	)
 	(symbol
 		(lib_id "diseqc_cntrl:+3V3")
-		(at 227.33 52.07 0)
+		(at 200.66 53.34 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -15274,7 +15002,7 @@
 		(fields_autoplaced yes)
 		(uuid "f3f9621d-d75a-437a-9172-7b6a9d597721")
 		(property "Reference" "#PWR031"
-			(at 227.33 55.88 0)
+			(at 200.66 57.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15283,7 +15011,7 @@
 			)
 		)
 		(property "Value" "+3V3"
-			(at 227.33 46.99 0)
+			(at 200.66 48.26 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15291,7 +15019,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 227.33 52.07 0)
+			(at 200.66 53.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15300,7 +15028,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 227.33 52.07 0)
+			(at 200.66 53.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15309,7 +15037,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+3V3\""
-			(at 227.33 52.07 0)
+			(at 200.66 53.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15826,6 +15554,68 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
 					(page "8")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 187.96 25.4)
+		(size 17.78 12.7)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "e5108393-1145-4ace-bd05-28ed9bbcb2b1")
+		(property "Sheetname" "USB-UART"
+			(at 187.96 24.6884 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "diseqc_cntrl_usb.kicad_sch"
+			(at 187.96 38.6846 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "FT230_RXD" input
+			(at 187.96 29.21 180)
+			(uuid "9e6e72b7-5638-4b88-883f-65abd656ceda")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "FT230_TXD" input
+			(at 187.96 33.02 180)
+			(uuid "457e75c4-c848-4867-b638-a4b853680254")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
+					(page "6")
 				)
 			)
 		)
