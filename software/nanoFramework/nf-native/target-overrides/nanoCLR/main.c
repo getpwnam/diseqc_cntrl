@@ -61,6 +61,11 @@ int main(void)
     sduObjectInit(&SERIAL_DRIVER);
     sduStart(&SERIAL_DRIVER, &serusbcfg);
 
+#if defined(NF_USB_NO_VBUS_SENSE) && (NF_USB_NO_VBUS_SENSE == 1)
+    USB_OTG_FS->GCCFG &= ~(USB_OTG_GCCFG_VBUSASEN | USB_OTG_GCCFG_VBUSBSEN);
+    USB_OTG_FS->GCCFG |= USB_OTG_GCCFG_NOVBUSSENS;
+#endif
+
     usbDisconnectBus(serusbcfg.usbp);
     chThdSleepMilliseconds(100);
     usbStart(serusbcfg.usbp, &usbcfg);

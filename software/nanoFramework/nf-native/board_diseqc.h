@@ -52,6 +52,11 @@
 #define SERIAL_DRIVER               SD3
 
 /*
+ * Set to 1 for hardware revisions where PA9 (OTG_FS_VBUS) is not wired.
+ */
+#define NF_USB_NO_VBUS_SENSE        0
+
+/*
  * DiSEqC Configuration
  */
 #define DISEQC_PWM_DRIVER           PWMD4    // TIM4 for DiSEqC carrier
@@ -186,16 +191,22 @@
  */
 #define VAL_GPIOA_MODER             (PIN_MODE_OUTPUT(GPIOA_PIN2) |              \
                                      PIN_MODE_ALTERNATE(GPIOA_PIN8) |           \
+                                     PIN_MODE_ALTERNATE(GPIOA_PIN11) |          \
+                                     PIN_MODE_ALTERNATE(GPIOA_PIN12) |          \
                                      PIN_MODE_ALTERNATE(GPIOA_PIN13) |          \
                                      PIN_MODE_ALTERNATE(GPIOA_PIN14))
 #define VAL_GPIOA_OTYPER            (PIN_OTYPE_PUSHPULL(GPIOA_PIN2) |           \
                                      PIN_OTYPE_OPENDRAIN(GPIOA_PIN8))
-#define VAL_GPIOA_OSPEEDR           (PIN_OSPEED_HIGH(GPIOA_PIN8))
+#define VAL_GPIOA_OSPEEDR           (PIN_OSPEED_HIGH(GPIOA_PIN8) |              \
+                                     PIN_OSPEED_HIGH(GPIOA_PIN11) |             \
+                                     PIN_OSPEED_HIGH(GPIOA_PIN12))
 #define VAL_GPIOA_PUPDR             (PIN_PUPDR_FLOATING(GPIOA_PIN2) |           \
                                      PIN_PUPDR_PULLUP(GPIOA_PIN8))
 #define VAL_GPIOA_ODR               (PIN_ODR_LOW(GPIOA_PIN2))
 #define VAL_GPIOA_AFRL              (0x00000000)
 #define VAL_GPIOA_AFRH              (PIN_AFIO_AF(GPIOA_PIN8, 4U) |              \
+                                     PIN_AFIO_AF(GPIOA_PIN11, 10U) |            \
+                                     PIN_AFIO_AF(GPIOA_PIN12, 10U) |            \
                                      PIN_AFIO_AF(GPIOA_PIN13, 0U) |             \
                                      PIN_AFIO_AF(GPIOA_PIN14, 0U))
 

@@ -371,6 +371,7 @@ fi
 # Hardware revision without VBUS_SENSE connected: force PA9 to pulldown so
 # USB FS VBUS input does not float during bring-up.
 if [ "$ENABLE_USB_NO_VBUS_SENSE" = "TRUE" ] && [ -f "$TARGET_DIR/board.h" ]; then
+    sed -E -i 's/^#define[[:space:]]+NF_USB_NO_VBUS_SENSE[[:space:]]+0/#define NF_USB_NO_VBUS_SENSE        1/' "$TARGET_DIR/board.h"
     tmp_board_h="$(mktemp)"
     awk '
         BEGIN { skip_moder = 0; skip_pupdr = 0 }
@@ -379,9 +380,11 @@ if [ "$ENABLE_USB_NO_VBUS_SENSE" = "TRUE" ] && [ -f "$TARGET_DIR/board.h" ]; the
             print "#define VAL_GPIOA_MODER             (PIN_MODE_OUTPUT(GPIOA_PIN2) |              \\";
             print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN8) |           \\";
             print "                                     PIN_MODE_ANALOG(GPIOA_PIN9) |              \\";
+            print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN11) |          \\";
+            print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN12) |          \\";
             print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN13) |          \\";
             print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN14))";
-            skip_moder = 3;
+            skip_moder = 5;
             next;
         }
 
