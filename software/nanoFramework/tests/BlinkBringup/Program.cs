@@ -20,7 +20,6 @@ namespace BlinkBringup
             {
                 gpio.Write(StatusLedPin, PinValue.High);
                 Thread.Sleep(1000);
-
                 gpio.Write(StatusLedPin, PinValue.Low);
                 Thread.Sleep(1000);
             }

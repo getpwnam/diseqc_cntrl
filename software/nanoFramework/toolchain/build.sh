@@ -15,6 +15,7 @@ if [ ! -f "/.dockerenv" ]; then
         -e NF_BUILD_PROFILE="${1:-${NF_BUILD_PROFILE:-minimal}}" \
     -e NF_INTERPRETER_REF="${NF_INTERPRETER_REF:-main}" \
     -e NF_UPDATE_INTERPRETER="${NF_UPDATE_INTERPRETER:-1}" \
+    -e NF_STATIC_AUDIT="${NF_STATIC_AUDIT:-0}" \
         nanoframework-build /work/toolchain/build.sh
 fi
 # ────────────────────────────────────────────────────────────────────────────
@@ -42,15 +43,20 @@ BUILD_PROFILE="${NF_BUILD_PROFILE:-${1:-minimal}}"
 # - NF_INCREMENTAL_BUILD: 1 keeps CMake cache between same-profile builds, 0 forces cache clean
 # - NF_CLEAN_FETCHCONTENT: 1 purges _deps/chibios fetch state, 0 keeps it for faster rebuilds
 # - NF_UPDATE_INTERPRETER: 1 runs git fetch/pull on nf-interpreter, 0 skips network update
+# - NF_STATIC_AUDIT: 1 fails if any reference-board fallback file would be consumed
 BUILD_JOBS="${NF_BUILD_JOBS:-$(nproc)}"
 INCREMENTAL_BUILD="${NF_INCREMENTAL_BUILD:-1}"
 CLEAN_FETCHCONTENT="${NF_CLEAN_FETCHCONTENT:-0}"
 UPDATE_INTERPRETER="${NF_UPDATE_INTERPRETER:-0}"
+STATIC_AUDIT="${NF_STATIC_AUDIT:-0}"
 
 ENABLE_HSI_PLL="0"  # HSE 8MHz crystal fitted; individual profiles override to HSI if needed
 
 case "$BUILD_PROFILE" in
     minimal)
+        ENABLE_API_GPIO="ON"
+        ENABLE_API_I2C="ON"
+        ENABLE_API_SPI="ON"
         ENABLE_SYSTEM_NET="OFF"
         ENABLE_CONFIG_BLOCK="ON"
         ENABLE_SNTP="OFF"
@@ -66,11 +72,14 @@ case "$BUILD_PROFILE" in
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
-        ENABLE_HSI_PLL="0"
+        ENABLE_HSI_PLL="1"
         PROFILE_STATUS="stable"
         PROFILE_NOTE="Minimal non-network firmware profile"
         ;;
     w5500-native)
+        ENABLE_API_GPIO="ON"
+        ENABLE_API_I2C="ON"
+        ENABLE_API_SPI="ON"
         ENABLE_SYSTEM_NET="OFF"
         ENABLE_CONFIG_BLOCK="OFF"
         ENABLE_SNTP="OFF"
@@ -90,6 +99,9 @@ case "$BUILD_PROFILE" in
         PROFILE_NOTE="Native W5500 transport scaffold (System.Net/lwIP disabled)"
         ;;
     bringup-smoke)
+        ENABLE_API_GPIO="ON"
+        ENABLE_API_I2C="ON"
+        ENABLE_API_SPI="ON"
         ENABLE_SYSTEM_NET="OFF"
         ENABLE_CONFIG_BLOCK="OFF"
         ENABLE_SNTP="OFF"
@@ -110,6 +122,9 @@ case "$BUILD_PROFILE" in
         PROFILE_NOTE="Hardware bring-up smoke profile (PA2 blink + USART3 heartbeat)"
         ;;
     bringup-hardalive)
+        ENABLE_API_GPIO="ON"
+        ENABLE_API_I2C="ON"
+        ENABLE_API_SPI="ON"
         ENABLE_SYSTEM_NET="OFF"
         ENABLE_CONFIG_BLOCK="OFF"
         ENABLE_SNTP="OFF"
@@ -130,6 +145,9 @@ case "$BUILD_PROFILE" in
         PROFILE_NOTE="Bare-metal bring-up profile (PA2 + PB10 hard toggle, no RTOS/CLR startup)"
         ;;
     usb-first)
+        ENABLE_API_GPIO="ON"
+        ENABLE_API_I2C="ON"
+        ENABLE_API_SPI="ON"
         ENABLE_SYSTEM_NET="OFF"
         ENABLE_CONFIG_BLOCK="OFF"
         ENABLE_SNTP="OFF"
@@ -149,6 +167,9 @@ case "$BUILD_PROFILE" in
         PROFILE_NOTE="USB-first bring-up profile (OTG1 enabled, UART wire protocol fallback retained)"
         ;;
     usb-no-vbus-sense)
+        ENABLE_API_GPIO="ON"
+        ENABLE_API_I2C="ON"
+        ENABLE_API_SPI="ON"
         ENABLE_SYSTEM_NET="OFF"
         ENABLE_CONFIG_BLOCK="OFF"
         ENABLE_SNTP="OFF"
@@ -168,6 +189,9 @@ case "$BUILD_PROFILE" in
         PROFILE_NOTE="USB bring-up profile for boards without PA9 VBUS_SENSE wiring (forces PA9 pulldown)"
         ;;
     network)
+        ENABLE_API_GPIO="ON"
+        ENABLE_API_I2C="ON"
+        ENABLE_API_SPI="ON"
         ENABLE_SYSTEM_NET="ON"
         ENABLE_CONFIG_BLOCK="ON"
         ENABLE_SNTP="OFF"
@@ -186,8 +210,31 @@ case "$BUILD_PROFILE" in
         PROFILE_STATUS="deprecated"
         PROFILE_NOTE="Temporary compatibility profile; scheduled for removal after native W5500 path is validated"
         ;;
+    core-only)
+        ENABLE_API_GPIO="ON"
+        ENABLE_API_I2C="ON"
+        ENABLE_API_SPI="ON"
+        ENABLE_SYSTEM_NET="OFF"
+        ENABLE_CONFIG_BLOCK="OFF"
+        ENABLE_SNTP="OFF"
+        ENABLE_MBEDTLS="OFF"
+        ENABLE_HAL_MAC="FALSE"
+        ENABLE_STM32_MAC_ETH="FALSE"
+        ENABLE_OTG1="FALSE"
+        ENABLE_OTG2="FALSE"
+        ENABLE_HAL_USB="FALSE"
+        ENABLE_HAL_SERIAL_USB="FALSE"
+        ENABLE_USB_NO_VBUS_SENSE="FALSE"
+        ENABLE_BRINGUP_SMOKE="FALSE"
+        ENABLE_BRINGUP_HARDALIVE="FALSE"
+        ENABLE_FEATURE_RTC="OFF"
+        ENABLE_HAL_RTC="FALSE"
+        ENABLE_HSI_PLL="0"
+        PROFILE_STATUS="experimental"
+        PROFILE_NOTE="Smallest managed/API surface profile for fast local firmware iteration"
+        ;;
     *)
-        echo -e "${RED}Unknown NF_BUILD_PROFILE='$BUILD_PROFILE'. Use 'minimal', 'w5500-native', 'bringup-smoke', 'bringup-hardalive', 'usb-first', 'usb-no-vbus-sense', or 'network'.${NC}"
+        echo -e "${RED}Unknown NF_BUILD_PROFILE='$BUILD_PROFILE'. Use 'minimal', 'core-only', 'w5500-native', 'bringup-smoke', 'bringup-hardalive', 'usb-first', 'usb-no-vbus-sense', or 'network'.${NC}"
         exit 1
         ;;
 esac
@@ -213,7 +260,7 @@ else
 
     # Optionally update existing clone. Skipped by default for faster local rebuilds.
     cd "$NF_INTERPRETER_DIR"
-    git checkout -- CMake/Modules/FindChibiOS.cmake src/CLR/Core/TypeSystem.cpp src/CLR/Startup/CLRStartup.cpp || true
+    git checkout -- CMake/Modules/FindChibiOS.cmake targets/ChibiOS/CMakeLists.txt src/CLR/Core/TypeSystem.cpp src/CLR/Startup/CLRStartup.cpp || true
     if [ "$UPDATE_INTERPRETER" = "1" ]; then
         echo -e "${YELLOW}Updating nf-interpreter (NF_UPDATE_INTERPRETER=1)...${NC}"
         git fetch --all --tags --prune || true
@@ -265,6 +312,14 @@ if ! grep -Fq 'reset nanoCLR source cache lists' "$NF_INTERPRETER_DIR/targets/Ch
 # reset nanoCLR source cache lists\
 set(TARGET_CHIBIOS_NANOCLR_SOURCES "" CACHE INTERNAL "reset nanoCLR sources" FORCE)\
 set(TARGET_CHIBIOS_NANOCLR_INCLUDE_DIRS "" CACHE INTERNAL "reset nanoCLR includes" FORCE)\
+' "$NF_INTERPRETER_DIR/targets/ChibiOS/_nanoCLR/CMakeLists.txt"
+fi
+
+if ! grep -Fq 'reset custom target source cache lists' "$NF_INTERPRETER_DIR/targets/ChibiOS/_nanoCLR/CMakeLists.txt"; then
+    sed -i '/# append nanoHAL/i \
+# reset custom target source cache lists\
+set(NANOCLR_PROJECT_SOURCES "" CACHE INTERNAL "reset nanoCLR project sources" FORCE)\
+set(NANOBOOTER_PROJECT_SOURCES "" CACHE INTERNAL "reset nanoBooter project sources" FORCE)\
 ' "$NF_INTERPRETER_DIR/targets/ChibiOS/_nanoCLR/CMakeLists.txt"
 fi
 
@@ -381,11 +436,6 @@ copy_glob_if_absent() {
 
 mkdir -p "$TARGET_DIR/common" "$TARGET_DIR/nanoCLR" "$TARGET_DIR/nanoBooter"
 
-# Force use of upstream/reference nanoHAL implementation.
-# A previously copied local nanoHAL.cpp can persist across builds in this
-# target tree and unexpectedly override debugger/wire-protocol behavior.
-rm -f "$TARGET_DIR/nanoCLR/nanoHAL.cpp"
-
 if [ -d "$LOCAL_TARGET_OVERRIDES_DIR" ]; then
     echo -e "${YELLOW}Applying local target overrides from $LOCAL_TARGET_OVERRIDES_DIR...${NC}"
 
@@ -393,6 +443,9 @@ if [ -d "$LOCAL_TARGET_OVERRIDES_DIR" ]; then
     cp "$LOCAL_TARGET_OVERRIDES_DIR"/target_*.c "$TARGET_DIR/" 2>/dev/null || true
     cp "$LOCAL_TARGET_OVERRIDES_DIR"/target_*.h "$TARGET_DIR/" 2>/dev/null || true
     cp "$LOCAL_TARGET_OVERRIDES_DIR"/target_*.cpp "$TARGET_DIR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/mcuconf.h" "$TARGET_DIR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/mcuconf.h" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
     cp "$LOCAL_TARGET_OVERRIDES_DIR/target_common.h.in" "$TARGET_DIR/" 2>/dev/null || true
     cp "$LOCAL_TARGET_OVERRIDES_DIR/common/Device_BlockStorage.c" "$TARGET_DIR/common/" 2>/dev/null || true
     if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
@@ -415,6 +468,19 @@ if [ -d "$LOCAL_TARGET_OVERRIDES_DIR" ]; then
     cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoBooter/main.c" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
 fi
 
+# Static-target guardrail: these core target overrides must come from this
+# repository, not from a reference board fallback.
+for required_target_file in \
+    "$TARGET_DIR/target_common.c" \
+    "$TARGET_DIR/target_system_io_ports_config.cpp" \
+    "$TARGET_DIR/target_system_io_ports_config.h"; do
+    if [ ! -f "$required_target_file" ]; then
+        echo -e "${RED}Missing required local target override: $required_target_file${NC}"
+        echo -e "${RED}Add it under /work/nf-native/target-overrides and rebuild.${NC}"
+        exit 1
+    fi
+done
+
 REFERENCE_BOARD=""
 for candidate in \
     "$NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F4_DISCOVERY" \
@@ -427,12 +493,60 @@ done
 
 if [ -n "$REFERENCE_BOARD" ]; then
     echo -e "${YELLOW}Backfilling missing target files from reference: $REFERENCE_BOARD${NC}"
+else
+    echo -e "${YELLOW}No reference board checkout found; using vendored target overrides only.${NC}"
+fi
 
-    # Core target configuration sources used by API find modules.
-    copy_glob_if_absent "$REFERENCE_BOARD/target_*.c" "$TARGET_DIR"
-    copy_glob_if_absent "$REFERENCE_BOARD/target_*.h" "$TARGET_DIR"
-    copy_glob_if_absent "$REFERENCE_BOARD/target_*.cpp" "$TARGET_DIR"
-    copy_if_absent "$REFERENCE_BOARD/target_common.h.in" "$TARGET_DIR/target_common.h.in"
+if [ "$STATIC_AUDIT" = "1" ] && [ -n "$REFERENCE_BOARD" ]; then
+    missing_fallback_files=()
+
+    for static_required in \
+        "$TARGET_DIR/common/Device_BlockStorage.c" \
+        "$TARGET_DIR/nanoCLR/halconf.h" \
+        "$TARGET_DIR/nanoCLR/halconf_nf.h" \
+        "$TARGET_DIR/nanoCLR/chconf.h" \
+        "$TARGET_DIR/nanoCLR/main.c" \
+        "$TARGET_DIR/nanoCLR/target_board.h.in" \
+        "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld" \
+        "$TARGET_DIR/nanoBooter/halconf.h" \
+        "$TARGET_DIR/nanoBooter/halconf_nf.h" \
+        "$TARGET_DIR/nanoBooter/chconf.h" \
+        "$TARGET_DIR/nanoBooter/target_board.h.in" \
+        "$TARGET_DIR/nanoBooter/STM32F407xG_booter.ld" \
+        "$TARGET_DIR/nanoBooter/main.c"; do
+        if [ ! -f "$static_required" ]; then
+            missing_fallback_files+=("$static_required")
+        fi
+    done
+
+    if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
+        for usb_required in \
+            "$TARGET_DIR/common/usbcfg.c" \
+            "$TARGET_DIR/common/usbcfg.h"; do
+            if [ ! -f "$usb_required" ]; then
+                missing_fallback_files+=("$usb_required")
+            fi
+        done
+    fi
+
+    if [ ! -f "$TARGET_DIR/mcuconf.h" ] || [ ! -f "$TARGET_DIR/nanoCLR/mcuconf.h" ] || [ ! -f "$TARGET_DIR/nanoBooter/mcuconf.h" ]; then
+        missing_fallback_files+=("$TARGET_DIR/mcuconf.h (and nanoCLR/nanoBooter copies)")
+    fi
+
+    if [ ${#missing_fallback_files[@]} -gt 0 ]; then
+        echo -e "${RED}NF_STATIC_AUDIT=1: static-target audit failed.${NC}"
+        echo -e "${RED}The following files are missing locally and would require reference-board fallback:${NC}"
+        for missing_path in "${missing_fallback_files[@]}"; do
+            echo -e "${RED}  - $missing_path${NC}"
+        done
+        exit 1
+    fi
+
+    echo -e "${GREEN}NF_STATIC_AUDIT=1: no reference fallback files required.${NC}"
+fi
+
+if [ -n "$REFERENCE_BOARD" ]; then
+    # Core target configuration sources are now owned by local overrides.
     copy_if_absent "$REFERENCE_BOARD/common/Device_BlockStorage.c" "$TARGET_DIR/common/Device_BlockStorage.c"
     if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
         copy_if_absent "$REFERENCE_BOARD/common/usbcfg.c" "$TARGET_DIR/common/usbcfg.c"
@@ -444,7 +558,6 @@ if [ -n "$REFERENCE_BOARD" ]; then
     copy_if_absent "$REFERENCE_BOARD/nanoCLR/halconf_nf.h" "$TARGET_DIR/nanoCLR/halconf_nf.h"
     copy_if_absent "$REFERENCE_BOARD/nanoCLR/chconf.h" "$TARGET_DIR/nanoCLR/chconf.h"
     copy_if_absent "$REFERENCE_BOARD/nanoCLR/main.c" "$TARGET_DIR/nanoCLR/main.c"
-    copy_if_absent "$REFERENCE_BOARD/nanoCLR/nanoHAL.cpp" "$TARGET_DIR/nanoCLR/nanoHAL.cpp"
     copy_if_absent "$REFERENCE_BOARD/nanoCLR/target_board.h.in" "$TARGET_DIR/nanoCLR/target_board.h.in"
     copy_if_absent "$REFERENCE_BOARD/nanoCLR/STM32F407xG_CLR.ld" "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld"
     copy_if_absent "$REFERENCE_BOARD/nanoBooter/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"
@@ -470,28 +583,29 @@ if [ -n "$REFERENCE_BOARD" ]; then
     fi
 
     # Use complete reference mcuconf as base to satisfy all STM32F4 required definitions
-    if [ -f "$REFERENCE_BOARD/mcuconf.h" ]; then
+    if [ ! -f "$TARGET_DIR/mcuconf.h" ] && [ -f "$REFERENCE_BOARD/mcuconf.h" ]; then
         cp "$REFERENCE_BOARD/mcuconf.h" "$TARGET_DIR/mcuconf.h" 2>/dev/null || true
         cp "$REFERENCE_BOARD/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" 2>/dev/null || true
         cp "$REFERENCE_BOARD/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h" 2>/dev/null || true
-    elif [ -f "$REFERENCE_BOARD/nanoCLR/mcuconf.h" ]; then
+    elif [ ! -f "$TARGET_DIR/mcuconf.h" ] && [ -f "$REFERENCE_BOARD/nanoCLR/mcuconf.h" ]; then
         cp "$REFERENCE_BOARD/nanoCLR/mcuconf.h" "$TARGET_DIR/mcuconf.h" 2>/dev/null || true
         cp "$REFERENCE_BOARD/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" 2>/dev/null || true
         cp "$REFERENCE_BOARD/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h" 2>/dev/null || true
     fi
+fi
 
-    # If a workspace mcuconf is provided, use it as the base before appending
-    # profile-specific overrides below.
-    if [ -f /work/build/mcuconf.h ]; then
-        cp /work/build/mcuconf.h "$TARGET_DIR/"
-        cp /work/build/mcuconf.h "$TARGET_DIR/nanoCLR/"
-        cp /work/build/mcuconf.h "$TARGET_DIR/nanoBooter/"
-    fi
+# If a workspace mcuconf is provided, use it as the base before appending
+# profile-specific overrides below.
+if [ -f /work/build/mcuconf.h ]; then
+    cp /work/build/mcuconf.h "$TARGET_DIR/"
+    cp /work/build/mcuconf.h "$TARGET_DIR/nanoCLR/"
+    cp /work/build/mcuconf.h "$TARGET_DIR/nanoBooter/"
+fi
 
-    # Apply board-specific peripheral usage overrides
-    for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h"; do
-        if [ -f "$mcu" ]; then
-            cat >> "$mcu" << 'EOF_MCU_OVERRIDES'
+# Apply board-specific peripheral usage overrides
+for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h"; do
+    if [ -f "$mcu" ]; then
+        cat >> "$mcu" << 'EOF_MCU_OVERRIDES'
 
 #undef STM32_PWM_USE_TIM1
 #define STM32_PWM_USE_TIM1                  FALSE
@@ -515,7 +629,7 @@ if [ -n "$REFERENCE_BOARD" ]; then
 #define STM32_SERIAL_USE_USART3             TRUE
 EOF_MCU_OVERRIDES
 
-            cat >> "$mcu" << EOF_MCU_PROFILE_OVERRIDES
+    cat >> "$mcu" << EOF_MCU_PROFILE_OVERRIDES
 
 #undef STM32_MAC_USE_ETH
 #define STM32_MAC_USE_ETH                  ${ENABLE_STM32_MAC_ETH}
@@ -531,8 +645,8 @@ EOF_MCU_OVERRIDES
 
 EOF_MCU_PROFILE_OVERRIDES
 
-            if [ "${ENABLE_HSI_PLL}" = "1" ]; then
-                cat >> "$mcu" << 'EOF_MCU_HSI_PLL'
+        if [ "${ENABLE_HSI_PLL}" = "1" ]; then
+            cat >> "$mcu" << 'EOF_MCU_HSI_PLL'
 // HSI PLL override: HSE crystal absent/unverified.
 // HSI=16MHz, PLLM=8 -> VCO_in=2MHz, PLLN=168, PLLP=2 -> SYSCLK=168MHz.
 // APB1 (/4) = 42MHz, APB2 (/2) = 84MHz - matches reference clock tree.
@@ -551,60 +665,57 @@ EOF_MCU_PROFILE_OVERRIDES
 #undef STM32_PLLQ_VALUE
 #define STM32_PLLQ_VALUE                    7
 EOF_MCU_HSI_PLL
-            fi
         fi
-    done
+    fi
+done
 
-    # Normalize CLR/deployment layout for STM32F407xG.
-    # - Keep managed deployment at 0x080C0000 (256KB)
-    # - Allocate remaining flash after booter to nanoCLR (752KB)
-    if [ -f "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld" ]; then
-        sed -E -i \
-            -e 's|^(\s*flash0\s*\(rx\)\s*:\s*org\s*=\s*0x08004000,\s*len\s*=\s*).*$|\1 1M - 16k - 256k     /* flash size less the space reserved for nanoBooter and application deployment*/|' \
-            -e 's|^(\s*deployment\s*\(rx\)\s*:\s*org\s*=\s*)0x[0-9A-Fa-f]+,\s*len\s*=\s*[^ ]+.*$|\10x080C0000, len = 256k                /* space reserved for application deployment */|' \
-            "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld"
+# Normalize CLR/deployment layout for STM32F407xG.
+# - Keep managed deployment at 0x080C0000 (256KB)
+# - Allocate remaining flash after booter to nanoCLR (752KB)
+if [ -f "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld" ]; then
+    sed -E -i \
+        -e 's|^(\s*flash0\s*\(rx\)\s*:\s*org\s*=\s*0x08004000,\s*len\s*=\s*).*$|\1 1M - 16k - 256k     /* flash size less the space reserved for nanoBooter and application deployment*/|' \
+        -e 's|^(\s*deployment\s*\(rx\)\s*:\s*org\s*=\s*)0x[0-9A-Fa-f]+,\s*len\s*=\s*[^ ]+.*$|\10x080C0000, len = 256k                /* space reserved for application deployment */|' \
+        "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld"
+fi
+
+# Keep block-storage regions aligned with the linker layout.
+# Reference STM32F4 Discovery storage map reserves deployment at 0x08040000,
+# but this target keeps nanoCLR up to 0x080C0000 and deploys into the last
+# two 128KB sectors (0x080C0000-0x080FFFFF).
+
+if [ -f "$TARGET_DIR/common/Device_BlockStorage.c" ]; then
+    sed -E -i \
+        -e 's|\{[[:space:]]*BlockRange_BLOCKTYPE_CODE[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*0x08020000[[:space:]]*nanoCLR|{BlockRange_BLOCKTYPE_CODE, 0, 4},      // 0x08020000 nanoCLR|' \
+        -e 's#\{[[:space:]]*BlockRange_BLOCKTYPE_DEPLOYMENT[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*(0x08040000|0x080C0000)[[:space:]]*deployment#{BlockRange_BLOCKTYPE_DEPLOYMENT, 5, 6} // 0x080C0000 deployment#' \
+        "$TARGET_DIR/common/Device_BlockStorage.c"
+
+    if ! grep -Eq '\{BlockRange_BLOCKTYPE_CODE,[[:space:]]*0,[[:space:]]*4\}' "$TARGET_DIR/common/Device_BlockStorage.c"; then
+        echo -e "${RED}Device_BlockStorage.c patch failed: expected CODE range 0..4 was not found.${NC}"
+        exit 1
     fi
 
-    # Keep block-storage regions aligned with the linker layout.
-    # Reference STM32F4 Discovery storage map reserves deployment at 0x08040000,
-    # but this target keeps nanoCLR up to 0x080C0000 and deploys into the last
-    # two 128KB sectors (0x080C0000-0x080FFFFF).
-    
-    # Comprehensive block-storage patching: apply to Device_BlockStorage.c AND any target_*.c files
-    BLOCK_STORAGE_PATCH_PATTERN='-E -i -e "s|\{[[:space:]]*BlockRange_BLOCKTYPE_CODE[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*0x08020000[[:space:]]*nanoCLR|{BlockRange_BLOCKTYPE_CODE, 0, 4},      // 0x08020000 nanoCLR|" -e "s#\{[[:space:]]*BlockRange_BLOCKTYPE_DEPLOYMENT[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*(0x08040000|0x080C0000)[[:space:]]*deployment#{BlockRange_BLOCKTYPE_DEPLOYMENT, 5, 6} // 0x080C0000 deployment#"'
-    
-    if [ -f "$TARGET_DIR/common/Device_BlockStorage.c" ]; then
+    if ! grep -Eq '\{BlockRange_BLOCKTYPE_DEPLOYMENT,[[:space:]]*5,[[:space:]]*6\}' "$TARGET_DIR/common/Device_BlockStorage.c"; then
+        echo -e "${RED}Device_BlockStorage.c patch failed: expected DEPLOYMENT range 5..6 was not found.${NC}"
+        exit 1
+    fi
+fi
+
+# Also patch any target_*.c files that may contain BlockRange definitions
+for target_storage_file in "$TARGET_DIR"/target_*.c; do
+    if [ -f "$target_storage_file" ] && grep -q "BlockRange_BLOCKTYPE" "$target_storage_file"; then
+        echo -e "${YELLOW}Patching block-storage in $(basename $target_storage_file)...${NC}"
         sed -E -i \
             -e 's|\{[[:space:]]*BlockRange_BLOCKTYPE_CODE[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*0x08020000[[:space:]]*nanoCLR|{BlockRange_BLOCKTYPE_CODE, 0, 4},      // 0x08020000 nanoCLR|' \
             -e 's#\{[[:space:]]*BlockRange_BLOCKTYPE_DEPLOYMENT[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*(0x08040000|0x080C0000)[[:space:]]*deployment#{BlockRange_BLOCKTYPE_DEPLOYMENT, 5, 6} // 0x080C0000 deployment#' \
-            "$TARGET_DIR/common/Device_BlockStorage.c"
-
-        if ! grep -Eq '\{BlockRange_BLOCKTYPE_CODE,[[:space:]]*0,[[:space:]]*4\}' "$TARGET_DIR/common/Device_BlockStorage.c"; then
-            echo -e "${RED}Device_BlockStorage.c patch failed: expected CODE range 0..4 was not found.${NC}"
-            exit 1
-        fi
-
-        if ! grep -Eq '\{BlockRange_BLOCKTYPE_DEPLOYMENT,[[:space:]]*5,[[:space:]]*6\}' "$TARGET_DIR/common/Device_BlockStorage.c"; then
-            echo -e "${RED}Device_BlockStorage.c patch failed: expected DEPLOYMENT range 5..6 was not found.${NC}"
-            exit 1
-        fi
+            "$target_storage_file"
     fi
-    
-    # Also patch any target_*.c files that may contain BlockRange definitions
-    for target_storage_file in "$TARGET_DIR"/target_*.c; do
-        if [ -f "$target_storage_file" ] && grep -q "BlockRange_BLOCKTYPE" "$target_storage_file"; then
-            echo -e "${YELLOW}Patching block-storage in $(basename $target_storage_file)...${NC}"
-            sed -E -i \
-                -e 's|\{[[:space:]]*BlockRange_BLOCKTYPE_CODE[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*0x08020000[[:space:]]*nanoCLR|{BlockRange_BLOCKTYPE_CODE, 0, 4},      // 0x08020000 nanoCLR|' \
-                -e 's#\{[[:space:]]*BlockRange_BLOCKTYPE_DEPLOYMENT[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*,[[:space:]]*[0-9]+[[:space:]]*\}[[:space:]]*,?[[:space:]]*//[[:space:]]*(0x08040000|0x080C0000)[[:space:]]*deployment#{BlockRange_BLOCKTYPE_DEPLOYMENT, 5, 6} // 0x080C0000 deployment#' \
-                "$target_storage_file"
-        fi
-    done
+done
 
-    # Provide a deterministic wire-protocol serial configuration header.
-    # Do not inherit reference-board SERIAL_DRIVER values.
-    if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
-        cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG_USB'
+# Provide a deterministic wire-protocol serial configuration header.
+# Do not inherit reference-board SERIAL_DRIVER values.
+if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
+    cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG_USB'
 #ifndef SERIALCFG_H
 #define SERIALCFG_H
 
@@ -612,8 +723,8 @@ EOF_MCU_HSI_PLL
 
 #endif // SERIALCFG_H
 EOF_SERIALCFG_USB
-    else
-        cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG_UART'
+else
+    cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG_UART'
 #ifndef SERIALCFG_H
 #define SERIALCFG_H
 
@@ -621,19 +732,10 @@ EOF_SERIALCFG_USB
 
 #endif // SERIALCFG_H
 EOF_SERIALCFG_UART
-    fi
-fi
-
-if [ ! -d "$REFERENCE_BOARD" ]; then
-    echo -e "${RED}Reference board files not found in expected locations.${NC}"
-    echo -e "${RED}Checked:${NC}"
-    echo -e "${RED}  - $NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F4_DISCOVERY${NC}"
-    echo -e "${RED}  - $NF_INTERPRETER_DIR/targets/ChibiOS/ST_STM32F429I_DISCOVERY${NC}"
-    exit 1
 fi
 
 if [ ! -f "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld" ] || [ ! -f "$TARGET_DIR/nanoBooter/STM32F407xG_booter.ld" ]; then
-    echo -e "${RED}Missing required linker scripts after reference copy.${NC}"
+    echo -e "${RED}Missing required linker scripts after target setup.${NC}"
     echo -e "${RED}Expected:${NC}"
     echo -e "${RED}  - $TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld${NC}"
     echo -e "${RED}  - $TARGET_DIR/nanoBooter/STM32F407xG_booter.ld${NC}"
@@ -641,7 +743,7 @@ if [ ! -f "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld" ] || [ ! -f "$TARGET_DIR/nano
 fi
 
 if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
-    echo -e "${YELLOW}USB serial profile: keeping reference USB nanoCLR main.${NC}"
+    echo -e "${YELLOW}USB serial profile: using local USB support files and dual-mode nanoCLR entrypoint.${NC}"
 
     # Reference nanoBooter mains often depend on board-specific button/LED macros.
     # Use this target's minimal booter main to keep boot path board-agnostic.
@@ -649,16 +751,20 @@ if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
         cp /work/build/nanoBooter_main.c "$TARGET_DIR/nanoBooter/main.c"
     fi
 else
-    if [ -f /work/build/nanoBooter_main.c ]; then
+    if [ ! -f "$TARGET_DIR/nanoBooter/main.c" ] && [ -f /work/build/nanoBooter_main.c ]; then
         cp /work/build/nanoBooter_main.c "$TARGET_DIR/nanoBooter/main.c"
     fi
 
+    # Always select nanoCLR entrypoint deterministically per profile.
+    # Relying on an existing main.c leaks state across profile switches.
     if [ "$ENABLE_BRINGUP_HARDALIVE" = "TRUE" ] && [ -f /work/build/nanoCLR_hardalive_main.c ]; then
         cp /work/build/nanoCLR_hardalive_main.c "$TARGET_DIR/nanoCLR/main.c"
     elif [ "$ENABLE_BRINGUP_SMOKE" = "TRUE" ] && [ -f /work/build/nanoCLR_bringup_main.c ]; then
         cp /work/build/nanoCLR_bringup_main.c "$TARGET_DIR/nanoCLR/main.c"
     elif [ -f /work/build/nanoCLR_main.c ]; then
         cp /work/build/nanoCLR_main.c "$TARGET_DIR/nanoCLR/main.c"
+    elif [ -f "$TARGET_DIR/nanoCLR/main.c" ]; then
+        :
     fi
 fi
 
@@ -679,7 +785,6 @@ cat > "$TARGET_DIR/nanoCLR/CMakeLists.txt" << 'EOF_NANOCLR_CMAKE'
 #
 
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/main.c")
-list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/nanoHAL.cpp")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/diseqc_interop.cpp")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/lnb_interop.cpp")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/w5500_interop.cpp")
@@ -718,14 +823,29 @@ CONFIG_TARGET_SERIES="STM32F4xx"
 CONFIG_NF_FEATURE_DEBUGGER=y
 CONFIG_NF_DEBUG_ASSERT=y
 CONFIG_API_HARDWARE_STM32=y
-CONFIG_API_SYSTEM_DEVICE_GPIO=y
-CONFIG_API_SYSTEM_DEVICE_I2C=y
-CONFIG_API_SYSTEM_DEVICE_SPI=y
 CONFIG_API_SYSTEM_MATH=y
 CONFIG_API_NANOFRAMEWORK_RUNTIME_EVENTS=y
 CONFIG_API_SYSTEM_RUNTIME_SERIALIZATION=y
 # CONFIG_NF_FEATURE_WATCHDOG is not set
 EOF_DEFCONFIG
+
+if [ "$ENABLE_API_GPIO" = "ON" ]; then
+    echo "CONFIG_API_SYSTEM_DEVICE_GPIO=y" >> "$TARGET_DIR/defconfig"
+else
+    echo "# CONFIG_API_SYSTEM_DEVICE_GPIO is not set" >> "$TARGET_DIR/defconfig"
+fi
+
+if [ "$ENABLE_API_I2C" = "ON" ]; then
+    echo "CONFIG_API_SYSTEM_DEVICE_I2C=y" >> "$TARGET_DIR/defconfig"
+else
+    echo "# CONFIG_API_SYSTEM_DEVICE_I2C is not set" >> "$TARGET_DIR/defconfig"
+fi
+
+if [ "$ENABLE_API_SPI" = "ON" ]; then
+    echo "CONFIG_API_SYSTEM_DEVICE_SPI=y" >> "$TARGET_DIR/defconfig"
+else
+    echo "# CONFIG_API_SYSTEM_DEVICE_SPI is not set" >> "$TARGET_DIR/defconfig"
+fi
 
 if [ "$ENABLE_SYSTEM_NET" = "ON" ]; then
     echo "CONFIG_API_SYSTEM_NET=y" >> "$TARGET_DIR/defconfig"
@@ -900,7 +1020,8 @@ export NM=arm-none-eabi-nm
 
 # Configure with CMake
 echo -e "${YELLOW}Configuring with CMake...${NC}"
-cmake -G Ninja \
+CMAKE_CONFIG_LOG="$BUILD_DIR/cmake-configure.log"
+if cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY \
     -DCMAKE_C_COMPILER=arm-none-eabi-gcc \
@@ -919,14 +1040,19 @@ cmake -G Ninja \
     -DNF_FEATURE_WATCHDOG=OFF \
     -DHAL_USE_WDG_OPTION=FALSE \
     -DNF_FEATURE_HAS_CONFIG_BLOCK=$ENABLE_CONFIG_BLOCK \
-    -DAPI_System.Device.Gpio=ON \
-    -DAPI_System.Device.Spi=ON \
-    -DAPI_System.Device.I2c=ON \
+    -DAPI_System.Device.Gpio=$ENABLE_API_GPIO \
+    -DAPI_System.Device.Spi=$ENABLE_API_SPI \
+    -DAPI_System.Device.I2c=$ENABLE_API_I2C \
     -DAPI_System.Net=$ENABLE_SYSTEM_NET \
     -DNF_SECURITY_MBEDTLS=$ENABLE_MBEDTLS \
     -DNF_NETWORKING_SNTP=$ENABLE_SNTP \
     -DUSE_RNG=OFF \
-    $NF_INTERPRETER_DIR
+    $NF_INTERPRETER_DIR > "$CMAKE_CONFIG_LOG" 2>&1; then
+    grep -Ev "^(A    chibios-src| U   chibios-src|Checked out revision|Updating '\.'|At revision [0-9]+\.)" "$CMAKE_CONFIG_LOG" | cat
+else
+    cat "$CMAKE_CONFIG_LOG"
+    exit 1
+fi
 
 # Workaround: some target setups emit a post-link dump command without tool path.
 if [ -f "$BUILD_DIR/build.ninja" ]; then

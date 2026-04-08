@@ -57,7 +57,6 @@
 #define DISEQC_PWM_DRIVER           PWMD4    // TIM4 for DiSEqC carrier
 #define DISEQC_GPT_DRIVER           GPTD5    // TIM5 for bit timing
 #define DISEQC_OUTPUT_LINE          PAL_LINE(GPIOD, 12U)  // PD12 = TIM4_CH1
-#define MOTOR_ENABLE_LINE           PAL_LINE(GPIOB, 1U)
 
 // Note: No motor enable pin - LNBH26 handles power control automatically
 // DiSEqC commands control rotor movement directly
@@ -110,7 +109,6 @@
 #define GPIOA_PIN15                 15U
 
 #define GPIOB_PIN0                  0U
-#define GPIOB_PIN1                  1U  // NC (Not Connected)
 #define GPIOB_PIN2                  2U
 #define GPIOB_PIN3                  3U
 #define GPIOB_PIN4                  4U

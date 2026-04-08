@@ -69,4 +69,50 @@ echo "[2/2] Building blink test ($CONFIGURATION)..."
   "-p:NF_MDP_MSBUILDTASK_PATH=$NF_MDP_MSBUILDTASK_PATH_EFFECTIVE" \
   -verbosity:minimal
 
+OUTPUT_DIR="$(dirname "$PROJECT")/bin/$CONFIGURATION"
+TARGET_NAME="$(basename "$PROJECT" .nfproj)"
+OUTPUT_BIN="$OUTPUT_DIR/$TARGET_NAME.bin"
+RUNTIME_EVENTS_PE=""
+
+if [[ -f "$OUTPUT_DIR/nanoFramework.Runtime.Events.pe" ]]; then
+  RUNTIME_EVENTS_PE="$OUTPUT_DIR/nanoFramework.Runtime.Events.pe"
+else
+  shopt -s nullglob
+  runtime_event_candidates=("$ROOT_DIR"/packages/nanoFramework.Runtime.Events.*/lib/nanoFramework.Runtime.Events.pe)
+  shopt -u nullglob
+  if [[ ${#runtime_event_candidates[@]} -gt 0 ]]; then
+    RUNTIME_EVENTS_PE="$(printf '%s\n' "${runtime_event_candidates[@]}" | sort -V | tail -n1)"
+  fi
+fi
+
+# Some environments emit only .pe artifacts. Build a dependency-complete
+# deployment bundle so managed startup stays reliable.
+if [[ ! -f "$OUTPUT_BIN" ]]; then
+  if [[ -f "$OUTPUT_DIR/mscorlib.pe" && -f "$OUTPUT_DIR/System.Device.Gpio.pe" && -f "$OUTPUT_DIR/System.Threading.pe" && -f "$OUTPUT_DIR/$TARGET_NAME.pe" ]]; then
+    pack_args=(
+      --required-marker NFMRK1
+      --out-dir "$OUTPUT_DIR"
+      --out-base "${TARGET_NAME}_bundle"
+      "$OUTPUT_DIR/$TARGET_NAME.pe"
+      "$OUTPUT_DIR/System.Device.Gpio.pe"
+    )
+
+    if [[ -n "$RUNTIME_EVENTS_PE" && -f "$RUNTIME_EVENTS_PE" ]]; then
+      pack_args+=("$RUNTIME_EVENTS_PE")
+    fi
+
+    pack_args+=(
+      "$OUTPUT_DIR/System.Threading.pe"
+      "$OUTPUT_DIR/mscorlib.pe"
+    )
+
+    "$SCRIPT_DIR/pack-and-validate.sh" "${pack_args[@]}" >/dev/null
+
+    if [[ -L "$OUTPUT_DIR/latest.deploy.bin" || -f "$OUTPUT_DIR/latest.deploy.bin" ]]; then
+      cp -f "$OUTPUT_DIR/latest.deploy.bin" "$OUTPUT_BIN"
+      echo "Created fallback deployment bundle: $OUTPUT_BIN"
+    fi
+  fi
+fi
+
 echo "Blink test build succeeded."

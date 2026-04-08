@@ -333,3 +333,34 @@ This file should be committed and checked on each build to prevent version drift
      - `GPIOA_ODR = 0x00000004`
   5. User confirmation: LED is flashing.
 - Conclusion: Managed LED blink is now robust across reset/power cycle; issue fixed in firmware startup path.
+
+### 2026-04-08 22:00:30 UTC [INFO]
+- Git rev: a9bb2bd (working tree with local diagnostic/tooling patches)
+- Command(s):
+  - Recreated missing GDB probe command files under `.debug/` and corrected probe sequencing (`reset halt` -> set breakpoint -> `reset run`) for one-shot startup-gate probes.
+  - Refreshed probe addresses from current `build/nanoCLR.elf` symbols/disassembly:
+    - `CreateInstance` `0x0801434C`
+    - `ResolveAll` `0x0802D588`
+    - `After ResolveAll` `0x08019D9C`
+    - `PrepareForExecution` `0x0802E854`
+    - `NewThread` `0x080320E0`
+    - `Execute_IL` `0x08009788`
+    - `NativeWrite` `0x0801F5BC`
+  - Probed `NativeWrite` argument registers at runtime (`r5=0x2`) to verify managed write targets pin index 2 (PA2).
+- Result:
+  - Pin mapping did not regress in vendored target content (PA2 remains `LED_STATUS`; managed pin argument observed as 2).
+  - During one failing run, startup regressed at `ResolveAll` with `r0=0xA3000000` before IL execution.
+- Conclusion: No evidence of PA2 remap regression. Intermittent no-LED episodes correlate with managed dependency resolution state, not pin-map drift.
+
+### 2026-04-08 22:00:30 UTC [PASS]
+- Git rev: a9bb2bd (working tree with local diagnostic/tooling patches)
+- Command(s):
+  - Updated `toolchain/compile-blink-test.sh` fallback bundling to include `nanoFramework.Runtime.Events.pe` automatically when available (from app output or `packages/` cache).
+  - Rebuilt BlinkBringup and regenerated `tests/BlinkBringup/bin/Release/BlinkBringup.bin`.
+  - Verified bundle composition with `toolchain/inspect_deploy_bundle.py` (5 NFMRK1 records including runtime events).
+  - Reflashed deterministic baseline over SWD (`nanoBooter`, `nanoCLR`, deployment image).
+  - Re-ran startup gate: all probes PASS (`ResolveAll HR=0x0`, `PrepareForExecution`, `NewThread`, `Execute_IL`, and `NativeWrite` all hit).
+  - User power-cycled board and confirmed LED activity restored.
+- Artifact:
+  - `tests/BlinkBringup/bin/Release/BlinkBringup.bin` (full-stack fallback bundle)
+- Conclusion: Build/deploy process is stable again for this target; managed startup and PA2 GPIO path are both validated after power cycle.
