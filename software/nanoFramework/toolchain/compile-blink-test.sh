@@ -59,7 +59,31 @@ if [[ -z "$NF_MDP_MSBUILDTASK_PATH_EFFECTIVE" ]]; then
 fi
 
 echo "[1/2] Restoring packages for blink test..."
-/usr/bin/nuget restore "$PROJECT"
+/usr/bin/nuget restore "$PROJECT" -PackagesDirectory "$ROOT_DIR/packages"
+
+# On some hosts NuGet restore for a lone .nfproj exits 0 but does not
+# materialize the expected packages tree. Ensure core references exist where
+# BlinkBringup.nfproj points its HintPath entries.
+required_refs=(
+  "$ROOT_DIR/packages/nanoFramework.CoreLibrary.1.17.11/lib/mscorlib.dll"
+  "$ROOT_DIR/packages/nanoFramework.System.Device.Gpio.1.1.57/lib/System.Device.Gpio.dll"
+  "$ROOT_DIR/packages/nanoFramework.System.Threading.1.1.52/lib/System.Threading.dll"
+)
+
+missing_refs=0
+for ref in "${required_refs[@]}"; do
+  if [[ ! -f "$ref" ]]; then
+    missing_refs=1
+    break
+  fi
+done
+
+if [[ "$missing_refs" -eq 1 ]]; then
+  echo "[info] Restored packages incomplete; installing core BlinkBringup dependencies..."
+  /usr/bin/nuget install nanoFramework.CoreLibrary -Version 1.17.11 -OutputDirectory "$ROOT_DIR/packages"
+  /usr/bin/nuget install nanoFramework.System.Device.Gpio -Version 1.1.57 -OutputDirectory "$ROOT_DIR/packages"
+  /usr/bin/nuget install nanoFramework.System.Threading -Version 1.1.52 -OutputDirectory "$ROOT_DIR/packages"
+fi
 
 echo "[2/2] Building blink test ($CONFIGURATION)..."
 /usr/local/bin/msbuild "$PROJECT" \
