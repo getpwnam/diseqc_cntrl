@@ -66,9 +66,9 @@ case "$BUILD_PROFILE" in
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
-        ENABLE_HSI_PLL="1"
+        ENABLE_HSI_PLL="0"
         PROFILE_STATUS="stable"
-        PROFILE_NOTE="Minimal non-network firmware profile (HSI PLL forced for clock isolation)"
+        PROFILE_NOTE="Minimal non-network firmware profile"
         ;;
     w5500-native)
         ENABLE_SYSTEM_NET="OFF"
@@ -381,6 +381,11 @@ copy_glob_if_absent() {
 
 mkdir -p "$TARGET_DIR/common" "$TARGET_DIR/nanoCLR" "$TARGET_DIR/nanoBooter"
 
+# Force use of upstream/reference nanoHAL implementation.
+# A previously copied local nanoHAL.cpp can persist across builds in this
+# target tree and unexpectedly override debugger/wire-protocol behavior.
+rm -f "$TARGET_DIR/nanoCLR/nanoHAL.cpp"
+
 if [ -d "$LOCAL_TARGET_OVERRIDES_DIR" ]; then
     echo -e "${YELLOW}Applying local target overrides from $LOCAL_TARGET_OVERRIDES_DIR...${NC}"
 
@@ -400,7 +405,6 @@ if [ -d "$LOCAL_TARGET_OVERRIDES_DIR" ]; then
     cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/halconf_nf.h" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
     cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/chconf.h" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
     cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/main.c" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
-    cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/nanoHAL.cpp" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
     cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/target_board.h.in" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
     cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/STM32F407xG_CLR.ld" "$TARGET_DIR/nanoCLR/" 2>/dev/null || true
     cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoBooter/halconf.h" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true

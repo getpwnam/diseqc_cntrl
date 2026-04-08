@@ -1,0 +1,14 @@
+# nanoFramework bring-up version lock (update intentionally, not implicitly)
+# Date: 2026-04-08
+
+managed:
+  nanoFramework.CoreLibrary: 1.17.11
+  nanoFramework.System.Device.Gpio: 1.1.57
+  nanoFramework.System.Threading: 1.1.52
+
+host-tools:
+  nanoff: 2.5.131+6bd4d0daab
+
+native-firmware:
+  repo-commit: 4391075
+  notes: Full bring-up confirmed 2026-04-08. Startup-gate PASS (all 7 probes). nanoff --deploy + --devicedetails PASS at 115200 via replacement USB-UART adapter. LED (PA2) blinking from managed BlinkBringup code. Original adapter investigation pending.
