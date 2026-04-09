@@ -323,6 +323,13 @@ set(NANOBOOTER_PROJECT_SOURCES "" CACHE INTERNAL "reset nanoBooter project sourc
 ' "$NF_INTERPRETER_DIR/targets/ChibiOS/_nanoCLR/CMakeLists.txt"
 fi
 
+I2C_NATIVE_CPP="$NF_INTERPRETER_DIR/targets/ChibiOS/_nanoCLR/System.Device.I2c/sys_dev_i2c_native_System_Device_I2c_I2cDevice.cpp"
+if [ -f "$I2C_NATIVE_CPP" ] && ! grep -Fq 'round tiny I2C transfers up to 1ms' "$I2C_NATIVE_CPP"; then
+    perl -0pi -e 's|    int estimatedDurationMiliseconds = palI2c->ByteTime \* \(palI2c->WriteSize \+ palI2c->ReadSize \+ 1\);\n|    int estimatedDurationMiliseconds = palI2c->ByteTime * (palI2c->WriteSize + palI2c->ReadSize + 1);\n\n    // round tiny I2C transfers up to 1ms so ChibiOS never sees TIME_IMMEDIATE\n    if (estimatedDurationMiliseconds < 1)\n    {\n        estimatedDurationMiliseconds = 1;\n    }\n|g' "$I2C_NATIVE_CPP"
+    perl -0pi -e 's|            estimatedDurationMiliseconds = palI2c->ByteTime \* \(palI2c->WriteSize \+ 1\);\n|            estimatedDurationMiliseconds = palI2c->ByteTime * (palI2c->WriteSize + 1);\n\n            if (estimatedDurationMiliseconds < 1)\n            {\n                estimatedDurationMiliseconds = 1;\n            }\n|g' "$I2C_NATIVE_CPP"
+    perl -0pi -e 's|            estimatedDurationMiliseconds = palI2c->ByteTime \* \(palI2c->ReadSize \+ 1\);\n|            estimatedDurationMiliseconds = palI2c->ByteTime * (palI2c->ReadSize + 1);\n\n            if (estimatedDurationMiliseconds < 1)\n            {\n                estimatedDurationMiliseconds = 1;\n            }\n|g' "$I2C_NATIVE_CPP"
+fi
+
 if grep -Fq 'list(APPEND CHIBIOS_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/targets/ChibiOS/${TARGET_BOARD}/nanoBooter)' \
     "$NF_INTERPRETER_DIR/CMake/Modules/FindChibiOS.cmake"; then
     echo -e "${RED}Failed to remove leaked nanoBooter ChibiOS include path.${NC}"

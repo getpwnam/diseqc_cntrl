@@ -99,3 +99,10 @@
 - [x] Replace W5500 interop stub behavior with real RX/TX socket path.
 - [x] Implement real board pin configuration in `ConfigPins_I2C3()` (PA8/PC9 I2C3 open-drain AF4 setup).
 - [ ] Validate runtime networking path on hardware once board is available.
+
+## FRAM Hardware Checks (from bring-up)
+
+- [ ] Verify FM24CL16B pin 7 (WP) is solidly tied low on assembled boards.
+- [ ] Confirm FM24CL16B orientation/pin-1 alignment on PCB assemblies.
+- [ ] Probe SDA/SCL bus levels during FRAM write transactions.
+- [ ] Check continuity from MCU I2C3 lines (PA8/PC9) to FRAM pins.
