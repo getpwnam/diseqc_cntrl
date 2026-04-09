@@ -116,6 +116,24 @@ namespace DiSEqC_Control.Native
             return NativeGetCurrentAngle();
         }
 
+        /// <summary>
+        /// Set SWD-readable bring-up status word for off-site diagnostics.
+        /// </summary>
+        /// <param name="statusWord">Packed status value.</param>
+        public static void SetBringupStatus(uint statusWord)
+        {
+            NativeSetBringupStatus(statusWord);
+        }
+
+        /// <summary>
+        /// Read current bring-up status word from native mailbox.
+        /// </summary>
+        /// <returns>Packed status value.</returns>
+        public static uint GetBringupStatus()
+        {
+            return NativeGetBringupStatus();
+        }
+
         /* Native method declarations - implemented in C++ */
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern int NativeGotoAngle(float angle);
@@ -143,69 +161,11 @@ namespace DiSEqC_Control.Native
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern float NativeGetCurrentAngle();
-    }
-
-    /// <summary>
-    /// Motor enable control - manages rotor power
-    /// </summary>
-    public static class MotorEnable
-    {
-        /// <summary>
-        /// Turn on motor for specified duration
-        /// </summary>
-        /// <param name="travelTimeSec">Expected travel time in seconds</param>
-        public static void TurnOn(uint travelTimeSec)
-        {
-            NativeTurnOn(travelTimeSec);
-        }
-
-        /// <summary>
-        /// Start tracking mode (continuous motor enable)
-        /// </summary>
-        public static void StartTracking()
-        {
-            NativeStartTracking();
-        }
-
-        /// <summary>
-        /// Stop tracking mode (disable motor)
-        /// </summary>
-        public static void StopTracking()
-        {
-            NativeStopTracking();
-        }
-
-        /// <summary>
-        /// Force motor off immediately (emergency stop)
-        /// </summary>
-        public static void ForceOff()
-        {
-            NativeForceOff();
-        }
-
-        /// <summary>
-        /// Check if motor is currently enabled
-        /// </summary>
-        /// <returns>True if motor is on</returns>
-        public static bool IsOn()
-        {
-            return NativeIsOn();
-        }
-
-        /* Native method declarations */
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void NativeTurnOn(uint travelTimeSec);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void NativeStartTracking();
+        private static extern void NativeSetBringupStatus(uint statusWord);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void NativeStopTracking();
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void NativeForceOff();
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern bool NativeIsOn();
+        private static extern uint NativeGetBringupStatus();
     }
 }

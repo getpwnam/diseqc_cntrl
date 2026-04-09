@@ -28,8 +28,12 @@
     <Compile Include="Native\DiSEqCNative.cs" />
     <Compile Include="Native\LNBNative.cs" />
     <Compile Include="Native\W5500SocketNative.cs" />
+    <Compile Include="Mqtt\IMqttClientFacade.cs" />
     <Compile Include="Mqtt\IW5500SocketApi.cs" />
     <Compile Include="Mqtt\MqttClientChannelInjector.cs" />
+    <Compile Include="Mqtt\MqttClientFacade.cs" />
+    <Compile Include="Mqtt\MqttCommandRouter.cs" />
+    <Compile Include="Mqtt\MqttConfigCommandProcessor.cs" />
     <Compile Include="Mqtt\W5500MqttNetworkChannel.cs" />
     <Compile Include="Mqtt\W5500MqttNetworkChannelCore.cs" />
     <Compile Include="Mqtt\W5500SocketApi.cs" />
@@ -51,6 +55,9 @@
     </Reference>
     <Reference Include="System.Device.I2c">
       <HintPath>packages\nanoFramework.System.Device.I2c.1.1.29\lib\System.Device.I2c.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Device.Gpio">
+      <HintPath>packages\nanoFramework.System.Device.Gpio.1.1.57\lib\System.Device.Gpio.dll</HintPath>
     </Reference>
       <Reference Include="nanoFramework.System.Text">
         <HintPath>packages\nanoFramework.System.Text.1.3.42\lib\nanoFramework.System.Text.dll</HintPath>

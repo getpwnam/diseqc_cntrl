@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include "board_diseqc.h"
 
+extern volatile uint32_t g_w5500_bringup_status;
+
 enum w5500_socket_status_t
 {
     W5500_SOCKET_OK = 0,
@@ -84,6 +86,11 @@ static bool g_initialized = false;
 static bool g_socketAllocated = false;
 static bool g_socketConnected = false;
 static uint16_t g_nextSourcePort = kDefaultSourcePort;
+
+static inline void set_w5500_bringup_status(uint8_t stage, uint8_t result, uint8_t detail)
+{
+    g_w5500_bringup_status = ((uint32_t)0xD5 << 24) | ((uint32_t)stage << 16) | ((uint32_t)result << 8) | (uint32_t)detail;
+}
 
 static const SPIConfig g_w5500SpiConfig = {
     false,
@@ -490,6 +497,8 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR
 {
     NANOCLR_HEADER();
 
+    set_w5500_bringup_status(2, 0, 0);
+
     if (!g_initialized)
     {
         w5500_socket_status_t initStatus = w5500_hw_init();
@@ -497,6 +506,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR
         {
             stack.Arg0().NumericByRef().s4 = -1;
             stack.SetResult_I4((int32_t)initStatus);
+            set_w5500_bringup_status(2, 14, (uint8_t)initStatus);
             NANOCLR_SET_AND_LEAVE(S_OK);
         }
 
@@ -507,6 +517,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR
     {
         stack.Arg0().NumericByRef().s4 = -1;
         stack.SetResult_I4((int32_t)W5500_SOCKET_BUSY);
+        set_w5500_bringup_status(2, 14, (uint8_t)W5500_SOCKET_BUSY);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
@@ -514,6 +525,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR
     g_socketConnected = false;
     stack.Arg0().NumericByRef().s4 = kSingleSocketHandle;
     stack.SetResult_I4((int32_t)W5500_SOCKET_OK);
+    set_w5500_bringup_status(2, 1, 0);
 
     NANOCLR_NOCLEANUP();
 }
@@ -521,6 +533,8 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR
 HRESULT Library_diseqc_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__STRING__STRING__STRING__STRING(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
+
+    set_w5500_bringup_status(3, 0, 0);
 
     CLR_RT_HeapBlock* ipArg = &(stack.Arg0());
     CLR_RT_HeapBlock* subnetArg = &(stack.Arg1());
@@ -553,6 +567,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__
         !parse_mac(mac->StringText(), parsedMac))
     {
         stack.SetResult_I4((int32_t)W5500_SOCKET_INVALID_PARAM);
+        set_w5500_bringup_status(3, 14, (uint8_t)W5500_SOCKET_INVALID_PARAM);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
@@ -567,6 +582,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__
     }
 
     stack.SetResult_I4((int32_t)W5500_SOCKET_OK);
+    set_w5500_bringup_status(3, 1, 0);
 
     NANOCLR_NOCLEANUP();
 }
@@ -574,6 +590,8 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__
 HRESULT Library_diseqc_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
+
+    set_w5500_bringup_status(4, 0, 0);
 
     int32_t socketHandle = stack.Arg0().NumericByRef().s4;
     CLR_RT_HeapBlock* hostArg = &(stack.Arg1());
@@ -589,24 +607,28 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRIN
     if (socketHandle != kSingleSocketHandle || !g_socketAllocated || !g_initialized)
     {
         stack.SetResult_I4((int32_t)W5500_SOCKET_INVALID_PARAM);
+        set_w5500_bringup_status(4, 14, (uint8_t)W5500_SOCKET_INVALID_PARAM);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
     if (port < 1 || port > 65535 || timeoutMs < 0)
     {
         stack.SetResult_I4((int32_t)W5500_SOCKET_INVALID_PARAM);
+        set_w5500_bringup_status(4, 14, (uint8_t)W5500_SOCKET_INVALID_PARAM);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
     if (!parse_ipv4(host->StringText(), remoteIp))
     {
         stack.SetResult_I4((int32_t)W5500_SOCKET_NOT_SUPPORTED);
+        set_w5500_bringup_status(4, 14, (uint8_t)W5500_SOCKET_NOT_SUPPORTED);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
     connectStatus = w5500_connect(kSocketIndex, remoteIp, (uint16_t)port, timeoutMs);
     g_socketConnected = (connectStatus == W5500_SOCKET_OK);
     stack.SetResult_I4((int32_t)connectStatus);
+    set_w5500_bringup_status(4, connectStatus == W5500_SOCKET_OK ? 1 : 14, (uint8_t)connectStatus);
 
     NANOCLR_NOCLEANUP();
 }
@@ -614,6 +636,8 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRIN
 HRESULT Library_diseqc_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_U1__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
+
+    set_w5500_bringup_status(6, 0, 0);
 
     int32_t socketHandle = stack.Arg0().NumericByRef().s4;
     CLR_RT_HeapBlock_Array* dataArray = stack.Arg1().DereferenceArray();
@@ -629,12 +653,14 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_
     if (socketHandle != kSingleSocketHandle || !g_socketAllocated || !g_socketConnected || !g_initialized)
     {
         stack.SetResult_I4((int32_t)W5500_SOCKET_NOT_INITIALIZED);
+        set_w5500_bringup_status(6, 14, (uint8_t)W5500_SOCKET_NOT_INITIALIZED);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
     if (offset < 0 || count < 0 || (uint32_t)(offset + count) > dataArray->m_numOfElements)
     {
         stack.SetResult_I4((int32_t)W5500_SOCKET_INVALID_PARAM);
+        set_w5500_bringup_status(6, 14, (uint8_t)W5500_SOCKET_INVALID_PARAM);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
@@ -646,6 +672,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_
     }
 
     stack.SetResult_I4((int32_t)sendStatus);
+    set_w5500_bringup_status(6, sendStatus == W5500_SOCKET_OK ? 1 : 14, (uint8_t)sendStatus);
 
     NANOCLR_NOCLEANUP();
 }
@@ -653,6 +680,8 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_
 HRESULT Library_diseqc_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARRAY_U1__I4__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
+
+    set_w5500_bringup_status(7, 0, 0);
 
     int32_t socketHandle = stack.Arg0().NumericByRef().s4;
     CLR_RT_HeapBlock_Array* bufferArray = stack.Arg1().DereferenceArray();
@@ -670,12 +699,14 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARR
     if (socketHandle != kSingleSocketHandle || !g_socketAllocated || !g_socketConnected || !g_initialized)
     {
         stack.SetResult_I4((int32_t)W5500_SOCKET_NOT_INITIALIZED);
+        set_w5500_bringup_status(7, 14, (uint8_t)W5500_SOCKET_NOT_INITIALIZED);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
     if (offset < 0 || count < 0 || timeoutMs < 0 || (uint32_t)(offset + count) > bufferArray->m_numOfElements)
     {
         stack.SetResult_I4((int32_t)W5500_SOCKET_INVALID_PARAM);
+        set_w5500_bringup_status(7, 14, (uint8_t)W5500_SOCKET_INVALID_PARAM);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
@@ -689,6 +720,14 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARR
     }
 
     stack.SetResult_I4((int32_t)rxStatus);
+    if (rxStatus == W5500_SOCKET_TIMEOUT)
+    {
+        set_w5500_bringup_status(7, 2, (uint8_t)rxStatus);
+    }
+    else
+    {
+        set_w5500_bringup_status(7, rxStatus == W5500_SOCKET_OK ? 1 : 14, (uint8_t)rxStatus);
+    }
 
     NANOCLR_NOCLEANUP();
 }
@@ -697,11 +736,14 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeClose___STATIC__I4__I4(CLR_RT_S
 {
     NANOCLR_HEADER();
 
+    set_w5500_bringup_status(8, 0, 0);
+
     int32_t socketHandle = stack.Arg0().NumericByRef().s4;
 
     if (socketHandle != kSingleSocketHandle || !g_socketAllocated)
     {
         stack.SetResult_I4((int32_t)W5500_SOCKET_INVALID_PARAM);
+        set_w5500_bringup_status(8, 14, (uint8_t)W5500_SOCKET_INVALID_PARAM);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
@@ -714,6 +756,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeClose___STATIC__I4__I4(CLR_RT_S
     g_socketConnected = false;
     g_socketAllocated = false;
     stack.SetResult_I4((int32_t)W5500_SOCKET_OK);
+    set_w5500_bringup_status(8, 1, 0);
 
     NANOCLR_NOCLEANUP();
 }
@@ -722,6 +765,8 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__
 {
     NANOCLR_HEADER();
 
+    set_w5500_bringup_status(5, 0, 0);
+
     int32_t socketHandle = stack.Arg0().NumericByRef().s4;
     uint8_t status = W5500_SOCK_CLOSED;
     bool connected = false;
@@ -729,6 +774,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__
     if (socketHandle != kSingleSocketHandle || !g_socketAllocated || !g_initialized)
     {
         stack.SetResult_Boolean(false);
+        set_w5500_bringup_status(5, 14, (uint8_t)W5500_SOCKET_INVALID_PARAM);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
@@ -736,6 +782,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__
     connected = (status == W5500_SOCK_ESTABLISHED || status == W5500_SOCK_CLOSE_WAIT);
     g_socketConnected = connected;
     stack.SetResult_Boolean(connected);
+    set_w5500_bringup_status(5, connected ? 1 : 14, connected ? 0 : 1);
 
     NANOCLR_NOCLEANUP();
 }

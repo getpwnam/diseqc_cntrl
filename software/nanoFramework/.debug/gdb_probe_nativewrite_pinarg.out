@@ -1,0 +1,18 @@
+0x0801f5bc in Library_sys_dev_gpio_native_System_Device_Gpio_GpioController::NativeWrite___VOID__I4__U1(CLR_RT_StackFrame&) ()
+Unable to match requested speed 2000 kHz, using 1800 kHz
+Unable to match requested speed 2000 kHz, using 1800 kHz
+[stm32f4x.cpu] halted due to debug-request, current mode: Thread 
+xPSR: 0x01000000 pc: 0x08001dc8 msp: 0x20000400
+Breakpoint 1 at 0x801f5d4
+Note: automatically using hardware breakpoints for read-only addresses.
+Unable to match requested speed 2000 kHz, using 1800 kHz
+Unable to match requested speed 2000 kHz, using 1800 kHz
+target not halted
+target stm32f4x.cpu was not halted when resume was requested
+
+Breakpoint 1, 0x0801f5d4 in Library_sys_dev_gpio_native_System_Device_Gpio_GpioController::NativeWrite___VOID__I4__U1(CLR_RT_StackFrame&) ()
+NATIVEWRITE_ARGS r5             0x2                 2
+r6             0x2001dfd8          536993752
+.debug/gdb_probe_nativewrite_pinarg.cmd:10: Error in sourced command file:
+Undefined command: "quitset".  Try "help".
+[Inferior 1 (Remote target) detached]

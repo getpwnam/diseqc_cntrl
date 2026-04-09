@@ -24,7 +24,31 @@ Deploy:
 
 - Deploy with `nanoff` to managed region `0x080C0000` after flashing `nanoBooter.bin` + `nanoCLR.bin`.
 
-## 2) Host Unit Tests (Managed Logic)
+## 2) Managed Test App: W5500Bringup
+
+Purpose:
+
+- Dedicated W5500-over-SPI bring-up app with LED-coded step/result statuses.
+- Exercises native `ConfigureNetwork`/`Open`/`Connect`/`Send`/`Receive`/`Close` interop path.
+
+Build:
+
+```bash
+cd software/nanoFramework
+./toolchain/compile-w5500-test.sh
+```
+
+Output:
+
+- `tests/W5500Bringup/bin/Release/W5500Bringup.bin`
+
+Deploy:
+
+- Deploy with `nanoff` to managed region `0x080C0000` after flashing `nanoBooter.bin` + `nanoCLR.bin`.
+
+Failure codes, LED meanings, and SWD mailbox probing are documented in `tests/W5500Bringup/README.md`.
+
+## 3) Host Unit Tests (Managed Logic)
 
 Run from Linux/WSL host:
 
@@ -39,11 +63,11 @@ Current coverage focus includes:
 - MQTT config command processing (`MqttConfigCommandProcessorTests.cs`)
 - Runtime config and helper utility behavior
 
-## 3) MQTT Smoke Scripts
+## 4) MQTT Smoke Scripts
 
 These scripts validate MQTT behavior without requiring new DiSEqC hardware revisions.
 
-### 3.1) Broker Loopback Self-Test
+### 4.1) Broker Loopback Self-Test
 
 Checks that the MQTT broker can receive and return messages.
 
@@ -60,7 +84,7 @@ Examples:
 ./mqtt_broker_selftest.sh localhost 1883
 ```
 
-### 3.2) Device Config Topic Smoke Test
+### 4.2) Device Config Topic Smoke Test
 
 Sends `config/get` and waits for the controller to publish a config status value.
 
@@ -80,7 +104,7 @@ Notes:
 - The second script requires the DiSEqC controller app to be connected to the same broker.
 - `mosquitto_pub` and `mosquitto_sub` must be installed (`mosquitto-clients` package).
 
-### 3.3) Topic Watcher
+### 4.3) Topic Watcher
 
 Continuously prints MQTT traffic for a topic filter.
 

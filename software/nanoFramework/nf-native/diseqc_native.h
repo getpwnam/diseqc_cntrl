@@ -5,12 +5,10 @@
  * This native driver uses ChibiOS (which nanoFramework is built on) to:
  * - Generate precise 22kHz DiSEqC carrier using TIM4 PWM
  * - Transmit DiSEqC 1.2 protocol commands
- * - Control motor enable with automatic timing
  * - Expose clean API to C# via nanoFramework interop
  * 
  * Hardware:
  * - PD12 (TIM4_CH1) → LNBH26 DSQIN
- * - PB1 (GPIO)     → Motor Enable
  */
 
 #ifndef DISEQC_NATIVE_H
@@ -37,10 +35,6 @@ extern "C" {
 #define DISEQC_PWM_DRIVER           PWMD4
 #define DISEQC_GPT_DRIVER           GPTD5
 #define DISEQC_OUTPUT_LINE          PAL_LINE(GPIOD, 12U)
-
-/* Motor Enable Configuration */
-#define MOTOR_ENABLE_PAD            GPIOB_PIN1  // Adjust to your board
-#define MOTOR_STARTUP_TIME_MS       2000        // Motor startup delay
 
 /* DiSEqC Status Codes */
 typedef enum {
@@ -76,17 +70,8 @@ typedef struct {
     
 } diseqc_handle_t;
 
-/* Motor Enable Handle */
-typedef struct {
-    ioline_t enable_line;                           // Motor enable GPIO line
-    virtual_timer_t timeout_timer;                  // Motor timeout timer
-    volatile bool tracking_mode;                    // Continuous enable mode
-    volatile bool motor_on;                         // Current state
-} motor_enable_handle_t;
-
 /* Global Handles (initialized in board init) */
 extern diseqc_handle_t g_diseqc;
-extern motor_enable_handle_t g_motor;
 
 /* Public API - Native Functions */
 
@@ -156,40 +141,6 @@ bool diseqc_is_busy(void);
  * @return Current angle in degrees
  */
 float diseqc_get_current_angle(void);
-
-/**
- * @brief Initialize motor enable manager
- * @param enable_line GPIO line for motor enable
- * @return DISEQC_OK on success
- */
-diseqc_status_t motor_enable_init(ioline_t enable_line);
-
-/**
- * @brief Turn on motor for specified duration
- * @param travel_time_sec Travel time in seconds
- */
-void motor_enable_turn_on(uint32_t travel_time_sec);
-
-/**
- * @brief Start tracking mode (continuous enable)
- */
-void motor_enable_start_tracking(void);
-
-/**
- * @brief Stop tracking mode
- */
-void motor_enable_stop_tracking(void);
-
-/**
- * @brief Force motor off immediately
- */
-void motor_enable_force_off(void);
-
-/**
- * @brief Check if motor is enabled
- * @return true if motor is on
- */
-bool motor_enable_is_on(void);
 
 #ifdef __cplusplus
 }

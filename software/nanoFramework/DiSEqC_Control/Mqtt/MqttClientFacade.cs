@@ -13,13 +13,13 @@ namespace DiSEqC_Control.Mqtt
             _client = client;
         }
 
-        public event EventHandler<MqttMsgPublishEventArgs> MessageReceived
+        public event IMqttClient.MqttMsgPublishEventHandler MessageReceived
         {
             add => _client.MqttMsgPublishReceived += value;
             remove => _client.MqttMsgPublishReceived -= value;
         }
 
-        public event EventHandler ConnectionClosed
+        public event IMqttClient.ConnectionClosedEventHandler ConnectionClosed
         {
             add => _client.ConnectionClosed += value;
             remove => _client.ConnectionClosed -= value;

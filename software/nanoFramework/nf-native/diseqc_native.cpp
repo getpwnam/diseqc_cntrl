@@ -16,7 +16,6 @@ void ConfigPins_I2C3(void)
 
 /* Global handles */
 diseqc_handle_t g_diseqc;
-motor_enable_handle_t g_motor;
 
 /* PWM Configuration for 22kHz carrier */
 // System clock = 168MHz, want 1MHz PWM clock for 1µs resolution
@@ -331,109 +330,4 @@ bool diseqc_is_busy(void)
 float diseqc_get_current_angle(void)
 {
     return g_diseqc.current_angle;
-}
-
-/* ========================================================================
- * Motor Enable Functions
- * ======================================================================== */
-
-static void motor_timeout_callback(virtual_timer_t *vtp, void *arg);
-
-/**
- * @brief Initialize motor enable
- */
-diseqc_status_t motor_enable_init(ioline_t enable_line)
-{
-    memset(&g_motor, 0, sizeof(motor_enable_handle_t));
-    
-    g_motor.enable_line = enable_line;
-    g_motor.tracking_mode = false;
-    g_motor.motor_on = false;
-    
-    // Initialize virtual timer
-    chVTObjectInit(&g_motor.timeout_timer);
-    
-    // Set motor OFF initially
-    palClearLine(g_motor.enable_line);
-    
-    return DISEQC_OK;
-}
-
-/**
- * @brief Motor timeout callback
- */
-static void motor_timeout_callback(virtual_timer_t *vtp, void *arg)
-{
-    (void)vtp;
-    (void)arg;
-    
-    if (!g_motor.tracking_mode) {
-        palClearLine(g_motor.enable_line);
-        g_motor.motor_on = false;
-    }
-}
-
-/**
- * @brief Turn on motor for duration
- */
-void motor_enable_turn_on(uint32_t travel_time_sec)
-{
-    if (g_motor.tracking_mode) {
-        return;  // Don't override tracking mode
-    }
-    
-    // Cancel any existing timeout
-    chVTReset(&g_motor.timeout_timer);
-    
-    // Turn on motor
-    palSetLine(g_motor.enable_line);
-    g_motor.motor_on = true;
-    
-    // Set timeout (travel time + startup time)
-    uint32_t total_time_ms = (travel_time_sec * 1000) + MOTOR_STARTUP_TIME_MS;
-    chVTSet(&g_motor.timeout_timer, TIME_MS2I(total_time_ms), 
-            motor_timeout_callback, NULL);
-    
-    // Block for startup time
-    chThdSleepMilliseconds(MOTOR_STARTUP_TIME_MS);
-}
-
-/**
- * @brief Start tracking mode
- */
-void motor_enable_start_tracking(void)
-{
-    chVTReset(&g_motor.timeout_timer);
-    g_motor.tracking_mode = true;
-    palSetLine(g_motor.enable_line);
-    g_motor.motor_on = true;
-}
-
-/**
- * @brief Stop tracking mode
- */
-void motor_enable_stop_tracking(void)
-{
-    g_motor.tracking_mode = false;
-    palClearLine(g_motor.enable_line);
-    g_motor.motor_on = false;
-}
-
-/**
- * @brief Force motor off
- */
-void motor_enable_force_off(void)
-{
-    chVTReset(&g_motor.timeout_timer);
-    g_motor.tracking_mode = false;
-    palClearLine(g_motor.enable_line);
-    g_motor.motor_on = false;
-}
-
-/**
- * @brief Check if motor is on
- */
-bool motor_enable_is_on(void)
-{
-    return g_motor.motor_on;
 }

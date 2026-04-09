@@ -370,3 +370,162 @@ This file should be committed and checked on each build to prevent version drift
 - Command(s): ./toolchain/build.sh minimal; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; nanoff --nanodevice --listdevices; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails; 8x+5x stress loops with/without st-flash reset
 - Artifact: build/nanoBooter.bin; build/nanoCLR.bin; DiSEqC_Control/bin/Release/DiSEqC_Control.bin
 - Conclusion: USART3 wire protocol is operational again on fresh minimal firmware; nanoff list/devicedetails stable across repeated attempts and SWD resets. Hardened HalSystemConfig debug handle mapping to explicit ConvertCOM_DebugHandle(3).
+
+### 2026-04-09 08:42:20 UTC [PASS]
+- Git rev: ef3c81b
+- Command(s): ./toolchain/build.sh w5500-native; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; ./toolchain/compile-w5500-test.sh; nanoff --deploy tests/W5500Bringup/bin/Release/W5500Bringup.bin @0x080C0000
+- Artifact: build/nanoBooter.bin; build/nanoCLR.bin; tests/W5500Bringup/bin/Release/W5500Bringup.bin
+- Conclusion: Switched target back to W5500 bring-up: w5500-native firmware flashed, W5500Bringup managed bundle deployed, and nanoff devicedetails confirms W5500Bringup 1.0.0.0 loaded with required dependencies.
+
+### 2026-04-09 11:37:57 UTC [FAIL]
+- Git rev: ef3c81b + local mailbox diagnostics (uncommitted)
+- Command(s):
+  - Added SWD mailbox plumbing and probes (`diseqc_interop.cpp`, `DiSEqCNative.cs`, `w5500_interop.cpp`, `tests/swd_read_bringup_status.sh`).
+  - Rebuilt/flashed `w5500-native` repeatedly and deployed both `W5500Bringup` and dedicated `MailboxSmoke` managed apps (manual packed bundles via `toolchain/pack-and-validate.sh`).
+  - Verified device-side assembly visibility via `nanoff --devicedetails` after successful deploy cycles.
+  - Probed mailbox repeatedly over SWD (`tests/swd_read_bringup_status.sh`) and cross-validated probe correctness with explicit SWD write/read (`tests/poke_bringup_status.sh`).
+- Artifact: build/nanoCLR.bin; tests/W5500Bringup/bin/Release/W5500Bringup.bin; tests/MailboxSmoke/bin/Release/latest.deploy.bin
+- Conclusion: SWD mailbox transport is valid, but runtime mailbox state remains at firmware sentinel `0xD5010000` (stage=1, running) across repeated deploy/reboot cycles; managed app assemblies load but observed execution does not advance mailbox stage/result. End-to-end mailbox signaling is not yet passing.
+
+### 2026-04-09 11:56:33 UTC [FAIL]
+- Git rev: ef3c81b + local startup-marker diagnostics (uncommitted)
+- Command(s):
+  - Instrumented `build/nanoCLR_main.c` with startup markers around kernel init/thread create and CLR thread wrapper entry.
+  - Rebuilt/flashed `w5500-native`, deployed `MailboxSmoke` bundle, and sampled mailbox repeatedly over SWD.
+  - Verified marker progression to `0xD5350000` (stage `0x35`) after boot and after successful managed deployment.
+  - Verified `nanoff --devicedetails` shows `MailboxSmoke, 1.0.0.0` loaded, while mailbox never moves beyond stage `0x35`.
+- Artifact: build/nanoCLR.bin; tests/MailboxSmoke/bin/Release/latest.deploy.bin
+- Conclusion: CLR startup thread is entered (stage `0x35`), but mailbox updates from managed/native interop are never observed afterward; execution appears stalled/blocked within CLR startup path before user-managed code or mailbox interop calls execute.
+
+### 2026-04-09 13:10:31 UTC [FAIL]
+- Git rev: ef3c81b + local deep CLR instrumentation (uncommitted)
+- Command(s):
+  - Patched active Docker volume source `nanoframework_nf-interpreter:/nf-interpreter/targets/ChibiOS/_nanoCLR/CLR_Startup_Thread.c` with mailbox markers:
+    - `0x40` thread entered
+    - `0x41` after `nanoHAL_Initialize_C()`
+    - `0x42` before `AssertBlockStorage()`
+    - `0x43` after `AssertBlockStorage()`
+    - `0x44` immediately before `ClrStartup(*clrSettings)`
+    - `0x45` immediately after `ClrStartup` return (expected unreachable)
+  - Rebuilt/flashed `w5500-native` and probed mailbox over SWD.
+- Artifact: build/nanoCLR.bin
+- Conclusion: mailbox reaches `0xD5440000` consistently (stage `0x44`, running), proving startup advances through nanoHAL and block storage checks, then stalls inside `ClrStartup(*clrSettings)` before returning or advancing to managed mailbox writes.
+
+### 2026-04-09 14:32:48 UTC [FAIL]
+- Git rev: ef3c81b + local mailbox bindtest diagnostics (uncommitted)
+- Command(s):
+  - Rebuilt and packed bindtest managed bundle (`tests/MailboxSmoke/bin/Release/latest.deploy.bin`) with assembly identity `DiSEqC_Control.Interop`.
+  - Bounded transport probes with explicit timeouts:
+    - `timeout 8s nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --listdevices` -> timeout (`rc=124`).
+    - `timeout 20s nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --deploy --image tests/MailboxSmoke/bin/Release/latest.deploy.bin --address 0x080C0000 --reset` -> `Error E2001`.
+    - Additional baud sweep attempts (`230400`, `460800`) also timed out on `--listdevices`.
+  - Verified SWD path remains healthy in same session: `st-info --probe` succeeds and `tests/swd_read_bringup_status.sh` reads mailbox `0xD5440000`.
+- Artifact: tests/MailboxSmoke/bin/Release/latest.deploy.bin; /tmp/list.log; /tmp/deploy.log
+- Conclusion: current blocker is UART wire-protocol transport instability (listdevices/deploy timeouts or E2001), not SWD or mailbox read path; bindtest interop hypothesis cannot be validated until serial deploy becomes stable again.
+
+### 2026-04-09 14:51:14 UTC [FAIL]
+- Git rev: ef3c81b + local mailbox bindtest diagnostics (uncommitted)
+- Command(s):
+  - `st-flash reset`
+  - `nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails`
+  - `nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --deploy --image tests/MailboxSmoke/bin/Release/latest.deploy.bin --address 0x080C0000 --reset`
+  - `nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails`
+  - `./tests/swd_read_bringup_status.sh`
+- Artifact: tests/MailboxSmoke/bin/Release/latest.deploy.bin
+- Result highlights:
+  - UART transport recovered after SWD reset; `nanoff --devicedetails` succeeded.
+  - Before deploy, managed assemblies showed `MailboxSmoke, 1.0.0.0` + `mscorlib`.
+  - Bindtest deploy completed successfully (`Getting details...OK`, `Deploying managed application...OK`, `Rebooting...OK`).
+  - After deploy, managed assemblies showed only `mscorlib, 1.17.11.0`.
+  - `DiSEqC_Control.Interop v1.0.0.0` remained visible only under `Native Assemblies`.
+  - SWD mailbox remained unchanged at `0xD5440000` (stage `0x44`, running).
+- Conclusion: mailbox feature still does not work end-to-end. With transport restored, the bindtest image can be deployed but is not accepted as a live managed assembly, and execution still never advances past the pre-`ClrStartup()` mailbox marker.
+
+### 2026-04-09 16:01:40 UTC [FAIL]
+- Git rev: ef3c81b + local mailbox diagnostics (uncommitted)
+- Command(s):
+  - Reverted MailboxSmoke assembly name from `DiSEqC_Control.Interop` back to `MailboxSmoke` in `.nfproj`.
+  - Rebuilt with `FORCE_REBUILD=1 ./toolchain/compile-mailbox-smoke.sh`.
+  - Packed new bundle at `tests/MailboxSmoke/bin/Release/MailboxSmoke_original-*.deploy.bin`.
+  - Deployed via `st-flash reset` + `nanoff --deploy`.
+  - Post-deploy `nanoff --devicedetails` confirmed assemblies.
+  - Sampled mailbox via `./tests/swd_read_bringup_status.sh`.
+- Artifact: tests/MailboxSmoke/bin/Release/MailboxSmoke_original-20260409T145918Z.deploy.bin
+- Result highlights:
+  - Deploy succeeded (`Getting details...OK`, `Deploying managed application...OK`, `Rebooting...OK`).
+  - **Post-deploy managed assemblies: `MailboxSmoke, 1.0.0.0` + `mscorlib, 1.17.11.0` (now includes MailboxSmoke)**
+  - SWD mailbox: `0xD5440000` (stage `0x44` = 68 decimal, RUNNING), unchanged from before.
+- Conclusion: Assembly name was the root cause of managed app disappearance after deploy. Restoring to `MailboxSmoke` now allows managed assembly to load and persist on-device. However, runtime execution still stalls inside `ClrStartup()` before returning to execution context; mailbox remains at stage `0x44`. **Root issue shifted from assembly identity to CLR startup stall.**
+
+### 2026-04-09 16:08:45 UTC [INFO]
+- Git rev: ef3c81b + local GDB isolation diagnostics (uncommitted)
+- Command(s):
+  - Packed dependency-complete MailboxSmoke deployment bundle (4 records):
+    - `MailboxSmoke.pe`
+    - `mscorlib.pe`
+    - `nanoFramework.Runtime.Events.pe`
+    - `System.Threading.pe`
+  - Deployed full-stack bundle via `nanoff --deploy` (deploy log shows `Getting details...OK`, `Deploying managed application...OK`, `Rebooting...OK`).
+  - Ran non-invasive SWD/GDB runtime sampling (no interpreter source patching):
+    - reset-run, timed halt, capture `PC`, `bt`, and instruction window.
+  - Ran startup milestone breakpoint pass at:
+    - `ClrStartup` `0x08018F88`
+    - `ResolveAll` `0x0802F144`
+    - `PrepareForExecution` `0x08030410`
+    - `NewThread` `0x08033DE8`
+- Artifact: tests/MailboxSmoke/bin/Release/MailboxSmoke_full_stack-20260409T153106Z.deploy.bin; /tmp/gdb_sample.log; /tmp/gdb_direct.log
+- Result highlights:
+  - Dependency-complete bundle generated successfully (`RECORD_COUNT: 4`).
+  - GDB runtime sample halted in managed IL:
+    - `FINAL_PC=0x08009A92`
+    - symbol: `CLR_RT_Thread::Execute_IL(...)`
+    - backtrace: `Execute_IL` -> `ClrStartup` -> `CLRStartupThreadWrapper`.
+  - Startup breakpoints were reached through `NewThread` (`halted: PC: 0x08018f8c`, `0x0802f148`, `0x08030414`, `0x08033dec`).
+  - Mailbox remains unchanged at `0xD5440000` (stage `0x44`) in subsequent SWD checks.
+- Conclusion: adding `nanoFramework.Runtime.Events` + `System.Threading` did not clear the mailbox symptom in this run. Managed IL is executing, so the earlier strict "stall before managed handover" hypothesis no longer fully explains current behavior. Next isolation target is managed-to-native boundary (`MailboxSet/Get` and W5500 native entrypoints) with one-probe-per-session GDB runs.
+
+### 2026-04-09 16:14:33 UTC [FAIL]
+- Git rev: ef3c81b + local GDB isolation diagnostics (uncommitted)
+- Command(s):
+  - Added one-probe-per-session helper `toolchain/probe-one-breakpoint.sh` to isolate native interop entrypoints using fresh OpenOCD/GDB sessions.
+  - Ran one-shot probes at native addresses:
+    - `MAILBOX_SET` `0x08023F00`
+    - `MAILBOX_GET` `0x08023F10`
+    - `W5500_OPEN` `0x08023F20`
+    - `W5500_CLOSE` `0x08024010`
+  - Each probe run bounded with timeout (`30s`) to classify hit/miss deterministically.
+- Artifact: /tmp/onebp_set3.log; /tmp/onebp_get3.log; /tmp/onebp_open3.log; /tmp/onebp_close3.log
+- Result highlights:
+  - All four interop probes timed out without breakpoint hit (`MISS rc=124`).
+  - During each probe run, debugger snapshots still show CPU in managed IL (`CLR_RT_Thread::Execute_IL(...)`).
+  - Managed PE metadata strings in `MailboxSmoke.pe` include `DiSEqC_Control.Native` symbols and `NativeSetBringupStatus`, but do **not** include assembly identity `DiSEqC_Control.Interop`.
+  - Native assembly export remains `g_CLR_AssemblyNative_DiSEqC_Control_Interop` (`"DiSEqC_Control.Interop"`, checksum `0x12345678`).
+  - Mailbox status remains unchanged (`0xD5440000`, stage `0x44`) after these runs.
+- Conclusion: managed IL execution is active, but none of the mailbox/W5500 native interop entrypoints are being reached in the current MailboxSmoke runtime path. The fault domain is now narrowed to managed-side control flow / internal-call binding at the managed-to-native boundary (not pre-CLR startup and not transport).
+
+### 2026-04-09 16:32:23 UTC [FAIL]
+- Git rev: ef3c81b + local interop-split diagnostics (uncommitted)
+- Command(s):
+  - Added dedicated managed interop library project `DiSEqC_Control.Interop` with raw `[MethodImpl(InternalCall)]` declarations in native table order and wired `tests/MailboxSmoke` to reference it.
+  - Rebuilt with `FORCE_REBUILD=1 ./toolchain/compile-mailbox-smoke.sh` and packed full-stack bundle including:
+    - `MailboxSmoke.pe`
+    - `DiSEqC_Control.Interop.pe`
+    - `mscorlib.pe`
+    - `nanoFramework.Runtime.Events.pe`
+    - `System.Threading.pe`
+  - Deployed via `nanoff --deploy` and verified with `nanoff --devicedetails`.
+  - Re-ran SWD mailbox read and startup/interops probe attempts (`probe-clr-startup.sh`, `probe-one-breakpoint.sh`).
+- Artifact: `tests/MailboxSmoke/bin/Release/MailboxSmoke_interop_split_full_stack-20260409T162116Z.deploy.bin`; `/tmp/probe_startup_interop_split.out`; `/tmp/deploy_interop2.log`; `/tmp/devicedetails_interop2.log`
+- Result highlights:
+  - Build succeeded and produced `DiSEqC_Control.Interop.pe` in MailboxSmoke output.
+  - Deploy completed (`Getting details...OK`, `Deploying managed application...OK`, `Rebooting...OK`).
+  - Post-deploy managed assemblies still show only:
+    - `MailboxSmoke, 1.0.0.0`
+    - `mscorlib, 1.17.11.0`
+    - `nanoFramework.Runtime.Events, 1.11.32.0`
+    - `System.Threading, 1.1.52.34401`
+  - `DiSEqC_Control.Interop` remains visible under **Native Assemblies** only; no managed assembly entry is accepted/retained for that name.
+  - SWD mailbox remains unchanged at `0xD5440000` (stage `0x44`, RUNNING).
+  - Startup probe partial pass confirms early managed pipeline still advances (`CLRSTARTUP=HIT`, `CREATEINSTANCE=HIT`, `RESOLVEALL=HIT`) before debugger/OpenOCD session instability interrupted full table capture.
+- Conclusion: splitting wrappers into a managed assembly named `DiSEqC_Control.Interop` did not restore mailbox/W5500 native entrypoint execution in this target state; managed deployment still effectively runs as `MailboxSmoke` while `DiSEqC_Control.Interop` remains native-only. The managed-to-native dispatch fault remains unresolved, with probe tooling noise now a secondary blocker for deterministic hit/miss completion.
+

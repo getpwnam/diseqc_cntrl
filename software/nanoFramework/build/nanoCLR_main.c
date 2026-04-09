@@ -20,8 +20,17 @@
 #define SWO_OUTPUT 0
 #endif
 
+extern volatile uint32_t g_w5500_bringup_status;
+
+static inline void SetStartupMailbox(uint8_t stage, uint8_t result, uint8_t detail)
+{
+    g_w5500_bringup_status = ((uint32_t)0xD5 << 24) | ((uint32_t)stage << 16) | ((uint32_t)result << 8) | (uint32_t)detail;
+}
+
+static void CLRStartupThreadWrapper(void const* argument);
+
 osThreadDef(ReceiverThread, osPriorityHigh, 2048, "ReceiverThread");
-osThreadDef(CLRStartupThread, osPriorityNormal, 4096, "CLRStartupThread");
+osThreadDef(CLRStartupThreadWrapper, osPriorityNormal, 4096, "CLRStartupThread");
 
 #if (HAL_USE_SERIAL_USB != TRUE)
 static void ForceUsart3PinsOnPb10Pb11(void)
@@ -45,8 +54,22 @@ static void ForceUsart3PinsOnPb10Pb11(void)
 }
 #endif
 
+static void CLRStartupThreadWrapper(void const* argument)
+{
+    SetStartupMailbox(0x35, 0, 0);
+    CLRStartupThread(argument);
+    SetStartupMailbox(0x36, 14, 1);
+
+    while (true)
+    {
+        osDelay(1000);
+    }
+}
+
 int main(void)
 {
+    SetStartupMailbox(0x30, 0, 0);
+
     halInit();
 
     InitBootClipboard();
@@ -56,6 +79,7 @@ int main(void)
 #endif
 
     osKernelInitialize();
+    SetStartupMailbox(0x31, 0, 0);
 
 #if (HAL_NF_USE_STM32_CRC == TRUE)
     crcStart(NULL);
@@ -86,7 +110,8 @@ int main(void)
     sdStart(&SERIAL_DRIVER, &usart3_cfg);
 #endif
 
-    osThreadCreate(osThread(ReceiverThread), NULL);
+    osThreadId receiverThread = osThreadCreate(osThread(ReceiverThread), NULL);
+    SetStartupMailbox(0x32, receiverThread != NULL ? 1 : 14, receiverThread != NULL ? 0 : 1);
 
     CLR_SETTINGS clrSettings;
     (void)memset(&clrSettings, 0, sizeof(CLR_SETTINGS));
@@ -95,9 +120,11 @@ int main(void)
     clrSettings.WaitForDebugger = false;
     clrSettings.EnterDebuggerLoopAfterExit = true;
 
-    osThreadCreate(osThread(CLRStartupThread), &clrSettings);
+    osThreadId clrThread = osThreadCreate(osThread(CLRStartupThreadWrapper), &clrSettings);
+    SetStartupMailbox(0x33, clrThread != NULL ? 1 : 14, clrThread != NULL ? 0 : 2);
 
-    osKernelStart();
+    osStatus kernelStart = osKernelStart();
+    SetStartupMailbox(0x34, kernelStart == osOK ? 1 : 14, (uint8_t)kernelStart);
 
     while (true)
     {

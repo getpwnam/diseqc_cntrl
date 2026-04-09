@@ -20,11 +20,8 @@ HRESULT Library_diseqc_interop_DiseqC_NativeStepEast___STATIC__I4__U1(CLR_RT_Sta
 HRESULT Library_diseqc_interop_DiseqC_NativeStepWest___STATIC__I4__U1(CLR_RT_StackFrame& stack);
 HRESULT Library_diseqc_interop_DiseqC_NativeIsBusy___STATIC__BOOLEAN(CLR_RT_StackFrame& stack);
 HRESULT Library_diseqc_interop_DiseqC_NativeGetCurrentAngle___STATIC__R4(CLR_RT_StackFrame& stack);
-HRESULT Library_diseqc_interop_MotorEnable_NativeTurnOn___STATIC__VOID__U4(CLR_RT_StackFrame& stack);
-HRESULT Library_diseqc_interop_MotorEnable_NativeStartTracking___STATIC__VOID(CLR_RT_StackFrame& stack);
-HRESULT Library_diseqc_interop_MotorEnable_NativeStopTracking___STATIC__VOID(CLR_RT_StackFrame& stack);
-HRESULT Library_diseqc_interop_MotorEnable_NativeForceOff___STATIC__VOID(CLR_RT_StackFrame& stack);
-HRESULT Library_diseqc_interop_MotorEnable_NativeIsOn___STATIC__BOOLEAN(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_DiseqC_NativeSetBringupStatus___STATIC__VOID__U4(CLR_RT_StackFrame& stack);
+HRESULT Library_diseqc_interop_DiseqC_NativeGetBringupStatus___STATIC__U4(CLR_RT_StackFrame& stack);
 HRESULT Library_diseqc_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR_RT_StackFrame& stack);
 HRESULT Library_diseqc_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__STRING__STRING__STRING__STRING(CLR_RT_StackFrame& stack);
 HRESULT Library_diseqc_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4(CLR_RT_StackFrame& stack);
@@ -34,6 +31,8 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeClose___STATIC__I4__I4(CLR_RT_S
 HRESULT Library_diseqc_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4(CLR_RT_StackFrame& stack);
 
 /* Library information */
+volatile uint32_t g_w5500_bringup_status = 0xD5010000;
+
 static const CLR_RT_MethodHandler method_lookup[] = 
 {
     NULL,
@@ -48,11 +47,8 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_diseqc_interop_DiseqC_NativeStepWest___STATIC__I4__U1,
     Library_diseqc_interop_DiseqC_NativeIsBusy___STATIC__BOOLEAN,
     Library_diseqc_interop_DiseqC_NativeGetCurrentAngle___STATIC__R4,
-    Library_diseqc_interop_MotorEnable_NativeTurnOn___STATIC__VOID__U4,
-    Library_diseqc_interop_MotorEnable_NativeStartTracking___STATIC__VOID,
-    Library_diseqc_interop_MotorEnable_NativeStopTracking___STATIC__VOID,
-    Library_diseqc_interop_MotorEnable_NativeForceOff___STATIC__VOID,
-    Library_diseqc_interop_MotorEnable_NativeIsOn___STATIC__BOOLEAN,
+    Library_diseqc_interop_DiseqC_NativeSetBringupStatus___STATIC__VOID__U4,
+    Library_diseqc_interop_DiseqC_NativeGetBringupStatus___STATIC__U4,
     Library_diseqc_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4,
     Library_diseqc_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__STRING__STRING__STRING__STRING,
     Library_diseqc_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4,
@@ -62,7 +58,7 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_diseqc_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4,
 };
 
-const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_DiseqC_Interop =
+extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_DiSEqC_Control_Interop =
 {
     "DiSEqC_Control.Interop",
     0x12345678,  // TODO: Generate proper checksum
@@ -237,78 +233,20 @@ HRESULT Library_diseqc_interop_DiseqC_NativeGetCurrentAngle___STATIC__R4(CLR_RT_
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
-/* =============================================================================
- * Motor Enable Native Functions
- * ========================================================================== */
-
-/**
- * @brief Native TurnOn implementation
- * C# signature: public static extern void NativeTurnOn(uint travelTimeSec);
- */
-HRESULT Library_diseqc_interop_MotorEnable_NativeTurnOn___STATIC__VOID__U4(CLR_RT_StackFrame& stack)
+HRESULT Library_diseqc_interop_DiseqC_NativeSetBringupStatus___STATIC__VOID__U4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
-    
-    uint32_t travel_time_sec = stack.Arg0().NumericByRef().u4;
-    
-    motor_enable_turn_on(travel_time_sec);
-    
+
+    g_w5500_bringup_status = stack.Arg0().NumericByRef().u4;
+
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
-/**
- * @brief Native StartTracking implementation
- * C# signature: public static extern void NativeStartTracking();
- */
-HRESULT Library_diseqc_interop_MotorEnable_NativeStartTracking___STATIC__VOID(CLR_RT_StackFrame& stack)
+HRESULT Library_diseqc_interop_DiseqC_NativeGetBringupStatus___STATIC__U4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
-    (void)stack;
-    
-    motor_enable_start_tracking();
-    
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
 
-/**
- * @brief Native StopTracking implementation
- * C# signature: public static extern void NativeStopTracking();
- */
-HRESULT Library_diseqc_interop_MotorEnable_NativeStopTracking___STATIC__VOID(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-    (void)stack;
-    
-    motor_enable_stop_tracking();
-    
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
+    stack.SetResult_U4(g_w5500_bringup_status);
 
-/**
- * @brief Native ForceOff implementation
- * C# signature: public static extern void NativeForceOff();
- */
-HRESULT Library_diseqc_interop_MotorEnable_NativeForceOff___STATIC__VOID(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-    (void)stack;
-    
-    motor_enable_force_off();
-    
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-/**
- * @brief Native IsOn implementation
- * C# signature: public static extern bool NativeIsOn();
- */
-HRESULT Library_diseqc_interop_MotorEnable_NativeIsOn___STATIC__BOOLEAN(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-    
-    bool is_on = motor_enable_is_on();
-    
-    stack.SetResult_Boolean(is_on);
-    
     NANOCLR_NOCLEANUP_NOLABEL();
 }

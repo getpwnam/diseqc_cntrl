@@ -6,8 +6,8 @@ namespace DiSEqC_Control.Mqtt
 {
     internal interface IMqttClientFacade
     {
-        event EventHandler<MqttMsgPublishEventArgs> MessageReceived;
-        event EventHandler ConnectionClosed;
+        event IMqttClient.MqttMsgPublishEventHandler MessageReceived;
+        event IMqttClient.ConnectionClosedEventHandler ConnectionClosed;
 
         bool IsConnected { get; }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Device.Gpio;
 using System.IO.Ports;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -28,6 +29,8 @@ namespace DiSEqC_Control
         private const int FRAM_DUMP_DEFAULT_BYTES = 64;
         private const int FRAM_DUMP_MAX_BYTES = 256;
         private const string FRAM_CLEAR_CONFIRMATION_TOKEN = "ERASE";
+        private const int STATUS_LED_PIN = 2;
+        private const int STATUS_LED_BLINK_MS = 500;
 
         private static string TopicPrefix => _runtimeConfig.MqttTopicPrefix;
         private static string TopicAvailability => TopicPrefix + "/availability";
@@ -42,6 +45,9 @@ namespace DiSEqC_Control
 
             // Initialize runtime configuration and persistent storage
             InitializeConfiguration();
+
+            // Start heartbeat LED early as a basic alive indicator.
+            StartStatusLedHeartbeat();
 
             // Initialize hardware
             InitializeNetwork();
@@ -59,6 +65,33 @@ namespace DiSEqC_Control
             // Main loop
             Debug.WriteLine("Entering main loop...");
             MainLoop();
+        }
+
+        private static void StartStatusLedHeartbeat()
+        {
+            try
+            {
+                var gpio = new GpioController();
+                var led = gpio.OpenPin(STATUS_LED_PIN, PinMode.Output);
+
+                new Thread(() =>
+                {
+                    bool on = false;
+
+                    while (true)
+                    {
+                        on = !on;
+                        led.Write(on ? PinValue.High : PinValue.Low);
+                        Thread.Sleep(STATUS_LED_BLINK_MS);
+                    }
+                }).Start();
+
+                Debug.WriteLine($"[LED] Heartbeat enabled on pin {STATUS_LED_PIN}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LED] Heartbeat unavailable: {ex.Message}");
+            }
         }
 
         #region Network Initialization

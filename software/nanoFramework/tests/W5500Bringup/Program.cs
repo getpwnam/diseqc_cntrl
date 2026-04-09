@@ -1,0 +1,367 @@
+using System;
+using System.Diagnostics;
+using System.Device.Gpio;
+using System.Threading;
+using DiSEqC_Control.Native;
+
+namespace W5500Bringup
+{
+    public static class Program
+    {
+        private const int StatusLedPin = 2;
+
+        // Network config applied directly to native W5500 driver.
+        private const string LocalIp = "192.168.1.160";
+        private const string SubnetMask = "255.255.255.0";
+        private const string Gateway = "192.168.1.1";
+        private const string MacAddress = "02:24:C1:00:00:51";
+
+        // Probe endpoint: use an always-on TCP service in your LAN.
+        private const string ProbeHost = "192.168.1.60";
+        private const int ProbePort = 1883;
+        private const int ConnectTimeoutMs = 5000;
+        private const int ReceiveTimeoutMs = 2000;
+
+        private const int FailCodeConfigureNetwork = 1;
+        private const int FailCodeOpenSocket = 2;
+        private const int FailCodeConnect = 3;
+        private const int FailCodeConnectedCheck = 4;
+        private const int FailCodeSend = 5;
+        private const int FailCodeReceive = 6;
+        private const int FailCodeClose = 7;
+        private const int FailCodeException = 8;
+
+        private const byte BringupResultRunning = 0;
+        private const byte BringupResultPass = 1;
+        private const byte BringupResultWarn = 2;
+        private const byte BringupResultFail = 14;
+        private const byte BringupResultException = 15;
+
+        private static GpioController _gpio;
+
+        public static void Main()
+        {
+            try
+            {
+                var earlyOpen = W5500Socket.Open(out int earlyHandle);
+                if (earlyHandle >= 0)
+                {
+                    W5500Socket.Close(earlyHandle);
+                }
+                Debug.WriteLine("[W5500] Early open probe => " + earlyOpen + " handle=" + earlyHandle);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[W5500] Early open probe failed: " + ex.Message);
+            }
+
+            if (!InitializeLed())
+            {
+                Debug.WriteLine("[LED] Failed to initialize status LED");
+            }
+
+            Debug.WriteLine("[W5500] Bring-up test starting");
+            Debug.WriteLine("[W5500] Local IP " + LocalIp + " Gateway " + Gateway);
+            Debug.WriteLine("[W5500] Probe target " + ProbeHost + ":" + ProbePort);
+            ReportBringupStatus(1, BringupResultRunning, 0);
+
+            // Startup signature to prove managed app execution.
+            Blink(3, 120, 120);
+
+            int failCode = 0;
+            int warnCode = 0;
+            int socketHandle = -1;
+            int currentStage = 0;
+            int exceptionStage = 0;
+
+            try
+            {
+                currentStage = 1;
+                ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                StageMarker(1);
+                try
+                {
+                    bool diseqcBusy = DiSEqC.IsBusy();
+                    Debug.WriteLine("[INTEROP] DiSEqC.IsBusy => " + diseqcBusy);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("[INTEROP] DiSEqC.IsBusy unavailable: " + ex.Message);
+                }
+
+                currentStage = 2;
+                ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                StageMarker(2);
+                var status = W5500Socket.Open(out socketHandle);
+                Debug.WriteLine("[W5500] Open => " + status + " handle=" + socketHandle);
+                if (status != W5500Socket.Status.Ok)
+                {
+                    failCode = FailCodeOpenSocket;
+                }
+
+                if (failCode == 0)
+                {
+                    currentStage = 3;
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                    StageMarker(3);
+                    status = W5500Socket.ConfigureNetwork(LocalIp, SubnetMask, Gateway, MacAddress);
+                    Debug.WriteLine("[W5500] ConfigureNetwork => " + status);
+                    if (status != W5500Socket.Status.Ok)
+                    {
+                        failCode = FailCodeConfigureNetwork;
+                    }
+                }
+
+                if (failCode == 0)
+                {
+                    currentStage = 4;
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                    StageMarker(4);
+                    status = W5500Socket.Connect(socketHandle, ProbeHost, ProbePort, ConnectTimeoutMs);
+                    Debug.WriteLine("[W5500] Connect => " + status);
+                    if (status != W5500Socket.Status.Ok)
+                    {
+                        failCode = FailCodeConnect;
+                    }
+                }
+
+                if (failCode == 0)
+                {
+                    currentStage = 5;
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                    bool connected = W5500Socket.IsConnected(socketHandle);
+                    Debug.WriteLine("[W5500] IsConnected => " + connected);
+                    if (!connected)
+                    {
+                        failCode = FailCodeConnectedCheck;
+                    }
+                }
+
+                if (failCode == 0)
+                {
+                    currentStage = 6;
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                    StageMarker(5);
+                    byte[] payload = BuildProbePayload();
+                    status = W5500Socket.Send(socketHandle, payload, 0, payload.Length, out int sentBytes);
+                    Debug.WriteLine("[W5500] Send => " + status + " sent=" + sentBytes);
+                    if (status != W5500Socket.Status.Ok || sentBytes <= 0)
+                    {
+                        failCode = FailCodeSend;
+                    }
+                }
+
+                if (failCode == 0)
+                {
+                    currentStage = 7;
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                    StageMarker(6);
+                    byte[] buffer = new byte[128];
+                    status = W5500Socket.Receive(socketHandle, buffer, 0, buffer.Length, ReceiveTimeoutMs, out int receivedBytes);
+                    Debug.WriteLine("[W5500] Receive => " + status + " bytes=" + receivedBytes);
+
+                    if (status == W5500Socket.Status.Timeout)
+                    {
+                        // Timeout is acceptable for first bring-up if target service does not send data back.
+                        warnCode = 1;
+                    }
+                    else if (status != W5500Socket.Status.Ok)
+                    {
+                        failCode = FailCodeReceive;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[W5500] Exception: " + ex.Message);
+                exceptionStage = currentStage;
+                Debug.WriteLine("[W5500] Exception stage: " + exceptionStage);
+                failCode = FailCodeException;
+                ReportBringupStatus(15, BringupResultException, (byte)exceptionStage);
+            }
+            finally
+            {
+                if (socketHandle >= 0)
+                {
+                    try
+                    {
+                        currentStage = 8;
+                        ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                        var closeStatus = W5500Socket.Close(socketHandle);
+                        Debug.WriteLine("[W5500] Close => " + closeStatus);
+                        if (failCode == 0 && closeStatus != W5500Socket.Status.Ok)
+                        {
+                            failCode = FailCodeClose;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine("[W5500] Close exception: " + ex.Message);
+                        if (failCode == 0)
+                        {
+                            failCode = FailCodeException;
+                            exceptionStage = 8;
+                        }
+                    }
+                }
+            }
+
+            if (failCode == 0 && warnCode == 0)
+            {
+                Debug.WriteLine("[LED] PASS pattern");
+                ReportBringupStatus(15, BringupResultPass, 0);
+                RunPassLoop();
+            }
+
+            if (failCode == 0 && warnCode != 0)
+            {
+                Debug.WriteLine("[LED] WARN pattern");
+                ReportBringupStatus(15, BringupResultWarn, (byte)warnCode);
+                RunWarnLoop();
+            }
+
+            Debug.WriteLine("[LED] FAIL code: " + failCode);
+            if (failCode == FailCodeException && exceptionStage > 0)
+            {
+                Debug.WriteLine("[LED] Exception stage pulses: " + exceptionStage);
+            }
+
+            ReportBringupStatus(15, failCode == FailCodeException ? BringupResultException : BringupResultFail, (byte)(failCode == FailCodeException ? exceptionStage : failCode));
+
+            RunFailLoop(failCode, exceptionStage);
+        }
+
+        private static uint EncodeBringupStatus(byte stage, byte result, byte detail)
+        {
+            return (uint)((0xD5 << 24) | (stage << 16) | (result << 8) | detail);
+        }
+
+        private static void ReportBringupStatus(byte stage, byte result, byte detail)
+        {
+            try
+            {
+                DiSEqC.SetBringupStatus(EncodeBringupStatus(stage, result, detail));
+            }
+            catch
+            {
+                // Keep bring-up flow alive even if mailbox setter interop is unavailable.
+            }
+        }
+
+        private static byte[] BuildProbePayload()
+        {
+            return new byte[]
+            {
+                (byte)'W', (byte)'5', (byte)'5', (byte)'0', (byte)'0', (byte)'-',
+                (byte)'B', (byte)'R', (byte)'I', (byte)'N', (byte)'G', (byte)'U', (byte)'P',
+                (byte)'\r', (byte)'\n'
+            };
+        }
+
+        private static bool InitializeLed()
+        {
+            try
+            {
+                _gpio = new GpioController();
+                _gpio.OpenPin(StatusLedPin, PinMode.Output);
+                _gpio.SetPinMode(StatusLedPin, PinMode.Output);
+                _gpio.Write(StatusLedPin, PinValue.Low);
+                Debug.WriteLine("[LED] Initialized on PA2");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[LED] Initialization failed: " + ex.Message);
+                return false;
+            }
+        }
+
+        private static void RunPassLoop()
+        {
+            while (true)
+            {
+                // PASS latch: one long + two short, then heartbeat cadence.
+                Pulse(800, 250);
+                Pulse(180, 180);
+                Pulse(180, 600);
+
+                Pulse(500, 500);
+                Pulse(500, 1000);
+            }
+        }
+
+        private static void RunWarnLoop()
+        {
+            while (true)
+            {
+                // WARN latch: one medium + one short, then 1.5 s pause.
+                Pulse(450, 180);
+                Pulse(160, 1500);
+            }
+        }
+
+        private static void RunFailLoop(int code, int exceptionStage)
+        {
+            if (code < 1)
+            {
+                code = 1;
+            }
+
+            while (true)
+            {
+                // Clear separator before each fail code burst.
+                Pulse(900, 900);
+
+                for (int i = 0; i < code; i++)
+                {
+                    Pulse(280, 280);
+                }
+
+                if (code == FailCodeException && exceptionStage > 0)
+                {
+                    Thread.Sleep(900);
+                    for (int i = 0; i < exceptionStage; i++)
+                    {
+                        Pulse(140, 220);
+                    }
+                }
+
+                Thread.Sleep(3500);
+            }
+        }
+
+        private static void Blink(int pulses, int onMs, int offMs)
+        {
+            for (int i = 0; i < pulses; i++)
+            {
+                Pulse(onMs, offMs);
+            }
+        }
+
+        private static void StageMarker(int stage)
+        {
+            if (stage < 1)
+            {
+                stage = 1;
+            }
+
+            // Distinct short pulse count before each critical step.
+            Blink(stage, 140, 220);
+            Thread.Sleep(900);
+        }
+
+        private static void Pulse(int onMs, int offMs)
+        {
+            if (_gpio == null)
+            {
+                Thread.Sleep(onMs + offMs);
+                return;
+            }
+
+            _gpio.Write(StatusLedPin, PinValue.High);
+            Thread.Sleep(onMs);
+            _gpio.Write(StatusLedPin, PinValue.Low);
+            Thread.Sleep(offMs);
+        }
+    }
+}

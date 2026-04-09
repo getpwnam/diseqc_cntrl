@@ -5749,12 +5749,6 @@
 		(uuid "9e1cc51a-b7ca-4c60-b990-d7ba2888d154")
 	)
 	(junction
-		(at 255.27 33.02)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "a2ce73e7-5bc6-42c0-95cf-535800901799")
-	)
-	(junction
 		(at 279.4 63.5)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -10908,7 +10902,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_ARM_SWD_TagConnect_TC2030"
+		(property "Value" "Conn_ARM_SWD_TagConnect_TC2050"
 			(at 248.92 20.32 0)
 			(effects
 				(font
@@ -10916,7 +10910,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector:Tag-Connect_TC2050-IDC-NL_2x05_P1.27mm_Vertical"
+		(property "Footprint" "Connector:Tag-Connect_TC2050-IDC-FP_2x05_P1.27mm_Vertical"
 			(at 248.92 33.02 0)
 			(effects
 				(font

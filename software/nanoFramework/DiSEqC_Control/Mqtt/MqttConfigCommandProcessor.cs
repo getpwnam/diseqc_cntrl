@@ -6,7 +6,7 @@ namespace DiSEqC_Control.Mqtt
     {
         private static bool TopicMatches(string topic, string commandSuffix)
         {
-            return topic.EndsWith(commandSuffix, StringComparison.Ordinal);
+            return topic.EndsWith(commandSuffix);
         }
 
         public static bool TryHandle(

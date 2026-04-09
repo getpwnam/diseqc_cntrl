@@ -1,0 +1,15 @@
+0x080280cc in __idle_thread ()
+Unable to match requested speed 2000 kHz, using 1800 kHz
+Unable to match requested speed 2000 kHz, using 1800 kHz
+[stm32f4x.cpu] halted due to debug-request, current mode: Thread 
+xPSR: 0x01000000 pc: 0x08001dc8 msp: 0x20000400
+Breakpoint 1 at 0x8019d9c
+Note: automatically using hardware breakpoints for read-only addresses.
+Unable to match requested speed 2000 kHz, using 1800 kHz
+Unable to match requested speed 2000 kHz, using 1800 kHz
+target not halted
+target stm32f4x.cpu was not halted when resume was requested
+
+Breakpoint 1, 0x08019d9c in ClrStartup ()
+AFTER_RESOLVEALL r0             0x0                 0
+[Inferior 1 (Remote target) detached]
