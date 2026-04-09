@@ -100,6 +100,12 @@
 - [x] Implement real board pin configuration in `ConfigPins_I2C3()` (PA8/PC9 I2C3 open-drain AF4 setup).
 - [ ] Validate runtime networking path on hardware once board is available.
 
+## Deferred: Motor Control (after immediate hardware checks)
+
+- [ ] Revisit native motor-enable interop/API surface after FRAM and board-level checks are completed.
+- [ ] Define managed motor-control workflow (step, slew, tracking, timeout safety) and align native implementation.
+- [ ] Add a dedicated motor bring-up test app with clear LED/telemetry pass-fail indicators.
+
 ## FRAM Hardware Checks (from bring-up)
 
 - [ ] Verify FM24CL16B pin 7 (WP) is solidly tied low on assembled boards.
