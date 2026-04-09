@@ -8,12 +8,16 @@
 #include <nanoHAL_v2.h>
 #include <platform_target_capabilities.h>
 
+#ifndef ConvertCOM_DebugHandle
+#define ConvertCOM_DebugHandle(port) (port)
+#endif
+
 // Board-specific system config.
 // Wire protocol debug channel is mapped to COM3 (USART3 -> PB10/PB11).
 HAL_SYSTEM_CONFIG HalSystemConfig = {
     {true}, // HAL_DRIVER_CONFIG_HEADER Header
 
-    3,      // ConvertCOM_DebugHandle(3)
+    ConvertCOM_DebugHandle(3), // COM3 (USART3 on PB10/PB11)
     0,      // Messaging channel disabled
     115200, // Wire protocol serial bitrate
     0,      // STDIO channel disabled

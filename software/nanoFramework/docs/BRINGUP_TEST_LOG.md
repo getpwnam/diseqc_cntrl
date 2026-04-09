@@ -364,3 +364,9 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact:
   - `tests/BlinkBringup/bin/Release/BlinkBringup.bin` (full-stack fallback bundle)
 - Conclusion: Build/deploy process is stable again for this target; managed startup and PA2 GPIO path are both validated after power cycle.
+
+### 2026-04-09 08:00:10 UTC [PASS]
+- Git rev: 7b85dc6
+- Command(s): ./toolchain/build.sh minimal; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; nanoff --nanodevice --listdevices; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails; 8x+5x stress loops with/without st-flash reset
+- Artifact: build/nanoBooter.bin; build/nanoCLR.bin; DiSEqC_Control/bin/Release/DiSEqC_Control.bin
+- Conclusion: USART3 wire protocol is operational again on fresh minimal firmware; nanoff list/devicedetails stable across repeated attempts and SWD resets. Hardened HalSystemConfig debug handle mapping to explicit ConvertCOM_DebugHandle(3).
