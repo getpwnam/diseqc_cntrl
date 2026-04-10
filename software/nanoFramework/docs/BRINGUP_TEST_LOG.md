@@ -933,3 +933,10 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: tests/W5500Bringup/bin/Release/Cubley.Interop.pe; build/nanoCLR.elf
 - Conclusion: Added persistent native error telemetry path (BringupStatus.NativeGetLastNativeError) and checksum-sync hardening fix; rapid mailbox sampling now stabilizes at 0xD50E0E03, indicating Open failure with native code 3 (Busy).
 - Note: Telemetry now publishes native op/code in fail loop stages 13/14 for SWD-stable diagnosis.
+
+### 2026-04-10 22:59:31 UTC [INFO]
+- Git rev: e2a3870
+- Command(s): ./toolchain/compile-w5500-test.sh; ./toolchain/w5500-led-observe.sh start; st-flash reset; 60x tests/swd_read_bringup_status.sh
+- Artifact: tests/W5500Bringup/Program.cs
+- Conclusion: Removed early NativeOpen probe from W5500Bringup startup. Rapid timeline now progresses to stage 3 (configure begin) and stage 4 (connect begin), then latches at 0xD50E0E00.
+- Note: Previous 0xD50E0E03 (Busy) no longer appears; stage14 detail=0 indicates native error code not set at failure point.

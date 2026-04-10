@@ -56,20 +56,6 @@ namespace W5500Bringup
 
         public static void Main()
         {
-            try
-            {
-                var earlyOpen = (W5500Socket.Status)W5500Socket.NativeOpen(out int earlyHandle);
-                if (earlyHandle >= 0)
-                {
-                    W5500Socket.NativeClose(earlyHandle);
-                }
-                Debug.WriteLine("[W5500] Early open probe => " + earlyOpen + " handle=" + earlyHandle);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("[W5500] Early open probe failed: " + ex.Message);
-            }
-
             bool ledReady = InitializeLed();
             if (!ledReady)
             {
