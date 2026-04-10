@@ -13,6 +13,28 @@
 // port for SCK pin is: SPI1_SCLK
 // port for MISO pin is: SPI1_MISO
 // port for MOSI pin is: SPI1_MOSI
+void ConfigPins_SPI1(const SPI_DEVICE_CONFIGURATION& spiDeviceConfig)
+{
+	(void)spiDeviceConfig;
 
-// GPIO alternate pin function is 5 (see alternate function mapping table in device datasheet)
-SPI_CONFIG_PINS(1, GPIOA, 5, GPIOA, 6, GPIOA, 7, 5)
+	palSetLineMode(PAL_LINE(GPIOA, 5U), PAL_MODE_ALTERNATE(5));
+	palSetLineMode(PAL_LINE(GPIOA, 6U), PAL_MODE_ALTERNATE(5));
+	palSetLineMode(PAL_LINE(GPIOA, 7U), PAL_MODE_ALTERNATE(5));
+}
+
+//////////
+// SPI2 //
+//////////
+
+// pin configuration for SPI2
+// port for SCK pin is: SPI2_SCLK
+// port for MISO pin is: SPI2_MISO
+// port for MOSI pin is: SPI2_MOSI
+void ConfigPins_SPI2(const SPI_DEVICE_CONFIGURATION& spiDeviceConfig)
+{
+	(void)spiDeviceConfig;
+
+	palSetLineMode(PAL_LINE(GPIOB, 13U), PAL_MODE_ALTERNATE(5));
+	palSetLineMode(PAL_LINE(GPIOB, 14U), PAL_MODE_ALTERNATE(5));
+	palSetLineMode(PAL_LINE(GPIOB, 15U), PAL_MODE_ALTERNATE(5));
+}

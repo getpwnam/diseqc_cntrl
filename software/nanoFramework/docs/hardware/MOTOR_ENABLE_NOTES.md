@@ -25,7 +25,7 @@ The original C# code had `MotorEnablerManager` that controlled a separate motor 
 
 ### Changes Made
 
-1. ✅ **Removed from `board_diseqc.h`**:
+1. ✅ **Removed from `board_cubley.h`**:
    - `#define MOTOR_ENABLE_LINE` removed
    - GPIOB configuration cleaned up (all default)
 
@@ -65,7 +65,7 @@ The rotor will:
 
 If you decide to add external motor control (like a relay), you could:
 1. Add a GPIO pin in your schematic
-2. Update `board_diseqc.h` with the new pin
+2. Update `board_cubley.h` with the new pin
 3. Use the existing motor enable code
 
 But for now, **you don't need it** - your design is simpler!
@@ -73,7 +73,7 @@ But for now, **you don't need it** - your design is simpler!
 ### Board Initialization
 
 ```cpp
-// In board_diseqc.cpp - boardInit()
+// In board_cubley.cpp - boardInit()
 void boardInit(void) {
     // Initialize DiSEqC native driver
     diseqc_init(&PWMD1, &GPTD2);

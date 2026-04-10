@@ -13,7 +13,7 @@ Document W5500 pin mapping and integration notes for this board.
 
 Based on your `diseqc_cntrl` KiCad schematic:
 
-### SPI1 Connections
+### SPI2 Connections
 | Signal | STM32 Pin | W5500 Pin | Description |
 |--------|-----------|-----------|-------------|
 | SCK    | PB13      | SCLK      | SPI Clock |
@@ -24,19 +24,25 @@ Based on your `diseqc_cntrl` KiCad schematic:
 ### Control Signals
 | Signal | STM32 Pin | W5500 Pin | Description |
 |--------|-----------|-----------|-------------|
-| RESET  | PC6       | RSTN      | Reset (active low) |
+| RESET  | PA8       | RSTN      | Reset (active low, temporary bodge wire) |
 | INT    | PC7       | INTN      | Interrupt (active low) |
 
 ## ✅ Updated Files
 
-### 1. `nf-native/board_diseqc.h`
+### 1. `nf-native/board_cubley.h`
 ```c
 // W5500 configuration
-#define W5500_SPI_DRIVER            SPID1               // SPI1
+#define W5500_SPI_DRIVER            SPID2               // SPI2
 #define W5500_CS_LINE               PAL_LINE(GPIOB, 12U) // PB12 = SCSN
-#define W5500_RESET_LINE            PAL_LINE(GPIOC, 6U)  // PC6 = W5500_RST
+#define W5500_RESET_LINE            PAL_LINE(GPIOA, 8U)  // PA8 = W5500_RST (temporary bodge)
 #define W5500_INT_LINE              PAL_LINE(GPIOC, 7U)  // PC7 = W5500_INT
 ```
+
+## Temporary Reset Routing
+
+- Current board bring-up uses a temporary bodge wire from MCU `PA8` to W5500 `RSTN`.
+- This is intentionally reflected in `W5500_RESET_LINE` and should be treated as temporary hardware state until PCB routing is finalized.
+- If/when reset routing moves back to `PC6`, update both `board_cubley.h` and this document in the same commit.
 
 ### 2. `DiSEqC_Control/packages.config`
 Added W5500 networking packages:

@@ -1,5 +1,5 @@
 /**
- * @file board_diseqc.cpp
+ * @file board_cubley.cpp
  * @brief Board-specific initialization for DiSEqC Controller
  */
 

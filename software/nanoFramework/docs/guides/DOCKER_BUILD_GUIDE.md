@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Build firmware artifacts for the `M0DMF_DISEQC_F407` target using Docker, without installing a local ARM toolchain.
+Build firmware artifacts for the `M0DMF_CUBLEY_F407` target using Docker, without installing a local ARM toolchain.
 
 ## Current Profile Status
 
@@ -132,13 +132,13 @@ openocd -f interface/stlink.cfg -f target/stm32f4x.cfg \
    - Networking stack
    
 3. **Copies Your Files**
-   - `board_diseqc.h` - Board configuration
+   - `board_cubley.h` - Board configuration
    - `diseqc_native.cpp` - DiSEqC driver
    - `lnb_control.cpp` - LNB I2C control
    - `*_interop.cpp` - C# bindings
    
 4. **Configures with CMake**
-   - Target: `M0DMF_DISEQC_F407`
+   - Target: `M0DMF_CUBLEY_F407`
    - Enables: GPIO, SPI, I2C (networking currently disabled in this profile)
    - DiSEqC + LNB drivers linked
    
@@ -175,7 +175,7 @@ software/nanoFramework/
 │   └── build.ps1              # PowerShell build script
 │
 ├── nf-native/                 # Your native code
-│   ├── board_diseqc.h
+│   ├── board_cubley.h
 │   ├── diseqc_native.cpp
 │   ├── lnb_control.cpp
 │   └── *_interop.cpp
@@ -287,7 +287,7 @@ Setting up target directory...
 Copying board configuration files...
 Creating build directory...
 Configuring with CMake...
--- Target: M0DMF_DISEQC_F407
+-- Target: M0DMF_CUBLEY_F407
 -- MCU: STM32F407VG
 -- Features enabled:
    - DiSEqC native driver

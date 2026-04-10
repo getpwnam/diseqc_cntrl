@@ -82,7 +82,7 @@ nanoFramework deploys managed code via **Wire Protocol** over UART (USART3).
 2. **Verify boot** via USART3 (115200 8N1)
    - Should see wire protocol ready message or clean boot without errors
    - If RTC hangs (20s+ delay): enable HSI_PLL for that profile
-   - `nanoff --devicedetails` should report `nanoCLR running @ M0DMF_DISEQC_F407`
+   - `nanoff --devicedetails` should report `nanoCLR running @ M0DMF_CUBLEY_F407`
    - At this stage, `Native Assemblies` populated with `Assemblies:` still empty is normal until you redeploy a managed app image
 
 ### Deploy Managed Application
@@ -148,7 +148,7 @@ Use this when your source tree is in WSL/Linux but your USB serial device is exp
 
 ### UART Garbled or Silent
 1. Check baud rate (115200 8N1)
-2. Verify boardInit() calls stm32_clock_init() in board_diseqc.cpp
+2. Verify boardInit() calls stm32_clock_init() in board_cubley.cpp
 3. If RTC hangs for ~20s: enable HSI_PLL for that profile in build.sh
 4. Check RCC state via GDB:
    ```gdb
@@ -202,7 +202,7 @@ Use this when your source tree is in WSL/Linux but your USB serial device is exp
 
 - [QUICK_START.md](./QUICK_START.md) — Build + flash commands
 - [DOCKER_BUILD_GUIDE.md](./docs/guides/DOCKER_BUILD_GUIDE.md) — Docker build details
-- [board_diseqc.cpp](./nf-native/board_diseqc.cpp) — Target board init (includes stm32_clock_init)
+- [board_cubley.cpp](./nf-native/board_cubley.cpp) — Target board init (includes stm32_clock_init)
 
 ---
 
@@ -221,7 +221,7 @@ Use this when your source tree is in WSL/Linux but your USB serial device is exp
 
 ### What Was Changed
 
-1. `nf-native/board_diseqc.cpp`
+1. `nf-native/board_cubley.cpp`
    - `boardInit()` now calls `stm32_clock_init()`.
 2. `toolchain/build.sh`
    - HSI PLL profile handling moved to script-level logic and re-applied after target config copies.

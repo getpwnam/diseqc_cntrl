@@ -4,7 +4,7 @@
  */
 
 #include "lnb_control.h"
-#include "board_diseqc.h"
+#include "board_cubley.h"
 #include <string.h>
 
 /* Global LNB handle */

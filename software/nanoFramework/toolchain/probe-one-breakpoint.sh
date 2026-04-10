@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then
-  echo "Usage: $0 <elf_path> <break_addr_hex> [label] [timeout_s]" >&2
+  echo "Usage: $0 <elf_path> <break_addr_hex> [label] [timeout_s] [attempts]" >&2
   exit 1
 fi
 
@@ -10,6 +10,7 @@ ELF_PATH="$1"
 BREAK_ADDR="$2"
 LABEL="${3:-BP}"
 TIMEOUT_S="${4:-18}"
+ATTEMPTS="${5:-${PROBE_ATTEMPTS:-8}}"
 OPENOCD_BIN="${OPENOCD_BIN:-openocd}"
 GDB_BIN="${GDB_BIN:-gdb-multiarch}"
 
@@ -57,7 +58,7 @@ openocd_pid=$!
 sleep 1.5
 
 rc=1
-for _ in 1 2 3 4 5 6 7 8; do
+for _ in $(seq 1 "$ATTEMPTS"); do
   set +e
   timeout "$TIMEOUT_S" "$GDB_BIN" "$ELF_PATH" -q -batch -x "$gdb_script" >"$gdb_out" 2>&1
   rc=$?

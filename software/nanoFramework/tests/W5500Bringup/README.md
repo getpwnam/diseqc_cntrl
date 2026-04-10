@@ -1,6 +1,6 @@
 # W5500Bringup
 
-Dedicated W5500 + SPI + LED bring-up app for the DiSEqC controller.
+Dedicated W5500 + SPI + LED bring-up app for the Cubley controller.
 
 This test app intentionally keeps diagnostics out of the production app startup path.
 
@@ -37,7 +37,7 @@ Failure code mapping:
 
 Exception stage mapping (only when failure code is 8):
 
-1. During DiSEqC interop smoke call (`DiSEqC.IsBusy`).
+1. During BringupStatus interop smoke call (`BringupStatus.NativeGet`).
 2. During Open.
 3. During ConfigureNetwork.
 4. During Connect.

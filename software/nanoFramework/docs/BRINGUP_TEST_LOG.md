@@ -919,3 +919,10 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: toolchain/build.sh; toolchain/interop-checksum.sh; toolchain/compile-w5500-test.sh; toolchain/compile-mailbox-smoke.sh
 - Conclusion: Added firmware-build interop checksum preflight and managed-build checksum guards so checksum drift fails fast before build/deploy.
 - Note: Preflight now runs at start of toolchain/build.sh; compile scripts validate Cubley.Interop.pe checksum compatibility.
+
+### 2026-04-10 22:47:15 UTC [INFO]
+- Git rev: b065a85
+- Command(s): git rm -r --cached software/nanoFramework/.debug; update board/docs for temporary W5500 reset routing
+- Artifact: software/nanoFramework/.gitignore; software/nanoFramework/nf-native/board_cubley.h; software/nanoFramework/docs/hardware/W5500_ETHERNET.md
+- Conclusion: Captured board-specific baseline changes and documented temporary W5500 reset routing to PA8; repository now ignores runtime .debug artifacts.
+- Note: Temporary bodge-wire reset mapping (PA8->RSTN) is intentional and must be updated alongside board docs when hardware routing changes.

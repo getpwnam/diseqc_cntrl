@@ -63,16 +63,41 @@ If VS Code extension is installed in WSL (remote) rather than Windows, pass it e
 
 ### 2) Firmware Build (nf-interpreter / nanoCLR)
 
-Builds firmware artifacts by fetching/using `nf-interpreter` inside Docker and compiling the `M0DMF_DISEQC_F407` target.
+Builds firmware artifacts by fetching/using `nf-interpreter` inside Docker and compiling the `M0DMF_CUBLEY_F407` target.
 
 Commands (recommended wrapper):
 
-- Minimal profile: `./toolchain/build.sh minimal`
-- W5500-native profile: `./toolchain/build.sh w5500-native`
-- Bring-up smoke profile (PA2 blink + USART3 heartbeat): `./toolchain/build.sh bringup-smoke`
-- Bring-up hardalive profile (PA2 + PB10 hard toggle, no RTOS/CLR): `./toolchain/build.sh bringup-hardalive`
-- USB no-VBUS-sense profile (current board revision): `./toolchain/build.sh usb-no-vbus-sense`
-- Network profile (deprecated transitional path): `./toolchain/build.sh network`
+- Cubley stable profile (default): `./toolchain/build.sh cubley-stable`
+- Cubley W5500-native profile: `./toolchain/build.sh cubley-w5500`
+- Cubley USB bring-up profile (no-VBUS-sense default): `./toolchain/build.sh cubley-usb`
+- Cubley hardalive profile (PA2 + PB10 hard toggle, no RTOS/CLR): `./toolchain/build.sh cubley-hardalive`
+- Bring-up smoke diagnostic profile (PA2 blink + USART3 heartbeat): `./toolchain/build.sh bringup-smoke`
+- Core-only diagnostic profile: `./toolchain/build.sh core-only`
+
+Legacy aliases are still accepted temporarily:
+
+- `minimal` -> `cubley-stable`
+- `w5500-native` -> `cubley-w5500`
+- `bringup-hardalive` -> `cubley-hardalive`
+- `usb-first` -> `cubley-usb` (VBUS-sense mode)
+- `usb-no-vbus-sense` -> `cubley-usb` (no-VBUS-sense mode)
+
+Deprecated profile quarantine:
+
+- `network` now maps to `legacy-network` and is blocked by default.
+- To run it intentionally: `NF_ALLOW_DEPRECATED_PROFILE=1 ./toolchain/build.sh network`
+
+### Firmware Profile Matrix
+
+| Profile | Status | Primary Purpose | Key Traits |
+|---|---|---|---|
+| `cubley-stable` | stable | Default daily firmware | Non-network, config block on, RTC on, UART wire protocol |
+| `cubley-w5500` | scaffold | Native W5500 bring-up | Non-network, config block off, SPI/GPIO/I2C on |
+| `cubley-usb` | experimental | USB-first transport bring-up | OTG1 + USB serial enabled; VBUS-sense mode selectable |
+| `cubley-hardalive` | experimental | Bare-metal liveness check | No RTOS/CLR startup; hard pin toggles |
+| `bringup-smoke` | experimental | Fast smoke diagnostics | PA2 blink + USART3 heartbeat |
+| `core-only` | experimental | Fast firmware iteration | Smallest managed/API footprint |
+| `legacy-network` | deprecated | Transitional compatibility only | lwIP/System.Net path; gated by env var |
 
 The wrapper auto-runs inside Docker when invoked from host Linux/WSL, and also works when already inside the container.
 

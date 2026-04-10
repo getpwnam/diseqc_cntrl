@@ -502,7 +502,7 @@ done
 
 ## 🔧 Board Configuration
 
-**File: `nf-native/board_diseqc.h`**
+**File: `nf-native/board_cubley.h`**
 
 ```c
 // LNB Control pins - VERIFY FROM SCHEMATIC!
@@ -515,7 +515,7 @@ done
 **⚠️ TODO before building firmware:**
 1. Check your schematic for LNBH26 VSEL pin connection
 2. Check if ToneIN is connected to MCU or using internal
-3. Update `board_diseqc.h` with correct pins
+3. Update `board_cubley.h` with correct pins
 4. Update GPIO configuration if needed
 
 ## 🚨 Troubleshooting

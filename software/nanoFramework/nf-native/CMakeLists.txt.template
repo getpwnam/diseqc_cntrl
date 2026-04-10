@@ -18,11 +18,11 @@ include(${TARGET_BASE_LOCATION}/target_common.cmake)
 
 # Board files
 list(APPEND TARGET_COMMON_SOURCES
-    ${TARGET_BASE_LOCATION}/board_diseqc.cpp
+    ${TARGET_BASE_LOCATION}/board_cubley.cpp
 )
 
 list(APPEND TARGET_COMMON_HEADERS
-    ${TARGET_BASE_LOCATION}/board_diseqc.h
+    ${TARGET_BASE_LOCATION}/board_cubley.h
     ${TARGET_BASE_LOCATION}/target_board.h
 )
 

@@ -9,7 +9,7 @@
 #include <hal.h>
 #include <string.h>
 #include <stdlib.h>
-#include "board_diseqc.h"
+#include "board_cubley.h"
 
 extern volatile uint32_t g_w5500_bringup_status;
 
@@ -34,6 +34,7 @@ static const uint8_t W5500_SHAR = 0x0009;
 static const uint8_t W5500_SIPR = 0x000F;
 static const uint8_t W5500_RTR = 0x0019;
 static const uint8_t W5500_RCR = 0x001B;
+static const uint16_t W5500_PHYCFGR = 0x002E;
 static const uint8_t W5500_VERSIONR = 0x0039;
 
 static const uint16_t Sn_MR = 0x0000;
@@ -92,16 +93,115 @@ static inline void set_w5500_bringup_status(uint8_t stage, uint8_t result, uint8
     g_w5500_bringup_status = ((uint32_t)0xD5 << 24) | ((uint32_t)stage << 16) | ((uint32_t)result << 8) | (uint32_t)detail;
 }
 
-static const SPIConfig g_w5500SpiConfig = {
-    false,
-    NULL,
-    NULL,
-    NULL,
-    GPIOB,
-    12U,
-    SPI_CR1_BR_2 | SPI_CR1_BR_1,
-    0
-};
+static const ioline_t W5500_SCK_LINE = PAL_LINE(GPIOB, 13U);
+static const ioline_t W5500_MISO_LINE = PAL_LINE(GPIOB, 14U);
+static const ioline_t W5500_MOSI_LINE = PAL_LINE(GPIOB, 15U);
+static bool g_w5500_mode3 = false;
+
+static inline void w5500_bb_delay()
+{
+    for (volatile int i = 0; i < 20; i++)
+    {
+        __asm__ volatile ("nop");
+    }
+}
+
+static inline void w5500_bb_set_sck_idle()
+{
+    if (g_w5500_mode3)
+    {
+        palSetLine(W5500_SCK_LINE);
+    }
+    else
+    {
+        palClearLine(W5500_SCK_LINE);
+    }
+}
+
+static uint8_t w5500_bb_xfer8(uint8_t out)
+{
+    uint8_t in = 0;
+    const bool cpol = g_w5500_mode3;
+    const bool cpha = g_w5500_mode3;
+
+    for (int bit = 7; bit >= 0; bit--)
+    {
+        bool outBit = ((out >> bit) & 0x01) != 0;
+
+        if (!cpha)
+        {
+            if (outBit)
+            {
+                palSetLine(W5500_MOSI_LINE);
+            }
+            else
+            {
+                palClearLine(W5500_MOSI_LINE);
+            }
+
+            if (cpol)
+            {
+                palClearLine(W5500_SCK_LINE);
+            }
+            else
+            {
+                palSetLine(W5500_SCK_LINE);
+            }
+
+            w5500_bb_delay();
+
+            in = (uint8_t)((in << 1) | (palReadLine(W5500_MISO_LINE) ? 1 : 0));
+
+            if (cpol)
+            {
+                palSetLine(W5500_SCK_LINE);
+            }
+            else
+            {
+                palClearLine(W5500_SCK_LINE);
+            }
+        }
+        else
+        {
+            if (cpol)
+            {
+                palClearLine(W5500_SCK_LINE);
+            }
+            else
+            {
+                palSetLine(W5500_SCK_LINE);
+            }
+
+            w5500_bb_delay();
+
+            if (outBit)
+            {
+                palSetLine(W5500_MOSI_LINE);
+            }
+            else
+            {
+                palClearLine(W5500_MOSI_LINE);
+            }
+
+            if (cpol)
+            {
+                palSetLine(W5500_SCK_LINE);
+            }
+            else
+            {
+                palClearLine(W5500_SCK_LINE);
+            }
+
+            w5500_bb_delay();
+
+            in = (uint8_t)((in << 1) | (palReadLine(W5500_MISO_LINE) ? 1 : 0));
+        }
+
+        w5500_bb_delay();
+    }
+
+    return in;
+}
 
 static inline uint8_t socket_reg_bsb(uint8_t socket)
 {
@@ -120,43 +220,49 @@ static inline uint8_t socket_rx_bsb(uint8_t socket)
 
 static uint8_t w5500_read8(uint16_t address, uint8_t bsb)
 {
-    uint8_t tx[4] = {(uint8_t)(address >> 8), (uint8_t)(address & 0xFF), (uint8_t)((bsb << 3) | 0x00), 0x00};
-    uint8_t rx[4] = {0};
-
-    spiSelect(&W5500_SPI_DRIVER);
-    spiExchange(&W5500_SPI_DRIVER, sizeof(tx), tx, rx);
-    spiUnselect(&W5500_SPI_DRIVER);
-
-    return rx[3];
+    palClearLine(W5500_CS_LINE);
+    (void)w5500_bb_xfer8((uint8_t)(address >> 8));
+    (void)w5500_bb_xfer8((uint8_t)(address & 0xFF));
+    (void)w5500_bb_xfer8((uint8_t)((bsb << 3) | 0x00));
+    uint8_t value = w5500_bb_xfer8(0x00);
+    palSetLine(W5500_CS_LINE);
+    return value;
 }
 
 static void w5500_write8(uint16_t address, uint8_t bsb, uint8_t value)
 {
-    uint8_t tx[4] = {(uint8_t)(address >> 8), (uint8_t)(address & 0xFF), (uint8_t)((bsb << 3) | 0x04), value};
-
-    spiSelect(&W5500_SPI_DRIVER);
-    spiSend(&W5500_SPI_DRIVER, sizeof(tx), tx);
-    spiUnselect(&W5500_SPI_DRIVER);
+    palClearLine(W5500_CS_LINE);
+    (void)w5500_bb_xfer8((uint8_t)(address >> 8));
+    (void)w5500_bb_xfer8((uint8_t)(address & 0xFF));
+    (void)w5500_bb_xfer8((uint8_t)((bsb << 3) | 0x04));
+    (void)w5500_bb_xfer8(value);
+    palSetLine(W5500_CS_LINE);
 }
 
 static void w5500_read_buf(uint16_t address, uint8_t bsb, uint8_t* out, uint16_t length)
 {
-    uint8_t header[3] = {(uint8_t)(address >> 8), (uint8_t)(address & 0xFF), (uint8_t)((bsb << 3) | 0x00)};
-
-    spiSelect(&W5500_SPI_DRIVER);
-    spiSend(&W5500_SPI_DRIVER, sizeof(header), header);
-    spiReceive(&W5500_SPI_DRIVER, length, out);
-    spiUnselect(&W5500_SPI_DRIVER);
+    palClearLine(W5500_CS_LINE);
+    (void)w5500_bb_xfer8((uint8_t)(address >> 8));
+    (void)w5500_bb_xfer8((uint8_t)(address & 0xFF));
+    (void)w5500_bb_xfer8((uint8_t)((bsb << 3) | 0x00));
+    for (uint16_t i = 0; i < length; i++)
+    {
+        out[i] = w5500_bb_xfer8(0x00);
+    }
+    palSetLine(W5500_CS_LINE);
 }
 
 static void w5500_write_buf(uint16_t address, uint8_t bsb, const uint8_t* data, uint16_t length)
 {
-    uint8_t header[3] = {(uint8_t)(address >> 8), (uint8_t)(address & 0xFF), (uint8_t)((bsb << 3) | 0x04)};
-
-    spiSelect(&W5500_SPI_DRIVER);
-    spiSend(&W5500_SPI_DRIVER, sizeof(header), header);
-    spiSend(&W5500_SPI_DRIVER, length, data);
-    spiUnselect(&W5500_SPI_DRIVER);
+    palClearLine(W5500_CS_LINE);
+    (void)w5500_bb_xfer8((uint8_t)(address >> 8));
+    (void)w5500_bb_xfer8((uint8_t)(address & 0xFF));
+    (void)w5500_bb_xfer8((uint8_t)((bsb << 3) | 0x04));
+    for (uint16_t i = 0; i < length; i++)
+    {
+        (void)w5500_bb_xfer8(data[i]);
+    }
+    palSetLine(W5500_CS_LINE);
 }
 
 static uint16_t w5500_read16(uint16_t address, uint8_t bsb)
@@ -311,20 +417,71 @@ static void w5500_apply_network_settings()
     w5500_write_buf(W5500_SIPR, W5500_BSB_COMMON, g_networkIp, 4);
 }
 
+static uint8_t w5500_probe_version(bool mode3)
+{
+    g_w5500_mode3 = mode3;
+    w5500_bb_set_sck_idle();
+
+    // Allow SPI peripheral and W5500 bus interface to settle.
+    chThdSleepMilliseconds(2);
+
+    uint8_t version = 0;
+    for (int i = 0; i < 5; i++)
+    {
+        version = w5500_read8(W5500_VERSIONR, W5500_BSB_COMMON);
+        if (version == 0x04)
+        {
+            return version;
+        }
+
+        chThdSleepMilliseconds(2);
+    }
+
+    return version;
+}
+
 static w5500_socket_status_t w5500_hw_init()
 {
-    spiStart(&W5500_SPI_DRIVER, &g_w5500SpiConfig);
+    // Ensure W5500 control and SPI pins are actively configured before reset.
+    palSetLineMode(W5500_RESET_LINE, PAL_MODE_OUTPUT_PUSHPULL);
+    palSetLineMode(W5500_CS_LINE, PAL_MODE_OUTPUT_PUSHPULL);
+    palSetLineMode(W5500_INT_LINE, PAL_MODE_INPUT_PULLUP);
 
+    // Bit-bang SPI requires GPIO output/input modes, not AF mode.
+    palSetLineMode(PAL_LINE(GPIOB, 13U), PAL_MODE_OUTPUT_PUSHPULL);  // SCK
+    palSetLineMode(PAL_LINE(GPIOB, 14U), PAL_MODE_INPUT_PULLUP);     // MISO
+    palSetLineMode(PAL_LINE(GPIOB, 15U), PAL_MODE_OUTPUT_PUSHPULL);  // MOSI
+
+    // Keep chip deselected while SPI is configured.
+    palSetLine(W5500_CS_LINE);
+    w5500_bb_set_sck_idle();
+
+    // Reset pulse - only effective if bodge wire is connected to RSTN.
+    // W5500 power-on-reset is sufficient for initial bring-up without bodge.
     palClearLine(W5500_RESET_LINE);
-    chThdSleepMilliseconds(10);
+    chThdSleepMilliseconds(20);
     palSetLine(W5500_RESET_LINE);
-    chThdSleepMilliseconds(120);
+    chThdSleepMilliseconds(50);
 
-    uint8_t version = w5500_read8(W5500_VERSIONR, W5500_BSB_COMMON);
+    uint8_t version = w5500_probe_version(false);
     if (version != 0x04)
     {
-        return W5500_SOCKET_IO_ERROR;
+        version = w5500_probe_version(true);
     }
+
+    // Always capture PHY config register for diagnostic mailbox.
+    uint8_t phycfgr = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
+
+    if (version != 0x04)
+    {
+        // Report raw VERSIONR and PHYCFGR for board-level diagnostics.
+        set_w5500_bringup_status(0xA0, version, phycfgr);
+        return (w5500_socket_status_t)(0x20 | (version & 0x0F));
+    }
+
+    // Keep runtime operations on mode 0 once version probing succeeds.
+    g_w5500_mode3 = false;
+    w5500_bb_set_sck_idle();
 
     w5500_write8(W5500_MR, W5500_BSB_COMMON, 0x80);
     chThdSleepMilliseconds(5);
@@ -338,6 +495,22 @@ static w5500_socket_status_t w5500_hw_init()
     w5500_write8(Sn_TXBUF_SIZE, socket_reg_bsb(kSocketIndex), 2);
 
     return W5500_SOCKET_OK;
+}
+
+extern "C" int cubley_w5500_early_init(void)
+{
+    if (g_initialized)
+    {
+        return (int)W5500_SOCKET_OK;
+    }
+
+    w5500_socket_status_t initStatus = w5500_hw_init();
+    if (initStatus == W5500_SOCKET_OK)
+    {
+        g_initialized = true;
+    }
+
+    return (int)initStatus;
 }
 
 static w5500_socket_status_t w5500_connect(uint8_t socket, const uint8_t remoteIp[4], uint16_t remotePort, int32_t timeoutMs)
@@ -493,7 +666,7 @@ static w5500_socket_status_t w5500_receive(uint8_t socket, uint8_t* buffer, uint
     return W5500_SOCKET_TIMEOUT;
 }
 
-HRESULT Library_diseqc_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 
@@ -530,7 +703,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR
     NANOCLR_NOCLEANUP();
 }
 
-HRESULT Library_diseqc_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__STRING__STRING__STRING__STRING(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__STRING__STRING__STRING__STRING(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 
@@ -587,7 +760,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__
     NANOCLR_NOCLEANUP();
 }
 
-HRESULT Library_diseqc_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 
@@ -633,7 +806,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRIN
     NANOCLR_NOCLEANUP();
 }
 
-HRESULT Library_diseqc_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_U1__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_U1__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 
@@ -677,7 +850,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_
     NANOCLR_NOCLEANUP();
 }
 
-HRESULT Library_diseqc_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARRAY_U1__I4__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARRAY_U1__I4__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 
@@ -732,7 +905,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARR
     NANOCLR_NOCLEANUP();
 }
 
-HRESULT Library_diseqc_interop_W5500Socket_NativeClose___STATIC__I4__I4(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_W5500Socket_NativeClose___STATIC__I4__I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 
@@ -761,7 +934,7 @@ HRESULT Library_diseqc_interop_W5500Socket_NativeClose___STATIC__I4__I4(CLR_RT_S
     NANOCLR_NOCLEANUP();
 }
 
-HRESULT Library_diseqc_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 

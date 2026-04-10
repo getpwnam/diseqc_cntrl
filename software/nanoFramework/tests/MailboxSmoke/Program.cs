@@ -1,5 +1,5 @@
 using System;
-using diseqc_interop;
+using Cubley.Interop;
 
 namespace MailboxSmoke
 {
@@ -28,8 +28,8 @@ namespace MailboxSmoke
 
                 try
                 {
-                    DiseqC.NativeSetBringupStatus(status);
-                    status = DiseqC.NativeGetBringupStatus();
+                    BringupStatus.NativeSet(status);
+                    status = BringupStatus.NativeGet();
                 }
                 catch
                 {

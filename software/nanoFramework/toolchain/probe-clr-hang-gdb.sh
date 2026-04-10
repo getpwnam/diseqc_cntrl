@@ -42,8 +42,8 @@ RESOLVEALL_ADDR="$(resolve_addr 'CLR_RT_TypeSystem::ResolveAll')"
 PREPARE_ADDR="$(resolve_addr 'CLR_RT_TypeSystem::PrepareForExecution')"
 NEWTHREAD_ADDR="$(resolve_addr 'CLR_RT_ExecutionEngine::NewThread')"
 EXECUTEIL_ADDR="$(resolve_addr 'CLR_RT_Thread::Execute_IL')"
-MAILBOXSET_ADDR="$(resolve_addr 'Library_diseqc_interop_DiseqC_NativeSetBringupStatus___STATIC__VOID__U4')"
-MAILBOXGET_ADDR="$(resolve_addr 'Library_diseqc_interop_DiseqC_NativeGetBringupStatus___STATIC__U4')"
+MAILBOXSET_ADDR="$(resolve_addr 'Library_cubley_interop_DiseqC_NativeSetBringupStatus___STATIC__VOID__U4')"
+MAILBOXGET_ADDR="$(resolve_addr 'Library_cubley_interop_DiseqC_NativeGetBringupStatus___STATIC__U4')"
 
 if [[ -z "$CLRSTARTUP_ADDR" ]]; then
   echo "Unable to locate ClrStartup symbol." >&2

@@ -28,9 +28,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\DiSEqC_Control.Interop\DiSEqC_Control.Interop.nfproj">
+    <ProjectReference Include="..\..\Cubley.Interop\Cubley.Interop.nfproj">
       <Project>{E65B3A56-704A-4E42-88E3-9E3A2E35B641}</Project>
-      <Name>DiSEqC_Control.Interop</Name>
+      <Name>Cubley.Interop</Name>
     </ProjectReference>
   </ItemGroup>
 

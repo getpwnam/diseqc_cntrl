@@ -59,7 +59,7 @@ Bit 2: VMON - Voltage monitor status
 
 **Verify I2C is working:**
 ```cpp
-// In your native code (diseqc_native.cpp or board_diseqc.cpp)
+// In your native code (diseqc_native.cpp or board_cubley.cpp)
 #include "lnb_control.h"
 
 void test_lnb_i2c() {
@@ -162,7 +162,7 @@ if (status & LNBH26_STAT_OTP) {
 
 3. **Wrong pins** - Verify PB8/PB9 are I2C1:
    ```c
-   // board_diseqc.h should have:
+   // board_cubley.h should have:
    #define VAL_GPIOB_AFRH  (PIN_AFIO_AF(8, 4U) | PIN_AFIO_AF(9, 4U))
    ```
 

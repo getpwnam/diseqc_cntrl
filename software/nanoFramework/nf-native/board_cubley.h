@@ -1,5 +1,5 @@
 /**
- * @file board_diseqc.h
+ * @file board_cubley.h
  * @brief Custom board configuration for DiSEqC Controller
  * 
  * Board: Custom STM32F407VGT6 DiSEqC Controller
@@ -15,7 +15,7 @@
 /*
  * Board identifier
  */
-#define BOARD_M0DMF_DISEQC_F407
+#define BOARD_M0DMF_CUBLEY_F407
 #define BOARD_NAME                  "DiSEqC Controller STM32F407VGT6"
 
 /*
@@ -85,12 +85,12 @@
 /*
  * W5500 Ethernet Configuration
  * Based on diseqc_cntrl schematic
- * SPI1: PB13 (SCK), PB14 (MISO), PB15 (MOSI)
- * Control: PB12 (CS/SCSN), PC6 (RST), PC7 (INT)
+ * SPI2: PB13 (SCK), PB14 (MISO), PB15 (MOSI)
+ * Control: PB12 (CS/SCSN), PA8 (RST - temporary bodge), PC7 (INT)
  */
-#define W5500_SPI_DRIVER            SPID1               // SPI1
+#define W5500_SPI_DRIVER            SPID2               // SPI2
 #define W5500_CS_LINE               PAL_LINE(GPIOB, 12U) // PB12 = SCSN (Chip Select)
-#define W5500_RESET_LINE            PAL_LINE(GPIOC, 6U)  // PC6 = W5500_RST
+#define W5500_RESET_LINE            PAL_LINE(GPIOA, 8U)  // PA8 = W5500_RST (temporary bodge)
 #define W5500_INT_LINE              PAL_LINE(GPIOC, 7U)  // PC7 = W5500_INT
 
 /*
@@ -125,9 +125,9 @@
 #define GPIOB_PIN10                 10U // USART3_TX
 #define GPIOB_PIN11                 11U // USART3_RX
 #define GPIOB_PIN12                 12U // W5500 SCSN
-#define GPIOB_PIN13                 13U // SPI1_SCK
-#define GPIOB_PIN14                 14U // SPI1_MISO
-#define GPIOB_PIN15                 15U // SPI1_MOSI
+#define GPIOB_PIN13                 13U // SPI2_SCK
+#define GPIOB_PIN14                 14U // SPI2_MISO
+#define GPIOB_PIN15                 15U // SPI2_MOSI
 
 #define GPIOC_PIN0                  0U
 #define GPIOC_PIN1                  1U
@@ -217,9 +217,9 @@
  * PB10 - Alternate USART3_TX
  * PB11 - Alternate USART3_RX
  * PB12 - Output (W5500 SCSN)
- * PB13 - Alternate SPI1_SCK
- * PB14 - Alternate SPI1_MISO
- * PB15 - Alternate SPI1_MOSI
+ * PB13 - Alternate SPI2_SCK
+ * PB14 - Alternate SPI2_MISO
+ * PB15 - Alternate SPI2_MOSI
  */
 #define VAL_GPIOB_MODER             (PIN_MODE_ALTERNATE(GPIOB_PIN6) |           \
                                      PIN_MODE_ALTERNATE(GPIOB_PIN7) |           \

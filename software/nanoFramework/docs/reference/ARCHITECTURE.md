@@ -6,7 +6,7 @@ Define the software boundaries, control flow, and ownership for the `software/na
 
 ## Current Build Profile
 
-- Target: `M0DMF_DISEQC_F407`
+- Target: `M0DMF_CUBLEY_F407`
 - Build orchestrator: `toolchain/build.sh`
 - Networking (`System.Net`): **disabled** in the currently validated profile
 - Firmware outputs: `build/nanoCLR.bin`, `build/nanoCLR.hex`, `build/nanoCLR.elf`
@@ -27,7 +27,7 @@ Define the software boundaries, control flow, and ownership for the `software/na
      - marshal arguments/results and status codes
 
 3. **Native Driver Layer (C++/ChibiOS integration)**
-   - Location: `nf-native/diseqc_native.*`, `nf-native/lnb_control.*`, `nf-native/board_diseqc.*`
+  - Location: `nf-native/diseqc_native.*`, `nf-native/lnb_control.*`, `nf-native/board_cubley.*`
    - Responsibilities:
      - DiSEqC timing/control primitives
      - LNB I2C control (LNBH26PQR)

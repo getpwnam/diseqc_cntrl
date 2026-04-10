@@ -45,6 +45,7 @@ target extended-remote :3333
 monitor halt
 set $mailbox_addr = &g_w5500_bringup_status
 x/wx $mailbox_addr
+monitor resume
 quit
 EOF_GDB
 

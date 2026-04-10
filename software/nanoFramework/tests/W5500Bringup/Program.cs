@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Device.Gpio;
 using System.Threading;
-using DiSEqC_Control.Native;
+using Cubley.Interop;
 
 namespace W5500Bringup
 {
@@ -37,16 +37,31 @@ namespace W5500Bringup
         private const byte BringupResultFail = 14;
         private const byte BringupResultException = 15;
 
+        private const byte DetailOpenBegin = 0x10;
+        private const byte DetailOpenDone = 0x11;
+        private const byte DetailConfigureBegin = 0x20;
+        private const byte DetailConfigureDone = 0x21;
+        private const byte DetailConnectBegin = 0x30;
+        private const byte DetailConnectDone = 0x31;
+        private const byte DetailConnectedCheckBegin = 0x40;
+        private const byte DetailConnectedCheckDone = 0x41;
+        private const byte DetailSendBegin = 0x50;
+        private const byte DetailSendDone = 0x51;
+        private const byte DetailReceiveBegin = 0x60;
+        private const byte DetailReceiveDone = 0x61;
+        private const byte DetailCloseBegin = 0x70;
+        private const byte DetailCloseDone = 0x71;
+
         private static GpioController _gpio;
 
         public static void Main()
         {
             try
             {
-                var earlyOpen = W5500Socket.Open(out int earlyHandle);
+                var earlyOpen = (W5500Socket.Status)W5500Socket.NativeOpen(out int earlyHandle);
                 if (earlyHandle >= 0)
                 {
-                    W5500Socket.Close(earlyHandle);
+                    W5500Socket.NativeClose(earlyHandle);
                 }
                 Debug.WriteLine("[W5500] Early open probe => " + earlyOpen + " handle=" + earlyHandle);
             }
@@ -55,7 +70,8 @@ namespace W5500Bringup
                 Debug.WriteLine("[W5500] Early open probe failed: " + ex.Message);
             }
 
-            if (!InitializeLed())
+            bool ledReady = InitializeLed();
+            if (!ledReady)
             {
                 Debug.WriteLine("[LED] Failed to initialize status LED");
             }
@@ -63,7 +79,12 @@ namespace W5500Bringup
             Debug.WriteLine("[W5500] Bring-up test starting");
             Debug.WriteLine("[W5500] Local IP " + LocalIp + " Gateway " + Gateway);
             Debug.WriteLine("[W5500] Probe target " + ProbeHost + ":" + ProbePort);
-            ReportBringupStatus(1, BringupResultRunning, 0);
+            byte startupLedDetail = ledReady ? (byte)0xA0 : (byte)0xA1;
+
+            // Stage 9 is reserved for startup diagnostics: detail 0xA0=LED init ok, 0xA1=failed.
+            ReportBringupStatus(9, BringupResultRunning, startupLedDetail);
+            Thread.Sleep(300);
+            ReportBringupStatus(1, BringupResultRunning, startupLedDetail);
 
             // Startup signature to prove managed app execution.
             Blink(3, 120, 120);
@@ -77,23 +98,24 @@ namespace W5500Bringup
             try
             {
                 currentStage = 1;
-                ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                ReportBringupStatus((byte)currentStage, BringupResultRunning, startupLedDetail);
                 StageMarker(1);
                 try
                 {
-                    bool diseqcBusy = DiSEqC.IsBusy();
-                    Debug.WriteLine("[INTEROP] DiSEqC.IsBusy => " + diseqcBusy);
+                    uint statusEcho = BringupStatus.NativeGet();
+                    Debug.WriteLine("[INTEROP] BringupStatus.NativeGet => 0x" + statusEcho.ToString("X8"));
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine("[INTEROP] DiSEqC.IsBusy unavailable: " + ex.Message);
+                    Debug.WriteLine("[INTEROP] BringupStatus.NativeGet unavailable: " + ex.Message);
                 }
 
                 currentStage = 2;
-                ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                ReportBringupStatus((byte)currentStage, BringupResultRunning, DetailOpenBegin);
                 StageMarker(2);
-                var status = W5500Socket.Open(out socketHandle);
+                var status = (W5500Socket.Status)W5500Socket.NativeOpen(out socketHandle);
                 Debug.WriteLine("[W5500] Open => " + status + " handle=" + socketHandle);
+                ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailOpenDone, (int)status));
                 if (status != W5500Socket.Status.Ok)
                 {
                     failCode = FailCodeOpenSocket;
@@ -102,10 +124,11 @@ namespace W5500Bringup
                 if (failCode == 0)
                 {
                     currentStage = 3;
-                    ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, DetailConfigureBegin);
                     StageMarker(3);
-                    status = W5500Socket.ConfigureNetwork(LocalIp, SubnetMask, Gateway, MacAddress);
+                    status = (W5500Socket.Status)W5500Socket.NativeConfigureNetwork(LocalIp, SubnetMask, Gateway, MacAddress);
                     Debug.WriteLine("[W5500] ConfigureNetwork => " + status);
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailConfigureDone, (int)status));
                     if (status != W5500Socket.Status.Ok)
                     {
                         failCode = FailCodeConfigureNetwork;
@@ -115,10 +138,11 @@ namespace W5500Bringup
                 if (failCode == 0)
                 {
                     currentStage = 4;
-                    ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, DetailConnectBegin);
                     StageMarker(4);
-                    status = W5500Socket.Connect(socketHandle, ProbeHost, ProbePort, ConnectTimeoutMs);
+                    status = (W5500Socket.Status)W5500Socket.NativeConnect(socketHandle, ProbeHost, ProbePort, ConnectTimeoutMs);
                     Debug.WriteLine("[W5500] Connect => " + status);
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailConnectDone, (int)status));
                     if (status != W5500Socket.Status.Ok)
                     {
                         failCode = FailCodeConnect;
@@ -128,9 +152,10 @@ namespace W5500Bringup
                 if (failCode == 0)
                 {
                     currentStage = 5;
-                    ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
-                    bool connected = W5500Socket.IsConnected(socketHandle);
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, DetailConnectedCheckBegin);
+                    bool connected = W5500Socket.NativeIsConnected(socketHandle);
                     Debug.WriteLine("[W5500] IsConnected => " + connected);
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, connected ? DetailConnectedCheckDone : (byte)(DetailConnectedCheckDone + 1));
                     if (!connected)
                     {
                         failCode = FailCodeConnectedCheck;
@@ -140,11 +165,12 @@ namespace W5500Bringup
                 if (failCode == 0)
                 {
                     currentStage = 6;
-                    ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, DetailSendBegin);
                     StageMarker(5);
                     byte[] payload = BuildProbePayload();
-                    status = W5500Socket.Send(socketHandle, payload, 0, payload.Length, out int sentBytes);
+                    status = (W5500Socket.Status)W5500Socket.NativeSend(socketHandle, payload, 0, payload.Length, out int sentBytes);
                     Debug.WriteLine("[W5500] Send => " + status + " sent=" + sentBytes);
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailSendDone, (int)status));
                     if (status != W5500Socket.Status.Ok || sentBytes <= 0)
                     {
                         failCode = FailCodeSend;
@@ -154,11 +180,12 @@ namespace W5500Bringup
                 if (failCode == 0)
                 {
                     currentStage = 7;
-                    ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, DetailReceiveBegin);
                     StageMarker(6);
                     byte[] buffer = new byte[128];
-                    status = W5500Socket.Receive(socketHandle, buffer, 0, buffer.Length, ReceiveTimeoutMs, out int receivedBytes);
+                    status = (W5500Socket.Status)W5500Socket.NativeReceive(socketHandle, buffer, 0, buffer.Length, ReceiveTimeoutMs, out int receivedBytes);
                     Debug.WriteLine("[W5500] Receive => " + status + " bytes=" + receivedBytes);
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailReceiveDone, (int)status));
 
                     if (status == W5500Socket.Status.Timeout)
                     {
@@ -186,9 +213,10 @@ namespace W5500Bringup
                     try
                     {
                         currentStage = 8;
-                        ReportBringupStatus((byte)currentStage, BringupResultRunning, 0);
-                        var closeStatus = W5500Socket.Close(socketHandle);
+                        ReportBringupStatus((byte)currentStage, BringupResultRunning, DetailCloseBegin);
+                        var closeStatus = (W5500Socket.Status)W5500Socket.NativeClose(socketHandle);
                         Debug.WriteLine("[W5500] Close => " + closeStatus);
+                        ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailCloseDone, (int)closeStatus));
                         if (failCode == 0 && closeStatus != W5500Socket.Status.Ok)
                         {
                             failCode = FailCodeClose;
@@ -236,11 +264,26 @@ namespace W5500Bringup
             return (uint)((0xD5 << 24) | (stage << 16) | (result << 8) | detail);
         }
 
+        private static byte CombineStatusDetail(byte major, int status)
+        {
+            int clamped = status;
+            if (clamped < 0)
+            {
+                clamped = 0;
+            }
+            if (clamped > 15)
+            {
+                clamped = 15;
+            }
+
+            return (byte)(major | (byte)clamped);
+        }
+
         private static void ReportBringupStatus(byte stage, byte result, byte detail)
         {
             try
             {
-                DiSEqC.SetBringupStatus(EncodeBringupStatus(stage, result, detail));
+                BringupStatus.NativeSet(EncodeBringupStatus(stage, result, detail));
             }
             catch
             {

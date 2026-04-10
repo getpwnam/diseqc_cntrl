@@ -45,3 +45,6 @@ desktop.ini
 # Logs
 *.log
 build.log
+
+# Runtime/debug probe outputs
+.debug/

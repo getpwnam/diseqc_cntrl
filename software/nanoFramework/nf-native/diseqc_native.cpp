@@ -4,7 +4,7 @@
  */
 
 #include "diseqc_native.h"
-#include "board_diseqc.h"
+#include "board_cubley.h"
 #include <string.h>
 #include <math.h>
 
