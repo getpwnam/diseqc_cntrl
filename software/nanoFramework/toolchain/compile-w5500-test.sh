@@ -101,7 +101,12 @@ if [[ -z "$ASSEMBLY_NAME" ]]; then
 fi
 PRIMARY_PE="$OUTPUT_DIR/$ASSEMBLY_NAME.pe"
 PRIMARY_BIN="$OUTPUT_DIR/$ASSEMBLY_NAME.bin"
+CUBLEY_INTEROP_PE="$OUTPUT_DIR/Cubley.Interop.pe"
 RUNTIME_EVENTS_PE=""
+
+if [[ -f "$CUBLEY_INTEROP_PE" ]]; then
+  "$SCRIPT_DIR/interop-checksum.sh" --check --pe "$CUBLEY_INTEROP_PE"
+fi
 
 if [[ -f "$OUTPUT_DIR/nanoFramework.Runtime.Events.pe" ]]; then
   RUNTIME_EVENTS_PE="$OUTPUT_DIR/nanoFramework.Runtime.Events.pe"
@@ -114,38 +119,36 @@ else
   fi
 fi
 
-if [[ -f "$PRIMARY_BIN" ]]; then
-  if [[ "$PRIMARY_BIN" != "$OUTPUT_BIN" ]]; then
-    cp -f "$PRIMARY_BIN" "$OUTPUT_BIN"
-    echo "Refreshed deployment image from primary output: $OUTPUT_BIN"
-  else
-    echo "Primary deployment image already at expected path: $OUTPUT_BIN"
+if [[ -f "$OUTPUT_DIR/mscorlib.pe" && -f "$OUTPUT_DIR/System.Device.Gpio.pe" && -f "$OUTPUT_DIR/System.Threading.pe" && -f "$PRIMARY_PE" ]]; then
+  # Always rebuild a deterministic deployment bundle instead of relying on
+  # msbuild's generated .bin, which can omit project-reference assemblies.
+  pack_args=(
+    --required-marker NFMRK1
+    --out-dir "$OUTPUT_DIR"
+    --out-base "${TARGET_NAME}_bundle"
+    "$PRIMARY_PE"
+  )
+
+  if [[ -f "$CUBLEY_INTEROP_PE" ]]; then
+    pack_args+=("$CUBLEY_INTEROP_PE")
   fi
-else
-  if [[ -f "$OUTPUT_DIR/mscorlib.pe" && -f "$OUTPUT_DIR/System.Device.Gpio.pe" && -f "$OUTPUT_DIR/System.Threading.pe" && -f "$PRIMARY_PE" ]]; then
-    pack_args=(
-      --required-marker NFMRK1
-      --out-dir "$OUTPUT_DIR"
-      --out-base "${TARGET_NAME}_bundle"
-      "$PRIMARY_PE"
-      "$OUTPUT_DIR/System.Device.Gpio.pe"
-    )
 
-    if [[ -n "$RUNTIME_EVENTS_PE" && -f "$RUNTIME_EVENTS_PE" ]]; then
-      pack_args+=("$RUNTIME_EVENTS_PE")
-    fi
+  pack_args+=("$OUTPUT_DIR/System.Device.Gpio.pe")
 
-    pack_args+=(
-      "$OUTPUT_DIR/System.Threading.pe"
-      "$OUTPUT_DIR/mscorlib.pe"
-    )
+  if [[ -n "$RUNTIME_EVENTS_PE" && -f "$RUNTIME_EVENTS_PE" ]]; then
+    pack_args+=("$RUNTIME_EVENTS_PE")
+  fi
 
-    "$SCRIPT_DIR/pack-and-validate.sh" "${pack_args[@]}" >/dev/null
+  pack_args+=(
+    "$OUTPUT_DIR/System.Threading.pe"
+    "$OUTPUT_DIR/mscorlib.pe"
+  )
 
-    if [[ -L "$OUTPUT_DIR/latest.deploy.bin" || -f "$OUTPUT_DIR/latest.deploy.bin" ]]; then
-      cp -f "$OUTPUT_DIR/latest.deploy.bin" "$OUTPUT_BIN"
-      echo "Created fallback deployment bundle: $OUTPUT_BIN"
-    fi
+  "$SCRIPT_DIR/pack-and-validate.sh" "${pack_args[@]}" >/dev/null
+
+  if [[ -L "$OUTPUT_DIR/latest.deploy.bin" || -f "$OUTPUT_DIR/latest.deploy.bin" ]]; then
+    cp -f "$OUTPUT_DIR/latest.deploy.bin" "$OUTPUT_BIN"
+    echo "Created deterministic deployment bundle: $OUTPUT_BIN"
   fi
 fi
 

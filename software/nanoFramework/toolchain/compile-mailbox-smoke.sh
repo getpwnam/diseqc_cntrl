@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT="$ROOT_DIR/tests/MailboxSmoke/MailboxSmoke.nfproj"
-INTEROP_PROJECT="$ROOT_DIR/DiSEqC_Control.Interop/DiSEqC_Control.Interop.nfproj"
+INTEROP_PROJECT="$ROOT_DIR/Cubley.Interop/Cubley.Interop.nfproj"
 NANO_EXT_ROOT="/home/cp/.vscode-server/extensions"
 DEFAULT_NANO_PS_PATH=""
 CONFIGURATION="${CONFIGURATION:-Release}"
@@ -96,6 +96,10 @@ PRIMARY_BIN="$OUTPUT_DIR/$TARGET_NAME.bin"
 PRIMARY_PE="$OUTPUT_DIR/$TARGET_NAME.pe"
 RUNTIME_EVENTS_PE=""
 
+if [[ -f "$OUTPUT_DIR/Cubley.Interop.pe" ]]; then
+  "$SCRIPT_DIR/interop-checksum.sh" --check --pe "$OUTPUT_DIR/Cubley.Interop.pe"
+fi
+
 if [[ -f "$OUTPUT_DIR/nanoFramework.Runtime.Events.pe" ]]; then
   RUNTIME_EVENTS_PE="$OUTPUT_DIR/nanoFramework.Runtime.Events.pe"
 else
@@ -120,8 +124,8 @@ if [[ ! -f "$OUTPUT_BIN" ]]; then
       "$PRIMARY_PE"
     )
 
-    if [[ -f "$OUTPUT_DIR/DiSEqC_Control.Interop.pe" ]]; then
-      pack_args+=("$OUTPUT_DIR/DiSEqC_Control.Interop.pe")
+    if [[ -f "$OUTPUT_DIR/Cubley.Interop.pe" ]]; then
+      pack_args+=("$OUTPUT_DIR/Cubley.Interop.pe")
     fi
 
     if [[ -n "$RUNTIME_EVENTS_PE" && -f "$RUNTIME_EVENTS_PE" ]]; then

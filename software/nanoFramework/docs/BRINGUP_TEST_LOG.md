@@ -855,3 +855,67 @@ This file should be committed and checked on each build to prevent version drift
   - `cubley-usb` build completed successfully.
   - USB profile confirmed it is using the shared dual-mode nanoCLR entrypoint path during build (`USB serial profile: using local USB support files and dual-mode nanoCLR entrypoint.`).
 - Conclusion: normal operational profiles now compile with the shared initialization path in place, with no immediate regression introduced by the consistency hardening.
+
+### 2026-04-10 13:15:00 UTC [INFO]
+- Git rev: 8e589e3 (+ local W5500 interop diagnostics)
+- Command(s):
+  - Removed all `DiSEqC` references from W5500 bring-up surfaces:
+    - `Cubley.Interop/CubleyInteropNative.cs` now exposes `BringupStatus` + `W5500Socket` only.
+    - `tests/W5500Bringup/Program.cs` now uses `BringupStatus.NativeSet/NativeGet`.
+    - `tests/W5500Bringup/README.md` wording updated to match W5500-only scope.
+    - `nf-native/cubley_interop.cpp` rewritten to a minimal native table containing only `BringupStatus` + `W5500Socket` entries.
+  - Rebuilt/flashed/deployed and re-ran W5500 diagnostics:
+    - `./toolchain/build.sh cubley-w5500`
+    - `st-flash write build/nanoBooter.bin 0x08000000`
+    - `st-flash write build/nanoCLR.bin 0x08004000`
+    - `./toolchain/compile-w5500-test.sh`
+    - `nanoff --deploy .../W5500Bringup.bin --address 0x080C0000 --reset`
+    - `./toolchain/w5500-swd-led-diag.sh --skip-deploy`
+- Artifact:
+  - `.debug/w5500_swd_led_diag.out`
+  - `.debug/gdb_startup_gate.out`
+- Result highlights:
+  - Managed deploy succeeds reliably.
+  - Startup probes now show partial progression (`GATE_AFTER_RESOLVEALL=1`, `GATE_PREPAREFOREXEC=1`) but still no W5500 native call hits.
+  - Mailbox remains at default `0xD5010000` in this run window.
+- Conclusion: naming/surface cleanup is complete and removes the protocol-mixup risk; W5500 runtime path still needs on-target behavioral confirmation (LED/link/socket steps) to determine where execution stalls after startup.
+
+### 2026-04-10 20:45:58 UTC [INFO]
+- Git rev: 311470a
+- Command(s): ./tests/swd_read_bringup_status.sh build/nanoCLR.elf
+- Artifact: build/nanoCLR.elf
+- Conclusion: SWD mailbox read succeeded with 0xD5900100 (stage 0x90 PASS detail 0), confirming early W5500 init pass in this sample.
+
+### 2026-04-10 20:51:19 UTC [PASS]
+- Git rev: 311470a
+- Command(s): st-info --probe; ./toolchain/uart-preflight.sh; ./tests/swd_read_bringup_status.sh; ./tests/poke_bringup_status.sh build/nanoCLR.elf 0xD5900107; 3x ./tests/swd_read_bringup_status.sh
+- Artifact: build/nanoCLR.elf; .debug/uart_preflight_20260410_204928/summary.txt
+- Conclusion: Mailbox feature is operational: SWD mailbox reads are repeatable and decode to valid magic (0xD5), and current status is stable at 0xD5900100 (stage 0x90, PASS).
+- Note: Probe_mailbox_setter timed out (GDB control flow), but independent mailbox read/poke/read checks succeeded.
+
+### 2026-04-10 21:06:20 UTC [INFO]
+- Git rev: 311470a
+- Command(s): pkill openocd; st-flash reset; ./toolchain/uart-preflight.sh; ./toolchain/w5500-swd-led-diag.sh
+- Artifact: .debug/uart_preflight_20260410_210155/summary.txt; .debug/w5500_swd_led_diag.out; .debug/gdb_startup_gate.out
+- Conclusion: Current run shows W5500 early init PASS mailbox (0xD5900100, stage 0x90), but startup gate fails and W5500 Open/Config/Connect/Send/Recv probes all MISS, so bidirectional SPI socket path remains unproven.
+
+### 2026-04-10 21:56:22 UTC [PASS]
+- Git rev: 311470a
+- Command(s): w5500-led-observe.sh start + scope PB12/PB13/PB14/PB15/PA8 per channel
+- Artifact: .debug/w5500_swd_led_diag.out
+- Conclusion: Full bidirectional SPI proven on scope: PB12(CS) pulsing low, PB13(SCK) clock bursts, PB15(MOSI) data bursts, PB14(MISO) return data bursts, PA8(RESET) low-pulse then high. Mailbox stable at 0xD5900100 (stage 0x90 PASS). W5500 hardware is alive and responding. Remaining blocker is managed-to-native interop dispatch, not hardware.
+- Note: MISO active confirms W5500 is driving return data. No reflow required.
+
+### 2026-04-10 22:27:35 UTC [PASS]
+- Git rev: 311470a
+- Command(s): ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; ./toolchain/w5500-led-observe.sh start; ./tests/swd_read_bringup_status.sh
+- Artifact: build/nanoCLR.elf; tests/W5500Bringup/bin/Release/W5500Bringup.bin
+- Conclusion: Interop checksum alignment fixed (Cubley.Interop nativeMethodsChecksum=0x7119BD66). InternalCall dispatch now active; mailbox reaches 0xD50F0E02 (stage 15 FAIL detail 2 = OpenSocket failure), proving runtime progressed past prior interop bind failure.
+- Note: Updated checksums in nf-native/cubley_interop.cpp and Cubley.Interop/Properties/AssemblyInfo.cs to 0x7119BD66.
+
+### 2026-04-10 22:43:40 UTC [INFO]
+- Git rev: 311470a
+- Command(s): bash -n toolchain/build.sh; ./toolchain/interop-checksum.sh --check --pe Cubley.Interop/bin/Release/Cubley.Interop.pe
+- Artifact: toolchain/build.sh; toolchain/interop-checksum.sh; toolchain/compile-w5500-test.sh; toolchain/compile-mailbox-smoke.sh
+- Conclusion: Added firmware-build interop checksum preflight and managed-build checksum guards so checksum drift fails fast before build/deploy.
+- Note: Preflight now runs at start of toolchain/build.sh; compile scripts validate Cubley.Interop.pe checksum compatibility.

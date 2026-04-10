@@ -26,6 +26,16 @@ echo "========================================"
 echo "nanoFramework Cubley Controller Build"
 echo "========================================"
 
+# Preflight: fail fast if managed/native interop checksum metadata drifts.
+# This catches InternalCall binding breakage before entering CMake/build work.
+CHECKSUM_TOOL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/interop-checksum.sh"
+if [ -x "$CHECKSUM_TOOL" ]; then
+    echo "Running interop checksum preflight..."
+    "$CHECKSUM_TOOL" --check
+else
+    echo "Warning: checksum preflight tool not found or not executable: $CHECKSUM_TOOL"
+fi
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -87,6 +97,7 @@ UPDATE_INTERPRETER="${NF_UPDATE_INTERPRETER:-0}"
 STATIC_AUDIT="${NF_STATIC_AUDIT:-0}"
 
 ENABLE_HSI_PLL="0"  # HSE 8MHz crystal fitted; individual profiles override to HSI if needed
+ENABLE_W5500_EARLY_INIT="FALSE"
 
 case "$BUILD_PROFILE" in
     cubley-stable)
@@ -131,6 +142,7 @@ case "$BUILD_PROFILE" in
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
+        ENABLE_W5500_EARLY_INIT="TRUE"
         PROFILE_STATUS="scaffold"
         PROFILE_NOTE="Cubley native W5500 transport scaffold (System.Net/lwIP disabled)"
         ;;
@@ -976,6 +988,9 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
 #define HAL_USE_MAC                         ${ENABLE_HAL_MAC}
 #undef HAL_USE_WDG
 #define HAL_USE_WDG                         FALSE
+
+#undef CUBLEY_W5500_EARLY_INIT
+#define CUBLEY_W5500_EARLY_INIT             ${ENABLE_W5500_EARLY_INIT}
 EOF_HAL_OVERRIDES
     fi
 done
