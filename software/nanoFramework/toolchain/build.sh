@@ -1,5 +1,5 @@
 #!/bin/bash
-# nanoFramework Build Script for DiSEqC Controller
+# nanoFramework Build Script for Cubley Controller
 # Builds firmware using Docker Compose V2
 # Uses: docker compose (not docker-compose)
 
@@ -12,16 +12,18 @@ if [ ! -f "/.dockerenv" ]; then
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     COMPOSE_DIR="$(dirname "$SCRIPT_DIR")"
     exec docker compose -f "$COMPOSE_DIR/docker-compose.yml" run --rm \
-        -e NF_BUILD_PROFILE="${1:-${NF_BUILD_PROFILE:-minimal}}" \
+        -e NF_BUILD_PROFILE="${1:-${NF_BUILD_PROFILE:-cubley-stable}}" \
     -e NF_INTERPRETER_REF="${NF_INTERPRETER_REF:-main}" \
     -e NF_UPDATE_INTERPRETER="${NF_UPDATE_INTERPRETER:-1}" \
     -e NF_STATIC_AUDIT="${NF_STATIC_AUDIT:-0}" \
+    -e NF_ALLOW_DEPRECATED_PROFILE="${NF_ALLOW_DEPRECATED_PROFILE:-0}" \
+    -e CUBLEY_USB_NO_VBUS_SENSE="${CUBLEY_USB_NO_VBUS_SENSE:-}" \
         nanoframework-build /work/toolchain/build.sh
 fi
 # ────────────────────────────────────────────────────────────────────────────
 
 echo "========================================"
-echo "nanoFramework DiSEqC Controller Build"
+echo "nanoFramework Cubley Controller Build"
 echo "========================================"
 
 # Colors
@@ -34,9 +36,43 @@ NC='\033[0m' # No Color
 NF_INTERPRETER_REPO="https://github.com/nanoframework/nf-interpreter.git"
 NF_INTERPRETER_DIR="/nf-interpreter"
 NF_INTERPRETER_REF="${NF_INTERPRETER_REF:-main}"
-TARGET_NAME="M0DMF_DISEQC_F407"
+TARGET_NAME="M0DMF_CUBLEY_F407"
 BUILD_TYPE="Release"
-BUILD_PROFILE="${NF_BUILD_PROFILE:-${1:-minimal}}"
+BUILD_PROFILE="${NF_BUILD_PROFILE:-${1:-cubley-stable}}"
+REQUESTED_BUILD_PROFILE="$BUILD_PROFILE"
+PROFILE_ALIAS_USED=""
+DEPRECATED_PROFILE_USED="0"
+
+# Legacy profile aliases. Canonical names use the cubley-* prefix.
+case "$BUILD_PROFILE" in
+    minimal)
+        BUILD_PROFILE="cubley-stable"
+        PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
+        ;;
+    w5500-native)
+        BUILD_PROFILE="cubley-w5500"
+        PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
+        ;;
+    bringup-hardalive)
+        BUILD_PROFILE="cubley-hardalive"
+        PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
+        ;;
+    usb-first)
+        BUILD_PROFILE="cubley-usb"
+        CUBLEY_USB_NO_VBUS_SENSE="0"
+        PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
+        ;;
+    usb-no-vbus-sense)
+        BUILD_PROFILE="cubley-usb"
+        CUBLEY_USB_NO_VBUS_SENSE="1"
+        PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
+        ;;
+    network)
+        BUILD_PROFILE="legacy-network"
+        PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
+        DEPRECATED_PROFILE_USED="1"
+        ;;
+esac
 
 # Performance knobs (override via environment variables).
 # - NF_BUILD_JOBS: parallel compile jobs (default: all host cores)
@@ -53,7 +89,7 @@ STATIC_AUDIT="${NF_STATIC_AUDIT:-0}"
 ENABLE_HSI_PLL="0"  # HSE 8MHz crystal fitted; individual profiles override to HSI if needed
 
 case "$BUILD_PROFILE" in
-    minimal)
+    cubley-stable)
         ENABLE_API_GPIO="ON"
         ENABLE_API_I2C="ON"
         ENABLE_API_SPI="ON"
@@ -74,9 +110,9 @@ case "$BUILD_PROFILE" in
         ENABLE_HAL_RTC="TRUE"
         ENABLE_HSI_PLL="1"
         PROFILE_STATUS="stable"
-        PROFILE_NOTE="Minimal non-network firmware profile"
+        PROFILE_NOTE="Default Cubley stable profile (non-network)"
         ;;
-    w5500-native)
+    cubley-w5500)
         ENABLE_API_GPIO="ON"
         ENABLE_API_I2C="ON"
         ENABLE_API_SPI="ON"
@@ -96,7 +132,7 @@ case "$BUILD_PROFILE" in
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
         PROFILE_STATUS="scaffold"
-        PROFILE_NOTE="Native W5500 transport scaffold (System.Net/lwIP disabled)"
+        PROFILE_NOTE="Cubley native W5500 transport scaffold (System.Net/lwIP disabled)"
         ;;
     bringup-smoke)
         ENABLE_API_GPIO="ON"
@@ -121,7 +157,7 @@ case "$BUILD_PROFILE" in
         PROFILE_STATUS="experimental"
         PROFILE_NOTE="Hardware bring-up smoke profile (PA2 blink + USART3 heartbeat)"
         ;;
-    bringup-hardalive)
+    cubley-hardalive)
         ENABLE_API_GPIO="ON"
         ENABLE_API_I2C="ON"
         ENABLE_API_SPI="ON"
@@ -144,7 +180,7 @@ case "$BUILD_PROFILE" in
         PROFILE_STATUS="experimental"
         PROFILE_NOTE="Bare-metal bring-up profile (PA2 + PB10 hard toggle, no RTOS/CLR startup)"
         ;;
-    usb-first)
+    cubley-usb)
         ENABLE_API_GPIO="ON"
         ENABLE_API_I2C="ON"
         ENABLE_API_SPI="ON"
@@ -158,37 +194,26 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="TRUE"
         ENABLE_HAL_SERIAL_USB="TRUE"
-        ENABLE_USB_NO_VBUS_SENSE="FALSE"
+        if [ "${CUBLEY_USB_NO_VBUS_SENSE:-1}" = "1" ]; then
+            ENABLE_USB_NO_VBUS_SENSE="TRUE"
+            PROFILE_NOTE="Cubley USB bring-up profile (PA9 no-VBUS-sense mode enabled)"
+        else
+            ENABLE_USB_NO_VBUS_SENSE="FALSE"
+            PROFILE_NOTE="Cubley USB bring-up profile (VBUS-sense mode enabled)"
+        fi
         ENABLE_BRINGUP_SMOKE="FALSE"
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
         PROFILE_STATUS="experimental"
-        PROFILE_NOTE="USB-first bring-up profile (OTG1 enabled, UART wire protocol fallback retained)"
         ;;
-    usb-no-vbus-sense)
-        ENABLE_API_GPIO="ON"
-        ENABLE_API_I2C="ON"
-        ENABLE_API_SPI="ON"
-        ENABLE_SYSTEM_NET="OFF"
-        ENABLE_CONFIG_BLOCK="OFF"
-        ENABLE_SNTP="OFF"
-        ENABLE_MBEDTLS="OFF"
-        ENABLE_HAL_MAC="FALSE"
-        ENABLE_STM32_MAC_ETH="FALSE"
-        ENABLE_OTG1="TRUE"
-        ENABLE_OTG2="FALSE"
-        ENABLE_HAL_USB="TRUE"
-        ENABLE_HAL_SERIAL_USB="TRUE"
-        ENABLE_USB_NO_VBUS_SENSE="TRUE"
-        ENABLE_BRINGUP_SMOKE="FALSE"
-        ENABLE_BRINGUP_HARDALIVE="FALSE"
-        ENABLE_FEATURE_RTC="ON"
-        ENABLE_HAL_RTC="TRUE"
-        PROFILE_STATUS="experimental"
-        PROFILE_NOTE="USB bring-up profile for boards without PA9 VBUS_SENSE wiring (forces PA9 pulldown)"
-        ;;
-    network)
+    legacy-network)
+        if [ "${NF_ALLOW_DEPRECATED_PROFILE:-0}" != "1" ]; then
+            echo -e "${RED}Profile '$REQUESTED_BUILD_PROFILE' is deprecated.${NC}"
+            echo -e "${YELLOW}If you still need it temporarily, re-run with NF_ALLOW_DEPRECATED_PROFILE=1.${NC}"
+            exit 1
+        fi
+
         ENABLE_API_GPIO="ON"
         ENABLE_API_I2C="ON"
         ENABLE_API_SPI="ON"
@@ -234,7 +259,9 @@ case "$BUILD_PROFILE" in
         PROFILE_NOTE="Smallest managed/API surface profile for fast local firmware iteration"
         ;;
     *)
-        echo -e "${RED}Unknown NF_BUILD_PROFILE='$BUILD_PROFILE'. Use 'minimal', 'core-only', 'w5500-native', 'bringup-smoke', 'bringup-hardalive', 'usb-first', 'usb-no-vbus-sense', or 'network'.${NC}"
+        echo -e "${RED}Unknown NF_BUILD_PROFILE='$REQUESTED_BUILD_PROFILE'.${NC}"
+        echo -e "${YELLOW}Canonical profiles:${NC} cubley-stable, cubley-w5500, cubley-usb, cubley-hardalive, bringup-smoke, core-only, legacy-network"
+        echo -e "${YELLOW}Legacy aliases:${NC} minimal, w5500-native, bringup-hardalive, usb-first, usb-no-vbus-sense, network"
         exit 1
         ;;
 esac
@@ -243,8 +270,12 @@ echo -e "${YELLOW}Build profile: ${BUILD_PROFILE}${NC}"
 echo -e "${YELLOW}Profile note: ${PROFILE_NOTE}${NC}"
 echo -e "${YELLOW}Target board: ${TARGET_NAME}${NC}"
 
-if [ "$PROFILE_STATUS" = "deprecated" ]; then
-    echo -e "${YELLOW}WARNING: 'network' profile is deprecated and will be removed after native W5500 transport validation.${NC}"
+if [ -n "$PROFILE_ALIAS_USED" ]; then
+    echo -e "${YELLOW}Profile alias used: '${PROFILE_ALIAS_USED}' -> '${BUILD_PROFILE}'.${NC}"
+fi
+
+if [ "$DEPRECATED_PROFILE_USED" = "1" ] || [ "$PROFILE_STATUS" = "deprecated" ]; then
+    echo -e "${YELLOW}WARNING: deprecated profile in use; migrate to Cubley profiles as soon as practical.${NC}"
 fi
 
 # Check if nf-interpreter exists
@@ -358,29 +389,29 @@ mkdir -p "$TARGET_DIR/common"
 
 # Copy board files
 echo -e "${YELLOW}Copying board configuration files...${NC}"
-cp /work/nf-native/board_diseqc.h $TARGET_DIR/
-cp /work/nf-native/board_diseqc.h $TARGET_DIR/board.h
-cp /work/nf-native/board_diseqc.cpp $TARGET_DIR/board.c
+cp /work/nf-native/board_cubley.h $TARGET_DIR/
+cp /work/nf-native/board_cubley.h $TARGET_DIR/board.h
+cp /work/nf-native/board_cubley.cpp $TARGET_DIR/board.c
 cp /work/nf-native/diseqc_native.h $TARGET_DIR/common/
 cp /work/nf-native/diseqc_native.cpp $TARGET_DIR/common/
 cp /work/nf-native/lnb_control.h $TARGET_DIR/common/
 cp /work/nf-native/lnb_control.cpp $TARGET_DIR/common/
-cp /work/nf-native/diseqc_interop.cpp $TARGET_DIR/nanoCLR/
+cp /work/nf-native/cubley_interop.cpp $TARGET_DIR/nanoCLR/
 cp /work/nf-native/lnb_interop.cpp $TARGET_DIR/nanoCLR/
 cp /work/nf-native/w5500_interop.cpp $TARGET_DIR/nanoCLR/
 
 # Register custom interop assembly module so CLR interop table includes
-# DiSEqC_Control.Interop native bindings.
-cat > "$NF_INTERPRETER_DIR/CMake/Modules/FindINTEROP-DiSEqC_Control_Interop.cmake" << EOF_FIND_INTEROP
-# Auto-generated by toolchain/build.sh for custom DiSEqC interop binding
-set(DiSEqC_Control_Interop_INCLUDE_DIRS "${TARGET_DIR}/nanoCLR")
-set(DiSEqC_Control_Interop_SOURCES
-    "${TARGET_DIR}/nanoCLR/diseqc_interop.cpp"
+# Cubley.Interop native bindings.
+cat > "$NF_INTERPRETER_DIR/CMake/Modules/FindINTEROP-Cubley_Interop.cmake" << EOF_FIND_INTEROP
+# Auto-generated by toolchain/build.sh for custom Cubley interop binding
+set(Cubley_Interop_INCLUDE_DIRS "${TARGET_DIR}/nanoCLR")
+set(Cubley_Interop_SOURCES
+    "${TARGET_DIR}/nanoCLR/cubley_interop.cpp"
     "${TARGET_DIR}/nanoCLR/lnb_interop.cpp"
     "${TARGET_DIR}/nanoCLR/w5500_interop.cpp")
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(INTEROP-DiSEqC_Control_Interop DEFAULT_MSG DiSEqC_Control_Interop_INCLUDE_DIRS DiSEqC_Control_Interop_SOURCES)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(INTEROP-Cubley_Interop DEFAULT_MSG Cubley_Interop_INCLUDE_DIRS Cubley_Interop_SOURCES)
 EOF_FIND_INTEROP
 
 # Select wire-protocol transport at board level to avoid SERIAL_DRIVER
@@ -767,6 +798,12 @@ fi
 if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
     echo -e "${YELLOW}USB serial profile: using local USB support files and dual-mode nanoCLR entrypoint.${NC}"
 
+    # Keep USB and UART profiles on the same shared nanoCLR entrypoint source,
+    # selected at compile-time via HAL_USE_SERIAL_USB.
+    if [ -f /work/nf-native/target-overrides/nanoCLR/main.c ]; then
+        cp /work/nf-native/target-overrides/nanoCLR/main.c "$TARGET_DIR/nanoCLR/main.c"
+    fi
+
     # Reference nanoBooter mains often depend on board-specific button/LED macros.
     # Use this target's minimal booter main to keep boot path board-agnostic.
     if [ -f /work/build/nanoBooter_main.c ]; then
@@ -783,6 +820,8 @@ else
         cp /work/build/nanoCLR_hardalive_main.c "$TARGET_DIR/nanoCLR/main.c"
     elif [ "$ENABLE_BRINGUP_SMOKE" = "TRUE" ] && [ -f /work/build/nanoCLR_bringup_main.c ]; then
         cp /work/build/nanoCLR_bringup_main.c "$TARGET_DIR/nanoCLR/main.c"
+    elif [ -f /work/nf-native/target-overrides/nanoCLR/main.c ]; then
+        cp /work/nf-native/target-overrides/nanoCLR/main.c "$TARGET_DIR/nanoCLR/main.c"
     elif [ -f /work/build/nanoCLR_main.c ]; then
         cp /work/build/nanoCLR_main.c "$TARGET_DIR/nanoCLR/main.c"
     elif [ -f "$TARGET_DIR/nanoCLR/main.c" ]; then
@@ -1063,7 +1102,7 @@ if cmake -G Ninja \
     -DAPI_System.Device.Spi=$ENABLE_API_SPI \
     -DAPI_System.Device.I2c=$ENABLE_API_I2C \
     -DAPI_System.Net=$ENABLE_SYSTEM_NET \
-    -DNF_INTEROP_ASSEMBLIES="DiSEqC_Control_Interop" \
+    -DNF_INTEROP_ASSEMBLIES="Cubley_Interop" \
     -DNF_SECURITY_MBEDTLS=$ENABLE_MBEDTLS \
     -DNF_NETWORKING_SNTP=$ENABLE_SNTP \
     -DUSE_RNG=OFF \

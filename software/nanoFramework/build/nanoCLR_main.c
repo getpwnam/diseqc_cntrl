@@ -5,11 +5,7 @@
 #include <hal_nf_community.h>
 #include <cmsis_os.h>
 
-#if (HAL_USE_SERIAL_USB == TRUE)
-#include <usbcfg.h>
-#else
 #include <serialcfg.h>
-#endif
 #include <swo.h>
 #include <CLR_Startup_Thread.h>
 #include <WireProtocol_ReceiverThread.h>
@@ -20,19 +16,9 @@
 #define SWO_OUTPUT 0
 #endif
 
-extern volatile uint32_t g_w5500_bringup_status;
-
-static inline void SetStartupMailbox(uint8_t stage, uint8_t result, uint8_t detail)
-{
-    g_w5500_bringup_status = ((uint32_t)0xD5 << 24) | ((uint32_t)stage << 16) | ((uint32_t)result << 8) | (uint32_t)detail;
-}
-
-static void CLRStartupThreadWrapper(void const* argument);
-
 osThreadDef(ReceiverThread, osPriorityHigh, 2048, "ReceiverThread");
-osThreadDef(CLRStartupThreadWrapper, osPriorityNormal, 4096, "CLRStartupThread");
+osThreadDef(CLRStartupThread, osPriorityNormal, 4096, "CLRStartupThread");
 
-#if (HAL_USE_SERIAL_USB != TRUE)
 static void ForceUsart3PinsOnPb10Pb11(void)
 {
     // Ensure GPIOB clock is enabled before pin mux writes.
@@ -52,24 +38,9 @@ static void ForceUsart3PinsOnPb10Pb11(void)
     GPIOB->AFRH &= ~((0xFu << ((10u - 8u) * 4u)) | (0xFu << ((11u - 8u) * 4u)));
     GPIOB->AFRH |=  ((7u << ((10u - 8u) * 4u)) | (7u << ((11u - 8u) * 4u)));
 }
-#endif
-
-static void CLRStartupThreadWrapper(void const* argument)
-{
-    SetStartupMailbox(0x35, 0, 0);
-    CLRStartupThread(argument);
-    SetStartupMailbox(0x36, 14, 1);
-
-    while (true)
-    {
-        osDelay(1000);
-    }
-}
 
 int main(void)
 {
-    SetStartupMailbox(0x30, 0, 0);
-
     halInit();
 
     InitBootClipboard();
@@ -79,21 +50,11 @@ int main(void)
 #endif
 
     osKernelInitialize();
-    SetStartupMailbox(0x31, 0, 0);
 
 #if (HAL_NF_USE_STM32_CRC == TRUE)
     crcStart(NULL);
 #endif
 
-#if (HAL_USE_SERIAL_USB == TRUE)
-    sduObjectInit(&SERIAL_DRIVER);
-    sduStart(&SERIAL_DRIVER, &serusbcfg);
-
-    usbDisconnectBus(serusbcfg.usbp);
-    chThdSleepMilliseconds(100);
-    usbStart(serusbcfg.usbp, &usbcfg);
-    usbConnectBus(serusbcfg.usbp);
-#else
     // Explicit 115200 8N1 config — do not pass NULL, ChibiOS default may differ.
     static const SerialConfig usart3_cfg = {
         115200,
@@ -108,10 +69,8 @@ int main(void)
     ForceUsart3PinsOnPb10Pb11();
 
     sdStart(&SERIAL_DRIVER, &usart3_cfg);
-#endif
 
-    osThreadId receiverThread = osThreadCreate(osThread(ReceiverThread), NULL);
-    SetStartupMailbox(0x32, receiverThread != NULL ? 1 : 14, receiverThread != NULL ? 0 : 1);
+    osThreadCreate(osThread(ReceiverThread), NULL);
 
     CLR_SETTINGS clrSettings;
     (void)memset(&clrSettings, 0, sizeof(CLR_SETTINGS));
@@ -120,11 +79,9 @@ int main(void)
     clrSettings.WaitForDebugger = false;
     clrSettings.EnterDebuggerLoopAfterExit = true;
 
-    osThreadId clrThread = osThreadCreate(osThread(CLRStartupThreadWrapper), &clrSettings);
-    SetStartupMailbox(0x33, clrThread != NULL ? 1 : 14, clrThread != NULL ? 0 : 2);
+    osThreadCreate(osThread(CLRStartupThread), &clrSettings);
 
-    osStatus kernelStart = osKernelStart();
-    SetStartupMailbox(0x34, kernelStart == osOK ? 1 : 14, (uint8_t)kernelStart);
+    osKernelStart();
 
     while (true)
     {

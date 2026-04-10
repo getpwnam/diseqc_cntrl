@@ -1,4 +1,4 @@
-// Minimal nanoCLR entry point for M0DMF_DISEQC_F407 (serial wire protocol, no USB)
+// Minimal nanoCLR entry point for M0DMF_CUBLEY_F407 (serial wire protocol, no USB)
 
 #include <ch.h>
 #include <hal.h>
