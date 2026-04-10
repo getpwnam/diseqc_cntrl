@@ -2,4 +2,4 @@ using System.Reflection;
 
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
-[assembly: AssemblyNativeVersion("7119BD66")]
+[assembly: AssemblyNativeVersion("A31D8705")]

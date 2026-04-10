@@ -926,3 +926,10 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: software/nanoFramework/.gitignore; software/nanoFramework/nf-native/board_cubley.h; software/nanoFramework/docs/hardware/W5500_ETHERNET.md
 - Conclusion: Captured board-specific baseline changes and documented temporary W5500 reset routing to PA8; repository now ignores runtime .debug artifacts.
 - Note: Temporary bodge-wire reset mapping (PA8->RSTN) is intentional and must be updated alongside board docs when hardware routing changes.
+
+### 2026-04-10 22:55:41 UTC [INFO]
+- Git rev: 9283763
+- Command(s): ./toolchain/compile-w5500-test.sh; ./toolchain/interop-checksum.sh --fix --pe tests/W5500Bringup/bin/Release/Cubley.Interop.pe; NF_INCREMENTAL_BUILD=1 ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; ./toolchain/w5500-led-observe.sh start; st-flash reset; 60x tests/swd_read_bringup_status.sh
+- Artifact: tests/W5500Bringup/bin/Release/Cubley.Interop.pe; build/nanoCLR.elf
+- Conclusion: Added persistent native error telemetry path (BringupStatus.NativeGetLastNativeError) and checksum-sync hardening fix; rapid mailbox sampling now stabilizes at 0xD50E0E03, indicating Open failure with native code 3 (Busy).
+- Note: Telemetry now publishes native op/code in fail loop stages 13/14 for SWD-stable diagnosis.

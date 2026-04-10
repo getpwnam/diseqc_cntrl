@@ -12,6 +12,7 @@
 #include "board_cubley.h"
 
 extern volatile uint32_t g_w5500_bringup_status;
+extern volatile uint32_t g_w5500_last_native_error;
 
 enum w5500_socket_status_t
 {
@@ -91,6 +92,12 @@ static uint16_t g_nextSourcePort = kDefaultSourcePort;
 static inline void set_w5500_bringup_status(uint8_t stage, uint8_t result, uint8_t detail)
 {
     g_w5500_bringup_status = ((uint32_t)0xD5 << 24) | ((uint32_t)stage << 16) | ((uint32_t)result << 8) | (uint32_t)detail;
+}
+
+static inline void set_w5500_last_native_error(uint8_t op, uint8_t code, uint8_t detail)
+{
+    // 0xE1 marker | op | code | detail (sticky until next update).
+    g_w5500_last_native_error = ((uint32_t)0xE1 << 24) | ((uint32_t)op << 16) | ((uint32_t)code << 8) | (uint32_t)detail;
 }
 
 static const ioline_t W5500_SCK_LINE = PAL_LINE(GPIOB, 13U);
@@ -442,6 +449,8 @@ static uint8_t w5500_probe_version(bool mode3)
 
 static w5500_socket_status_t w5500_hw_init()
 {
+    set_w5500_last_native_error(0x40, 0x00, 0x00);
+
     // Ensure W5500 control and SPI pins are actively configured before reset.
     palSetLineMode(W5500_RESET_LINE, PAL_MODE_OUTPUT_PUSHPULL);
     palSetLineMode(W5500_CS_LINE, PAL_MODE_OUTPUT_PUSHPULL);
@@ -476,6 +485,7 @@ static w5500_socket_status_t w5500_hw_init()
     {
         // Report raw VERSIONR and PHYCFGR for board-level diagnostics.
         set_w5500_bringup_status(0xA0, version, phycfgr);
+        set_w5500_last_native_error(0x41, (uint8_t)(0x20 | (version & 0x0F)), phycfgr);
         return (w5500_socket_status_t)(0x20 | (version & 0x0F));
     }
 
@@ -493,6 +503,8 @@ static w5500_socket_status_t w5500_hw_init()
     w5500_socket_close(kSocketIndex);
     w5500_write8(Sn_RXBUF_SIZE, socket_reg_bsb(kSocketIndex), 2);
     w5500_write8(Sn_TXBUF_SIZE, socket_reg_bsb(kSocketIndex), 2);
+
+    set_w5500_last_native_error(0x42, 0x00, 0x00);
 
     return W5500_SOCKET_OK;
 }
@@ -671,6 +683,7 @@ HRESULT Library_cubley_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR
     NANOCLR_HEADER();
 
     set_w5500_bringup_status(2, 0, 0);
+    set_w5500_last_native_error(0x10, 0x00, 0x00);
 
     if (!g_initialized)
     {
@@ -680,6 +693,7 @@ HRESULT Library_cubley_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR
             stack.Arg0().NumericByRef().s4 = -1;
             stack.SetResult_I4((int32_t)initStatus);
             set_w5500_bringup_status(2, 14, (uint8_t)initStatus);
+            set_w5500_last_native_error(0x11, (uint8_t)initStatus, 0x00);
             NANOCLR_SET_AND_LEAVE(S_OK);
         }
 
@@ -691,6 +705,7 @@ HRESULT Library_cubley_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR
         stack.Arg0().NumericByRef().s4 = -1;
         stack.SetResult_I4((int32_t)W5500_SOCKET_BUSY);
         set_w5500_bringup_status(2, 14, (uint8_t)W5500_SOCKET_BUSY);
+        set_w5500_last_native_error(0x12, (uint8_t)W5500_SOCKET_BUSY, 0x00);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
@@ -699,6 +714,7 @@ HRESULT Library_cubley_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR
     stack.Arg0().NumericByRef().s4 = kSingleSocketHandle;
     stack.SetResult_I4((int32_t)W5500_SOCKET_OK);
     set_w5500_bringup_status(2, 1, 0);
+    set_w5500_last_native_error(0x13, (uint8_t)W5500_SOCKET_OK, 0x00);
 
     NANOCLR_NOCLEANUP();
 }

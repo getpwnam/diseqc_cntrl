@@ -9,6 +9,9 @@ namespace Cubley.Interop
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern uint NativeGet();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern uint NativeGetLastNativeError();
     }
 
     public static class W5500Socket

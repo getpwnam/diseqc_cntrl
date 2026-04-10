@@ -94,6 +94,7 @@ namespace W5500Bringup
             int socketHandle = -1;
             int currentStage = 0;
             int exceptionStage = 0;
+            uint lastNativeError = 0;
 
             try
             {
@@ -116,6 +117,15 @@ namespace W5500Bringup
                 var status = (W5500Socket.Status)W5500Socket.NativeOpen(out socketHandle);
                 Debug.WriteLine("[W5500] Open => " + status + " handle=" + socketHandle);
                 ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailOpenDone, (int)status));
+                try
+                {
+                    lastNativeError = BringupStatus.NativeGetLastNativeError();
+                    Debug.WriteLine("[W5500] LastNativeError after Open => 0x" + lastNativeError.ToString("X8"));
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("[W5500] LastNativeError unavailable: " + ex.Message);
+                }
                 if (status != W5500Socket.Status.Ok)
                 {
                     failCode = FailCodeOpenSocket;
@@ -254,9 +264,14 @@ namespace W5500Bringup
                 Debug.WriteLine("[LED] Exception stage pulses: " + exceptionStage);
             }
 
+            if (lastNativeError != 0)
+            {
+                Debug.WriteLine("[W5500] Final LastNativeError => 0x" + lastNativeError.ToString("X8"));
+            }
+
             ReportBringupStatus(15, failCode == FailCodeException ? BringupResultException : BringupResultFail, (byte)(failCode == FailCodeException ? exceptionStage : failCode));
 
-            RunFailLoop(failCode, exceptionStage);
+            RunFailLoop(failCode, exceptionStage, lastNativeError);
         }
 
         private static uint EncodeBringupStatus(byte stage, byte result, byte detail)
@@ -343,7 +358,7 @@ namespace W5500Bringup
             }
         }
 
-        private static void RunFailLoop(int code, int exceptionStage)
+        private static void RunFailLoop(int code, int exceptionStage, uint lastNativeError)
         {
             if (code < 1)
             {
@@ -352,6 +367,13 @@ namespace W5500Bringup
 
             while (true)
             {
+                if (lastNativeError != 0)
+                {
+                    // Keep a stable SWD-readable record of native error op/code in failure latch loop.
+                    ReportBringupStatus(13, BringupResultFail, (byte)((lastNativeError >> 16) & 0xFF));
+                    ReportBringupStatus(14, BringupResultFail, (byte)((lastNativeError >> 8) & 0xFF));
+                }
+
                 // Clear separator before each fail code burst.
                 Pulse(900, 900);
 
