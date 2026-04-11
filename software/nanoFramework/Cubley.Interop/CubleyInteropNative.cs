@@ -47,5 +47,8 @@ namespace Cubley.Interop
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern bool NativeIsConnected(int socketHandle);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern uint NativeGetPhyStatus();
     }
 }

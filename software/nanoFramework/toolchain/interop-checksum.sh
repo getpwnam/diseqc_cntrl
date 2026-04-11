@@ -136,7 +136,7 @@ if [[ "$MODE" == "fix" ]]; then
   PE_SUM="$(extract_pe_checksum "$PE_PATH")"
 
   sed -E -i 's/AssemblyNativeVersion\("[0-9A-Fa-f]{8}"\)/AssemblyNativeVersion("'"$PE_SUM"'")/' "$ASSEMBLY_INFO_PATH"
-  perl -0777 -i -pe 's/(g_CLR_AssemblyNative_Cubley_Interop\s*=\s*\{\s*"Cubley\.Interop",\s*)0x[0-9A-Fa-f]{8}/$1"0x'"$PE_SUM"'"/se' "$NATIVE_INTEROP_PATH"
+  perl -0777 -i -pe 's/(g_CLR_AssemblyNative_Cubley_Interop\s*=\s*\{\s*"Cubley\.Interop",\s*)0x[0-9A-Fa-f]{8}/${1}0x'"$PE_SUM"'/s' "$NATIVE_INTEROP_PATH"
 
   echo "Updated checksums to $PE_SUM"
   echo "  - $ASSEMBLY_INFO_PATH"

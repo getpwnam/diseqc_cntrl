@@ -975,3 +975,26 @@ HRESULT Library_cubley_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__
 
     NANOCLR_NOCLEANUP();
 }
+
+HRESULT Library_cubley_interop_W5500Socket_NativeGetPhyStatus___STATIC__U4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    uint8_t phycfgr = 0;
+
+    if (!g_initialized)
+    {
+        stack.SetResult_U4(0);
+        set_w5500_last_native_error(0x50, (uint8_t)W5500_SOCKET_NOT_INITIALIZED, 0x00);
+        NANOCLR_SET_AND_LEAVE(S_OK);
+    }
+
+    phycfgr = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
+    stack.SetResult_U4((uint32_t)phycfgr);
+
+    // Surface link state snapshots through bringup status for SWD mailbox visibility.
+    set_w5500_bringup_status(5, (phycfgr & 0x01) != 0 ? 1 : 14, phycfgr);
+    set_w5500_last_native_error(0x51, (phycfgr & 0x01) != 0 ? 0x00 : 0x01, phycfgr);
+
+    NANOCLR_NOCLEANUP();
+}

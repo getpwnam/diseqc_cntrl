@@ -103,6 +103,7 @@ namespace W5500Bringup
                 var status = (W5500Socket.Status)W5500Socket.NativeOpen(out socketHandle);
                 Debug.WriteLine("[W5500] Open => " + status + " handle=" + socketHandle);
                 ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailOpenDone, (int)status));
+                LogPhyStatus("after-open");
                 try
                 {
                     lastNativeError = BringupStatus.NativeGetLastNativeError();
@@ -125,6 +126,7 @@ namespace W5500Bringup
                     status = (W5500Socket.Status)W5500Socket.NativeConfigureNetwork(LocalIp, SubnetMask, Gateway, MacAddress);
                     Debug.WriteLine("[W5500] ConfigureNetwork => " + status);
                     ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailConfigureDone, (int)status));
+                    LogPhyStatus("after-config");
                     if (status != W5500Socket.Status.Ok)
                     {
                         failCode = FailCodeConfigureNetwork;
@@ -139,6 +141,7 @@ namespace W5500Bringup
                     status = (W5500Socket.Status)W5500Socket.NativeConnect(socketHandle, ProbeHost, ProbePort, ConnectTimeoutMs);
                     Debug.WriteLine("[W5500] Connect => " + status);
                     ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailConnectDone, (int)status));
+                    LogPhyStatus("after-connect");
                     if (status != W5500Socket.Status.Ok)
                     {
                         failCode = FailCodeConnect;
@@ -152,6 +155,7 @@ namespace W5500Bringup
                     bool connected = W5500Socket.NativeIsConnected(socketHandle);
                     Debug.WriteLine("[W5500] IsConnected => " + connected);
                     ReportBringupStatus((byte)currentStage, BringupResultRunning, connected ? DetailConnectedCheckDone : (byte)(DetailConnectedCheckDone + 1));
+                    LogPhyStatus("after-isconnected");
                     if (!connected)
                     {
                         failCode = FailCodeConnectedCheck;
@@ -289,6 +293,28 @@ namespace W5500Bringup
             catch
             {
                 // Keep bring-up flow alive even if mailbox setter interop is unavailable.
+            }
+        }
+
+        private static void LogPhyStatus(string marker)
+        {
+            try
+            {
+                uint phy = W5500Socket.NativeGetPhyStatus();
+                bool linkUp = (phy & 0x01U) != 0;
+                bool speed100 = (phy & 0x02U) != 0;
+                bool fullDuplex = (phy & 0x04U) != 0;
+
+                Debug.WriteLine(
+                    "[W5500] PHY " + marker +
+                    " raw=0x" + phy.ToString("X2") +
+                    " link=" + (linkUp ? "UP" : "DOWN") +
+                    " speed=" + (speed100 ? "100M" : "10M") +
+                    " duplex=" + (fullDuplex ? "FULL" : "HALF"));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[W5500] PHY " + marker + " unavailable: " + ex.Message);
             }
         }
 
