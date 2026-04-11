@@ -954,3 +954,10 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: build/nanoBooter.bin; build/nanoCLR.bin; tests/W5500Bringup/bin/Release/W5500Bringup.bin; build/nanoCLR.elf
 - Conclusion: Managed runtime and deployment are healthy, but W5500 bringup latches at stage 15 FAIL detail 3 (Connect failure).
 - Note: Native error latch sampled from g_w5500_last_native_error at 0x20005B00 = 0xE1130000 (op 0x13, code 0, detail 0), confirming Open completed successfully before Connect failure.
+
+### 2026-04-11 00:55:34 UTC [FAIL]
+- Git rev: 7c96254
+- Command(s): st-flash read /tmp/mb.bin 0x20000c34 4; st-flash read /tmp/ne.bin 0x20005b00 4; mailbox decode
+- Artifact: build/nanoCLR.bin; tests/W5500Bringup/bin/Release/W5500Bringup.bin
+- Conclusion: Mailbox stabilized at 0xD50F0E03 (stage=15,result=FAIL,detail=3=FailCodeConnect); native error 0xE15101B8 indicates PHY snapshot op 0x51 with link-down code
+- Note: 12x SWD sampling returned one unique pair: d50f0e03 e15101b8
