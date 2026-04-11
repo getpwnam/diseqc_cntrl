@@ -947,3 +947,10 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: toolchain/interop-checksum.sh; toolchain/build-managed-cli.sh; toolchain/compile-w5500-test.sh; toolchain/compile-mailbox-smoke.sh; tests/W5500Bringup/bin/Release/W5500Bringup.bin
 - Conclusion: Interop checksum/scope guard now enforced across firmware and managed build entrypoints; managed deployment and execution validated in this session.
 - Note: Removed invalid AssemblyNativeVersion from app AssemblyInfo files to prevent CLR launch rejection.
+
+### 2026-04-11 00:33:41 UTC [FAIL]
+- Git rev: f0ef2ef
+- Command(s): NF_INCREMENTAL_BUILD=1 ./toolchain/build.sh cubley-w5500; ./toolchain/compile-w5500-test.sh; st-flash --connect-under-reset write build/nanoBooter.bin 0x08000000; st-flash --connect-under-reset write build/nanoCLR.bin 0x08004000; st-flash --connect-under-reset write tests/W5500Bringup/bin/Release/W5500Bringup.bin 0x080C0000; st-flash reset; ./tests/swd_read_bringup_status.sh; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails
+- Artifact: build/nanoBooter.bin; build/nanoCLR.bin; tests/W5500Bringup/bin/Release/W5500Bringup.bin; build/nanoCLR.elf
+- Conclusion: Managed runtime and deployment are healthy, but W5500 bringup latches at stage 15 FAIL detail 3 (Connect failure).
+- Note: Native error latch sampled from g_w5500_last_native_error at 0x20005B00 = 0xE1130000 (op 0x13, code 0, detail 0), confirming Open completed successfully before Connect failure.
