@@ -940,3 +940,10 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: tests/W5500Bringup/Program.cs
 - Conclusion: Removed early NativeOpen probe from W5500Bringup startup. Rapid timeline now progresses to stage 3 (configure begin) and stage 4 (connect begin), then latches at 0xD50E0E00.
 - Note: Previous 0xD50E0E03 (Busy) no longer appears; stage14 detail=0 indicates native error code not set at failure point.
+
+### 2026-04-11 00:25:15 UTC [INFO]
+- Git rev: 2466266
+- Command(s): ./toolchain/interop-checksum.sh --check; ./toolchain/compile-w5500-test.sh; ./toolchain/build-managed-cli.sh; ./toolchain/compile-mailbox-smoke.sh; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails; ./tests/swd_read_bringup_status.sh
+- Artifact: toolchain/interop-checksum.sh; toolchain/build-managed-cli.sh; toolchain/compile-w5500-test.sh; toolchain/compile-mailbox-smoke.sh; tests/W5500Bringup/bin/Release/W5500Bringup.bin
+- Conclusion: Interop checksum/scope guard now enforced across firmware and managed build entrypoints; managed deployment and execution validated in this session.
+- Note: Removed invalid AssemblyNativeVersion from app AssemblyInfo files to prevent CLR launch rejection.
