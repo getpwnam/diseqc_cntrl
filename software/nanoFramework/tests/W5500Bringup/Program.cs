@@ -300,13 +300,16 @@ namespace W5500Bringup
         {
             try
             {
-                uint phy = W5500Socket.NativeGetPhyStatus();
+                uint packed = W5500Socket.NativeGetVersionPhyStatus();
+                uint version = (packed >> 8) & 0xFFU;
+                uint phy = packed & 0xFFU;
                 bool linkUp = (phy & 0x01U) != 0;
                 bool speed100 = (phy & 0x02U) != 0;
                 bool fullDuplex = (phy & 0x04U) != 0;
 
                 Debug.WriteLine(
                     "[W5500] PHY " + marker +
+                    " ver=0x" + version.ToString("X2") +
                     " raw=0x" + phy.ToString("X2") +
                     " link=" + (linkUp ? "UP" : "DOWN") +
                     " speed=" + (speed100 ? "100M" : "10M") +

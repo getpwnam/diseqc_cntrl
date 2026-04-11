@@ -50,5 +50,11 @@ namespace Cubley.Interop
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern uint NativeGetPhyStatus();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern uint NativeGetVersion();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern uint NativeGetVersionPhyStatus();
     }
 }

@@ -961,3 +961,11 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: build/nanoCLR.bin; tests/W5500Bringup/bin/Release/W5500Bringup.bin
 - Conclusion: Mailbox stabilized at 0xD50F0E03 (stage=15,result=FAIL,detail=3=FailCodeConnect); native error 0xE15101B8 indicates PHY snapshot op 0x51 with link-down code
 - Note: 12x SWD sampling returned one unique pair: d50f0e03 e15101b8
+
+### 2026-04-11 12:17:39 UTC [INFO]
+- Git rev: 04350b6
+- Command(s): NF_INCREMENTAL_BUILD=1 ./toolchain/build.sh cubley-w5500 && st-flash write build/nanoCLR.bin 0x08004000 && st-flash reset && ./tests/swd_read_w5500_diag.sh (x6)
+- Artifact: build/nanoCLR.bin (271220 bytes); tests/W5500Bringup/bin/Release/W5500Bringup.nfmrk2.bin
+- Breakpoints: g_w5500_bringup_status=0xd5040030, g_w5500_last_native_error=0xe1540400
+- Conclusion: W5500 VERSIONR=0x04 confirmed; PHYCFGR software override blocked by PMODE HW straps (OPMDC=0x0, link DOWN)
+- Note: Added NativeGetVersion (slot 11) and NativeGetVersionPhyStatus (slot 12) interop; interop checksum 55BA4996; PHYCFGR write 0xF8 issued in w5500_hw_init() but OPMD readback=0 confirms PMODE pins overriding SW config; PMODE0-2 on IC6 must be measured and corrected for auto-neg

@@ -86,11 +86,11 @@
  * W5500 Ethernet Configuration
  * Based on diseqc_cntrl schematic
  * SPI2: PB13 (SCK), PB14 (MISO), PB15 (MOSI)
- * Control: PB12 (CS/SCSN), PA8 (RST - temporary bodge), PC7 (INT)
+ * Control: PB12 (CS/SCSN), PC6 (RST), PC7 (INT)
  */
 #define W5500_SPI_DRIVER            SPID2               // SPI2
 #define W5500_CS_LINE               PAL_LINE(GPIOB, 12U) // PB12 = SCSN (Chip Select)
-#define W5500_RESET_LINE            PAL_LINE(GPIOA, 8U)  // PA8 = W5500_RST (temporary bodge)
+#define W5500_RESET_LINE            PAL_LINE(GPIOC, 6U)  // PC6 = W5500_RST
 #define W5500_INT_LINE              PAL_LINE(GPIOC, 7U)  // PC7 = W5500_INT
 
 /*

@@ -38,6 +38,14 @@ static const uint8_t W5500_RCR = 0x001B;
 static const uint16_t W5500_PHYCFGR = 0x002E;
 static const uint8_t W5500_VERSIONR = 0x0039;
 
+static const uint8_t W5500_PHYCFGR_LNK = 0x01;
+static const uint8_t W5500_PHYCFGR_SPD = 0x02;
+static const uint8_t W5500_PHYCFGR_DPX = 0x04;
+static const uint8_t W5500_PHYCFGR_OPMDC_MASK = 0x38;
+static const uint8_t W5500_PHYCFGR_OPMD = 0x40;
+static const uint8_t W5500_PHYCFGR_RST = 0x80;
+static const uint8_t W5500_PHYCFGR_OPMDC_ALL_AUTO = 0x38; // all-capable auto-negotiation (prefers highest common mode)
+
 static const uint16_t Sn_MR = 0x0000;
 static const uint16_t Sn_CR = 0x0001;
 static const uint16_t Sn_IR = 0x0002;
@@ -465,8 +473,7 @@ static w5500_socket_status_t w5500_hw_init()
     palSetLine(W5500_CS_LINE);
     w5500_bb_set_sck_idle();
 
-    // Reset pulse - only effective if bodge wire is connected to RSTN.
-    // W5500 power-on-reset is sufficient for initial bring-up without bodge.
+    // Hardware reset pulse on configured W5500 reset line.
     palClearLine(W5500_RESET_LINE);
     chThdSleepMilliseconds(20);
     palSetLine(W5500_RESET_LINE);
@@ -495,6 +502,19 @@ static w5500_socket_status_t w5500_hw_init()
 
     w5500_write8(W5500_MR, W5500_BSB_COMMON, 0x80);
     chThdSleepMilliseconds(5);
+
+    // Set PHY to software-configured all-capable auto-negotiation.
+    // This allows the PHY to negotiate 100BASE-T full duplex when the link partner supports it.
+    w5500_write8(
+        W5500_PHYCFGR,
+        W5500_BSB_COMMON,
+        (uint8_t)(W5500_PHYCFGR_RST | W5500_PHYCFGR_OPMD | W5500_PHYCFGR_OPMDC_ALL_AUTO));
+    chThdSleepMilliseconds(50);
+
+    phycfgr = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
+    // If OPMD reads as 0, PMODE hardware straps are controlling PHY mode.
+    // If OPMD reads as 1, software configuration is active.
+    set_w5500_last_native_error(0x43, (uint8_t)((phycfgr & W5500_PHYCFGR_OPMD) != 0 ? 0xA1 : 0xA0), phycfgr);
 
     w5500_apply_network_settings();
     w5500_write16(W5500_RTR, W5500_BSB_COMMON, kDefaultRetryTime);
@@ -995,6 +1015,57 @@ HRESULT Library_cubley_interop_W5500Socket_NativeGetPhyStatus___STATIC__U4(CLR_R
     // Surface link state snapshots through bringup status for SWD mailbox visibility.
     set_w5500_bringup_status(5, (phycfgr & 0x01) != 0 ? 1 : 14, phycfgr);
     set_w5500_last_native_error(0x51, (phycfgr & 0x01) != 0 ? 0x00 : 0x01, phycfgr);
+
+    NANOCLR_NOCLEANUP();
+}
+
+HRESULT Library_cubley_interop_W5500Socket_NativeGetVersion___STATIC__U4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    uint8_t version = 0;
+    uint8_t phycfgr = 0;
+
+    if (!g_initialized)
+    {
+        stack.SetResult_U4(0);
+        set_w5500_last_native_error(0x52, (uint8_t)W5500_SOCKET_NOT_INITIALIZED, 0x00);
+        NANOCLR_SET_AND_LEAVE(S_OK);
+    }
+
+    version = w5500_read8(W5500_VERSIONR, W5500_BSB_COMMON);
+    phycfgr = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
+    stack.SetResult_U4((uint32_t)version);
+
+    // Surface VERSIONR and PHYCFGR together for SWD-only diagnostics.
+    set_w5500_bringup_status(5, version == 0x04 ? 1 : 14, version);
+    set_w5500_last_native_error(0x53, version, phycfgr);
+
+    NANOCLR_NOCLEANUP();
+}
+
+HRESULT Library_cubley_interop_W5500Socket_NativeGetVersionPhyStatus___STATIC__U4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    uint8_t version = 0;
+    uint8_t phycfgr = 0;
+    uint32_t packed = 0;
+
+    if (!g_initialized)
+    {
+        stack.SetResult_U4(0);
+        set_w5500_last_native_error(0x54, (uint8_t)W5500_SOCKET_NOT_INITIALIZED, 0x00);
+        NANOCLR_SET_AND_LEAVE(S_OK);
+    }
+
+    version = w5500_read8(W5500_VERSIONR, W5500_BSB_COMMON);
+    phycfgr = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
+    packed = (((uint32_t)version) << 8) | (uint32_t)phycfgr;
+    stack.SetResult_U4(packed);
+
+    set_w5500_bringup_status(5, (phycfgr & 0x01) != 0 ? 1 : 14, phycfgr);
+    set_w5500_last_native_error(0x54, version, phycfgr);
 
     NANOCLR_NOCLEANUP();
 }
