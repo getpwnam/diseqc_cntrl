@@ -122,14 +122,18 @@ decode_phycfgr() {
   local opmd=$(((phy >> 6) & 0x01))
 
   local link_str="DOWN"
-  local speed_str="10M"
-  local duplex_str="HALF"
+  local speed_str="N/A"
+  local duplex_str="N/A"
   local mode_src="HW straps"
   local mode_hint="mode-code"
 
   [[ "$lnk" -eq 1 ]] && link_str="UP"
-  [[ "$spd" -eq 1 ]] && speed_str="100M"
-  [[ "$dpx" -eq 1 ]] && duplex_str="FULL"
+  if [[ "$lnk" -eq 1 ]]; then
+    speed_str="10M"
+    duplex_str="HALF"
+    [[ "$spd" -eq 1 ]] && speed_str="100M"
+    [[ "$dpx" -eq 1 ]] && duplex_str="FULL"
+  fi
   [[ "$opmd" -eq 1 ]] && mode_src="SW config"
 
   if [[ "$opmd" -eq 1 && "$opmdc" -eq 7 ]]; then
@@ -137,10 +141,13 @@ decode_phycfgr() {
   elif [[ "$opmd" -eq 1 ]]; then
     mode_hint="forced/alternate mode code"
   else
-    mode_hint="hardware strap mode from PMODE pins"
+    mode_hint="hardware-controlled mode active (OPMDC meaning is limited when OPMD=0)"
   fi
 
   printf '  PHYCFGR decode: link=%s speed=%s duplex=%s opmd=%s opmdc=0x%X (%s)\n' "$link_str" "$speed_str" "$duplex_str" "$mode_src" "$opmdc" "$mode_hint"
+  if [[ "$lnk" -eq 0 ]]; then
+    echo '  Note: speed/duplex are meaningful only when link=UP.'
+  fi
 }
 
 if [[ "$mb_magic" -ne 213 ]]; then
@@ -150,12 +157,24 @@ fi
 if [[ "$err_op" -eq 0x51 ]]; then
   echo "Hint: opcode 0x51 = PHYCFGR snapshot; detail byte is PHYCFGR." >&2
   decode_phycfgr "$err_detail"
+elif [[ "$err_op" -eq 0x44 ]]; then
+  echo "Hint: opcode 0x44 = pre-soft-reset PHY snapshot; code byte is OPMDC, detail byte is PHYCFGR." >&2
+  printf '  OPMDC(code) decode: 0x%02X\n' "$err_code"
+  decode_phycfgr "$err_detail"
+elif [[ "$err_op" -eq 0x46 ]]; then
+  echo "Hint: opcode 0x46 = readback after SW-mode write without RST; expected PHYCFGR includes OPMD=1 (usually 0x78)." >&2
+  printf '  OPMD after SW write: %s\n' "$([[ "$err_code" -eq 0xA1 ]] && echo 'SW config (OPMD=1)' || echo 'not set (OPMD=0)')"
+  decode_phycfgr "$err_detail"
 elif [[ "$err_op" -eq 0x53 ]]; then
   echo "Hint: opcode 0x53 = combined snapshot; code byte is VERSIONR, detail byte is PHYCFGR." >&2
   printf '  VERSIONR decode: 0x%02X%s\n' "$err_code" "$([[ "$err_code" -eq 0x04 ]] && echo ' (expected for W5500)' || echo ' (unexpected)')"
   decode_phycfgr "$err_detail"
-elif [[ "$err_op" -eq 0x54 ]]; then
-  echo "Hint: opcode 0x54 = packed NativeGetVersionPhyStatus; code byte is VERSIONR, detail byte is PHYCFGR." >&2
-  printf '  VERSIONR decode: 0x%02X%s\n' "$err_code" "$([[ "$err_code" -eq 0x04 ]] && echo ' (expected for W5500)' || echo ' (unexpected)')"
+elif [[ "$err_op" -eq 0x43 ]]; then
+  echo "Hint: opcode 0x43 = post-RST-write readback (intermediate; RST may still be set); code=0xA1 means OPMD=1 confirmed, detail is PHYCFGR." >&2
+  printf '  OPMD from code: %s\n' "$([[ "$err_code" -eq 0xA1 ]] && echo 'SW config (OPMD=1)' || echo 'HW straps (OPMD=0)')"
+  decode_phycfgr "$err_detail"
+elif [[ "$err_op" -eq 0x45 ]]; then
+  echo "Hint: opcode 0x45 = post-reset settled PHYCFGR after explicit SW-mode re-assert; OPMD=1 means SW config is active at end of init." >&2
+  printf '  OPMD settled: %s\n' "$([[ "$err_code" -eq 0xA1 ]] && echo 'SW config (OPMD=1) -- autoneg active' || echo 'hardware-controlled mode active (OPMD=0)')"
   decode_phycfgr "$err_detail"
 fi

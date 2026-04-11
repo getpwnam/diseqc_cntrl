@@ -969,3 +969,11 @@ This file should be committed and checked on each build to prevent version drift
 - Breakpoints: g_w5500_bringup_status=0xd5040030, g_w5500_last_native_error=0xe1540400
 - Conclusion: W5500 VERSIONR=0x04 confirmed; PHYCFGR software override blocked by PMODE HW straps (OPMDC=0x0, link DOWN)
 - Note: Added NativeGetVersion (slot 11) and NativeGetVersionPhyStatus (slot 12) interop; interop checksum 55BA4996; PHYCFGR write 0xF8 issued in w5500_hw_init() but OPMD readback=0 confirms PMODE pins overriding SW config; PMODE0-2 on IC6 must be measured and corrected for auto-neg
+
+### 2026-04-11 12:48:37 UTC [PASS]
+- Git rev: 185ca63
+- Command(s): st-flash write build/nanoCLR.bin 0x08004000; st-flash reset; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; high-frequency SWD read loop of g_w5500_last_native_error (80 samples)
+- Artifact: build/nanoCLR.bin; tests/W5500Bringup/bin/Release/latest.deploy.bin
+- Breakpoints: g_w5500_last_native_error unique samples: 0xE14407F8, 0xE143A1F8, 0xE1420000
+- Conclusion: Early SWD capture shows PHY software override is active after fix (pre-reset op 0x44 detail 0xF8, post-write op 0x43 detail 0xF8); prior PMODE-strap inference was a reset-timing artifact
+- Note: Decoded: op 0x44 code=0x07 detail=0xF8 (pre-soft-reset OPMDC=111), op 0x43 code=0xA1 detail=0xF8 (OPMD=1 SW config active, OPMDC=111), then opcode 0x42 idle marker overwrites latch

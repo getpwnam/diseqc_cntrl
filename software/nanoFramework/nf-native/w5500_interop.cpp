@@ -500,21 +500,66 @@ static w5500_socket_status_t w5500_hw_init()
     g_w5500_mode3 = false;
     w5500_bb_set_sck_idle();
 
-    w5500_write8(W5500_MR, W5500_BSB_COMMON, 0x80);
-    chThdSleepMilliseconds(5);
+    // Capture PHY mode immediately after hardware reset/probe, before MR software reset.
+    // Note: when OPMD=0 (HW mode), OPMDC field interpretation is limited; do not infer exact
+    // PMODE pin levels from OPMDC alone without physical measurement.
+    set_w5500_last_native_error(
+        0x44,
+        (uint8_t)((phycfgr & W5500_PHYCFGR_OPMDC_MASK) >> 3),
+        phycfgr);
 
-    // Set PHY to software-configured all-capable auto-negotiation.
-    // This allows the PHY to negotiate 100BASE-T full duplex when the link partner supports it.
+    w5500_write8(W5500_MR, W5500_BSB_COMMON, 0x80);
+    // Allow enough time for MR software reset to complete before touching PHYCFGR.
+    chThdSleepMilliseconds(50);
+
+    // Step 1: Write desired SW configuration WITHOUT RST to establish OPMD=1 before reset fires.
+    // WIZnet reference: set OPMD/OPMDC first, then assert RST separately so the config survives
+    // the self-clear. Writing all three bits simultaneously can cause RST to clear OPMD back to 0.
+    w5500_write8(
+        W5500_PHYCFGR,
+        W5500_BSB_COMMON,
+        (uint8_t)(W5500_PHYCFGR_OPMD | W5500_PHYCFGR_OPMDC_ALL_AUTO));
+    chThdSleepMilliseconds(10);
+
+    // op 0x46: readback after step-1 write. If OPMD=0 here, SW-mode write did not stick.
+    // Expected: PHYCFGR=0x78 (OPMD=1, OPMDC=7, RST=0).
+    phycfgr = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
+    set_w5500_last_native_error(0x46, (uint8_t)((phycfgr & W5500_PHYCFGR_OPMD) != 0 ? 0xA1 : 0xA0), phycfgr);
+
+    // Step 2: Assert RST to restart autoneg with the SW configuration now in place.
     w5500_write8(
         W5500_PHYCFGR,
         W5500_BSB_COMMON,
         (uint8_t)(W5500_PHYCFGR_RST | W5500_PHYCFGR_OPMD | W5500_PHYCFGR_OPMDC_ALL_AUTO));
     chThdSleepMilliseconds(50);
 
+    // Intermediate readback (op 0x43): may still show RST=1 if RST hasn't cleared yet.
     phycfgr = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
-    // If OPMD reads as 0, PMODE hardware straps are controlling PHY mode.
-    // If OPMD reads as 1, software configuration is active.
     set_w5500_last_native_error(0x43, (uint8_t)((phycfgr & W5500_PHYCFGR_OPMD) != 0 ? 0xA1 : 0xA0), phycfgr);
+
+    // Poll until RST bit self-clears (datasheet: ~3ms; observed to take much longer in some runs).
+    // Timeout after 3 seconds, then continue. We always re-assert SW mode afterward.
+    for (int rst_poll = 0; rst_poll < 300; rst_poll++)
+    {
+        chThdSleepMilliseconds(10);
+        phycfgr = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
+        if ((phycfgr & W5500_PHYCFGR_RST) == 0)
+        {
+            break;
+        }
+    }
+
+    // Re-assert SW all-auto mode regardless of poll outcome to avoid depending on previous
+    // reset timing behavior.
+    w5500_write8(
+        W5500_PHYCFGR,
+        W5500_BSB_COMMON,
+        (uint8_t)(W5500_PHYCFGR_OPMD | W5500_PHYCFGR_OPMDC_ALL_AUTO));
+    chThdSleepMilliseconds(5);
+    phycfgr = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
+
+    // op 0x45: post-reset settled state after explicit SW-mode re-assert.
+    set_w5500_last_native_error(0x45, (uint8_t)((phycfgr & W5500_PHYCFGR_OPMD) != 0 ? 0xA1 : 0xA0), phycfgr);
 
     w5500_apply_network_settings();
     w5500_write16(W5500_RTR, W5500_BSB_COMMON, kDefaultRetryTime);
@@ -523,8 +568,6 @@ static w5500_socket_status_t w5500_hw_init()
     w5500_socket_close(kSocketIndex);
     w5500_write8(Sn_RXBUF_SIZE, socket_reg_bsb(kSocketIndex), 2);
     w5500_write8(Sn_TXBUF_SIZE, socket_reg_bsb(kSocketIndex), 2);
-
-    set_w5500_last_native_error(0x42, 0x00, 0x00);
 
     return W5500_SOCKET_OK;
 }
