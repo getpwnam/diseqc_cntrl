@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT="$ROOT_DIR/tests/W5500Bringup/W5500Bringup.nfproj"
+CHECKSUM_TOOL="$SCRIPT_DIR/interop-checksum.sh"
 NANO_EXT_ROOT="/home/cp/.vscode-server/extensions"
 DEFAULT_NANO_PS_PATH=""
 CONFIGURATION="${CONFIGURATION:-Release}"
@@ -39,6 +40,13 @@ if [[ ! -d "$NANO_PS_PATH" ]]; then
   echo "Set NANO_PS_PATH to your installed path, e.g.:" >&2
   echo "  export NANO_PS_PATH=/home/<user>/.vscode-server/extensions/nanoframework.vscode-nanoframework-<ver>/dist/utils/nanoFramework/v1.0/" >&2
   exit 1
+fi
+
+if [[ -x "$CHECKSUM_TOOL" ]]; then
+  echo "[preflight] Validating interop checksum and AssemblyNativeVersion scope"
+  "$CHECKSUM_TOOL" --check
+else
+  echo "[warn] Interop checksum tool not found or not executable: $CHECKSUM_TOOL" >&2
 fi
 
 # Linux host workaround for nanoFramework metadata processor dependency.

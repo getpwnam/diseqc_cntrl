@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT="${PROJECT:-$ROOT_DIR/DiSEqC_Control/DiSEqC_Control.nfproj}"
 SOLUTION="${SOLUTION:-$ROOT_DIR/DiSEqC_Control/DiSEqC_Control.sln}"
+CHECKSUM_TOOL="$SCRIPT_DIR/interop-checksum.sh"
 
 resolve_nano_ps_path() {
   local root="/home/cp/.vscode-server/extensions"
@@ -147,6 +148,13 @@ fi
 if [[ ! -f "$SOLUTION" ]]; then
   echo "Solution not found: $SOLUTION" >&2
   exit 1
+fi
+
+if [[ -x "$CHECKSUM_TOOL" ]]; then
+  echo "[preflight] Validating interop checksum and AssemblyNativeVersion scope"
+  "$CHECKSUM_TOOL" --check
+else
+  echo "[warn] Interop checksum tool not found or not executable: $CHECKSUM_TOOL" >&2
 fi
 
 if [[ -z "$NANO_PS_PATH" || ! -d "$NANO_PS_PATH" ]]; then

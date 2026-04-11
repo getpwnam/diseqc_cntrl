@@ -947,9 +947,39 @@ else
     echo "# CONFIG_NF_SECURITY_MBEDTLS is not set" >> "$TARGET_DIR/defconfig"
 fi
 
-# Copy CMake file override (if provided)
+# Generate top-level target CMakeLists.txt.
+# This is required by nf-interpreter CMake line 833 (add_subdirectory).
+# A local override takes priority; otherwise generate a standard one.
 if [ -f /work/build/CMakeLists.txt ]; then
-    cp /work/build/CMakeLists.txt $TARGET_DIR/
+    cp /work/build/CMakeLists.txt "$TARGET_DIR/"
+elif [ ! -f "$TARGET_DIR/CMakeLists.txt" ]; then
+    cat > "$TARGET_DIR/CMakeLists.txt" << 'EOF_TARGET_CMAKE'
+#
+# Copyright (c) .NET Foundation and Contributors
+# See LICENSE file in the project root for full license information.
+#
+
+include(binutils.common)
+include(binutils.ChibiOS)
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/common")
+
+nf_setup_target_build(
+    HAS_NANOBOOTER
+
+    BOOTER_LINKER_FILE
+        STM32F407xG_booter
+
+    CLR_LINKER_FILE
+        STM32F407xG_CLR
+
+    BOOTER_EXTRA_LINKMAP_PROPERTIES
+        ",--library-path=${CMAKE_SOURCE_DIR}/targets/ChibiOS/_common,--defsym=__main_stack_size__=0x400,--defsym=__process_stack_size__=0x400,--defsym=__crt_heap_size__=0x10000"
+
+    CLR_EXTRA_LINKMAP_PROPERTIES
+        ",--library-path=${CMAKE_SOURCE_DIR}/targets/ChibiOS/_common,--defsym=__main_stack_size__=0x400,--defsym=__process_stack_size__=0x800,--defsym=__crt_heap_size__=0x10000"
+)
+EOF_TARGET_CMAKE
 fi
 
 # Ensure HAL settings match this board capabilities in both firmware images
@@ -1148,6 +1178,7 @@ if [ -f "nanoCLR.bin" ]; then
     echo -e "${GREEN}========================================${NC}"
     
     # Copy output to work directory
+    mkdir -p /work/build
     cp nanoCLR.bin /work/build/nanoCLR.bin
     cp nanoCLR.hex /work/build/nanoCLR.hex
     cp nanoCLR.elf /work/build/nanoCLR.elf

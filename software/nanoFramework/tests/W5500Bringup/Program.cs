@@ -361,6 +361,9 @@ namespace W5500Bringup
                 }
 
                 // Clear separator before each fail code burst.
+                // Always keep fail code visible via stage 15 for SWD diagnostics.
+                ReportBringupStatus(15, BringupResultFail, (byte)code);
+
                 Pulse(900, 900);
 
                 for (int i = 0; i < code; i++)

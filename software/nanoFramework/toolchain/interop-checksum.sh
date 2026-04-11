@@ -7,6 +7,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ASSEMBLY_INFO_PATH="$ROOT_DIR/Cubley.Interop/Properties/AssemblyInfo.cs"
 NATIVE_INTEROP_PATH="$ROOT_DIR/nf-native/cubley_interop.cpp"
 DEFAULT_PE_PATH="$ROOT_DIR/Cubley.Interop/bin/Release/Cubley.Interop.pe"
+ALLOWED_NATIVE_VERSION_FILE="$ASSEMBLY_INFO_PATH"
 
 MODE="check"
 PE_PATH="$DEFAULT_PE_PATH"
@@ -91,6 +92,26 @@ val = struct.unpack_from('<I', data, 20)[0]
 print(f"{val:08X}")
 PYEOF
 }
+
+assert_native_version_scope() {
+  local offenders
+  offenders="$(grep -R -n --include='AssemblyInfo.cs' -F 'AssemblyNativeVersion("' "$ROOT_DIR" \
+    | cut -d: -f1 \
+    | sort -u \
+    | grep -v "^$ALLOWED_NATIVE_VERSION_FILE$" || true)"
+
+  if [[ -n "$offenders" ]]; then
+    echo "Invalid AssemblyNativeVersion usage detected outside Cubley.Interop:" >&2
+    while IFS= read -r offender; do
+      [[ -n "$offender" ]] || continue
+      echo "  - $offender" >&2
+    done <<< "$offenders"
+    echo "Only $ALLOWED_NATIVE_VERSION_FILE may declare AssemblyNativeVersion." >&2
+    exit 1
+  fi
+}
+
+assert_native_version_scope
 
 CS_SUM="$(extract_cs_checksum)"
 NATIVE_SUM="$(extract_native_checksum)"

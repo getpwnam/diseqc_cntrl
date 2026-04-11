@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT="$ROOT_DIR/tests/MailboxSmoke/MailboxSmoke.nfproj"
 INTEROP_PROJECT="$ROOT_DIR/Cubley.Interop/Cubley.Interop.nfproj"
+CHECKSUM_TOOL="$SCRIPT_DIR/interop-checksum.sh"
 NANO_EXT_ROOT="/home/cp/.vscode-server/extensions"
 DEFAULT_NANO_PS_PATH=""
 CONFIGURATION="${CONFIGURATION:-Release}"
@@ -39,6 +40,13 @@ if [[ ! -d "$NANO_PS_PATH" ]]; then
   echo "NanoFrameworkProjectSystemPath not found: $NANO_PS_PATH" >&2
   echo "Set NANO_PS_PATH to your installed path." >&2
   exit 1
+fi
+
+if [[ -x "$CHECKSUM_TOOL" ]]; then
+  echo "[preflight] Validating interop checksum and AssemblyNativeVersion scope"
+  "$CHECKSUM_TOOL" --check
+else
+  echo "[warn] Interop checksum tool not found or not executable: $CHECKSUM_TOOL" >&2
 fi
 
 if [[ -z "$NF_MDP_MSBUILDTASK_PATH_EFFECTIVE" ]]; then
