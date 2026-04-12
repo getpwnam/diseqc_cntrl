@@ -15,6 +15,7 @@ HRESULT Library_cubley_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__
 HRESULT Library_cubley_interop_W5500Socket_NativeGetPhyStatus___STATIC__U4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_W5500Socket_NativeGetVersion___STATIC__U4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_W5500Socket_NativeGetVersionPhyStatus___STATIC__U4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_W5500Socket_NativeSetPhyMode___STATIC__U4__I4(CLR_RT_StackFrame& stack);
 
 volatile uint32_t g_w5500_bringup_status = 0xD5010000;
 volatile uint32_t g_w5500_last_native_error = 0;
@@ -34,12 +35,13 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_W5500Socket_NativeGetPhyStatus___STATIC__U4,                                    // [10]
     Library_cubley_interop_W5500Socket_NativeGetVersion___STATIC__U4,                                      // [11] W5500Socket.NativeGetVersion
     Library_cubley_interop_W5500Socket_NativeGetVersionPhyStatus___STATIC__U4,                             // [12] W5500Socket.NativeGetVersionPhyStatus
+    Library_cubley_interop_W5500Socket_NativeSetPhyMode___STATIC__U4__I4,                                  // [13] W5500Socket.NativeSetPhyMode
 };
 
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_Cubley_Interop =
 {
     "Cubley.Interop",
-    0x55BA4996,  // nativeMethodsChecksum from Cubley.Interop.pe (computed by MetaDataProcessor)
+    0xD2CF401C,  // nativeMethodsChecksum from Cubley.Interop.pe (computed by MetaDataProcessor)
     method_lookup,
     { 1, 0, 0, 0 }
 };

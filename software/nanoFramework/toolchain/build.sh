@@ -687,6 +687,8 @@ for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/
 
 #undef STM32_SPI_USE_SPI1
 #define STM32_SPI_USE_SPI1                  TRUE
+#undef STM32_SPI_USE_SPI2
+#define STM32_SPI_USE_SPI2                  TRUE
 
 #undef STM32_SERIAL_USE_USART2
 #define STM32_SERIAL_USE_USART2             FALSE
@@ -1012,6 +1014,8 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
 #define HAL_USE_PWM                         TRUE
 #undef HAL_USE_PAL
 #define HAL_USE_PAL                         TRUE
+#undef HAL_USE_SPI
+#define HAL_USE_SPI                         TRUE
 #undef HAL_USE_RTC
 #define HAL_USE_RTC                         ${RTC_HAL_SETTING}
 #undef HAL_USE_MAC

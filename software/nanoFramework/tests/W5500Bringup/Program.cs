@@ -52,6 +52,12 @@ namespace W5500Bringup
         private const byte DetailCloseBegin = 0x70;
         private const byte DetailCloseDone = 0x71;
 
+        // Diagnostic mode: keep refreshing PHY status for SWD while cable is unplugged/replugged.
+        private const bool EnablePhyMonitorMode = true;
+        private const bool EnablePhyModeSweep = true;
+        private const int PhyMonitorIterations = 240;
+        private const int PhyMonitorIntervalMs = 500;
+
         private static GpioController _gpio;
 
         public static void Main()
@@ -116,6 +122,18 @@ namespace W5500Bringup
                 if (status != W5500Socket.Status.Ok)
                 {
                     failCode = FailCodeOpenSocket;
+                }
+
+                if (failCode == 0 && EnablePhyMonitorMode)
+                {
+                    currentStage = 10;
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, 0xA0);
+                    if (EnablePhyModeSweep)
+                    {
+                        RunPhyModeSweep();
+                    }
+                    RunPhyMonitorLoop(PhyMonitorIterations, PhyMonitorIntervalMs);
+                    ReportBringupStatus((byte)currentStage, BringupResultRunning, 0xAF);
                 }
 
                 if (failCode == 0)
@@ -319,6 +337,74 @@ namespace W5500Bringup
             {
                 Debug.WriteLine("[W5500] PHY " + marker + " unavailable: " + ex.Message);
             }
+        }
+
+        private static void RunPhyMonitorLoop(int iterations, int intervalMs)
+        {
+            Debug.WriteLine("[W5500] PHY monitor mode running: iterations=" + iterations + " intervalMs=" + intervalMs);
+
+            for (int i = 0; i < iterations; i++)
+            {
+                uint packed = W5500Socket.NativeGetVersionPhyStatus();
+                uint version = (packed >> 8) & 0xFFU;
+                uint phy = packed & 0xFFU;
+                bool linkUp = (phy & 0x01U) != 0;
+                bool speed100 = (phy & 0x02U) != 0;
+                bool fullDuplex = (phy & 0x04U) != 0;
+
+                Debug.WriteLine(
+                    "[W5500] PHY loop i=" + i.ToString() +
+                    " ver=0x" + version.ToString("X2") +
+                    " raw=0x" + phy.ToString("X2") +
+                    " link=" + (linkUp ? "UP" : "DOWN") +
+                    " speed=" + (speed100 ? "100M" : "10M") +
+                    " duplex=" + (fullDuplex ? "FULL" : "HALF"));
+
+                ReportBringupStatus(10, BringupResultRunning, (byte)(linkUp ? 0xE1 : 0xE0));
+                Thread.Sleep(intervalMs);
+            }
+        }
+
+        private static void RunPhyModeSweep()
+        {
+            int[] modeCodes = { 7, 0, 1, 2, 3, 6 };
+            string[] modeNames =
+            {
+                "all-auto(7)",
+                "10H(0)",
+                "10F(1)",
+                "100H(2)",
+                "100F(3)",
+                "auto(6)"
+            };
+
+            Debug.WriteLine("[W5500] PHY mode sweep start");
+
+            for (int m = 0; m < modeCodes.Length; m++)
+            {
+                int mode = modeCodes[m];
+                uint afterSet = W5500Socket.NativeSetPhyMode(mode);
+                Debug.WriteLine("[W5500] PHY set mode " + modeNames[m] + " => raw=0x" + afterSet.ToString("X2"));
+                ReportBringupStatus(10, BringupResultRunning, (byte)(0xC0 | (byte)(mode & 0x0F)));
+
+                for (int i = 0; i < 12; i++)
+                {
+                    uint packed = W5500Socket.NativeGetVersionPhyStatus();
+                    uint phy = packed & 0xFFU;
+                    bool linkUp = (phy & 0x01U) != 0;
+
+                    Debug.WriteLine(
+                        "[W5500] PHY sweep mode=" + modeNames[m] +
+                        " i=" + i.ToString() +
+                        " raw=0x" + phy.ToString("X2") +
+                        " link=" + (linkUp ? "UP" : "DOWN"));
+
+                    ReportBringupStatus(10, BringupResultRunning, (byte)(linkUp ? 0xE1 : 0xE0));
+                    Thread.Sleep(500);
+                }
+            }
+
+            Debug.WriteLine("[W5500] PHY mode sweep end");
         }
 
         private static byte[] BuildProbePayload()

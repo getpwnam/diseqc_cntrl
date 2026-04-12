@@ -977,3 +977,57 @@ This file should be committed and checked on each build to prevent version drift
 - Breakpoints: g_w5500_last_native_error unique samples: 0xE14407F8, 0xE143A1F8, 0xE1420000
 - Conclusion: Early SWD capture shows PHY software override is active after fix (pre-reset op 0x44 detail 0xF8, post-write op 0x43 detail 0xF8); prior PMODE-strap inference was a reset-timing artifact
 - Note: Decoded: op 0x44 code=0x07 detail=0xF8 (pre-soft-reset OPMDC=111), op 0x43 code=0xA1 detail=0xF8 (OPMD=1 SW config active, OPMDC=111), then opcode 0x42 idle marker overwrites latch
+
+### 2026-04-11 17:24:53 UTC [INFO]
+- Git rev: aaf81d8
+- Command(s): NF_INCREMENTAL_BUILD=0 ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; nanoff --devicedetails; ./tests/swd_read_w5500_diag.sh; ./tests/swd_read_bringup_status.sh
+- Artifact: build/nanoCLR.bin; tests/W5500Bringup/bin/Release/latest.deploy.bin
+- Breakpoints: mailbox=0xD5020000; native_error=0xE1400000
+- Conclusion: HW SPI2 migration builds and deploys; bringup no longer at stage 0x0F/Busy, now stable at stage 0x02 RUNNING.
+- Note: Assemblies visible: W5500Bringup + Cubley.Interop; checksum 55BA4996 verified.
+
+### 2026-04-11 19:01:42 UTC [INFO]
+- Git rev: aaf81d8
+- Command(s): ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; for i in 1..120 ./tests/swd_read_w5500_diag.sh
+- Artifact: unique pairs: 0xd50100a0/0xe14100f0, 0xd50f0e02/0xe1540200
+- Breakpoints: SWD mailbox/native-error sampling
+- Conclusion: CS readback stayed high across SPI select/unselect (detail 0xF0), VERSIONR still 0x00 in init path
+- Note: 0x41 detail high nibble encodes CS bits [preSel,postSel,preUnsel,postUnsel]=1111
+
+### 2026-04-11 19:23:55 UTC [INFO]
+- Git rev: aaf81d8
+- Command(s): ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; post-reset 220x ./tests/swd_read_w5500_diag.sh
+- Artifact: unique pairs include 0xd50100a0/0xe14100c7 and 0xd5020000/0xe1490757
+- Breakpoints: SWD mailbox/native-error sampling
+- Conclusion: Manual CS test: PB12 ODR toggles high-low-high but readback stays high; W5500 VERSIONR remains 0x00
+- Note: Decode: op49 code=0x07 (IDR high/high/high), detail high nibble=0x5 (ODR high/low/high). op41 detail high nibble=0xC and low nibble=0x7 confirms CS observe path mismatch
+
+### 2026-04-11 20:56:07 UTC [INFO]
+- Git rev: aaf81d8
+- Command(s): Scope probe on MCU PB12 and W5500 SCSn during init
+- Artifact: Observed normal-high line with short low bursts (~250 ms windows) at both probe points
+- Breakpoints: Physical oscilloscope observation
+- Conclusion: Scope verification overrides CS-readback inference: PB12 and W5500 SCSn do pulse low after reset; CS control path is functioning
+- Note: Treat op41/op49 CS-readback mismatch as software sampling artifact; continue debugging SPI data path (SCK/MOSI/MISO)
+
+### 2026-04-11 20:58:23 UTC [INFO]
+- Git rev: aaf81d8
+- Command(s): ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; post-reset 180x ./tests/swd_read_w5500_diag.sh
+- Artifact: Observed pairs include 0xd5900e20/0xe14a0000 and 0xd5a00000/0xe14a0000
+- Breakpoints: SWD mailbox/native-error sampling
+- Conclusion: Raw SPI frame diagnostic shows rx0/rx1 are 0x00 during VERSIONR failure (op 0x4A), consistent with MISO low/undriven data path
+- Note: op 0x4A encodes code=rx0 detail=rx1 from VERSIONR 4-byte frame; both remained zero
+
+### 2026-04-11 21:52:38 UTC [INFO]
+- Git rev: aaf81d8
+- Command(s): st-flash write build/nanoCLR.bin 0x08004000 && st-flash reset; ./tests/swd_read_w5500_diag.sh; repeated scope probes on PB13/PB15/PB14
+- Artifact: build/nanoCLR.bin
+- Conclusion: Post-flash diagnostics report NativeError op=0x54 code=0x04 detail=0x78 (VERSIONR=0x04, PHYCFGR=0x78) while visual MISO activity remained inconclusive on scope.
+- Note: Scope (FNRSI 1013D): SCK and MOSI clearly active; MISO showed no visible transitions.
+
+### 2026-04-12 08:57:27 UTC [FAIL]
+- Git rev: aaf81d8
+- Command(s): Patched w5500_interop PHY RST polarity + added NativeSetPhyMode mode sweep; ./toolchain/interop-checksum.sh --fix --pe tests/W5500Bringup/bin/Release/Cubley.Interop.pe; ./toolchain/compile-w5500-test.sh; NF_INCREMENTAL_BUILD=1 ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; nanoff --deploy --image tests/W5500Bringup/bin/Release/W5500Bringup.bin --address 0x080C0000 --reset; repeated ./tests/swd_read_w5500_diag.sh + ./tests/swd_read_bringup_status.sh sampling
+- Artifact: build/nanoCLR.bin; tests/W5500Bringup/bin/Release/W5500Bringup.bin; tests/W5500Bringup/bin/Release/Cubley.Interop.pe
+- Conclusion: W5500 responds (VERSIONR=0x04) and accepts forced PHY mode changes, but link never comes up (LNK=0 in all tested modes) and no TX activity observed; evidence now points to TX hardware path fault around T1/CT_1 side rather than firmware.
+- Note: Observed PHYCFGR sequence during mode sweep included 0xF8, 0xC0, 0xCC, 0xD2, 0xDE, 0xF0 with mailbox stage 10 detail 0xE0 throughout. Hardware checks: R23=33R and R24=33R; continuity W5500 TXP->R23->T1 TD+ and W5500 TXN->R24->T1 TD- confirmed; CT_2->3V3 open as expected; CT_1->3V3 measures ~25R (anomalous), suggesting leakage/bridge on TX-side network. Next step: clean/rework T1 pin solder around pins 1-3 and re-measure CT_1 to 3V3, then isolate by lifting R23/R24 if needed.

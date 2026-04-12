@@ -46,6 +46,19 @@ static void ForceUsart3PinsOnPb10Pb11(void)
 }
 #endif
 
+#if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_W5500_EARLY_INIT) && (CUBLEY_W5500_EARLY_INIT == TRUE))
+static void PreOsDelayMs(int ms)
+{
+    for (int t = 0; t < ms; t++)
+    {
+        for (volatile int i = 0; i < 7000; i++)
+        {
+            __asm__ volatile ("nop");
+        }
+    }
+}
+#endif
+
 int main(void)
 {
     halInit();
@@ -72,7 +85,7 @@ int main(void)
 #endif
 
     usbDisconnectBus(serusbcfg.usbp);
-    chThdSleepMilliseconds(100);
+    PreOsDelayMs(100);
     usbStart(serusbcfg.usbp, &usbcfg);
     usbConnectBus(serusbcfg.usbp);
 #else
@@ -94,7 +107,7 @@ int main(void)
     // Visible heartbeat pulse and early W5500 reset release before CLR startup.
     palSetLineMode(PAL_LINE(GPIOA, 2U), PAL_MODE_OUTPUT_PUSHPULL);
     palSetLine(PAL_LINE(GPIOA, 2U));
-    chThdSleepMilliseconds(100);
+    PreOsDelayMs(100);
     palClearLine(PAL_LINE(GPIOA, 2U));
 
     int earlyInitStatus = cubley_w5500_early_init();
@@ -103,11 +116,11 @@ int main(void)
     {
         // Two short pulses = early W5500 init success.
         palSetLine(PAL_LINE(GPIOA, 2U));
-        chThdSleepMilliseconds(80);
+        PreOsDelayMs(80);
         palClearLine(PAL_LINE(GPIOA, 2U));
-        chThdSleepMilliseconds(80);
+        PreOsDelayMs(80);
         palSetLine(PAL_LINE(GPIOA, 2U));
-        chThdSleepMilliseconds(80);
+        PreOsDelayMs(80);
         palClearLine(PAL_LINE(GPIOA, 2U));
 
         g_w5500_bringup_status = ((uint32_t)0xD5 << 24) | ((uint32_t)0x90 << 16) | ((uint32_t)1 << 8);
@@ -118,9 +131,9 @@ int main(void)
         for (int i = 0; i < 4; i++)
         {
             palSetLine(PAL_LINE(GPIOA, 2U));
-            chThdSleepMilliseconds(80);
+            PreOsDelayMs(80);
             palClearLine(PAL_LINE(GPIOA, 2U));
-            chThdSleepMilliseconds(80);
+            PreOsDelayMs(80);
         }
 
         // Follow-up diagnostic code: pulse low nibble of status (1..15).
@@ -130,13 +143,13 @@ int main(void)
             diagPulses = 1;
         }
 
-        chThdSleepMilliseconds(250);
+        PreOsDelayMs(250);
         for (int i = 0; i < diagPulses; i++)
         {
             palSetLine(PAL_LINE(GPIOA, 2U));
-            chThdSleepMilliseconds(60);
+            PreOsDelayMs(60);
             palClearLine(PAL_LINE(GPIOA, 2U));
-            chThdSleepMilliseconds(120);
+            PreOsDelayMs(120);
         }
 
         g_w5500_bringup_status = ((uint32_t)0xD5 << 24) | ((uint32_t)0x90 << 16) | ((uint32_t)14 << 8) | ((uint32_t)earlyInitStatus & 0xFFU);
