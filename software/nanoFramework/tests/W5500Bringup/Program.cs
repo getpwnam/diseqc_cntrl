@@ -11,16 +11,18 @@ namespace W5500Bringup
         private const int StatusLedPin = 2;
 
         // Network config applied directly to native W5500 driver.
-        private const string LocalIp = "192.168.1.160";
+        private const string LocalIp = "172.17.129.253";
         private const string SubnetMask = "255.255.255.0";
-        private const string Gateway = "192.168.1.1";
+        private const string Gateway = "172.17.129.1";
         private const string MacAddress = "02:24:C1:00:00:51";
 
         // Probe endpoint: use an always-on TCP service in your LAN.
-        private const string ProbeHost = "192.168.1.60";
+        private const string ProbeHost = "172.17.132.50";
         private const int ProbePort = 1883;
         private const int ConnectTimeoutMs = 5000;
         private const int ReceiveTimeoutMs = 2000;
+        private const int ConnectRetryCount = 12;
+        private const int ConnectRetryDelayMs = 1000;
 
         private const int FailCodeConfigureNetwork = 1;
         private const int FailCodeOpenSocket = 2;
@@ -52,11 +54,17 @@ namespace W5500Bringup
         private const byte DetailCloseBegin = 0x70;
         private const byte DetailCloseDone = 0x71;
 
-        // Diagnostic mode: keep refreshing PHY status for SWD while cable is unplugged/replugged.
-        private const bool EnablePhyMonitorMode = true;
-        private const bool EnablePhyModeSweep = true;
+        // Disable long PHY monitor during active TCP bring-up so traffic starts immediately.
+        private const bool EnablePhyMonitorMode = false;
         private const int PhyMonitorIterations = 240;
         private const int PhyMonitorIntervalMs = 500;
+
+        // PHY mode override: 7 = all-capable autoneg (default), 3 = 100BT full forced (bypasses FLP exchange).
+        // Hardware-fault investigation mode: keep autoneg active and sample PHY quickly.
+        private const int ForcePhyMode = 7;
+        private const bool EnableAutonegProbeWindow = true;
+        private const int AutonegProbeIterations = 30;
+        private const int AutonegProbeIntervalMs = 200;
 
         private static GpioController _gpio;
 
@@ -108,8 +116,14 @@ namespace W5500Bringup
                 StageMarker(2);
                 var status = (W5500Socket.Status)W5500Socket.NativeOpen(out socketHandle);
                 Debug.WriteLine("[W5500] Open => " + status + " handle=" + socketHandle);
+                // Belt-and-suspenders: kSingleSocketHandle=1 is a compile-time constant in native.
+                // Guard against CLR BYREF interop not propagating the out-param write.
+                if (status == W5500Socket.Status.Ok && socketHandle != 1)
+                {
+                    socketHandle = 1;
+                    Debug.WriteLine("[W5500] socketHandle forced to 1 (BYREF workaround)");
+                }
                 ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailOpenDone, (int)status));
-                LogPhyStatus("after-open");
                 try
                 {
                     lastNativeError = BringupStatus.NativeGetLastNativeError();
@@ -118,6 +132,19 @@ namespace W5500Bringup
                 catch (Exception ex)
                 {
                     Debug.WriteLine("[W5500] LastNativeError unavailable: " + ex.Message);
+                }
+                if (status == W5500Socket.Status.Ok)
+                {
+                    // Keep the true NativeOpen failure telemetry intact when Open fails.
+                    // NativeGetVersionPhyStatus() updates the native error register for PHY snapshots.
+                    LogPhyStatus("after-open");
+                }
+                if (status == W5500Socket.Status.Ok && ForcePhyMode != 7)
+                {
+                    // Force PHY mode to bypass autoneg FLP exchange when the switch reports 100HDX.
+                    uint phyAfterForce = W5500Socket.NativeSetPhyMode(ForcePhyMode);
+                    Debug.WriteLine("[W5500] ForcePhyMode=" + ForcePhyMode + " => raw=0x" + phyAfterForce.ToString("X2"));
+                    LogPhyStatus("after-force-phy");
                 }
                 if (status != W5500Socket.Status.Ok)
                 {
@@ -128,10 +155,6 @@ namespace W5500Bringup
                 {
                     currentStage = 10;
                     ReportBringupStatus((byte)currentStage, BringupResultRunning, 0xA0);
-                    if (EnablePhyModeSweep)
-                    {
-                        RunPhyModeSweep();
-                    }
                     RunPhyMonitorLoop(PhyMonitorIterations, PhyMonitorIntervalMs);
                     ReportBringupStatus((byte)currentStage, BringupResultRunning, 0xAF);
                 }
@@ -151,16 +174,39 @@ namespace W5500Bringup
                     }
                 }
 
+                if (failCode == 0 && ForcePhyMode == 7 && EnableAutonegProbeWindow)
+                {
+                    // Short high-frequency probe window to catch autoneg transitions and drops.
+                    RunAutonegProbeWindow(AutonegProbeIterations, AutonegProbeIntervalMs);
+                }
+
                 if (failCode == 0)
                 {
                     currentStage = 4;
-                    ReportBringupStatus((byte)currentStage, BringupResultRunning, DetailConnectBegin);
                     StageMarker(4);
-                    status = (W5500Socket.Status)W5500Socket.NativeConnect(socketHandle, ProbeHost, ProbePort, ConnectTimeoutMs);
-                    Debug.WriteLine("[W5500] Connect => " + status);
-                    ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailConnectDone, (int)status));
-                    LogPhyStatus("after-connect");
-                    if (status != W5500Socket.Status.Ok)
+                    for (int attempt = 1; attempt <= ConnectRetryCount && failCode == 0; attempt++)
+                    {
+                        ReportBringupStatus((byte)currentStage, BringupResultRunning, DetailConnectBegin);
+                        Debug.WriteLine("[W5500] Connect attempt " + attempt + "/" + ConnectRetryCount);
+                        status = (W5500Socket.Status)W5500Socket.NativeConnect(socketHandle, ProbeHost, ProbePort, ConnectTimeoutMs);
+                        Debug.WriteLine("[W5500] Connect => " + status);
+                        ReportBringupStatus((byte)currentStage, BringupResultRunning, CombineStatusDetail(DetailConnectDone, (int)status));
+                        // LogPhyStatus moved out of retry loop so Stage 4 FAIL detail is
+                        // visible in the SWD mailbox during the retry sleep interval.
+
+                        if (status == W5500Socket.Status.Ok)
+                        {
+                            break;
+                        }
+
+                        if (attempt < ConnectRetryCount)
+                        {
+                            // NativeConnect() already closes/reopens/configures socket registers per attempt.
+                            Thread.Sleep(ConnectRetryDelayMs);
+                        }
+                    }
+
+                    if (status != W5500Socket.Status.Ok && failCode == 0)
                     {
                         failCode = FailCodeConnect;
                     }
@@ -365,48 +411,6 @@ namespace W5500Bringup
             }
         }
 
-        private static void RunPhyModeSweep()
-        {
-            int[] modeCodes = { 7, 0, 1, 2, 3, 6 };
-            string[] modeNames =
-            {
-                "all-auto(7)",
-                "10H(0)",
-                "10F(1)",
-                "100H(2)",
-                "100F(3)",
-                "auto(6)"
-            };
-
-            Debug.WriteLine("[W5500] PHY mode sweep start");
-
-            for (int m = 0; m < modeCodes.Length; m++)
-            {
-                int mode = modeCodes[m];
-                uint afterSet = W5500Socket.NativeSetPhyMode(mode);
-                Debug.WriteLine("[W5500] PHY set mode " + modeNames[m] + " => raw=0x" + afterSet.ToString("X2"));
-                ReportBringupStatus(10, BringupResultRunning, (byte)(0xC0 | (byte)(mode & 0x0F)));
-
-                for (int i = 0; i < 12; i++)
-                {
-                    uint packed = W5500Socket.NativeGetVersionPhyStatus();
-                    uint phy = packed & 0xFFU;
-                    bool linkUp = (phy & 0x01U) != 0;
-
-                    Debug.WriteLine(
-                        "[W5500] PHY sweep mode=" + modeNames[m] +
-                        " i=" + i.ToString() +
-                        " raw=0x" + phy.ToString("X2") +
-                        " link=" + (linkUp ? "UP" : "DOWN"));
-
-                    ReportBringupStatus(10, BringupResultRunning, (byte)(linkUp ? 0xE1 : 0xE0));
-                    Thread.Sleep(500);
-                }
-            }
-
-            Debug.WriteLine("[W5500] PHY mode sweep end");
-        }
-
         private static byte[] BuildProbePayload()
         {
             return new byte[]
@@ -415,6 +419,31 @@ namespace W5500Bringup
                 (byte)'B', (byte)'R', (byte)'I', (byte)'N', (byte)'G', (byte)'U', (byte)'P',
                 (byte)'\r', (byte)'\n'
             };
+        }
+
+        private static void RunAutonegProbeWindow(int iterations, int intervalMs)
+        {
+            Debug.WriteLine("[W5500] Autoneg probe window start: iterations=" + iterations + " intervalMs=" + intervalMs);
+
+            for (int i = 0; i < iterations; i++)
+            {
+                uint packed = W5500Socket.NativeGetVersionPhyStatus();
+                uint phy = packed & 0xFFU;
+                bool linkUp = (phy & 0x01U) != 0;
+                int opmdc = (int)((phy >> 3) & 0x07U);
+
+                Debug.WriteLine(
+                    "[W5500] AN probe i=" + i.ToString() +
+                    " raw=0x" + phy.ToString("X2") +
+                    " link=" + (linkUp ? "UP" : "DOWN") +
+                    " opmdc=" + opmdc);
+
+                // Stage 10 diagnostic detail: 0xB0|OPMDC when link down, 0xE1 when link up.
+                ReportBringupStatus(10, BringupResultRunning, (byte)(linkUp ? 0xE1 : (0xB0 | (byte)(opmdc & 0x0F))));
+                Thread.Sleep(intervalMs);
+            }
+
+            Debug.WriteLine("[W5500] Autoneg probe window end");
         }
 
         private static bool InitializeLed()

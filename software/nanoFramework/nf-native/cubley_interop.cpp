@@ -19,6 +19,15 @@ HRESULT Library_cubley_interop_W5500Socket_NativeSetPhyMode___STATIC__U4__I4(CLR
 
 volatile uint32_t g_w5500_bringup_status = 0xD5010000;
 volatile uint32_t g_w5500_last_native_error = 0;
+// First-link-up latch: 0x00000000 while link has never been seen up.
+// Latched to 0xD600<phycfgr>00 the first time PHYCFGR.LNK=1 is observed.
+volatile uint32_t g_w5500_first_link_up = 0;
+// Connect-params latch: written once per connect attempt, never overwritten.
+// Format: 0xCC_<DIPR2>_<DIPR3>_<DPORT_HI>_<DPORT_LO> -- magic byte 0xCC.
+volatile uint32_t g_w5500_connect_params = 0;
+// Post-CMD_CONNECT Sn_SR snapshot: captured ~50ms after CMD_CONNECT per attempt.
+// Format: 0xCE_<attempt_count>_<Sn_SR_at_50ms>_<Sn_IR_at_50ms> -- magic byte 0xCE.
+volatile uint32_t g_w5500_post_connect_sr = 0;
 
 static const CLR_RT_MethodHandler method_lookup[] =
 {

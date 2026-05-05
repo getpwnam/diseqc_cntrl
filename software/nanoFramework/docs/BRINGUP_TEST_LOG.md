@@ -1031,3 +1031,43 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: build/nanoCLR.bin; tests/W5500Bringup/bin/Release/W5500Bringup.bin; tests/W5500Bringup/bin/Release/Cubley.Interop.pe
 - Conclusion: W5500 responds (VERSIONR=0x04) and accepts forced PHY mode changes, but link never comes up (LNK=0 in all tested modes) and no TX activity observed; evidence now points to TX hardware path fault around T1/CT_1 side rather than firmware.
 - Note: Observed PHYCFGR sequence during mode sweep included 0xF8, 0xC0, 0xCC, 0xD2, 0xDE, 0xF0 with mailbox stage 10 detail 0xE0 throughout. Hardware checks: R23=33R and R24=33R; continuity W5500 TXP->R23->T1 TD+ and W5500 TXN->R24->T1 TD- confirmed; CT_2->3V3 open as expected; CT_1->3V3 measures ~25R (anomalous), suggesting leakage/bridge on TX-side network. Next step: clean/rework T1 pin solder around pins 1-3 and re-measure CT_1 to 3V3, then isolate by lifting R23/R24 if needed.
+
+### 2026-05-01 22:41:47 UTC [FAIL]
+- Git rev: f33ba0f
+- Command(s): 10-cycle: st-flash reset + poll swd_read_w5500_diag.sh; GDB SRAM read: g_w5500_cs_gpio_code=0x07 (expected 0x05); op 0x49 cs_lo=1 after palClearLine
+- Artifact: build/nanoCLR.elf
+- Breakpoints: op 0x49 detail: cs_gpio_code=0x07 (0b111); op 0x4A: spi_rx0=0x00 spi_rx1=0x00; op 0x11: NativeOpen initStatus=0x20; mailbox 0xd50f0e02 Stage=15 FAIL
+- Conclusion: Gate 2 HW_FAIL 10/10: W5500 VERSIONR=0x00 every cycle; PB12 (CS) stuck HIGH — firmware ODR write to 0 confirmed, IDR remains HIGH, pin cannot be asserted
+- Note: Gates 1 (rails/RST) confirmed pass. PB12 physically stuck HIGH — suspect solder bridge to 3.3V or PB13 (SCK). All SPI transactions ignored by W5500 (CS never asserted). Action: inspect PB12 under magnification, check continuity PB12-to-3V3 and PB12-to-PB13.
+
+### 2026-05-01 23:21:46 UTC [INFO]
+- Git rev: f33ba0f
+- Command(s): Scope verification at W5500 pin 32 (SCSN) during reset sequence
+- Artifact: docs/MCU_W5500_HARDWARE_TEST_LOG.md
+- Breakpoints: Prior failure words remain: op 0x4A (rx0=0x00 rx1=0x00), op 0x11 (initStatus=0x20)
+- Conclusion: CS assertion reaches W5500: SCSN (pin 32) shows low pulses on reset; previous 'PB12 stuck HIGH' hypothesis is invalidated by direct pin-level scope evidence
+- Note: Electrical path for CS appears continuous MCU->W5500. Next isolate SPI data-path/timing (SCK/MOSI/MISO capture) and W5500 readiness timing.
+
+### 2026-05-01 23:41:53 UTC [INFO]
+- Git rev: f33ba0f
+- Command(s): Run 1: SCSN pin 32 falling-edge reset capture; Run 2: SCK (PB13 net) reset capture
+- Artifact: docs/MCU_W5500_HARDWARE_TEST_LOG.md
+- Breakpoints: Failure signature still pending data-path confirmation: op 0x4A (rx0=0x00 rx1=0x00), op 0x11 (initStatus=0x20)
+- Conclusion: Single-probe scope runbook checkpoint: Run 1 (SCSN) and Run 2 (SCK) both match expected startup behavior
+- Note: Proceeding to Run 3 (MOSI) then Run 4 (MISO) with same trigger method.
+
+### 2026-05-02 00:44:04 UTC [PASS]
+- Git rev: f33ba0f
+- Command(s): Scope: MISO activity observed at W5500 pin 34 after reflow; SWD: ./tests/swd_read_w5500_diag.sh
+- Artifact: docs/MCU_W5500_HARDWARE_TEST_LOG.md
+- Breakpoints: Mailbox 0xD50A00E0 (Stage10 RUNNING), Native error 0xE15404DE (op0x54 version=0x04 phy=0xDE)
+- Conclusion: Post-reflow bring-up recovered: VERSIONR now reads 0x04 and runtime sits in Stage 10 PHY monitor; one/two LED then quiet is expected monitor-mode behavior, not a main loop crash
+- Note: Program.cs currently has EnablePhyMonitorMode=true and PhyMonitorIterations=240 (~120s), so LED stage markers pause after stage 2 while monitor loop runs.
+
+### 2026-05-02 00:55:19 UTC [INFO]
+- Git rev: f33ba0f
+- Command(s): Confirmed cable and switch port good; sampled SWD diag repeatedly
+- Artifact: docs/MCU_W5500_HARDWARE_TEST_LOG.md
+- Breakpoints: Mailbox 0xD50F0E03 (FAIL code 3), native error 0xE15404F0 (VERSIONR=0x04, PHYCFGR=0xF0 link-down)
+- Conclusion: Known-good cable/switch verified; device remains fail code 3 (connect) with persistent PHY link-down (0xE15404F0)
+- Note: External network path validated; focus shifts to PHY analog front-end (clock, TX pair activity, magnetics/CT network).

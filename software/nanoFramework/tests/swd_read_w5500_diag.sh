@@ -47,8 +47,14 @@ target extended-remote :3333
 monitor halt
 set $mailbox_addr = &g_w5500_bringup_status
 set $error_addr = &g_w5500_last_native_error
+set $link_latch_addr = &g_w5500_first_link_up
+set $connect_params_addr = &g_w5500_connect_params
 x/wx $mailbox_addr
 x/wx $error_addr
+x/wx $link_latch_addr
+x/wx $connect_params_addr
+set $post_connect_addr = &g_w5500_post_connect_sr
+x/wx $post_connect_addr
 monitor resume
 quit
 EOF_GDB
@@ -59,12 +65,16 @@ trap 'kill "$openocd_pid" >/dev/null 2>&1 || true; rm -rf "$tmp_dir"' EXIT
 
 mailbox_hex=""
 error_hex=""
+link_latch_hex=""
 for _ in $(seq 1 15); do
   if "$GDB_BIN" "$ELF_PATH" -q -batch -x "$gdb_cmd" >"$gdb_out" 2>&1; then
     mapfile -t vals < <(sed -n 's/.*:\s*\(0x[0-9a-fA-F]\+\).*/\1/p' "$gdb_out")
     if [[ ${#vals[@]} -ge 2 ]]; then
       mailbox_hex="${vals[0]}"
       error_hex="${vals[1]}"
+      link_latch_hex="${vals[2]:-0x00000000}"
+      connect_params_hex="${vals[3]:-0x00000000}"
+      post_connect_hex="${vals[4]:-0x00000000}"
       break
     fi
   fi
@@ -81,6 +91,9 @@ if [[ -z "$mailbox_hex" || -z "$error_hex" ]]; then
   tail -n 50 "$openocd_log" >&2 || true
   exit 1
 fi
+
+connect_params_hex="${connect_params_hex:-0x00000000}"
+post_connect_hex="${post_connect_hex:-0x00000000}"
 
 mailbox_dec=$((mailbox_hex))
 mb_magic=$(((mailbox_dec >> 24) & 0xFF))
@@ -177,4 +190,103 @@ elif [[ "$err_op" -eq 0x45 ]]; then
   echo "Hint: opcode 0x45 = post-reset settled PHYCFGR after explicit SW-mode re-assert; OPMD=1 means SW config is active at end of init." >&2
   printf '  OPMD settled: %s\n' "$([[ "$err_code" -eq 0xA1 ]] && echo 'SW config (OPMD=1) -- autoneg active' || echo 'hardware-controlled mode active (OPMD=0)')"
   decode_phycfgr "$err_detail"
+elif [[ "$err_op" -eq 0x54 ]]; then
+  echo "Hint: opcode 0x54 = runtime VERSIONR+PHYCFGR snapshot; code byte is VERSIONR, detail byte is current PHYCFGR." >&2
+  printf '  VERSIONR decode: 0x%02X%s\n' "$err_code" "$([[ "$err_code" -eq 0x04 ]] && echo ' (expected for W5500)' || echo ' (unexpected)')"
+  decode_phycfgr "$err_detail"
+elif [[ "$err_op" -eq 0x67 ]]; then
+  echo "Hint: opcode 0x67 = entered w5500_connect(); detail byte is socket index." >&2
+elif [[ "$err_op" -eq 0x68 ]]; then
+  echo "Hint: opcode 0x68 = CMD_CLOSE phase; code=0x08 before issue, code=0xFF means close command wait timeout." >&2
+elif [[ "$err_op" -eq 0x69 ]]; then
+  echo "Hint: opcode 0x69 = CMD_CLOSE completed." >&2
+elif [[ "$err_op" -eq 0x6A ]]; then
+  echo "Hint: opcode 0x6A = CMD_OPEN phase; code=0x01 before issue, code=0xFF means open command wait timeout." >&2
+elif [[ "$err_op" -eq 0x6B ]]; then
+  echo "Hint: opcode 0x6B = CMD_OPEN completed." >&2
+elif [[ "$err_op" -eq 0x6C ]]; then
+  printf 'Hint: opcode 0x6C = Sn_DPORT readback; code=high byte, detail=low byte. Value=0x%02X%02X (%d). Expected 0x075B (1883).\n' "$err_code" "$err_detail" "$(( (err_code << 8) | err_detail ))"
+  if [[ "$(( (err_code << 8) | err_detail ))" -eq 1883 ]]; then
+    echo "  DPORT: OK (1883)"
+  else
+    printf '  DPORT: WRONG! Got %d, expected 1883\n' "$(( (err_code << 8) | err_detail ))"
+  fi
+elif [[ "$err_op" -eq 0x6D ]]; then
+  printf 'Hint: opcode 0x6D = Sn_DIPR[2:3] readback; code=DIPR[2], detail=DIPR[3]. Got %d.%d. Expected 132.50 for 172.17.132.50.\n' "$err_code" "$err_detail"
+  if [[ "$err_code" -eq 132 && "$err_detail" -eq 50 ]]; then
+    echo "  DIPR[2:3]: OK (132.50)"
+  else
+    printf '  DIPR[2:3]: WRONG! Got %d.%d, expected 132.50\n' "$err_code" "$err_detail"
+  fi
 fi
+
+# Decode first-link-up latch.
+latch_dec=$((link_latch_hex))
+latch_magic=$(((latch_dec >> 24) & 0xFF))
+latch_phycfgr=$(((latch_dec >> 8) & 0xFF))
+printf '\nFirst-link-up latch raw: %s\n' "$link_latch_hex"
+if [[ "$latch_dec" -eq 0 ]]; then
+  echo '  Status: NEVER SEEN -- LNK=1 has not been observed since last reset.'
+elif [[ "$latch_magic" -eq 0xD6 ]]; then
+  echo '  Status: LATCHED -- LNK=1 was observed at least once since last reset.'
+  printf '  PHYCFGR at first link-up: 0x%02X\n' "$latch_phycfgr"
+  decode_phycfgr "$latch_phycfgr"
+else
+  printf '  Status: unexpected magic 0x%02X (expected 0xD6); latch may be uninitialized.\n' "$latch_magic"
+fi
+
+# Decode connect-params latch.
+cp_dec=$((connect_params_hex))
+cp_magic=$(((cp_dec >> 24) & 0xFF))
+cp_dipr2=$(((cp_dec >> 16) & 0xFF))
+cp_dipr3=$(((cp_dec >> 8) & 0xFF))
+cp_dport_lo=$((cp_dec & 0xFF))
+printf '\nConnect-params latch raw: %s\n' "$connect_params_hex"
+if [[ "$cp_dec" -eq 0 ]]; then
+  echo '  Status: NOT SET -- connect has not been attempted yet.'
+elif [[ "$cp_magic" -eq 0xCC ]]; then
+  printf '  DIPR[2:3]: %d.%d\n' "$cp_dipr2" "$cp_dipr3"
+  printf '  DPORT low byte: 0x%02X (%d)\n' "$cp_dport_lo" "$cp_dport_lo"
+  if [[ "$cp_dipr2" -eq 132 && "$cp_dipr3" -eq 50 ]]; then
+    echo '  DIPR[2:3]: OK (132.50 = ...132.50)'
+  else
+    printf '  DIPR[2:3]: WRONG! Got %d.%d, expected 132.50\n' "$cp_dipr2" "$cp_dipr3"
+  fi
+  if [[ "$cp_dport_lo" -eq 91 ]]; then
+    echo '  DPORT low: OK (0x5B = low byte of 1883)'
+  else
+    printf '  DPORT low: WRONG! Got 0x%02X, expected 0x5B (low byte of 1883)\n' "$cp_dport_lo"
+  fi
+else
+  printf '  Status: unexpected magic 0x%02X (expected 0xCC); latch may be uninitialized.\n' "$cp_magic"
+fi
+
+# Decode post-CMD_CONNECT Sn_SR snapshot.
+pc_dec=$((post_connect_hex))
+pc_magic=$(((pc_dec >> 24) & 0xFF))
+pc_attempt=$(((pc_dec >> 16) & 0xFF))
+pc_sr=$(((pc_dec >> 8) & 0xFF))
+pc_ir=$((pc_dec & 0xFF))
+printf '\nPost-CMD_CONNECT snapshot raw: %s\n' "$post_connect_hex"
+if [[ "$pc_dec" -eq 0 ]]; then
+  echo '  Status: NOT SET -- CMD_CONNECT has not been reached yet.'
+elif [[ "$pc_magic" -eq 0xCE ]]; then
+  printf '  Attempt count: %d\n' "$pc_attempt"
+  printf '  Sn_SR at ~50ms: 0x%02X' "$pc_sr"
+  case "$pc_sr" in
+    0x00|0) echo ' (SOCK_CLOSED -- CMD_CONNECT failed silently; SYN was NOT sent)' ;;
+    0x15|21) echo ' (SOCK_SYNSENT -- SYN was emitted, waiting for SYN-ACK) *** GOOD ***' ;;
+    0x17|23) echo ' (SOCK_ESTABLISHED -- connected!)' ;;
+    0x18|24) echo ' (SOCK_CLOSE_WAIT)' ;;
+    0x1C|28) echo ' (SOCK_FIN_WAIT)' ;;
+    *) printf ' (unexpected state)\n' ;;
+  esac
+  printf '  Sn_IR at ~50ms: 0x%02X' "$pc_ir"
+  [[ $((pc_ir & 0x08)) -ne 0 ]] && printf ' [TIMEOUT]'
+  [[ $((pc_ir & 0x04)) -ne 0 ]] && printf ' [DISCON]'
+  [[ $((pc_ir & 0x01)) -ne 0 ]] && printf ' [CON]'
+  echo
+else
+  printf '  Status: unexpected magic 0x%02X (expected 0xCE).\n' "$pc_magic"
+fi
+

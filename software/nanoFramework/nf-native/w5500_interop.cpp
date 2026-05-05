@@ -12,7 +12,10 @@
 #include "board_cubley.h"
 
 extern volatile uint32_t g_w5500_bringup_status;
+extern volatile uint32_t g_w5500_connect_params;
+extern volatile uint32_t g_w5500_post_connect_sr;
 extern volatile uint32_t g_w5500_last_native_error;
+extern volatile uint32_t g_w5500_first_link_up;
 
 enum w5500_socket_status_t
 {
@@ -96,6 +99,7 @@ static bool g_initialized = false;
 static bool g_socketAllocated = false;
 static bool g_socketConnected = false;
 static uint16_t g_nextSourcePort = kDefaultSourcePort;
+static uint8_t g_connectAttemptCount = 0;
 
 static inline void set_w5500_bringup_status(uint8_t stage, uint8_t result, uint8_t detail)
 {
@@ -106,6 +110,17 @@ static inline void set_w5500_last_native_error(uint8_t op, uint8_t code, uint8_t
 {
     // 0xE1 marker | op | code | detail (sticky until next update).
     g_w5500_last_native_error = ((uint32_t)0xE1 << 24) | ((uint32_t)op << 16) | ((uint32_t)code << 8) | (uint32_t)detail;
+}
+
+// Latch the first PHYCFGR value where LNK=1 is set.
+// Format: 0xD6 00 <phycfgr> 00  (0x00000000 = never seen link up).
+// Write-once: once set it is not overwritten so a short transient is preserved.
+static inline void w5500_latch_link_up_if_new(uint8_t phycfgr)
+{
+    if ((phycfgr & W5500_PHYCFGR_LNK) != 0 && g_w5500_first_link_up == 0)
+    {
+        g_w5500_first_link_up = ((uint32_t)0xD6 << 24) | ((uint32_t)phycfgr << 8);
+    }
 }
 
 // Hardware SPI2 for W5500: PB12=NSS, PB13=SCK, PB14=MISO, PB15=MOSI (all AF5).
@@ -129,14 +144,24 @@ static uint8_t g_w5500_last_cs_bits = 0;
 // PB12 high->low->high GPIO sanity code from w5500_hw_init() (expected 0b101 = 0x5).
 static uint8_t g_w5500_cs_gpio_code = 0;
 
-static inline void w5500_cs_assert(void)
+static inline void w5500_cs_gpio_assert(void)
 {
     palClearLine(W5500_CS_LINE);
 }
 
-static inline void w5500_cs_release(void)
+static inline void w5500_cs_gpio_release(void)
 {
     palSetLine(W5500_CS_LINE);
+}
+
+static inline void w5500_spi_select(void)
+{
+    spiSelect(&SPID2);
+}
+
+static inline void w5500_spi_unselect(void)
+{
+    spiUnselect(&SPID2);
 }
 
 static void w5500_spi_prepare_config(void)
@@ -210,9 +235,9 @@ static void w5500_scope_spi_clock_burst()
     for (int burst = 0; burst < 12; burst++)
     {
         memset(rx, 0, sizeof(rx));
-        w5500_cs_assert();
+        w5500_spi_select();
         spiExchange(&SPID2, sizeof(tx), tx, rx);
-        w5500_cs_release();
+        w5500_spi_unselect();
         chThdSleepMilliseconds(20);
     }
 
@@ -239,9 +264,9 @@ static void w5500_scope_versionr_stream(uint8_t *lastVersion, uint8_t *nonZeroCo
     for (int i = 0; i < 48; i++)
     {
         memset(rx4, 0, sizeof(rx4));
-        w5500_cs_assert();
+        w5500_spi_select();
         spiExchange(&SPID2, 4U, tx4, rx4);
-        w5500_cs_release();
+        w5500_spi_unselect();
 
         last = rx4[3];
         if (rx4[3] != 0)
@@ -283,7 +308,7 @@ static inline uint8_t socket_rx_bsb(uint8_t socket)
 
 // Hardware SPI transaction helpers.
 // The W5500 frame format is: [ADDR_HI][ADDR_LO][BSB|RW] followed by data bytes.
-// spiSelect/spiUnselect toggle PB12 CS via the SPIConfig ssport/sspad.
+// Use ChibiOS select/unselect so CS handling follows SPIConfig behavior.
 static uint8_t w5500_read8(uint16_t address, uint8_t bsb)
 {
     g_w5500_spi_tx4[0] = (uint8_t)(address >> 8);
@@ -302,7 +327,7 @@ static uint8_t w5500_read8(uint16_t address, uint8_t bsb)
         csBits |= 0x08;
     }
 
-    w5500_cs_assert();
+    w5500_spi_select();
     if (palReadLine(W5500_CS_LINE) != 0)
     {
         csBits |= 0x04;
@@ -315,7 +340,7 @@ static uint8_t w5500_read8(uint16_t address, uint8_t bsb)
         csBits |= 0x02;
     }
 
-    w5500_cs_release();
+    w5500_spi_unselect();
     if (palReadLine(W5500_CS_LINE) != 0)
     {
         csBits |= 0x01;
@@ -338,9 +363,9 @@ static void w5500_write8(uint16_t address, uint8_t bsb, uint8_t value)
     g_w5500_spi_tx4[2] = (uint8_t)((bsb << 3) | 0x04);
     g_w5500_spi_tx4[3] = value;
 
-    w5500_cs_assert();
+    w5500_spi_select();
     spiSend(&SPID2, 4U, g_w5500_spi_tx4);
-    w5500_cs_release();
+    w5500_spi_unselect();
 }
 
 static void w5500_read_buf(uint16_t address, uint8_t bsb, uint8_t* out, uint16_t length)
@@ -349,10 +374,10 @@ static void w5500_read_buf(uint16_t address, uint8_t bsb, uint8_t* out, uint16_t
     g_w5500_spi_hdr3[1] = (uint8_t)(address & 0xFF);
     g_w5500_spi_hdr3[2] = (uint8_t)((bsb << 3) | 0x00);
 
-    w5500_cs_assert();
+    w5500_spi_select();
     spiSend(&SPID2, 3U, g_w5500_spi_hdr3);
     spiReceive(&SPID2, (size_t)length, out);
-    w5500_cs_release();
+    w5500_spi_unselect();
 }
 
 static void w5500_write_buf(uint16_t address, uint8_t bsb, const uint8_t* data, uint16_t length)
@@ -361,10 +386,10 @@ static void w5500_write_buf(uint16_t address, uint8_t bsb, const uint8_t* data, 
     g_w5500_spi_hdr3[1] = (uint8_t)(address & 0xFF);
     g_w5500_spi_hdr3[2] = (uint8_t)((bsb << 3) | 0x04);
 
-    w5500_cs_assert();
+    w5500_spi_select();
     spiSend(&SPID2, 3U, g_w5500_spi_hdr3);
     spiSend(&SPID2, (size_t)length, data);
-    w5500_cs_release();
+    w5500_spi_unselect();
 }
 
 static uint16_t w5500_read16(uint16_t address, uint8_t bsb)
@@ -530,7 +555,7 @@ static w5500_socket_status_t w5500_hw_init()
     palSetLineMode(PAL_LINE(GPIOB, 14U), PAL_MODE_ALTERNATE(5));  // MISO
     palSetLineMode(PAL_LINE(GPIOB, 15U), PAL_MODE_ALTERNATE(5));  // MOSI
     palSetLineMode(W5500_CS_LINE, PAL_MODE_OUTPUT_PUSHPULL);
-    w5500_cs_release();
+    w5500_cs_gpio_release();
     palSetLineMode(W5500_RESET_LINE, PAL_MODE_OUTPUT_PUSHPULL);
     palSetLineMode(W5500_INT_LINE, PAL_MODE_INPUT_PULLUP);
 
@@ -555,14 +580,14 @@ static w5500_socket_status_t w5500_hw_init()
     // code bits: b2=readback after first high, b1=after low, b0=after final high.
     // detail bits: high nibble=ODR snapshots (same phase order), low nibble=IDR snapshots.
     uint8_t cs_hi1 = (palReadLine(W5500_CS_LINE) != 0) ? 1U : 0U;
-    w5500_cs_assert();
+    w5500_cs_gpio_assert();
     uint8_t cs_lo = (palReadLine(W5500_CS_LINE) != 0) ? 1U : 0U;
-    w5500_cs_release();
+    w5500_cs_gpio_release();
     uint8_t cs_hi2 = (palReadLine(W5500_CS_LINE) != 0) ? 1U : 0U;
     uint8_t odr_hi1 = (uint8_t)((GPIOB->ODR & (1U << 12U)) ? 1U : 0U);
-    w5500_cs_assert();
+    w5500_cs_gpio_assert();
     uint8_t odr_lo = (uint8_t)((GPIOB->ODR & (1U << 12U)) ? 1U : 0U);
-    w5500_cs_release();
+    w5500_cs_gpio_release();
     uint8_t odr_hi2 = (uint8_t)((GPIOB->ODR & (1U << 12U)) ? 1U : 0U);
     g_w5500_cs_gpio_code = (uint8_t)((cs_hi1 << 2) | (cs_lo << 1) | cs_hi2);
     set_w5500_last_native_error(
@@ -757,34 +782,91 @@ extern "C" int cubley_w5500_early_init(void)
 
 static w5500_socket_status_t w5500_connect(uint8_t socket, const uint8_t remoteIp[4], uint16_t remotePort, int32_t timeoutMs)
 {
+    // op 0x67: entered w5500_connect; detail=socket index.
+    set_w5500_last_native_error(0x67, 0x00, socket);
+
+    // op 0x68: about to issue CMD_CLOSE.
+    set_w5500_last_native_error(0x68, W5500_CMD_CLOSE, 0x00);
     if (!w5500_issue_socket_command(socket, W5500_CMD_CLOSE, 100))
     {
+        set_w5500_last_native_error(0x68, 0xFF, 0x00);
         return W5500_SOCKET_TIMEOUT;
     }
+
+    // op 0x69: CMD_CLOSE done.
+    set_w5500_last_native_error(0x69, 0x00, 0x00);
 
     w5500_write8(Sn_MR, socket_reg_bsb(socket), W5500_SOCK_MODE_TCP);
     w5500_write16(Sn_PORT, socket_reg_bsb(socket), g_nextSourcePort++);
 
+    // op 0x6A: about to issue CMD_OPEN.
+    set_w5500_last_native_error(0x6A, W5500_CMD_OPEN, 0x00);
     if (!w5500_issue_socket_command(socket, W5500_CMD_OPEN, 200))
     {
+        set_w5500_last_native_error(0x6A, 0xFF, W5500_SOCK_INIT);
+        set_w5500_last_native_error(0x60, 0xFF, W5500_SOCK_INIT);
         return W5500_SOCKET_TIMEOUT;
     }
 
-    if (w5500_read8(Sn_SR, socket_reg_bsb(socket)) != W5500_SOCK_INIT)
+    // op 0x6B: CMD_OPEN done.
+    set_w5500_last_native_error(0x6B, 0x00, 0x00);
+
     {
-        return W5500_SOCKET_IO_ERROR;
+        uint8_t sn_sr_after_open = w5500_read8(Sn_SR, socket_reg_bsb(socket));
+        if (sn_sr_after_open != W5500_SOCK_INIT)
+        {
+            // op 0x60: code=actual Sn_SR after OPEN, detail=expected (0x13=SOCK_INIT).
+            // Seeing 0x00 means CLOSED; socket never transitioned after CMD_OPEN.
+            set_w5500_last_native_error(0x60, sn_sr_after_open, W5500_SOCK_INIT);
+            return W5500_SOCKET_IO_ERROR;
+        }
     }
 
-    w5500_write_buf(Sn_DIPR, socket_reg_bsb(socket), remoteIp, 4);
+    // IMPORTANT: avoid DMA reads from stack-backed buffers (remoteIp can be on CCM stack).
+    // Write destination IP bytes individually from register-sized values.
+    w5500_write8((uint16_t)(Sn_DIPR + 0U), socket_reg_bsb(socket), remoteIp[0]);
+    w5500_write8((uint16_t)(Sn_DIPR + 1U), socket_reg_bsb(socket), remoteIp[1]);
+    w5500_write8((uint16_t)(Sn_DIPR + 2U), socket_reg_bsb(socket), remoteIp[2]);
+    w5500_write8((uint16_t)(Sn_DIPR + 3U), socket_reg_bsb(socket), remoteIp[3]);
     w5500_write16(Sn_DPORT, socket_reg_bsb(socket), remotePort);
     w5500_write8(Sn_IR, socket_reg_bsb(socket), 0xFF);
 
+    // Persist DPORT and DIPR[2:3] readbacks in a sticky global so they survive the 0x65 overwrite.
+    // Format: 0xCC | DIPR[2] | DIPR[3] | DPORT_HI | DPORT_LO
+    {
+        uint16_t dport_rb = w5500_read16(Sn_DPORT, socket_reg_bsb(socket));
+        uint8_t dipr2 = w5500_read8((uint16_t)(Sn_DIPR + 2U), socket_reg_bsb(socket));
+        uint8_t dipr3 = w5500_read8((uint16_t)(Sn_DIPR + 3U), socket_reg_bsb(socket));
+        g_w5500_connect_params = ((uint32_t)0xCC << 24) |
+                                 ((uint32_t)dipr2 << 16) |
+                                 ((uint32_t)dipr3 << 8) |
+                                 (uint32_t)(dport_rb & 0xFF);
+        // op 0x6C: transient readback marker; code=DPORT high byte, detail=DPORT low byte.
+        set_w5500_last_native_error(0x6C, (uint8_t)(dport_rb >> 8), (uint8_t)(dport_rb & 0xFF));
+    }
+
+    // op 0x63: CMD_CONNECT is about to be issued; code=low byte of source port used.
+    set_w5500_last_native_error(0x63, (uint8_t)(g_nextSourcePort - 1), 0x00);
+
     if (!w5500_issue_socket_command(socket, W5500_CMD_CONNECT, 200))
     {
+        set_w5500_last_native_error(0x64, 0xFF, 0x00);
         return W5500_SOCKET_TIMEOUT;
     }
 
-    int32_t elapsed = 0;
+    // Snapshot Sn_SR ~50ms after CMD_CONNECT to catch SOCK_SYNSENT (0x15) vs SOCK_CLOSED (0x00).
+    // SOCK_SYNSENT means SYN was physically emitted; SOCK_CLOSED means CMD_CONNECT failed silently.
+    chThdSleepMilliseconds(50);
+    {
+        uint8_t sr_snap = w5500_read8(Sn_SR, socket_reg_bsb(socket));
+        uint8_t ir_snap = w5500_read8(Sn_IR, socket_reg_bsb(socket));
+        g_w5500_post_connect_sr = ((uint32_t)0xCE << 24) |
+                                  ((uint32_t)(++g_connectAttemptCount) << 16) |
+                                  ((uint32_t)sr_snap << 8) |
+                                  (uint32_t)ir_snap;
+    }
+
+    int32_t elapsed = 50;
     while (elapsed < timeoutMs)
     {
         uint8_t status = w5500_read8(Sn_SR, socket_reg_bsb(socket));
@@ -798,14 +880,29 @@ static w5500_socket_status_t w5500_connect(uint8_t socket, const uint8_t remoteI
 
         if ((ir & W5500_IR_TIMEOUT) != 0 || status == W5500_SOCK_CLOSED)
         {
+            // op 0x65: TCP connect W5500 timeout; code=Sn_SR, detail=Sn_IR at timeout.
+            set_w5500_last_native_error(0x65, status, ir);
             w5500_write8(Sn_IR, socket_reg_bsb(socket), W5500_IR_TIMEOUT);
             return W5500_SOCKET_TIMEOUT;
+        }
+
+        // Sample PHYCFGR during the connect wait to catch transient link-up events.
+        if ((elapsed & 0x3F) == 0)
+        {
+            uint8_t phycfgr_poll = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
+            w5500_latch_link_up_if_new(phycfgr_poll);
         }
 
         chThdSleepMilliseconds(1);
         elapsed++;
     }
 
+    // op 0x66: TCP connect wall-clock timeout expired; code=Sn_SR, detail=Sn_IR at expiry.
+    {
+        uint8_t fin_sr = w5500_read8(Sn_SR, socket_reg_bsb(socket));
+        uint8_t fin_ir = w5500_read8(Sn_IR, socket_reg_bsb(socket));
+        set_w5500_last_native_error(0x66, fin_sr, fin_ir);
+    }
     return W5500_SOCKET_TIMEOUT;
 }
 
@@ -923,7 +1020,9 @@ HRESULT Library_cubley_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR
             stack.Arg0().NumericByRef().s4 = -1;
             stack.SetResult_I4((int32_t)initStatus);
             set_w5500_bringup_status(2, 14, (uint8_t)initStatus);
-            set_w5500_last_native_error(0x11, (uint8_t)initStatus, 0x00);
+            // Preserve low-byte context from the last native probe record so SWD
+            // diagnostics can still infer which init probe failed.
+            set_w5500_last_native_error(0x11, (uint8_t)initStatus, (uint8_t)(g_w5500_last_native_error & 0xFFU));
             NANOCLR_SET_AND_LEAVE(S_OK);
         }
 
@@ -1025,6 +1124,13 @@ HRESULT Library_cubley_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRIN
 
     if (socketHandle != kSingleSocketHandle || !g_socketAllocated || !g_initialized)
     {
+        // op 0x20: guard fail; code bits: b0=handle_mismatch, b1=not_allocated, b2=not_init;
+        // detail = low byte of socketHandle received.
+        uint8_t guard_bits = (uint8_t)(
+            ((socketHandle != (int32_t)kSingleSocketHandle) ? 0x01U : 0x00U) |
+            (!g_socketAllocated ? 0x02U : 0x00U) |
+            (!g_initialized ? 0x04U : 0x00U));
+        set_w5500_last_native_error(0x20, guard_bits, (uint8_t)((uint32_t)socketHandle & 0xFFU));
         stack.SetResult_I4((int32_t)W5500_SOCKET_INVALID_PARAM);
         set_w5500_bringup_status(4, 14, (uint8_t)W5500_SOCKET_INVALID_PARAM);
         NANOCLR_SET_AND_LEAVE(S_OK);
@@ -1032,6 +1138,8 @@ HRESULT Library_cubley_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRIN
 
     if (port < 1 || port > 65535 || timeoutMs < 0)
     {
+        // op 0x21: port/timeout param validation fail; code=port_lo, detail=timeout_lo.
+        set_w5500_last_native_error(0x21, (uint8_t)((uint32_t)port & 0xFFU), (uint8_t)((uint32_t)timeoutMs & 0xFFU));
         stack.SetResult_I4((int32_t)W5500_SOCKET_INVALID_PARAM);
         set_w5500_bringup_status(4, 14, (uint8_t)W5500_SOCKET_INVALID_PARAM);
         NANOCLR_SET_AND_LEAVE(S_OK);
@@ -1131,7 +1239,7 @@ HRESULT Library_cubley_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARR
 
     rx = (uint8_t*)bufferArray->GetFirstElement();
     rxStatus = w5500_receive(kSocketIndex, rx + offset, (uint16_t)count, timeoutMs, &received);
-    stack.Arg5().NumericByRef().s4 = received;
+    stack.Arg5().NumericByRef().s4 = (int32_t)received;
 
     if (rxStatus == W5500_SOCKET_NOT_INITIALIZED)
     {
@@ -1220,6 +1328,7 @@ HRESULT Library_cubley_interop_W5500Socket_NativeGetPhyStatus___STATIC__U4(CLR_R
     }
 
     phycfgr = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
+    w5500_latch_link_up_if_new(phycfgr);
     stack.SetResult_U4((uint32_t)phycfgr);
 
     // Surface link state snapshots through bringup status for SWD mailbox visibility.
@@ -1271,6 +1380,7 @@ HRESULT Library_cubley_interop_W5500Socket_NativeGetVersionPhyStatus___STATIC__U
 
     version = w5500_read8(W5500_VERSIONR, W5500_BSB_COMMON);
     phycfgr = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
+    w5500_latch_link_up_if_new(phycfgr);
     packed = (((uint32_t)version) << 8) | (uint32_t)phycfgr;
     stack.SetResult_U4(packed);
 
