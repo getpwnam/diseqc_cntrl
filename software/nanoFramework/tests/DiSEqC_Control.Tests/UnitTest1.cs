@@ -7,16 +7,16 @@ public class RuntimeConfigurationTests
     {
         var config = RuntimeConfiguration.CreateDefaults();
 
-        Assert.True(config.UseDhcp);
-        Assert.Equal("192.168.1.100", config.StaticIp);
+        Assert.False(config.UseDhcp);
+        Assert.Equal("172.17.129.253", config.StaticIp);
         Assert.Equal("255.255.255.0", config.StaticSubnetMask);
-        Assert.Equal("192.168.1.1", config.StaticGateway);
-        Assert.Equal("02:08:DC:00:00:01", config.NetworkMac);
-        Assert.Equal("192.168.1.50", config.MqttBroker);
+        Assert.Equal("172.17.129.1", config.StaticGateway);
+        Assert.Equal("02:24:C1:00:00:51", config.NetworkMac);
+        Assert.Equal("172.17.132.50", config.MqttBroker);
         Assert.Equal(1883, config.MqttPort);
         Assert.Equal("diseqc_controller", config.MqttClientId);
         Assert.Equal("diseqc", config.MqttTopicPrefix);
-        Assert.Equal("system-net", config.MqttTransportMode);
+        Assert.Equal("w5500-native", config.MqttTransportMode);
         Assert.Equal("diseqc-ctrl", config.DeviceName);
     }
 

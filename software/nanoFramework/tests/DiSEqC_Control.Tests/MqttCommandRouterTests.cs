@@ -159,24 +159,10 @@ public class MqttCommandRouterTests
 
     private static bool Route(string topic, string payload, CommandSink sink)
     {
-        return MqttCommandRouter.TryHandle(
-            topic,
-            payload,
-            sink.HandleGotoAngle,
-            sink.HandleGotoSatellite,
-            sink.HandleHalt,
-            sink.HandleStepEast,
-            sink.HandleStepWest,
-            sink.HandleDriveEast,
-            sink.HandleDriveWest,
-            sink.HandleLnbVoltage,
-            sink.HandleLnbPolarization,
-            sink.HandleLnbTone,
-            sink.HandleLnbBand,
-            sink.HandleCalibrateReference);
+        return MqttCommandRouter.TryHandle(topic, payload, sink);
     }
 
-    private sealed class CommandSink
+    private sealed class CommandSink : IMqttCommandSink
     {
         public string GotoAnglePayload;
         public string GotoSatellitePayload;

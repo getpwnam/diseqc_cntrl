@@ -1,5 +1,3 @@
-using System;
-
 namespace DiSEqC_Control.Mqtt
 {
     internal static class MqttConfigCommandProcessor
@@ -9,26 +7,16 @@ namespace DiSEqC_Control.Mqtt
             return topic.EndsWith(commandSuffix);
         }
 
-        public static bool TryHandle(
-            string topic,
-            string payload,
-            RuntimeConfiguration runtimeConfig,
-            Action<string, string> publishStatus,
-            Action<string> publishError,
-            Action publishEffectiveConfig,
-            Action handleConfigSave,
-            Action handleConfigReset,
-            Action handleConfigReload,
-            Action<string> handleConfigFramClear)
+        public static bool TryHandle(string topic, string payload, RuntimeConfiguration runtimeConfig, IMqttConfigSink sink)
         {
-            if (topic == null)
+            if (topic == null || sink == null)
             {
                 return false;
             }
 
             if (TopicMatches(topic, "/command/config/get"))
             {
-                publishEffectiveConfig();
+                sink.PublishEffectiveConfig();
                 return true;
             }
 
@@ -36,44 +24,25 @@ namespace DiSEqC_Control.Mqtt
             {
                 if (!TryParseConfigPayload(payload, out string key, out string value))
                 {
-                    publishError("Config set payload must be key=value");
+                    sink.PublishError("Config set payload must be key=value");
                     return true;
                 }
 
                 if (!runtimeConfig.TrySetValue(key, value, out string error))
                 {
-                    publishError(error);
+                    sink.PublishError(error);
                     return true;
                 }
 
-                publishStatus("config/updated", key);
-                publishEffectiveConfig();
+                sink.PublishStatus("config/updated", key);
+                sink.PublishEffectiveConfig();
                 return true;
             }
 
-            if (TopicMatches(topic, "/command/config/save"))
-            {
-                handleConfigSave();
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/config/reset"))
-            {
-                handleConfigReset();
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/config/reload"))
-            {
-                handleConfigReload();
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/config/fram_clear"))
-            {
-                handleConfigFramClear(payload ?? string.Empty);
-                return true;
-            }
+            if (TopicMatches(topic, "/command/config/save")) { sink.HandleConfigSave(); return true; }
+            if (TopicMatches(topic, "/command/config/reset")) { sink.HandleConfigReset(); return true; }
+            if (TopicMatches(topic, "/command/config/reload")) { sink.HandleConfigReload(); return true; }
+            if (TopicMatches(topic, "/command/config/fram_clear")) { sink.HandleConfigFramClear(payload ?? string.Empty); return true; }
 
             return false;
         }
@@ -82,18 +51,9 @@ namespace DiSEqC_Control.Mqtt
         {
             key = string.Empty;
             value = string.Empty;
-
-            if (string.IsNullOrEmpty(payload))
-            {
-                return false;
-            }
-
+            if (string.IsNullOrEmpty(payload)) return false;
             int separator = payload.IndexOf('=');
-            if (separator <= 0 || separator >= payload.Length - 1)
-            {
-                return false;
-            }
-
+            if (separator <= 0 || separator >= payload.Length - 1) return false;
             key = payload.Substring(0, separator).Trim();
             value = payload.Substring(separator + 1).Trim();
             return true;

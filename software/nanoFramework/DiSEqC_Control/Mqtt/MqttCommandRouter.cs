@@ -1,5 +1,3 @@
-using System;
-
 namespace DiSEqC_Control.Mqtt
 {
     internal static class MqttCommandRouter
@@ -9,98 +7,25 @@ namespace DiSEqC_Control.Mqtt
             return topic.EndsWith(commandSuffix);
         }
 
-        public static bool TryHandle(
-            string topic,
-            string payload,
-            Action<string> handleGotoAngle,
-            Action<string> handleGotoSatellite,
-            Action handleHalt,
-            Action<string> handleStepEast,
-            Action<string> handleStepWest,
-            Action handleDriveEast,
-            Action handleDriveWest,
-            Action<string> handleLnbVoltage,
-            Action<string> handleLnbPolarization,
-            Action<string> handleLnbTone,
-            Action<string> handleLnbBand,
-            Action handleCalibrateReference)
+        public static bool TryHandle(string topic, string payload, IMqttCommandSink sink)
         {
-            if (topic == null)
+            if (topic == null || sink == null)
             {
                 return false;
             }
 
-            if (TopicMatches(topic, "/command/goto/angle"))
-            {
-                handleGotoAngle(payload);
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/goto/satellite"))
-            {
-                handleGotoSatellite(payload);
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/halt"))
-            {
-                handleHalt();
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/manual/step_east"))
-            {
-                handleStepEast(payload);
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/manual/step_west"))
-            {
-                handleStepWest(payload);
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/manual/drive_east"))
-            {
-                handleDriveEast();
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/manual/drive_west"))
-            {
-                handleDriveWest();
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/lnb/voltage"))
-            {
-                handleLnbVoltage(payload);
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/lnb/polarization"))
-            {
-                handleLnbPolarization(payload);
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/lnb/tone"))
-            {
-                handleLnbTone(payload);
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/lnb/band"))
-            {
-                handleLnbBand(payload);
-                return true;
-            }
-
-            if (TopicMatches(topic, "/command/calibrate/reference"))
-            {
-                handleCalibrateReference();
-                return true;
-            }
+            if (TopicMatches(topic, "/command/goto/angle")) { sink.HandleGotoAngle(payload); return true; }
+            if (TopicMatches(topic, "/command/goto/satellite")) { sink.HandleGotoSatellite(payload); return true; }
+            if (TopicMatches(topic, "/command/halt")) { sink.HandleHalt(); return true; }
+            if (TopicMatches(topic, "/command/manual/step_east")) { sink.HandleStepEast(payload); return true; }
+            if (TopicMatches(topic, "/command/manual/step_west")) { sink.HandleStepWest(payload); return true; }
+            if (TopicMatches(topic, "/command/manual/drive_east")) { sink.HandleDriveEast(); return true; }
+            if (TopicMatches(topic, "/command/manual/drive_west")) { sink.HandleDriveWest(); return true; }
+            if (TopicMatches(topic, "/command/lnb/voltage")) { sink.HandleLnbVoltage(payload); return true; }
+            if (TopicMatches(topic, "/command/lnb/polarization")) { sink.HandleLnbPolarization(payload); return true; }
+            if (TopicMatches(topic, "/command/lnb/tone")) { sink.HandleLnbTone(payload); return true; }
+            if (TopicMatches(topic, "/command/lnb/band")) { sink.HandleLnbBand(payload); return true; }
+            if (TopicMatches(topic, "/command/calibrate/reference")) { sink.HandleCalibrateReference(); return true; }
 
             return false;
         }

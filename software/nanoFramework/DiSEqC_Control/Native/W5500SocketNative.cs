@@ -1,13 +1,15 @@
 using System;
-using System.Runtime.CompilerServices;
+using NativeW5500 = Cubley.Interop.W5500Socket;
 
 namespace DiSEqC_Control.Native
 {
     /// <summary>
-    /// Native W5500 socket interop contract.
+    /// Thin managed wrapper around <see cref="Cubley.Interop.W5500Socket"/>.
     ///
-    /// This is a minimal TCP-like surface intended to be compatible with the
-    /// transport expectations of managed MQTT clients.
+    /// The native InternalCall bindings live in the Cubley.Interop assembly; this
+    /// shell adds parameter validation and a managed Status enum that mirrors the
+    /// native one. Belt-and-suspenders: keeps existing DiSEqC_Control call sites
+    /// stable while routing every call through the single canonical native table.
     /// </summary>
     public static class W5500Socket
     {
@@ -24,7 +26,13 @@ namespace DiSEqC_Control.Native
 
         public static Status Open(out int socketHandle)
         {
-            int result = NativeOpen(out socketHandle);
+            int result = NativeW5500.NativeOpen(out socketHandle);
+            // NativeOpen returns kSingleSocketHandle=1 on success, but BYREF interop
+            // can occasionally drop the out-param write. Mirror the W5500Bringup workaround.
+            if ((Status)result == Status.Ok && socketHandle != 1)
+            {
+                socketHandle = 1;
+            }
             return (Status)result;
         }
 
@@ -35,8 +43,7 @@ namespace DiSEqC_Control.Native
                 return Status.InvalidParam;
             }
 
-            int result = NativeConfigureNetwork(localIp, subnetMask, gateway, macAddress);
-            return (Status)result;
+            return (Status)NativeW5500.NativeConfigureNetwork(localIp, subnetMask, gateway, macAddress);
         }
 
         public static Status Connect(int socketHandle, string host, int port, int timeoutMs)
@@ -46,8 +53,7 @@ namespace DiSEqC_Control.Native
                 return Status.InvalidParam;
             }
 
-            int result = NativeConnect(socketHandle, host, port, timeoutMs);
-            return (Status)result;
+            return (Status)NativeW5500.NativeConnect(socketHandle, host, port, timeoutMs);
         }
 
         public static Status Send(int socketHandle, byte[] data, int offset, int count, out int sent)
@@ -59,8 +65,7 @@ namespace DiSEqC_Control.Native
                 return Status.InvalidParam;
             }
 
-            int result = NativeSend(socketHandle, data, offset, count, out sent);
-            return (Status)result;
+            return (Status)NativeW5500.NativeSend(socketHandle, data, offset, count, out sent);
         }
 
         public static Status Receive(int socketHandle, byte[] buffer, int offset, int count, int timeoutMs, out int received)
@@ -72,40 +77,22 @@ namespace DiSEqC_Control.Native
                 return Status.InvalidParam;
             }
 
-            int result = NativeReceive(socketHandle, buffer, offset, count, timeoutMs, out received);
-            return (Status)result;
+            return (Status)NativeW5500.NativeReceive(socketHandle, buffer, offset, count, timeoutMs, out received);
         }
 
         public static Status Close(int socketHandle)
         {
-            int result = NativeClose(socketHandle);
-            return (Status)result;
+            return (Status)NativeW5500.NativeClose(socketHandle);
         }
 
         public static bool IsConnected(int socketHandle)
         {
-            return NativeIsConnected(socketHandle);
+            return NativeW5500.NativeIsConnected(socketHandle);
         }
 
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeOpen(out int socketHandle);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeConfigureNetwork(string localIp, string subnetMask, string gateway, string macAddress);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeConnect(int socketHandle, string host, int port, int timeoutMs);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeSend(int socketHandle, byte[] data, int offset, int count, out int sent);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeReceive(int socketHandle, byte[] buffer, int offset, int count, int timeoutMs, out int received);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeClose(int socketHandle);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern bool NativeIsConnected(int socketHandle);
+        public static uint GetVersionPhyStatus()
+        {
+            return NativeW5500.NativeGetVersionPhyStatus();
+        }
     }
 }

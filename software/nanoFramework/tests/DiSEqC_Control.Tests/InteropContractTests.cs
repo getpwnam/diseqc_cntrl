@@ -1,5 +1,6 @@
 using DiSEqC_Control.Native;
 using System.Reflection;
+using CubleyW5500 = Cubley.Interop.W5500Socket;
 
 namespace DiSEqC_Control.Tests;
 
@@ -17,6 +18,18 @@ public class W5500SocketContractTests
         Assert.Equal(6, (int)W5500Socket.Status.IoError);
     }
 
+    [Fact]
+    public void CubleyAndManagedStatusEnums_AreInSync()
+    {
+        Assert.Equal((int)CubleyW5500.Status.Ok, (int)W5500Socket.Status.Ok);
+        Assert.Equal((int)CubleyW5500.Status.InvalidParam, (int)W5500Socket.Status.InvalidParam);
+        Assert.Equal((int)CubleyW5500.Status.NotInitialized, (int)W5500Socket.Status.NotInitialized);
+        Assert.Equal((int)CubleyW5500.Status.Busy, (int)W5500Socket.Status.Busy);
+        Assert.Equal((int)CubleyW5500.Status.Timeout, (int)W5500Socket.Status.Timeout);
+        Assert.Equal((int)CubleyW5500.Status.NotSupported, (int)W5500Socket.Status.NotSupported);
+        Assert.Equal((int)CubleyW5500.Status.IoError, (int)W5500Socket.Status.IoError);
+    }
+
     [Theory]
     [InlineData("NativeOpen")]
     [InlineData("NativeConfigureNetwork")]
@@ -27,11 +40,12 @@ public class W5500SocketContractTests
     [InlineData("NativeIsConnected")]
     public void InternalNativeMethods_HaveExternShape(string methodName)
     {
-        var method = typeof(W5500Socket).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static);
+        // Native InternalCall bindings now live on Cubley.Interop.W5500Socket and are public extern.
+        var method = typeof(CubleyW5500).GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
 
         Assert.NotNull(method);
         Assert.True(method.IsStatic);
-        Assert.True(method.IsPrivate);
+        Assert.True(method.IsPublic);
         Assert.Null(method.GetMethodBody());
     }
 

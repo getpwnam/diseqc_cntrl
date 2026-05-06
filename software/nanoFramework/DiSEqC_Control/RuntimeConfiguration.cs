@@ -4,19 +4,21 @@ namespace DiSEqC_Control
 {
     internal sealed class RuntimeConfiguration
     {
-        public bool UseDhcp = true;
-        public string StaticIp = "192.168.1.100";
+        // Defaults match the verified W5500 bring-up lab configuration.
+        // Override at runtime via the serial command interface; persisted to FRAM.
+        public bool UseDhcp = false;
+        public string StaticIp = "172.17.129.253";
         public string StaticSubnetMask = "255.255.255.0";
-        public string StaticGateway = "192.168.1.1";
-        public string NetworkMac = "02:08:DC:00:00:01";
+        public string StaticGateway = "172.17.129.1";
+        public string NetworkMac = "02:24:C1:00:00:51";
 
-        public string MqttBroker = "192.168.1.50";
+        public string MqttBroker = "172.17.132.50";
         public int MqttPort = 1883;
         public string MqttClientId = "diseqc_controller";
         public string MqttUsername = "";
         public string MqttPassword = "";
         public string MqttTopicPrefix = "diseqc";
-        public string MqttTransportMode = "system-net";
+        public string MqttTransportMode = "w5500-native";
 
         public string DeviceName = "diseqc-ctrl";
         public string DeviceLocation = "default";

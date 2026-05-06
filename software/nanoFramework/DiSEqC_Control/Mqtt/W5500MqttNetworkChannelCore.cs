@@ -31,42 +31,81 @@ namespace DiSEqC_Control.Mqtt
 
         public void Connect()
         {
+            BringupBeacon(0xC0, 0x00);
+            System.Threading.Thread.Sleep(800);
             if (string.IsNullOrEmpty(_remoteHost) || _remotePort < 1 || _remotePort > 65535)
             {
+                BringupBeacon(0xC0, 0xFE);
                 throw new InvalidOperationException("Invalid remote endpoint for MQTT channel");
             }
 
+            BringupBeacon(0xC1, 0x00);
+            System.Threading.Thread.Sleep(800);
             if (_socketHandle >= 0 && _socketApi.IsConnected(_socketHandle))
             {
+                BringupBeacon(0xC1, 0x01);
                 return;
             }
 
+            BringupBeacon(0xC2, 0x00);
+            System.Threading.Thread.Sleep(800);
             Close();
 
-            W5500Socket.Status openStatus = _socketApi.Open(out int socketHandle);
+            BringupBeacon(0xC3, 0x00);
+            System.Threading.Thread.Sleep(800);
+            int socketHandle;
+            W5500Socket.Status openStatus = _socketApi.Open(out socketHandle);
+            BringupBeacon(0xC4, (byte)(((int)openStatus & 0x0F) | ((socketHandle & 0x0F) << 4)));
+            System.Threading.Thread.Sleep(800);
             EnsureSuccess(openStatus, "open W5500 socket");
 
+            BringupBeacon(0xC5, 0x00);
+            System.Threading.Thread.Sleep(800);
             W5500Socket.Status connectStatus = _socketApi.Connect(socketHandle, _remoteHost, _remotePort, _defaultConnectTimeoutMs);
+            BringupBeacon(0xC6, (byte)connectStatus);
+            System.Threading.Thread.Sleep(800);
             EnsureSuccess(connectStatus, "connect W5500 socket");
 
             _socketHandle = socketHandle;
+            BringupBeacon(0xC7, 0x00);
+            System.Threading.Thread.Sleep(800);
+        }
+
+        private static void BringupBeacon(byte stage, byte detail)
+        {
+            try
+            {
+                uint word = ((uint)0xD5 << 24) | ((uint)stage << 16) | detail;
+                Cubley.Interop.BringupStatus.NativeSet(word);
+            }
+            catch
+            {
+            }
         }
 
         public int Send(byte[] buffer)
         {
+            BringupBeacon(0xE0, (byte)(buffer == null ? 0xFF : buffer.Length));
+            System.Threading.Thread.Sleep(800);
             if (buffer == null)
             {
                 throw new ArgumentNullException(nameof(buffer));
             }
 
             EnsureConnected();
+            BringupBeacon(0xE1, 0x00);
+            System.Threading.Thread.Sleep(800);
 
             int offset = 0;
             int remaining = buffer.Length;
 
             while (remaining > 0)
             {
+                BringupBeacon(0xE4, (byte)remaining);
+                System.Threading.Thread.Sleep(800);
                 W5500Socket.Status sendStatus = _socketApi.Send(_socketHandle, buffer, offset, remaining, out int sent);
+                BringupBeacon(0xE2, (byte)(((int)sendStatus & 0x0F) | ((sent & 0x0F) << 4)));
+                System.Threading.Thread.Sleep(800);
                 EnsureSuccess(sendStatus, "send W5500 payload");
 
                 if (sent <= 0)
@@ -78,6 +117,8 @@ namespace DiSEqC_Control.Mqtt
                 remaining -= sent;
             }
 
+            BringupBeacon(0xE3, 0x00);
+            System.Threading.Thread.Sleep(400);
             return buffer.Length;
         }
 
