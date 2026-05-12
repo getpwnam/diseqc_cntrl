@@ -16,18 +16,17 @@ HRESULT Library_cubley_interop_W5500Socket_NativeGetPhyStatus___STATIC__U4(CLR_R
 HRESULT Library_cubley_interop_W5500Socket_NativeGetVersion___STATIC__U4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_W5500Socket_NativeGetVersionPhyStatus___STATIC__U4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_W5500Socket_NativeSetPhyMode___STATIC__U4__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26_NativeSetVoltage___STATIC__I4__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26_NativeSetPolarization___STATIC__I4__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26_NativeSetTone___STATIC__I4__BOOLEAN(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26_NativeSetBand___STATIC__I4__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26_NativeGetVoltage___STATIC__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26_NativeGetTone___STATIC__BOOLEAN(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26_NativeGetPolarization___STATIC__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26_NativeGetBand___STATIC__I4(CLR_RT_StackFrame& stack);
 
 volatile uint32_t g_w5500_bringup_status = 0xD5010000;
 volatile uint32_t g_w5500_last_native_error = 0;
-// First-link-up latch: 0x00000000 while link has never been seen up.
-// Latched to 0xD600<phycfgr>00 the first time PHYCFGR.LNK=1 is observed.
-volatile uint32_t g_w5500_first_link_up = 0;
-// Connect-params latch: written once per connect attempt, never overwritten.
-// Format: 0xCC_<DIPR2>_<DIPR3>_<DPORT_HI>_<DPORT_LO> -- magic byte 0xCC.
-volatile uint32_t g_w5500_connect_params = 0;
-// Post-CMD_CONNECT Sn_SR snapshot: captured ~50ms after CMD_CONNECT per attempt.
-// Format: 0xCE_<attempt_count>_<Sn_SR_at_50ms>_<Sn_IR_at_50ms> -- magic byte 0xCE.
-volatile uint32_t g_w5500_post_connect_sr = 0;
 
 static const CLR_RT_MethodHandler method_lookup[] =
 {
@@ -45,12 +44,20 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_W5500Socket_NativeGetVersion___STATIC__U4,                                      // [11] W5500Socket.NativeGetVersion
     Library_cubley_interop_W5500Socket_NativeGetVersionPhyStatus___STATIC__U4,                             // [12] W5500Socket.NativeGetVersionPhyStatus
     Library_cubley_interop_W5500Socket_NativeSetPhyMode___STATIC__U4__I4,                                  // [13] W5500Socket.NativeSetPhyMode
+    Library_cubley_interop_LNBH26_NativeSetVoltage___STATIC__I4__I4,                                       // [14] LNBH26.NativeSetVoltage
+    Library_cubley_interop_LNBH26_NativeSetPolarization___STATIC__I4__I4,                                  // [15] LNBH26.NativeSetPolarization
+    Library_cubley_interop_LNBH26_NativeSetTone___STATIC__I4__BOOLEAN,                                     // [16] LNBH26.NativeSetTone
+    Library_cubley_interop_LNBH26_NativeSetBand___STATIC__I4__I4,                                          // [17] LNBH26.NativeSetBand
+    Library_cubley_interop_LNBH26_NativeGetVoltage___STATIC__I4,                                            // [18] LNBH26.NativeGetVoltage
+    Library_cubley_interop_LNBH26_NativeGetTone___STATIC__BOOLEAN,                                          // [19] LNBH26.NativeGetTone
+    Library_cubley_interop_LNBH26_NativeGetPolarization___STATIC__I4,                                       // [20] LNBH26.NativeGetPolarization
+    Library_cubley_interop_LNBH26_NativeGetBand___STATIC__I4,                                               // [21] LNBH26.NativeGetBand
 };
 
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_Cubley_Interop =
 {
     "Cubley.Interop",
-    0xD2CF401C,  // nativeMethodsChecksum from Cubley.Interop.pe (computed by MetaDataProcessor)
+    0xE741549D,  // nativeMethodsChecksum from Cubley.Interop.pe (computed by MetaDataProcessor)
     method_lookup,
     { 1, 0, 0, 0 }
 };

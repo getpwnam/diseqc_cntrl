@@ -7,11 +7,15 @@
 #ifndef USBCFG_H
 #define USBCFG_H
 
-// define which serial driver the Wire Protocol will be using
+// Wire-protocol driver selection. usbcfg.h is only included by code paths
+// that build with HAL_USE_SERIAL_USB == TRUE (e.g. nanoCLR main.c).
+// Override any prior SERIAL_DRIVER definition (e.g. from serialcfg.h) so
+// the same translation unit can include both headers cleanly.
+#undef  SERIAL_DRIVER
 #define SERIAL_DRIVER SDU1
 
 extern const USBConfig usbcfg;
-extern SerialUSBConfig serusbcfg;
+extern const SerialUSBConfig serusbcfg;
 extern SerialUSBDriver SDU1;
 
 #endif // USBCFG_H

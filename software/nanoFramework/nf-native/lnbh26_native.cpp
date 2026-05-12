@@ -1,9 +1,9 @@
 /**
- * @file lnb_control.cpp
+ * @file lnbh26_native.cpp
  * @brief LNB Control Implementation via I2C for LNBH26PQR
  */
 
-#include "lnb_control.h"
+#include "lnbh26_native.h"
 #include "board_cubley.h"
 #include <string.h>
 

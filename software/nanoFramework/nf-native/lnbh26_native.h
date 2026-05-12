@@ -1,5 +1,5 @@
 /**
- * @file lnb_control.h
+ * @file lnbh26_native.h
  * @brief LNB (Low Noise Block) Control for LNBH26PQR via I2C
  * 
  * The LNBH26PQR is controlled via I2C interface:
@@ -15,8 +15,8 @@
  * - Register 0x01: Status register (Overcurrent, Temperature, etc.)
  */
 
-#ifndef LNB_CONTROL_H
-#define LNB_CONTROL_H
+#ifndef LNBH26_NATIVE_H
+#define LNBH26_NATIVE_H
 
 #include <hal.h>
 #include <ch.h>
@@ -178,4 +178,4 @@ lnb_handle_t* lnb_get_global_handle(void);
 }
 #endif
 
-#endif /* LNB_CONTROL_H */
+#endif /* LNBH26_NATIVE_H */

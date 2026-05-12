@@ -19,6 +19,24 @@
 #define BOARD_NAME                  "DiSEqC Controller STM32F407VGT6"
 
 /*
+ * USB OTG_FS configuration.
+ *
+ * The board exposes USB VBUS to PA9 only through R31 (100k pull-up to VBUS,
+ * no divider/pull-down). That impedance is too high to reliably trip the
+ * STM32F407 OTG_FS A/B-session VBUS comparators, so VBUSASEN/VBUSBSEN never
+ * report VBUS valid, the core never asserts the D+ pull-up, and the host
+ * sees no enumeration (Windows reports Code 43).
+ *
+ * Defining BOARD_OTG_NOVBUSSENS makes ChibiOS program GCCFG with NOVBUSSENS
+ * set (and VBUSASEN/VBUSBSEN cleared) inside usb_lld_start(), which is the
+ * supported way to handle a self-powered device whose USB cable can be
+ * plugged in after power-up. Doing it here (before halInit/usbStart) avoids
+ * the race that comes from patching GCCFG after the OTG core has already
+ * been brought up with VBUS-sense enabled.
+ */
+#define BOARD_OTG_NOVBUSSENS
+
+/*
  * Ethernet PHY type (required by ChibiOS MAC driver when networking is enabled)
  */
 #define BOARD_PHY_ID                MII_LAN8742A_ID
@@ -47,14 +65,14 @@
 #define STM32F407xx
 
 /*
- * Default wire protocol serial channel (nanoBooter/nanoCLR)
+ * Default wire protocol serial channel.
+ *
+ * board.h may be included before halconf.h is fully processed, so this
+ * fallback is unconditional. Translation units that need the USB-CDC
+ * driver instead include usbcfg.h after halconf.h, which #undefs and
+ * redefines SERIAL_DRIVER to SDU1.
  */
 #define SERIAL_DRIVER               SD3
-
-/*
- * Set to 1 for hardware revisions where PA9 (OTG_FS_VBUS) is not wired.
- */
-#define NF_USB_NO_VBUS_SENSE        0
 
 /*
  * DiSEqC Configuration

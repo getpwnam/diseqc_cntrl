@@ -149,10 +149,14 @@ decode_phycfgr() {
   fi
   [[ "$opmd" -eq 1 ]] && mode_src="SW config"
 
-  if [[ "$opmd" -eq 1 && "$opmdc" -eq 7 ]]; then
+  if [[ "$opmd" -eq 1 && "$opmdc" -eq 6 ]]; then
     mode_hint="all-capable auto-neg (prefers 100FDX when partner supports it)"
+  elif [[ "$opmd" -eq 1 && "$opmdc" -eq 7 ]]; then
+    mode_hint="reserved code 111 -- PHY analog likely powered down (BUG)"
+  elif [[ "$opmd" -eq 1 && "$opmdc" -eq 5 ]]; then
+    mode_hint="explicit power-down"
   elif [[ "$opmd" -eq 1 ]]; then
-    mode_hint="forced/alternate mode code"
+    mode_hint="forced fixed-mode (no auto-neg)"
   else
     mode_hint="hardware-controlled mode active (OPMDC meaning is limited when OPMD=0)"
   fi

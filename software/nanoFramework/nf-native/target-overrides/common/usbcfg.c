@@ -6,6 +6,8 @@
 
 #include "hal.h"
 
+#if (HAL_USE_SERIAL_USB == TRUE)
+
 /* Virtual serial port over USB.*/
 SerialUSBDriver SDU1;
 
@@ -452,3 +454,5 @@ const SerialUSBConfig serusbcfg = {
   USBD2_DATA_AVAILABLE_EP,
   USBD2_INTERRUPT_REQUEST_EP
 };
+
+#endif // HAL_USE_SERIAL_USB == TRUE
