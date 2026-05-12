@@ -17,7 +17,7 @@ if [ ! -f "/.dockerenv" ]; then
     -e NF_UPDATE_INTERPRETER="${NF_UPDATE_INTERPRETER:-1}" \
     -e NF_STATIC_AUDIT="${NF_STATIC_AUDIT:-0}" \
     -e NF_ALLOW_DEPRECATED_PROFILE="${NF_ALLOW_DEPRECATED_PROFILE:-0}" \
-    -e CUBLEY_USB_NO_VBUS_SENSE="${CUBLEY_USB_NO_VBUS_SENSE:-}" \
+    -e NF_W5500_EARLY_INIT="${NF_W5500_EARLY_INIT:-}" \
         nanoframework-build /work/toolchain/build.sh
 fi
 # ────────────────────────────────────────────────────────────────────────────
@@ -59,22 +59,16 @@ case "$BUILD_PROFILE" in
         BUILD_PROFILE="cubley-stable"
         PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
         ;;
-    w5500-native)
-        BUILD_PROFILE="cubley-w5500"
+    w5500-native|cubley-w5500)
+        BUILD_PROFILE="cubley-uart"
         PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
         ;;
     bringup-hardalive)
         BUILD_PROFILE="cubley-hardalive"
         PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
         ;;
-    usb-first)
+    usb-first|usb-no-vbus-sense)
         BUILD_PROFILE="cubley-usb"
-        CUBLEY_USB_NO_VBUS_SENSE="0"
-        PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
-        ;;
-    usb-no-vbus-sense)
-        BUILD_PROFILE="cubley-usb"
-        CUBLEY_USB_NO_VBUS_SENSE="1"
         PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
         ;;
     network)
@@ -114,7 +108,6 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="FALSE"
         ENABLE_HAL_SERIAL_USB="FALSE"
-        ENABLE_USB_NO_VBUS_SENSE="FALSE"
         ENABLE_BRINGUP_SMOKE="FALSE"
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
@@ -123,7 +116,7 @@ case "$BUILD_PROFILE" in
         PROFILE_STATUS="stable"
         PROFILE_NOTE="Default Cubley stable profile (non-network)"
         ;;
-    cubley-w5500)
+    cubley-uart)
         ENABLE_API_GPIO="ON"
         ENABLE_API_I2C="ON"
         ENABLE_API_SPI="ON"
@@ -137,14 +130,13 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="FALSE"
         ENABLE_HAL_SERIAL_USB="FALSE"
-        ENABLE_USB_NO_VBUS_SENSE="FALSE"
         ENABLE_BRINGUP_SMOKE="FALSE"
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
         ENABLE_W5500_EARLY_INIT="TRUE"
         PROFILE_STATUS="scaffold"
-        PROFILE_NOTE="Cubley native W5500 transport scaffold (System.Net/lwIP disabled)"
+        PROFILE_NOTE="Cubley UART wire-protocol profile (USART3 on PB10/PB11; W5500 native, System.Net/lwIP disabled)"
         ;;
     bringup-smoke)
         ENABLE_API_GPIO="ON"
@@ -160,7 +152,6 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="FALSE"
         ENABLE_HAL_SERIAL_USB="FALSE"
-        ENABLE_USB_NO_VBUS_SENSE="FALSE"
         ENABLE_BRINGUP_SMOKE="TRUE"
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="OFF"
@@ -183,7 +174,6 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="FALSE"
         ENABLE_HAL_SERIAL_USB="FALSE"
-        ENABLE_USB_NO_VBUS_SENSE="FALSE"
         ENABLE_BRINGUP_SMOKE="FALSE"
         ENABLE_BRINGUP_HARDALIVE="TRUE"
         ENABLE_FEATURE_RTC="OFF"
@@ -206,18 +196,13 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="TRUE"
         ENABLE_HAL_SERIAL_USB="TRUE"
-        if [ "${CUBLEY_USB_NO_VBUS_SENSE:-1}" = "1" ]; then
-            ENABLE_USB_NO_VBUS_SENSE="TRUE"
-            PROFILE_NOTE="Cubley USB bring-up profile (PA9 no-VBUS-sense mode enabled)"
-        else
-            ENABLE_USB_NO_VBUS_SENSE="FALSE"
-            PROFILE_NOTE="Cubley USB bring-up profile (VBUS-sense mode enabled)"
-        fi
         ENABLE_BRINGUP_SMOKE="FALSE"
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
+        ENABLE_W5500_EARLY_INIT="TRUE"
         PROFILE_STATUS="experimental"
+        PROFILE_NOTE="Cubley USB bring-up profile (USB-CDC wire protocol on PA11/PA12, VBUS sensed on PA9)"
         ;;
     legacy-network)
         if [ "${NF_ALLOW_DEPRECATED_PROFILE:-0}" != "1" ]; then
@@ -239,7 +224,6 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="FALSE"
         ENABLE_HAL_SERIAL_USB="FALSE"
-        ENABLE_USB_NO_VBUS_SENSE="FALSE"
         ENABLE_BRINGUP_SMOKE="FALSE"
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
@@ -261,7 +245,6 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="FALSE"
         ENABLE_HAL_SERIAL_USB="FALSE"
-        ENABLE_USB_NO_VBUS_SENSE="FALSE"
         ENABLE_BRINGUP_SMOKE="FALSE"
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="OFF"
@@ -272,11 +255,26 @@ case "$BUILD_PROFILE" in
         ;;
     *)
         echo -e "${RED}Unknown NF_BUILD_PROFILE='$REQUESTED_BUILD_PROFILE'.${NC}"
-        echo -e "${YELLOW}Canonical profiles:${NC} cubley-stable, cubley-w5500, cubley-usb, cubley-hardalive, bringup-smoke, core-only, legacy-network"
-        echo -e "${YELLOW}Legacy aliases:${NC} minimal, w5500-native, bringup-hardalive, usb-first, usb-no-vbus-sense, network"
+        echo -e "${YELLOW}Canonical profiles:${NC} cubley-stable, cubley-uart, cubley-usb, cubley-hardalive, bringup-smoke, core-only, legacy-network"
+        echo -e "${YELLOW}Legacy aliases:${NC} minimal, w5500-native, cubley-w5500, bringup-hardalive, usb-first, usb-no-vbus-sense, network"
         exit 1
         ;;
 esac
+
+if [ -n "${NF_W5500_EARLY_INIT:-}" ]; then
+    case "${NF_W5500_EARLY_INIT}" in
+        1|true|TRUE|on|ON|yes|YES)
+            ENABLE_W5500_EARLY_INIT="TRUE"
+            ;;
+        0|false|FALSE|off|OFF|no|NO)
+            ENABLE_W5500_EARLY_INIT="FALSE"
+            ;;
+        *)
+            echo -e "${RED}Invalid NF_W5500_EARLY_INIT='${NF_W5500_EARLY_INIT}'. Use 0/1 or true/false.${NC}"
+            exit 1
+            ;;
+    esac
+fi
 
 echo -e "${YELLOW}Build profile: ${BUILD_PROFILE}${NC}"
 echo -e "${YELLOW}Profile note: ${PROFILE_NOTE}${NC}"
@@ -387,6 +385,224 @@ fi
 
 echo -e "${YELLOW}Using upstream CLR assembly loader (no legacy runtime patching).${NC}"
 
+# Inject deterministic CLR startup breadcrumbs in the interpreter source so
+# failures between thread entry and managed execute are visible in mailbox/error.
+CLR_STARTUP_CPP="$NF_INTERPRETER_DIR/src/CLR/Startup/CLRStartup.cpp"
+if [ -f "$CLR_STARTUP_CPP" ]; then
+    echo -e "${YELLOW}Patching CLR startup diagnostics in CLRStartup.cpp...${NC}"
+
+    if ! grep -Fq 'CUBLEY_CLR_STARTUP_DIAG' "$CLR_STARTUP_CPP"; then
+        perl -0pi -e 's~#include <nanoCLR_Hardware.h>~#include <nanoCLR_Hardware.h>\n#include <stdint.h>\n\nextern "C"\n{\n    extern volatile uint32_t g_w5500_bringup_status;\n    extern volatile uint32_t g_w5500_last_native_error;\n}\n\nstatic inline void CubleySetClrDiag(uint8_t stage, uint8_t result, uint8_t detail)\n{\n    // CUBLEY_CLR_STARTUP_DIAG: 0xD5SSRRDD\n    g_w5500_bringup_status = ((uint32_t)0xD5u << 24) \| ((uint32_t)stage << 16) \| ((uint32_t)result << 8) \| (uint32_t)detail;\n}\n\nstatic inline void CubleySetClrErr(uint8_t op, uint8_t code, uint8_t detail)\n{\n    // CUBLEY_CLR_STARTUP_DIAG: 0xE2OOCCDD\n    g_w5500_last_native_error = ((uint32_t)0xE2u << 24) \| ((uint32_t)op << 16) \| ((uint32_t)code << 8) \| (uint32_t)detail;\n}\n~' "$CLR_STARTUP_CPP"
+    fi
+
+    if ! grep -Fq 'CubleySetClrDiag(0xE0, 0, 1);' "$CLR_STARTUP_CPP"; then
+        python3 - "$CLR_STARTUP_CPP" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+text = text.replace(
+    "        HRESULT hr;\n\n",
+    "        HRESULT hr;\n\n        CubleySetClrDiag(0xE0, 0, 1);\n        CubleySetClrErr(0xE0, 0, 1);\n\n",
+    1,
+)
+
+text = text.replace(
+    "if (SUCCEEDED(hr = s_ClrSettings.Initialize(params)))\n        {\n",
+    "if (SUCCEEDED(hr = s_ClrSettings.Initialize(params)))\n        {\n            CubleySetClrDiag(0xE1, 0, 1);\n            CubleySetClrErr(0xE1, 0, 1);\n",
+    1,
+)
+
+text = text.replace(
+    "if (SUCCEEDED(hr = s_ClrSettings.Load()))\n            {\n",
+    "if (SUCCEEDED(hr = s_ClrSettings.Load()))\n            {\n                CubleySetClrDiag(0xE2, 0, 1);\n                CubleySetClrErr(0xE2, 0, 1);\n",
+    1,
+)
+
+path.write_text(text)
+PY
+    fi
+
+
+    if ! grep -Fq 'CubleySetClrDiag(0xE8, 0, 1);' "$CLR_STARTUP_CPP"; then
+        python3 - "$CLR_STARTUP_CPP" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+old = '''#if !defined(BUILD_RTM)
+        CLR_Debug::Printf("Loading Deployment Assemblies.\\r\\n");
+#endif
+
+        NANOCLR_CHECK_HRESULT(LoadDeploymentAssemblies());
+
+        //--//
+
+#if !defined(BUILD_RTM)
+        CLR_Debug::Printf("Resolving.\\r\\n");
+#endif
+        NANOCLR_CHECK_HRESULT(g_CLR_RT_TypeSystem.ResolveAll());
+
+        NANOCLR_CHECK_HRESULT(g_CLR_RT_TypeSystem.PrepareForExecution());
+'''
+new = '''#if !defined(BUILD_RTM)
+        CLR_Debug::Printf("Loading Deployment Assemblies.\\r\\n");
+#endif
+
+        CubleySetClrDiag(0xE8, 0, 1);
+        CubleySetClrErr(0xE8, 0, 1);
+        NANOCLR_CHECK_HRESULT(LoadDeploymentAssemblies());
+        CubleySetClrDiag(0xE9, 0, 1);
+        CubleySetClrErr(0xE9, 0, 1);
+
+        //--//
+
+#if !defined(BUILD_RTM)
+        CLR_Debug::Printf("Resolving.\\r\\n");
+#endif
+        CubleySetClrDiag(0xEA, 0, 1);
+        CubleySetClrErr(0xEA, 0, 1);
+        NANOCLR_CHECK_HRESULT(g_CLR_RT_TypeSystem.ResolveAll());
+        CubleySetClrDiag(0xEB, 0, 1);
+        CubleySetClrErr(0xEB, 0, 1);
+
+        CubleySetClrDiag(0xEC, 0, 1);
+        CubleySetClrErr(0xEC, 0, 1);
+        NANOCLR_CHECK_HRESULT(g_CLR_RT_TypeSystem.PrepareForExecution());
+        CubleySetClrDiag(0xED, 0, 1);
+        CubleySetClrErr(0xED, 0, 1);
+'''
+if old in text:
+    text = text.replace(old, new, 1)
+path.write_text(text)
+PY
+    fi
+
+
+    if ! grep -Fq 'CubleySetClrDiag(0xEE, 14, (uint8_t)(hr & 0xFF));' "$CLR_STARTUP_CPP"; then
+        python3 - "$CLR_STARTUP_CPP" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+old = '''#if !defined(BUILD_RTM)
+        if (FAILED(hr))
+        {
+            CLR_Debug::Printf("Error: %08x\\r\\n", hr);
+
+            if (hr == CLR_E_TYPE_UNAVAILABLE)
+            {
+                // exception occurred during type resolution
+                CLR_EE_DBG_SET(StateResolutionFailed);
+            }
+        }
+#endif
+'''
+new = '''#if !defined(BUILD_RTM)
+        if (FAILED(hr))
+        {
+            if ((g_w5500_bringup_status & 0xFF000000u) != 0x08000000u)
+            {
+                CubleySetClrDiag(0xEE, 14, (uint8_t)(hr & 0xFF));
+                CubleySetClrErr(0xEE, 14, (uint8_t)(hr & 0xFF));
+            }
+            CLR_Debug::Printf("Error: %08x\\r\\n", hr);
+
+            if (hr == CLR_E_TYPE_UNAVAILABLE)
+            {
+                // exception occurred during type resolution
+                CLR_EE_DBG_SET(StateResolutionFailed);
+                if ((g_w5500_bringup_status & 0xFF000000u) != 0x08000000u)
+                {
+                    CubleySetClrDiag(0xEF, 14, (uint8_t)(hr & 0xFF));
+                    CubleySetClrErr(0xEF, 14, (uint8_t)(hr & 0xFF));
+                }
+            }
+        }
+#endif
+'''
+if old in text:
+    text = text.replace(old, new, 1)
+path.write_text(text)
+PY
+    fi
+
+
+    if ! grep -Fq 'CubleySetClrDiag(0xE3, 0, 1);' "$CLR_STARTUP_CPP"; then
+        perl -0pi -e 's~\n                hr = g_CLR_RT_ExecutionEngine\.Execute\(NULL, params\.MaxContextSwitches\);~\n                CubleySetClrDiag(0xE3, 0, 1);\n                CubleySetClrErr(0xE3, 0, 1);\n                hr = g_CLR_RT_ExecutionEngine.Execute(NULL, params.MaxContextSwitches);\n                CubleySetClrDiag(0xE4, FAILED(hr) ? 14 : 0, (uint8_t)(hr & 0xFF));\n                CubleySetClrErr(0xE4, FAILED(hr) ? 14 : 0, (uint8_t)(hr & 0xFF));~' "$CLR_STARTUP_CPP"
+    fi
+fi
+
+# Capture unresolved assembly identity directly in TypeSystem resolve path.
+TYPESYSTEM_CPP="$NF_INTERPRETER_DIR/src/CLR/Core/TypeSystem.cpp"
+if [ -f "$TYPESYSTEM_CPP" ]; then
+    echo -e "${YELLOW}Patching TypeSystem resolve diagnostics...${NC}"
+
+    if ! grep -Fq 'CUBLEY_CLR_RESOLVE_PTR' "$TYPESYSTEM_CPP"; then
+        perl -0pi -e 's~#include "corhdr_private.h"~#include "corhdr_private.h"\n#include <stdint.h>\n\nextern "C"\n{\n    extern volatile uint32_t g_w5500_bringup_status;\n    extern volatile uint32_t g_w5500_last_native_error;\n}\n\nstatic inline void CubleySetResolvePtr(const char *owner, const char *needed)\n{\n    // CUBLEY_CLR_RESOLVE_PTR: raw pointers to assembly names for post-mortem reads\n    g_w5500_bringup_status = (uint32_t)(uintptr_t)owner;\n    g_w5500_last_native_error = (uint32_t)(uintptr_t)needed;\n}\n~' "$TYPESYSTEM_CPP"
+    fi
+
+    if ! grep -Fq 'CubleySetResolvePtr(m_szName, szName);' "$TYPESYSTEM_CPP"; then
+        python3 - "$TYPESYSTEM_CPP" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+old = '''#if !defined(BUILD_RTM)
+                if (fOutput)
+                {
+                    CLR_Debug::Printf(
+                        "Assembly: %s (%d.%d.%d.%d)",
+                        m_szName,
+                        m_header->version.iMajorVersion,
+                        m_header->version.iMinorVersion,
+                        m_header->version.iBuildNumber,
+                        m_header->version.iRevisionNumber);
+
+                    CLR_Debug::Printf(
+                        " needs assembly '%s' (%d.%d.%d.%d)\\r\\n",
+                        szName,
+                        src->version.iMajorVersion,
+                        src->version.iMinorVersion,
+                        src->version.iBuildNumber,
+                        src->version.iRevisionNumber);
+                }
+#endif
+'''
+new = '''#if !defined(BUILD_RTM)
+                if (fOutput)
+                {
+                    CubleySetResolvePtr(m_szName, szName);
+                    CLR_Debug::Printf(
+                        "Assembly: %s (%d.%d.%d.%d)",
+                        m_szName,
+                        m_header->version.iMajorVersion,
+                        m_header->version.iMinorVersion,
+                        m_header->version.iBuildNumber,
+                        m_header->version.iRevisionNumber);
+
+                    CLR_Debug::Printf(
+                        " needs assembly '%s' (%d.%d.%d.%d)\\r\\n",
+                        szName,
+                        src->version.iMajorVersion,
+                        src->version.iMinorVersion,
+                        src->version.iBuildNumber,
+                        src->version.iRevisionNumber);
+                }
+#endif
+'''
+if old in text:
+    text = text.replace(old, new, 1)
+path.write_text(text)
+PY
+    fi
+fi
+
 # Create target directory structure
 echo -e "${YELLOW}Setting up target directory...${NC}"
 TARGET_DIR="$NF_INTERPRETER_DIR/targets/ChibiOS/$TARGET_NAME"
@@ -406,10 +622,10 @@ cp /work/nf-native/board_cubley.h $TARGET_DIR/board.h
 cp /work/nf-native/board_cubley.cpp $TARGET_DIR/board.c
 cp /work/nf-native/diseqc_native.h $TARGET_DIR/common/
 cp /work/nf-native/diseqc_native.cpp $TARGET_DIR/common/
-cp /work/nf-native/lnb_control.h $TARGET_DIR/common/
-cp /work/nf-native/lnb_control.cpp $TARGET_DIR/common/
+cp /work/nf-native/lnbh26_native.h $TARGET_DIR/common/
+cp /work/nf-native/lnbh26_native.cpp $TARGET_DIR/common/
 cp /work/nf-native/cubley_interop.cpp $TARGET_DIR/nanoCLR/
-cp /work/nf-native/lnb_interop.cpp $TARGET_DIR/nanoCLR/
+cp /work/nf-native/lnbh26_interop.cpp $TARGET_DIR/nanoCLR/
 cp /work/nf-native/w5500_interop.cpp $TARGET_DIR/nanoCLR/
 
 # Register custom interop assembly module so CLR interop table includes
@@ -419,61 +635,15 @@ cat > "$NF_INTERPRETER_DIR/CMake/Modules/FindINTEROP-Cubley_Interop.cmake" << EO
 set(Cubley_Interop_INCLUDE_DIRS "${TARGET_DIR}/nanoCLR")
 set(Cubley_Interop_SOURCES
     "${TARGET_DIR}/nanoCLR/cubley_interop.cpp"
-    "${TARGET_DIR}/nanoCLR/lnb_interop.cpp"
+    "${TARGET_DIR}/nanoCLR/lnbh26_interop.cpp"
     "${TARGET_DIR}/nanoCLR/w5500_interop.cpp")
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(INTEROP-Cubley_Interop DEFAULT_MSG Cubley_Interop_INCLUDE_DIRS Cubley_Interop_SOURCES)
 EOF_FIND_INTEROP
 
-# Select wire-protocol transport at board level to avoid SERIAL_DRIVER
-# redefinition conflicts when USB serial is enabled.
-if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ] && [ -f "$TARGET_DIR/board.h" ]; then
-    sed -E -i 's/^#define[[:space:]]+SERIAL_DRIVER[[:space:]]+SD3/#define SERIAL_DRIVER               SDU1/' "$TARGET_DIR/board.h"
-fi
-
-# Hardware revision without VBUS_SENSE connected: force PA9 to pulldown so
-# USB FS VBUS input does not float during bring-up.
-if [ "$ENABLE_USB_NO_VBUS_SENSE" = "TRUE" ] && [ -f "$TARGET_DIR/board.h" ]; then
-    sed -E -i 's/^#define[[:space:]]+NF_USB_NO_VBUS_SENSE[[:space:]]+0/#define NF_USB_NO_VBUS_SENSE        1/' "$TARGET_DIR/board.h"
-    tmp_board_h="$(mktemp)"
-    awk '
-        BEGIN { skip_moder = 0; skip_pupdr = 0 }
-
-        /^#define VAL_GPIOA_MODER/ {
-            print "#define VAL_GPIOA_MODER             (PIN_MODE_OUTPUT(GPIOA_PIN2) |              \\";
-            print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN8) |           \\";
-            print "                                     PIN_MODE_ANALOG(GPIOA_PIN9) |              \\";
-            print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN11) |          \\";
-            print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN12) |          \\";
-            print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN13) |          \\";
-            print "                                     PIN_MODE_ALTERNATE(GPIOA_PIN14))";
-            skip_moder = 5;
-            next;
-        }
-
-        skip_moder > 0 {
-            skip_moder--;
-            next;
-        }
-
-        /^#define VAL_GPIOA_PUPDR/ {
-            print "#define VAL_GPIOA_PUPDR             (PIN_PUPDR_FLOATING(GPIOA_PIN2) |           \\";
-            print "                                     PIN_PUPDR_PULLUP(GPIOA_PIN8) |             \\";
-            print "                                     PIN_PUPDR_PULLDOWN(GPIOA_PIN9))";
-            skip_pupdr = 2;
-            next;
-        }
-
-        skip_pupdr > 0 {
-            skip_pupdr--;
-            next;
-        }
-
-        { print }
-    ' "$TARGET_DIR/board.h" > "$tmp_board_h"
-    mv "$tmp_board_h" "$TARGET_DIR/board.h"
-fi
+# board.h selects SERIAL_DRIVER conditionally based on HAL_USE_SERIAL_USB
+# (CLR -> SDU1 when USB on; nanoBooter -> SD3 always). No rewrite needed here.
 
 # Copy required ChibiOS target config files from local overrides first,
 # then fill missing files from an STM32F4 reference target.
@@ -780,26 +950,23 @@ for target_storage_file in "$TARGET_DIR"/target_*.c; do
 done
 
 # Provide a deterministic wire-protocol serial configuration header.
-# Do not inherit reference-board SERIAL_DRIVER values.
-if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
-    cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG_USB'
+# This file is included by both nanoBooter and nanoCLR via
+# _common/WireProtocol_HAL_Interface.c. Selecting the right driver per image
+# is driven by the per-image halconf.h (HAL_USE_SERIAL_USB).
+cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG'
 #ifndef SERIALCFG_H
 #define SERIALCFG_H
 
+#include "halconf.h"
+
+#if defined(HAL_USE_SERIAL_USB) && (HAL_USE_SERIAL_USB == TRUE)
 #define SERIAL_DRIVER           SDU1
-
-#endif // SERIALCFG_H
-EOF_SERIALCFG_USB
-else
-    cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG_UART'
-#ifndef SERIALCFG_H
-#define SERIALCFG_H
-
+#else
 #define SERIAL_DRIVER           SD3
+#endif
 
 #endif // SERIALCFG_H
-EOF_SERIALCFG_UART
-fi
+EOF_SERIALCFG
 
 if [ ! -f "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld" ] || [ ! -f "$TARGET_DIR/nanoBooter/STM32F407xG_booter.ld" ]; then
     echo -e "${RED}Missing required linker scripts after target setup.${NC}"
@@ -861,7 +1028,7 @@ cat > "$TARGET_DIR/nanoCLR/CMakeLists.txt" << 'EOF_NANOCLR_CMAKE'
 
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/main.c")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/diseqc_native.cpp")
-list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/lnb_control.cpp")
+list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/lnbh26_native.cpp")
 list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/Device_BlockStorage.c")
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../common/usbcfg.c")
     list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/usbcfg.c")
@@ -988,8 +1155,15 @@ fi
 for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; do
     if [ -f "$cfg" ]; then
         RTC_HAL_SETTING="$ENABLE_HAL_RTC"
+        USB_HAL_SETTING="$ENABLE_HAL_USB"
+        SERIAL_USB_HAL_SETTING="$ENABLE_HAL_SERIAL_USB"
         if [[ "$cfg" == *"/nanoBooter/"* ]]; then
             RTC_HAL_SETTING="FALSE"
+            # nanoBooter never uses USB - it just chains into nanoCLR via SWD/ST-Link
+            # recovery path. Forcing USB off here keeps the 16 KB flash0 region
+            # within budget regardless of the profile's USB choice.
+            USB_HAL_SETTING="FALSE"
+            SERIAL_USB_HAL_SETTING="FALSE"
         fi
 
         # ChibiOS 9.x requires these markers in halconf.h.
@@ -1003,9 +1177,9 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
         cat >> "$cfg" << EOF_HAL_OVERRIDES
 
 #undef HAL_USE_USB
-#define HAL_USE_USB                         ${ENABLE_HAL_USB}
+#define HAL_USE_USB                         ${USB_HAL_SETTING}
 #undef HAL_USE_SERIAL_USB
-#define HAL_USE_SERIAL_USB                  ${ENABLE_HAL_SERIAL_USB}
+#define HAL_USE_SERIAL_USB                  ${SERIAL_USB_HAL_SETTING}
 #undef HAL_USE_SERIAL
 #define HAL_USE_SERIAL                      TRUE
 #undef HAL_USE_GPT
@@ -1032,12 +1206,20 @@ done
 # Ensure USB OTG usage flags match selected build profile
 for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h"; do
     if [ -f "$mcu" ]; then
+        OTG1_SETTING="$ENABLE_OTG1"
+        OTG2_SETTING="$ENABLE_OTG2"
+        if [[ "$mcu" == *"/nanoBooter/"* ]]; then
+            # nanoBooter has no USB stack; keep OTG drivers out of its build.
+            OTG1_SETTING="FALSE"
+            OTG2_SETTING="FALSE"
+        fi
+
         cat >> "$mcu" << EOF_MCU_USB_OVERRIDES
 
 #undef STM32_USB_USE_OTG1
-#define STM32_USB_USE_OTG1                  ${ENABLE_OTG1}
+#define STM32_USB_USE_OTG1                  ${OTG1_SETTING}
 #undef STM32_USB_USE_OTG2
-#define STM32_USB_USE_OTG2                  ${ENABLE_OTG2}
+#define STM32_USB_USE_OTG2                  ${OTG2_SETTING}
 EOF_MCU_USB_OVERRIDES
 
         if [ "${ENABLE_HSI_PLL}" = "1" ]; then

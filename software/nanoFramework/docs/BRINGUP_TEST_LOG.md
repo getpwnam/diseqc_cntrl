@@ -1071,3 +1071,45 @@ This file should be committed and checked on each build to prevent version drift
 - Breakpoints: Mailbox 0xD50F0E03 (FAIL code 3), native error 0xE15404F0 (VERSIONR=0x04, PHYCFGR=0xF0 link-down)
 - Conclusion: Known-good cable/switch verified; device remains fail code 3 (connect) with persistent PHY link-down (0xE15404F0)
 - Note: External network path validated; focus shifts to PHY analog front-end (clock, TX pair activity, magnetics/CT network).
+
+### 2026-05-09 22:59:45 UTC [FAIL]
+- Git rev: 284b340
+- Command(s): ./toolchain/build.sh cubley-uart; st-flash --connect-under-reset write build/nanoBooter.bin 0x08000000; st-flash --connect-under-reset write build/nanoCLR.bin 0x08004000; ./toolchain/compile-w5500-test.sh; nanoff --serialport /dev/ttyUSB0 --baud 115200 --deploy --image tests/W5500Bringup/bin/Release/W5500Bringup.bin --address 0x080C0000 --reset; ./tests/swd_read_w5500_diag.sh
+- Artifact: build/nanoCLR.bin (274496 B); tests/W5500Bringup/bin/Release/W5500Bringup.bin (49720 B); Cubley.Interop checksum 0xD2CF401C
+- Breakpoints: Mailbox 0xD50F0E02 (Stage15 FAIL detail 2 = OpenSocket); native_error 0xE1112000 (op 0x11 NativeOpen, code 0x20 = VERSIONR=0x00); first_link_up=0; connect_params=0
+- Conclusion: cubley-uart end-to-end pipeline (build/flash/wire-protocol/deploy) PASS; W5500 SPI regressed: VERSIONR=0x00, same dead-SPI signature as pre-reflow 2026-05-01. Test rig: 20cm CAT6 to known-good switch port.
+
+### 2026-05-12 23:07:22 UTC [PASS]
+- Git rev: 284b340
+- Command(s): ./toolchain/build.sh cubley-stable; st-flash booter+clr; st-flash DiSEqC_Control_bundle*.deploy.bin @0x080C0000; gdb/openocd RAM reads; nanoff --devicedetails
+- Artifact: build/nanoCLR.elf, build/nanoCLR.bin, DiSEqC_Control/bin/Release/DiSEqC_Control_bundle-20260512T230012Z.deploy.bin
+- Conclusion: Instrumented nanoCLR now emits startup clues: bringup_status=0xD5D10001 and last_native_error=0xE2D10001 (CLR startup thread entered), while DiSEqC_Control remains deployed.
+- Note: Diagnostic signature 0xE2 reserved for CLR startup path; stale openocd on port 6666 required cleanup via pkill -f openocd.
+
+### 2026-05-12 23:16:59 UTC [PASS]
+- Git rev: 284b340
+- Command(s): ./toolchain/build.sh cubley-stable; st-flash booter+clr+DiSEqC bundle; SWD read g_w5500_bringup_status/g_w5500_last_native_error; nanoff --devicedetails
+- Artifact: build/nanoCLR.bin, build/nanoCLR.elf, DiSEqC_Control/bin/Release/DiSEqC_Control_bundle-20260512T230012Z.deploy.bin
+- Conclusion: Deep CLR startup clues now active: status/error progressed to 0xD5E10001 / 0xE2E10001 (Initialize succeeded, did not reach Load success marker E2), narrowing failure window to startup-load path.
+- Note: build.sh now auto-patches /nf-interpreter/src/CLR/Startup/CLRStartup.cpp with E0..E4 milestone writes.
+
+### 2026-05-12 23:29:54 UTC [PASS]
+- Git rev: 284b340
+- Command(s): NF_W5500_EARLY_INIT=0 ./toolchain/build.sh cubley-uart; st-flash booter+clr+DiSEqC bundle; SWD read bringup_status/last_native_error; nanoff --devicedetails
+- Artifact: build/nanoCLR.bin (md5 736c5da96c4dfd34f3dd902a20b993b4), build/nanoCLR.elf, DiSEqC_Control/bin/Release/DiSEqC_Control_bundle-20260512T230012Z.deploy.bin
+- Conclusion: Granular ClrStartup load tracing active on cubley-uart without W5500 early-init clobber: status/error = 0xD5EA0001 / 0xE2EA0001, narrowing failure to ResolveAll entry boundary (before ResolveAll returns).
+- Note: Added NF_W5500_EARLY_INIT env override + docker passthrough to keep cubley-uart while handling no-W5500 boards.
+
+### 2026-05-12 23:35:00 UTC [PASS]
+- Git rev: 284b340
+- Command(s): NF_W5500_EARLY_INIT=0 ./toolchain/build.sh cubley-uart; st-flash booter+clr+DiSEqC bundle; SWD read bringup_status/last_native_error; nanoff --devicedetails
+- Artifact: build/nanoCLR.bin (md5 ad919a798c214880e978be7d4f5b554), build/nanoCLR.elf, DiSEqC_Control/bin/Release/DiSEqC_Control_bundle-20260512T230012Z.deploy.bin
+- Conclusion: ResolveAll failure classified: status/error=0xD5EF0E00/0xE2EF0E00 indicates CLR_E_TYPE_UNAVAILABLE path during Load() after entering ResolveAll.
+- Note: EE/EF markers added in CLRStartup.cpp patch flow; EF marks CLR_E_TYPE_UNAVAILABLE subtype in Load() cleanup.
+
+### 2026-05-12 23:51:42 UTC [PASS]
+- Git rev: 284b340
+- Command(s): NF_W5500_EARLY_INIT=0 ./toolchain/build.sh cubley-uart; st-flash booter+clr; pack-and-validate explicit PE list incl nanoFramework.Runtime.Events.pe; st-flash latest.deploy.bin @0x080C0000; nanoff --devicedetails; openocd+gdb read g_w5500_*
+- Artifact: DiSEqC_Control/bin/Release/DiSEqC_Control_runtimefix-20260512T235044Z.deploy.bin
+- Conclusion: Resolved CLR_E_TYPE_UNAVAILABLE root cause: System.Device.Gpio dependency nanoFramework.Runtime.Events was not present in deployed managed assembly set; explicit runtime-fix bundle now loads nanoFramework.Runtime.Events and startup no longer latches resolve-pointer failure.
+- Note: Post-fix probes show g_w5500_bringup_status=0xD5E24601 and g_w5500_last_native_error=0xE2E30001 (progress markers), replacing prior unresolved pointer pair System.Device.Gpio -> nanoFramework.Runtime.Events.

@@ -29,20 +29,8 @@
     <!-- <Compile Include="Manager\RotorManagerNative.cs" /> -->
     <!-- <Compile Include="Native\DiSEqCNative.cs" /> -->
     <!-- <Compile Include="Native\LNBNative.cs" /> -->
-    <Compile Include="Native\W5500SocketNative.cs" />
-    <Compile Include="Mqtt\AsciiCodec.cs" />
-    <Compile Include="Mqtt\IMqttCommandSink.cs" />
-    <Compile Include="Mqtt\IW5500SocketApi.cs" />
-    <Compile Include="Mqtt\MqttCommandRouter.cs" />
-    <Compile Include="Mqtt\MqttConfigCommandProcessor.cs" />
-    <Compile Include="Mqtt\W5500MqttNetworkChannelCore.cs" />
-    <Compile Include="Mqtt\W5500SocketApi.cs" />
-    <Compile Include="Mqtt\MqttPacket.cs" />
-    <Compile Include="Mqtt\MqttClient.cs" />
-    <Compile Include="ParityHelper.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="RuntimeConfiguration.cs" />    <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="Resources\script.js" />
+    <Compile Include="StartupProbe.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib">
@@ -50,6 +38,9 @@
     </Reference>
     <Reference Include="System.Device.Gpio">
       <HintPath>packages\nanoFramework.System.Device.Gpio.1.1.57\lib\System.Device.Gpio.dll</HintPath>
+    </Reference>
+    <Reference Include="nanoFramework.Runtime.Events">
+      <HintPath>..\packages\nanoFramework.Runtime.Events.1.11.32\lib\nanoFramework.Runtime.Events.dll</HintPath>
     </Reference>
     <Reference Include="System.Threading">
       <HintPath>packages\nanoFramework.System.Threading.1.1.52\lib\System.Threading.dll</HintPath>

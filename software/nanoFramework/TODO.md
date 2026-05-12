@@ -53,7 +53,7 @@
 - [x] Replace stub behavior in `nf-native/w5500_interop.cpp` with real RX/TX socket path.
 - [x] Wire W5500 local IP/subnet/gateway/MAC defaults to runtime config + FRAM (`network.*`) via native `ConfigureNetwork` interop.
 - [x] Reconcile board-level pin/config definitions required by W5500 runtime path.
-- [x] Verify `w5500-native` firmware profile build remains green in Docker.
+- [x] Verify `cubley-uart` firmware profile build remains green in Docker.
 
 ### Phase 3.5: M2Mqtt Adapter Integration (in progress)
 
@@ -93,6 +93,16 @@
 - [x] Update native interop registration names/assembly identifiers and build scripts required by the rename.
 - [x] Update docs and command examples to reference the new project name.
 - [x] Re-run `./toolchain/compile-managed.sh` and `./toolchain/build-chain.sh` after rename (full build remains blocked by known `System.Drawing.Common` metadata processor issue).
+
+## Managed Startup Preflight (idea)
+
+- [ ] Add a minimal, always-completing managed hardware preflight at startup that probes core devices (W5500, LNBH26, FRAM, and other board-critical peripherals), records a per-device pass/fail bitmap + error details, and only then branches to main app behavior.
+- [ ] Ensure preflight tolerates intentionally-missing hardware variants (for example, no W5500 fitted) without blocking remaining checks.
+- [ ] Emit preflight summary to mailbox/diagnostic channel so failures are visible even when main app path is skipped.
+
+## Temporary Diagnostics Cleanup
+
+- [ ] Remove temporary deep CLR startup/resolve diagnostics in `toolchain/build.sh` (`CUBLEY_CLR_STARTUP_DIAG` and `CUBLEY_CLR_RESOLVE_PTR`) after startup regression risk is low and baseline tests are stable.
 
 ## Native/W5500 Follow-up
 
