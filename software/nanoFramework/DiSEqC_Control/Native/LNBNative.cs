@@ -7,7 +7,7 @@ namespace DiSEqC_Control.Native
     /// LNB (Low Noise Block) Control
     /// Controls voltage (13V/18V) and 22kHz tone for satellite reception
     /// </summary>
-    public static class LNB
+    public static class LNBH26
     {
         /// <summary>
         /// LNB Voltage levels

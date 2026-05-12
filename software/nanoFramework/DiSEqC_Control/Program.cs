@@ -16,12 +16,13 @@ namespace DiSEqC_Control
     {
         private static MqttClient _mqttClient;
         private static bool _isConnected;
-        private static RuntimeConfiguration _runtimeConfig = RuntimeConfiguration.CreateDefaults();
-        private static RuntimeConfiguration _savedConfig = RuntimeConfiguration.CreateDefaults();
+        private static RuntimeConfiguration _runtimeConfig;
+        private static RuntimeConfiguration _savedConfig;
         private static Program _instance;
 
         private const int STATUS_LED_PIN = 2;
         private const int STATUS_LED_BLINK_MS = 500;
+        private const bool StartupSmokeProbe = true;
 
         private static string TopicPrefix { get { return _runtimeConfig.MqttTopicPrefix; } }
         private static string TopicAvailability { get { return TopicPrefix + "/availability"; } }
@@ -38,9 +39,46 @@ namespace DiSEqC_Control
             }
         }
 
-        public static void Main()
+        public static void MainApp()
         {
+            // Hard marker before Beacon path to prove Main entry even if helper calls fail.
+            Cubley.Interop.BringupStatus.NativeSet(0xD5E00101u);
+
+            if (StartupSmokeProbe)
+            {
+                GpioController gpio = null;
+                GpioPin led = null;
+
+                try
+                {
+                    gpio = new GpioController();
+                    led = gpio.OpenPin(STATUS_LED_PIN, PinMode.Output);
+                }
+                catch
+                {
+                }
+
+                uint counter = 0;
+                bool on = false;
+
+                while (true)
+                {
+                    counter++;
+                    Cubley.Interop.BringupStatus.NativeSet(0xD5E10000u | ((counter & 0xFFu) << 8) | 0x01u);
+
+                    if (led != null)
+                    {
+                        on = !on;
+                        led.Write(on ? PinValue.High : PinValue.Low);
+                    }
+
+                    Thread.Sleep(STATUS_LED_BLINK_MS);
+                }
+            }
+
             Beacon(0xA0, 0x01);
+            // Marker after first Beacon to confirm helper execution path.
+            Cubley.Interop.BringupStatus.NativeSet(0xD5E00201u);
             Debug.WriteLine("==============================================");
             Debug.WriteLine("DiSEqC Controller (MQTT-first build)");
             Debug.WriteLine("STM32F407VGT6 + W5500 + nanoFramework");
@@ -394,5 +432,18 @@ namespace DiSEqC_Control
         }
         public void HandleConfigReload() { PublishEffectiveConfigInternal(); }
         public void HandleConfigFramClear(string token) { PublishErrorInternal("config/fram_clear: FRAM not yet enabled in this firmware build"); }
+
+        /// <summary>
+        /// Basic I2C communication test for LNBH25PQR
+        /// </summary>
+        private static void LnbI2cBasicTest()
+        {
+            Debug.WriteLine("\n--- LNBH25PQR I2C Basic Test ---");
+            var status = Cubley.Interop.LNBH26.SetVoltage(Cubley.Interop.LNBH26.Voltage.V13);
+            Debug.WriteLine($"SetVoltage(13V) result: {status}");
+            var voltage = Cubley.Interop.LNBH26.GetVoltage();
+            Debug.WriteLine($"GetVoltage() -> {voltage}");
+            // Optionally, print more status if available
+        }
     }
 }

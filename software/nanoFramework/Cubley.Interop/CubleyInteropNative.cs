@@ -1,5 +1,8 @@
 using System.Runtime.CompilerServices;
 
+    
+
+
 namespace Cubley.Interop
 {
     public static class BringupStatus
@@ -59,5 +62,68 @@ namespace Cubley.Interop
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern uint NativeSetPhyMode(int modeCode);
+    }
+    public static class LNBH26
+    {
+        public enum Voltage { V13 = 0, V18 = 1 }
+        public enum Polarization { Vertical = 0, Horizontal = 1 }
+        public enum Band { Low = 0, High = 1 }
+        public enum Status { Ok = 0, InvalidParam = 1, NotInitialized = 2 }
+
+        public static Status SetVoltage(Voltage voltage)
+        {
+            int result = NativeSetVoltage((int)voltage);
+            return (Status)result;
+        }
+        public static Status SetPolarization(Polarization polarization)
+        {
+            int result = NativeSetPolarization((int)polarization);
+            return (Status)result;
+        }
+        public static Status SetTone(bool enable)
+        {
+            int result = NativeSetTone(enable);
+            return (Status)result;
+        }
+        public static Status SetBand(Band band)
+        {
+            int result = NativeSetBand((int)band);
+            return (Status)result;
+        }
+        public static Voltage GetVoltage()
+        {
+            int result = NativeGetVoltage();
+            return (Voltage)result;
+        }
+        public static bool GetTone()
+        {
+            return NativeGetTone();
+        }
+        public static Polarization GetPolarization()
+        {
+            int result = NativeGetPolarization();
+            return (Polarization)result;
+        }
+        public static Band GetBand()
+        {
+            int result = NativeGetBand();
+            return (Band)result;
+        }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern int NativeSetVoltage(int voltage);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern int NativeSetPolarization(int polarization);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern int NativeSetTone(bool enable);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern int NativeSetBand(int band);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern int NativeGetVoltage();
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern bool NativeGetTone();
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern int NativeGetPolarization();
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern int NativeGetBand();
     }
 }
