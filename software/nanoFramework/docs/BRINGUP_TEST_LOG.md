@@ -1113,3 +1113,19 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: DiSEqC_Control/bin/Release/DiSEqC_Control_runtimefix-20260512T235044Z.deploy.bin
 - Conclusion: Resolved CLR_E_TYPE_UNAVAILABLE root cause: System.Device.Gpio dependency nanoFramework.Runtime.Events was not present in deployed managed assembly set; explicit runtime-fix bundle now loads nanoFramework.Runtime.Events and startup no longer latches resolve-pointer failure.
 - Note: Post-fix probes show g_w5500_bringup_status=0xD5E24601 and g_w5500_last_native_error=0xE2E30001 (progress markers), replacing prior unresolved pointer pair System.Device.Gpio -> nanoFramework.Runtime.Events.
+
+### 2026-05-13 10:02:36 UTC [PASS]
+- Git rev: ab7609f (Add hardware presence probes for W5500, LNBH26, and FRAM)
+- Command(s): Clean compile managed code (StartupProbe.cs + I2C corrections); st-flash @0x080C0000; SWD read g_w5500_bringup_status; scope capture I2C3 FRAM transaction
+- Artifact: DiSEqC_Control/bin/Release/DiSEqC_Control.bin (md5 f6bf6266adda60847...), build/nanoCLR.elf
+- Conclusion: Startup hardware presence probes working and validated:
+  - W5500: not soldered on this board (bit0=0)
+  - LNBH26: I2C1 0x08 responds with ACK (bit1=1)
+  - FRAM: I2C3 0x50 responds with full write-read cycle (bit2=1)
+  - Probe bitmap: 0x06 (LNBH26 + FRAM present)
+  - I2C3 transaction captured and decoded on scope at 10 us/div:
+    - Start condition, 0xA0 (addr 0x50 write) + ACK, register 0x00 + ACK
+    - Repeated start, 0xA1 (addr 0x50 read) + ACK, data byte, NACK, Stop
+    - Clock rate ~350-400 kHz, clean framing, no bus faults
+- Note: I2C1 pin configuration corrected in target_system_device_i2c_config.cpp (PB6=SCL, PB7=SDA per board layout); breadcrumb markers (0xD5E1xxxx) added to startup for future bringup debugging, to be removed in cleanup pass per TODO.md
+
