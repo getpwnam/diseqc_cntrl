@@ -25,10 +25,24 @@
   <ItemGroup>
     <!-- MQTT-first build. Rotor/LNB/Fram/Serial are excluded until their native
          InternalCall bindings are registered as g_CLR_AssemblyNative_DiSEqC_Control. -->
-    <!-- <Compile Include="FramConfigurationStorage.cs" /> -->
+    <Compile Include="FramConfigurationStorage.cs" />
+    <Compile Include="HardwareCapabilities.cs" />
     <!-- <Compile Include="Manager\RotorManagerNative.cs" /> -->
     <!-- <Compile Include="Native\DiSEqCNative.cs" /> -->
     <!-- <Compile Include="Native\LNBNative.cs" /> -->
+    <Compile Include="Native\W5500SocketNative.cs" />
+    <Compile Include="Mqtt\AsciiCodec.cs" />
+    <Compile Include="Mqtt\IMqttCommandSink.cs" />
+    <Compile Include="Mqtt\IW5500SocketApi.cs" />
+    <Compile Include="Mqtt\MqttCommandRouter.cs" />
+    <Compile Include="Mqtt\MqttConfigCommandProcessor.cs" />
+    <Compile Include="Mqtt\W5500MqttNetworkChannelCore.cs" />
+    <Compile Include="Mqtt\W5500SocketApi.cs" />
+    <Compile Include="Mqtt\MqttPacket.cs" />
+    <Compile Include="Mqtt\MqttClient.cs" />
+    <Compile Include="ParityHelper.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="RuntimeConfiguration.cs" />
     <Compile Include="StartupProbe.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

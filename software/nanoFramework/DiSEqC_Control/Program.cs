@@ -14,15 +14,23 @@ namespace DiSEqC_Control
     /// </summary>
     public class Program : IMqttCommandSink, IMqttConfigSink
     {
+        private const int FramBusId = 3;
+        private static bool EnableFramStartupLoadIsolation = false;
+
         private static MqttClient _mqttClient;
         private static bool _isConnected;
         private static RuntimeConfiguration _runtimeConfig;
         private static RuntimeConfiguration _savedConfig;
         private static Program _instance;
+        private static HardwareCapabilities _hardwareCapabilities = HardwareCapabilities.None;
+        private static FramConfigurationStorage _framStorage;
 
         private const int STATUS_LED_PIN = 2;
         private const int STATUS_LED_BLINK_MS = 500;
-        private const bool StartupSmokeProbe = true;
+
+        private static bool HasW5500 { get { return _hardwareCapabilities.HasW5500; } }
+        private static bool HasLnbh26 { get { return _hardwareCapabilities.HasLnbh26; } }
+        private static bool HasFram { get { return _hardwareCapabilities.HasFram; } }
 
         private static string TopicPrefix { get { return _runtimeConfig.MqttTopicPrefix; } }
         private static string TopicAvailability { get { return TopicPrefix + "/availability"; } }
@@ -39,42 +47,12 @@ namespace DiSEqC_Control
             }
         }
 
-        public static void MainApp()
+        internal static void MainApp(HardwareCapabilities hardwareCapabilities)
         {
+            _hardwareCapabilities = hardwareCapabilities ?? HardwareCapabilities.None;
+
             // Hard marker before Beacon path to prove Main entry even if helper calls fail.
             Cubley.Interop.BringupStatus.NativeSet(0xD5E00101u);
-
-            if (StartupSmokeProbe)
-            {
-                GpioController gpio = null;
-                GpioPin led = null;
-
-                try
-                {
-                    gpio = new GpioController();
-                    led = gpio.OpenPin(STATUS_LED_PIN, PinMode.Output);
-                }
-                catch
-                {
-                }
-
-                uint counter = 0;
-                bool on = false;
-
-                while (true)
-                {
-                    counter++;
-                    Cubley.Interop.BringupStatus.NativeSet(0xD5E10000u | ((counter & 0xFFu) << 8) | 0x01u);
-
-                    if (led != null)
-                    {
-                        on = !on;
-                        led.Write(on ? PinValue.High : PinValue.Low);
-                    }
-
-                    Thread.Sleep(STATUS_LED_BLINK_MS);
-                }
-            }
 
             Beacon(0xA0, 0x01);
             // Marker after first Beacon to confirm helper execution path.
@@ -85,22 +63,149 @@ namespace DiSEqC_Control
             Debug.WriteLine("==============================================");
 
             Beacon(0xA1, 0x01);
+            LogHardwareCapabilities();
+
+            if (EnableFramStartupLoadIsolation)
+            {
+                RunFramStartupLoadIsolation();
+            }
+
             _runtimeConfig = RuntimeConfiguration.CreateDefaults();
             _savedConfig = _runtimeConfig.Clone();
+            TryLoadRuntimeConfigFromFram();
             _instance = new Program();
 
             Beacon(0xA2, 0x01);
             StartStatusLedHeartbeat();
 
             Beacon(0xA3, 0x01);
-            InitializeNetwork();
+            if (HasW5500)
+            {
+                InitializeNetwork();
 
-            Beacon(0xA6, 0x01);
-            ConnectToMqtt();
+                Beacon(0xA6, 0x01);
+                ConnectToMqtt();
+            }
+            else
+            {
+                Debug.WriteLine("[probe] W5500 absent; skipping network and MQTT startup.");
+                Debug.WriteLine("[probe] Main app continues with non-network features only.");
+            }
 
             Beacon(0xA7, 0x01);
             Debug.WriteLine("Entering main loop...");
             MainLoop();
+        }
+
+        private static void LogHardwareCapabilities()
+        {
+            Debug.WriteLine("[probe] bitmap=0x" + _hardwareCapabilities.Bitmap.ToString("X2") + " (bit0=W5500, bit1=LNBH26, bit2=FRAM)");
+            Debug.WriteLine("[probe] W5500=" + (HasW5500 ? "present" : "absent") +
+                " LNBH26=" + (HasLnbh26 ? "present" : "absent") +
+                " FRAM=" + (HasFram ? "present" : "absent"));
+        }
+
+        private static bool TryGetFramStorage(out FramConfigurationStorage storage, out string error)
+        {
+            storage = null;
+
+            if (!HasFram)
+            {
+                error = "FRAM not detected";
+                return false;
+            }
+
+            try
+            {
+                if (_framStorage == null)
+                {
+                    _framStorage = new FramConfigurationStorage(FramBusId);
+                }
+
+                storage = _framStorage;
+                error = null;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = "FRAM init failed: " + ex.Message;
+                return false;
+            }
+        }
+
+        private static void TryLoadRuntimeConfigFromFram()
+        {
+            try
+            {
+                if (!TryGetFramStorage(out FramConfigurationStorage storage, out string error))
+                {
+                    Debug.WriteLine("[FRAM] " + error + "; using defaults.");
+                    return;
+                }
+
+                if (storage.TryLoad(out RuntimeConfiguration storedConfig, out error))
+                {
+                    _runtimeConfig = storedConfig;
+                    _savedConfig = storedConfig.Clone();
+                    Debug.WriteLine("[FRAM] Loaded persisted runtime configuration.");
+                    return;
+                }
+
+                Debug.WriteLine("[FRAM] " + error + "; using defaults.");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[FRAM] Startup load threw: " + ex.Message + "; using defaults.");
+            }
+        }
+
+        private static void RunFramStartupLoadIsolation()
+        {
+            Cubley.Interop.BringupStatus.NativeSet(0xD5F10001u);
+
+            if (!HasFram)
+            {
+                Cubley.Interop.BringupStatus.NativeSet(0xD5F10000u);
+                return;
+            }
+
+            FramConfigurationStorage storage = null;
+
+            Cubley.Interop.BringupStatus.NativeSet(0xD5F10101u);
+            try
+            {
+                storage = new FramConfigurationStorage(FramBusId);
+                Cubley.Interop.BringupStatus.NativeSet(0xD5F10201u);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[FRAM-ISO] ctor exception: " + ex.Message);
+                Cubley.Interop.BringupStatus.NativeSet(0xD5F1E101u);
+                return;
+            }
+
+            Cubley.Interop.BringupStatus.NativeSet(0xD5F10301u);
+            try
+            {
+                RuntimeConfiguration loadedConfig;
+                string loadError;
+                bool loaded = storage.TryLoad(out loadedConfig, out loadError);
+
+                if (loaded)
+                {
+                    Cubley.Interop.BringupStatus.NativeSet(0xD5F10401u);
+                }
+                else
+                {
+                    Debug.WriteLine("[FRAM-ISO] TryLoad returned false: " + loadError);
+                    Cubley.Interop.BringupStatus.NativeSet(0xD5F10400u);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[FRAM-ISO] TryLoad exception: " + ex.Message);
+                Cubley.Interop.BringupStatus.NativeSet(0xD5F1E201u);
+            }
         }
 
         private static void StartStatusLedHeartbeat()
@@ -384,6 +489,13 @@ namespace DiSEqC_Control
             {
                 if (!_isConnected || (_mqttClient != null && !_mqttClient.IsConnected))
                 {
+                    if (!HasW5500)
+                    {
+                        Thread.Sleep(1000);
+                        loopCounter++;
+                        continue;
+                    }
+
                     Debug.WriteLine("[MQTT] Disconnected. Reconnecting...");
                     Thread.Sleep(5000);
                     ConnectToMqtt();
@@ -412,17 +524,42 @@ namespace DiSEqC_Control
         public void HandleStepWest(string payload) { PublishErrorInternal("rotor not yet bound"); }
         public void HandleDriveEast() { PublishErrorInternal("rotor not yet bound"); }
         public void HandleDriveWest() { PublishErrorInternal("rotor not yet bound"); }
-        public void HandleLnbVoltage(string payload) { PublishErrorInternal("LNB not yet bound"); }
-        public void HandleLnbPolarization(string payload) { PublishErrorInternal("LNB not yet bound"); }
-        public void HandleLnbTone(string payload) { PublishErrorInternal("LNB not yet bound"); }
-        public void HandleLnbBand(string payload) { PublishErrorInternal("LNB not yet bound"); }
+        public void HandleLnbVoltage(string payload) { PublishErrorInternal(HasLnbh26 ? "LNB present; control path not yet bound" : "LNB not detected"); }
+        public void HandleLnbPolarization(string payload) { PublishErrorInternal(HasLnbh26 ? "LNB present; control path not yet bound" : "LNB not detected"); }
+        public void HandleLnbTone(string payload) { PublishErrorInternal(HasLnbh26 ? "LNB present; control path not yet bound" : "LNB not detected"); }
+        public void HandleLnbBand(string payload) { PublishErrorInternal(HasLnbh26 ? "LNB present; control path not yet bound" : "LNB not detected"); }
         public void HandleCalibrateReference() { PublishErrorInternal("calibration not yet bound"); }
 
         // ------------------ IMqttConfigSink ------------------
         public void PublishStatus(string subtopic, string value) { PublishStatusInternal(subtopic, value); }
         public void PublishError(string message) { PublishErrorInternal(message); }
         public void PublishEffectiveConfig() { PublishEffectiveConfigInternal(); }
-        public void HandleConfigSave() { PublishErrorInternal("config/save: FRAM not yet enabled in this firmware build"); }
+        public void HandleConfigSave()
+        {
+            try
+            {
+                if (!TryGetFramStorage(out FramConfigurationStorage storage, out string error))
+                {
+                    PublishErrorInternal("config/save: " + error);
+                    return;
+                }
+
+                if (!storage.TrySave(_runtimeConfig, out error))
+                {
+                    PublishErrorInternal("config/save: " + error);
+                    return;
+                }
+
+                _savedConfig = _runtimeConfig.Clone();
+                PublishStatusInternal("config/save", "ok");
+                PublishEffectiveConfigInternal();
+                Debug.WriteLine("[FRAM] Saved runtime configuration.");
+            }
+            catch (Exception ex)
+            {
+                PublishErrorInternal("config/save: exception: " + ex.Message);
+            }
+        }
         public void HandleConfigReset()
         {
             _runtimeConfig = RuntimeConfiguration.CreateDefaults();
@@ -430,8 +567,58 @@ namespace DiSEqC_Control
             PublishStatusInternal("config/reset", "ok");
             PublishEffectiveConfigInternal();
         }
-        public void HandleConfigReload() { PublishEffectiveConfigInternal(); }
-        public void HandleConfigFramClear(string token) { PublishErrorInternal("config/fram_clear: FRAM not yet enabled in this firmware build"); }
+        public void HandleConfigReload()
+        {
+            try
+            {
+                if (!TryGetFramStorage(out FramConfigurationStorage storage, out string error))
+                {
+                    PublishErrorInternal("config/reload: " + error);
+                    return;
+                }
+
+                if (!storage.TryLoad(out RuntimeConfiguration storedConfig, out error))
+                {
+                    PublishErrorInternal("config/reload: " + error);
+                    return;
+                }
+
+                _runtimeConfig = storedConfig;
+                _savedConfig = storedConfig.Clone();
+                PublishStatusInternal("config/reload", "ok");
+                PublishEffectiveConfigInternal();
+                Debug.WriteLine("[FRAM] Reloaded runtime configuration.");
+            }
+            catch (Exception ex)
+            {
+                PublishErrorInternal("config/reload: exception: " + ex.Message);
+            }
+        }
+
+        public void HandleConfigFramClear(string token)
+        {
+            try
+            {
+                if (!TryGetFramStorage(out FramConfigurationStorage storage, out string error))
+                {
+                    PublishErrorInternal("config/fram_clear: " + error);
+                    return;
+                }
+
+                if (!storage.TryClear(out error))
+                {
+                    PublishErrorInternal("config/fram_clear: " + error);
+                    return;
+                }
+
+                PublishStatusInternal("config/fram_clear", "ok");
+                Debug.WriteLine("[FRAM] Cleared persisted configuration.");
+            }
+            catch (Exception ex)
+            {
+                PublishErrorInternal("config/fram_clear: exception: " + ex.Message);
+            }
+        }
 
         /// <summary>
         /// Basic I2C communication test for LNBH25PQR

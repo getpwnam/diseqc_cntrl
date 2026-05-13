@@ -78,9 +78,6 @@ NetworkInterface.GetAllNetworkInterfaces()[0].EnableStaticIPv4(
     "192.168.1.1"     // Gateway
 );
 
-// Or use DHCP
-// NetworkInterface.GetAllNetworkInterfaces()[0].EnableDhcp();
-
 // Wait for network ready
 while (NetworkInterface.GetAllNetworkInterfaces()[0].IPv4Address == "0.0.0.0")
 {
@@ -155,7 +152,7 @@ mqtt.Publish("diseqc/status", Encoding.UTF8.GetBytes("online"));
 ### Network Not Working
 - Verify Ethernet cable connected
 - Check link LED on W5500 module
-- Try static IP instead of DHCP first
+- Verify static IP/subnet/gateway values are correct for your LAN
 - Check gateway/subnet configuration
 
 ### MQTT Connection Fails
@@ -169,7 +166,7 @@ mqtt.Publish("diseqc/status", Encoding.UTF8.GetBytes("online"));
 1. **Build firmware** with updated board configuration
 2. **Flash to board** and verify W5500 initialization
 3. **Test SPI communication** (version register read)
-4. **Configure network** (static IP or DHCP)
+4. **Configure network** (static IP)
 5. **Connect to MQTT broker**
 6. **Test DiSEqC commands via MQTT**
 

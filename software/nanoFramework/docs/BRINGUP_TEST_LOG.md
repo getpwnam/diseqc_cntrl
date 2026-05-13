@@ -1118,6 +1118,7 @@ This file should be committed and checked on each build to prevent version drift
 - Git rev: ab7609f (Add hardware presence probes for W5500, LNBH26, and FRAM)
 - Command(s): Clean compile managed code (StartupProbe.cs + I2C corrections); st-flash @0x080C0000; SWD read g_w5500_bringup_status; scope capture I2C3 FRAM transaction
 - Artifact: DiSEqC_Control/bin/Release/DiSEqC_Control.bin (md5 f6bf6266adda60847...), build/nanoCLR.elf
+- Evidence file: docs/tests/2026-05-13_I2C3_FRAM_probe.png (scope screenshot with I2C-triggered decode)
 - Conclusion: Startup hardware presence probes working and validated:
   - W5500: not soldered on this board (bit0=0)
   - LNBH26: I2C1 0x08 responds with ACK (bit1=1)

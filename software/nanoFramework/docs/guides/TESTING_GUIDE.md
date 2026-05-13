@@ -16,7 +16,7 @@ Bring up and validate board behavior in a staged way: power, flash, protocol out
 - ✅ USB-to-Serial adapter (for debug output) - USART3 on PB10/PB11
 - ✅ ST-Link V2 (for programming)
 - ✅ Ethernet cable
-- ✅ Router/switch with DHCP
+- ✅ Router/switch on the static-IP subnet
 - ✅ MQTT broker (Mosquitto on PC or Raspberry Pi)
 - ✅ Oscilloscope (for verifying DiSEqC signal)
 - ✅ Multimeter
@@ -74,13 +74,10 @@ STM32F407VGT6 + W5500 + nanoFramework
 --- Network Initialization ---
 Network Interface: Ethernet
 MAC Address: DE:AD:BE:EF:12:34
-Requesting DHCP address...
-......
 ✓ Network Ready!
-  IP Address: 192.168.1.123
+  IP Address: 172.17.129.253
   Subnet Mask: 255.255.255.0
-  Gateway: 192.168.1.1
-  DNS: 192.168.1.1
+  Gateway: 172.17.129.1
 
 Initializing DiSEqC native driver...
 
@@ -101,14 +98,14 @@ Entering main loop...
 
 ✅ **Success Criteria:**
 - Serial output appears
-- DHCP address acquired
+- Network initialized with configured static IP
 - MQTT connection successful
 
 ❌ **Troubleshooting:**
 | Issue | Fix |
 |-------|-----|
 | No serial output | Check TX/RX wiring, baud rate |
-| DHCP timeout | Check Ethernet cable, W5500 connections |
+| Network init failed | Check Ethernet cable, W5500 connections and static IP settings |
 | MQTT connection failed | Check broker IP, firewall |
 
 ---
@@ -204,7 +201,6 @@ On the UART terminal (same link used for debug output), send:
 ```text
 help
 config get
-config set network.use_dhcp=false
 config set network.static_ip=192.168.1.120
 config save
 config reset
@@ -561,7 +557,7 @@ done
 - [  ] Board powers on without smoke
 - [  ] Serial debug output works
 - [  ] W5500 Ethernet link LED on
-- [  ] DHCP address acquired
+- [  ] Static IP network initialized
 - [  ] TIM4_CH1 output pin produces 22kHz DiSEqC signal
 - [  ] LNBH26 provides LNB power
 
@@ -595,7 +591,7 @@ done
 **Solution:**
 - Check Ethernet cable
 - Verify W5500 SPI connections (PB12-PB15, PC6-PC7)
-- Test with static IP instead of DHCP
+- Verify static IP/subnet/gateway match your LAN
 
 ### Issue: "MQTT connection failed"
 **Solution:**
@@ -625,7 +621,7 @@ done
 | Metric | Value |
 |--------|-------|
 | Boot time | <5 seconds |
-| DHCP acquisition | 5-10 seconds |
+| Network initialization (static IP) | <1 second |
 | MQTT connection | <1 second |
 | Command response | <100ms |
 | DiSEqC transmission | 67ms (5 bytes) |

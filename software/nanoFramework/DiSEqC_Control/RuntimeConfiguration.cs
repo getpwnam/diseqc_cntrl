@@ -6,7 +6,6 @@ namespace DiSEqC_Control
     {
         // Defaults match the verified W5500 bring-up lab configuration.
         // Override at runtime via the serial command interface; persisted to FRAM.
-        public bool UseDhcp = false;
         public string StaticIp = "172.17.129.253";
         public string StaticSubnetMask = "255.255.255.0";
         public string StaticGateway = "172.17.129.1";
@@ -32,7 +31,6 @@ namespace DiSEqC_Control
         {
             return new RuntimeConfiguration
             {
-                UseDhcp = UseDhcp,
                 StaticIp = StaticIp,
                 StaticSubnetMask = StaticSubnetMask,
                 StaticGateway = StaticGateway,
@@ -66,15 +64,6 @@ namespace DiSEqC_Control
 
             switch (normalizedKey)
             {
-                case "network.use_dhcp":
-                    if (!TryParseBoolean(value, out bool useDhcp))
-                    {
-                        error = "network.use_dhcp must be true/false";
-                        return false;
-                    }
-                    UseDhcp = useDhcp;
-                    break;
-
                 case "network.static_ip":
                     if (!IsValidIpv4(value))
                     {
@@ -191,7 +180,6 @@ namespace DiSEqC_Control
         public string ToKeyValueLines()
         {
             return
-                "network.use_dhcp=" + (UseDhcp ? "true" : "false") + "\n" +
                 "network.static_ip=" + StaticIp + "\n" +
                 "network.static_subnet=" + StaticSubnetMask + "\n" +
                 "network.static_gateway=" + StaticGateway + "\n" +
@@ -244,26 +232,6 @@ namespace DiSEqC_Control
 
             error = null;
             return true;
-        }
-
-        private static bool TryParseBoolean(string value, out bool result)
-        {
-            string normalized = value.ToLower();
-
-            if (normalized == "true" || normalized == "1" || normalized == "on")
-            {
-                result = true;
-                return true;
-            }
-
-            if (normalized == "false" || normalized == "0" || normalized == "off")
-            {
-                result = false;
-                return true;
-            }
-
-            result = false;
-            return false;
         }
 
         private static bool IsValidIpv4(string value)

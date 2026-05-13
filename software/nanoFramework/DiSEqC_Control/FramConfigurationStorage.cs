@@ -1,6 +1,6 @@
 using System;
 using System.Device.I2c;
-using System.Text;
+using DiSEqC_Control.Mqtt;
 
 namespace DiSEqC_Control
 {
@@ -14,16 +14,11 @@ namespace DiSEqC_Control
 
         private const byte Version = 1;
 
-        private readonly I2cDevice[] _devices;
+        private readonly int _busId;
 
         public FramConfigurationStorage(int busId)
         {
-            _devices = new I2cDevice[DeviceBlockCount];
-
-            for (int i = 0; i < DeviceBlockCount; i++)
-            {
-                _devices[i] = new I2cDevice(new I2cConnectionSettings(busId, BaseDeviceAddress + i));
-            }
+            _busId = busId;
         }
 
         public bool TrySave(RuntimeConfiguration configuration, out string error)
@@ -31,7 +26,7 @@ namespace DiSEqC_Control
             try
             {
                 string payloadText = configuration.ToKeyValueLines();
-                byte[] payload = Encoding.UTF8.GetBytes(payloadText);
+                byte[] payload = AsciiCodec.GetBytes(payloadText);
 
                 if (payload.Length > PayloadCapacity)
                 {
@@ -100,7 +95,7 @@ namespace DiSEqC_Control
                     return false;
                 }
 
-                string payloadText = Encoding.UTF8.GetString(payload, 0, payloadLength);
+                string payloadText = AsciiCodec.GetString(payload, 0, payloadLength);
                 if (!RuntimeConfiguration.TryParseKeyValueLines(payloadText, out configuration, out error))
                 {
                     return false;
@@ -207,7 +202,10 @@ namespace DiSEqC_Control
                 Array.Copy(source, sourceOffset, buffer, 1, chunk);
 
                 int block = (currentAddress >> 8) & 0x07;
-                _devices[block].Write(buffer);
+                using (I2cDevice device = OpenBlockDevice(block))
+                {
+                    device.Write(buffer);
+                }
 
                 currentAddress += chunk;
                 sourceOffset += chunk;
@@ -236,7 +234,10 @@ namespace DiSEqC_Control
                 byte[] readBuffer = new byte[chunk];
 
                 int block = (currentAddress >> 8) & 0x07;
-                _devices[block].WriteRead(writeBuffer, readBuffer);
+                using (I2cDevice device = OpenBlockDevice(block))
+                {
+                    device.WriteRead(writeBuffer, readBuffer);
+                }
 
                 Array.Copy(readBuffer, 0, destination, destinationOffset, chunk);
 
@@ -255,6 +256,16 @@ namespace DiSEqC_Control
             }
 
             return (ushort)(sum & 0xFFFF);
+        }
+
+        private I2cDevice OpenBlockDevice(int block)
+        {
+            if (block < 0 || block >= DeviceBlockCount)
+            {
+                throw new ArgumentOutOfRangeException("block", "FRAM block index out of range");
+            }
+
+            return new I2cDevice(new I2cConnectionSettings(_busId, BaseDeviceAddress + block));
         }
     }
 }

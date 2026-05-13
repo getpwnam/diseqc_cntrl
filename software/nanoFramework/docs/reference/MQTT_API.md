@@ -65,7 +65,6 @@ Root prefix: `diseqc/`
   - payload: `key=value`
   - example: `mqtt.broker=192.168.1.60`
   - key set (MVP):
-    - `network.use_dhcp`
     - `network.static_ip`
     - `network.static_subnet`
     - `network.static_gateway`

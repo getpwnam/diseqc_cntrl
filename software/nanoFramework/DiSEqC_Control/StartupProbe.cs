@@ -29,34 +29,9 @@ namespace DiSEqC_Control
             byte probeBitmap = RunHardwarePresenceProbes();
             Debug.WriteLine("[probe] bitmap=0x" + probeBitmap.ToString("X2") + " (bit0=W5500, bit1=LNBH26, bit2=FRAM)");
 
-            GpioController gpio = null;
-            GpioPin led = null;
+            Cubley.Interop.BringupStatus.NativeSet(0xD5E20000u | probeBitmap);
 
-            try
-            {
-                gpio = new GpioController();
-                led = gpio.OpenPin(LedPin, PinMode.Output);
-            }
-            catch
-            {
-            }
-
-            uint counter = 0;
-            bool on = false;
-
-            while (true)
-            {
-                counter++;
-                Cubley.Interop.BringupStatus.NativeSet(0xD5E20000u | ((counter & 0xFFu) << 8) | probeBitmap);
-
-                if (led != null)
-                {
-                    on = !on;
-                    led.Write(on ? PinValue.High : PinValue.Low);
-                }
-
-                Thread.Sleep(300);
-            }
+            Program.MainApp(HardwareCapabilities.FromBitmap(probeBitmap));
         }
 
         private static byte RunHardwarePresenceProbes()
@@ -66,7 +41,7 @@ namespace DiSEqC_Control
             WriteProbeStage(ProbeStageW5500, 0x01);
             if (ProbeW5500())
             {
-                bitmap |= 0x01;
+                bitmap |= HardwareCapabilities.W5500Bit;
                 WriteProbeStage(ProbeStageW5500, 0x11);
             }
             else
@@ -77,7 +52,7 @@ namespace DiSEqC_Control
             WriteProbeStage(ProbeStageLnb, 0x01);
             if (ProbeLnbh26())
             {
-                bitmap |= 0x02;
+                bitmap |= HardwareCapabilities.LnbBit;
                 WriteProbeStage(ProbeStageLnb, 0x11);
             }
             else
@@ -88,7 +63,7 @@ namespace DiSEqC_Control
             WriteProbeStage(ProbeStageFram, 0x01);
             if (ProbeFram())
             {
-                bitmap |= 0x04;
+                bitmap |= HardwareCapabilities.FramBit;
                 WriteProbeStage(ProbeStageFram, 0x11);
             }
             else

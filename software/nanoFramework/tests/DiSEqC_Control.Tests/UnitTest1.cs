@@ -7,7 +7,6 @@ public class RuntimeConfigurationTests
     {
         var config = RuntimeConfiguration.CreateDefaults();
 
-        Assert.False(config.UseDhcp);
         Assert.Equal("172.17.129.253", config.StaticIp);
         Assert.Equal("255.255.255.0", config.StaticSubnetMask);
         Assert.Equal("172.17.129.1", config.StaticGateway);
@@ -18,24 +17,6 @@ public class RuntimeConfigurationTests
         Assert.Equal("diseqc", config.MqttTopicPrefix);
         Assert.Equal("w5500-native", config.MqttTransportMode);
         Assert.Equal("diseqc-ctrl", config.DeviceName);
-    }
-
-    [Theory]
-    [InlineData("true", true)]
-    [InlineData("false", false)]
-    [InlineData("1", true)]
-    [InlineData("0", false)]
-    [InlineData("on", true)]
-    [InlineData("off", false)]
-    public void TrySetValue_ParsesNetworkUseDhcpVariants(string value, bool expected)
-    {
-        var config = RuntimeConfiguration.CreateDefaults();
-
-        var ok = config.TrySetValue("network.use_dhcp", value, out var error);
-
-        Assert.True(ok);
-        Assert.Null(error);
-        Assert.Equal(expected, config.UseDhcp);
     }
 
     [Fact]
@@ -139,7 +120,6 @@ public class RuntimeConfigurationTests
     public void KeyValueRoundTrip_PreservesConfiguredValues()
     {
         var config = RuntimeConfiguration.CreateDefaults();
-        config.TrySetValue("network.use_dhcp", "false", out _);
         config.TrySetValue("network.static_ip", "10.1.2.3", out _);
         config.TrySetValue("network.mac", "12:34:56:78:9A:BC", out _);
         config.TrySetValue("mqtt.port", "1884", out _);
@@ -152,7 +132,6 @@ public class RuntimeConfigurationTests
 
         Assert.True(parsed);
         Assert.Null(error);
-        Assert.False(rehydrated.UseDhcp);
         Assert.Equal("10.1.2.3", rehydrated.StaticIp);
         Assert.Equal("12:34:56:78:9A:BC", rehydrated.NetworkMac);
         Assert.Equal(1884, rehydrated.MqttPort);
@@ -164,7 +143,7 @@ public class RuntimeConfigurationTests
     [Fact]
     public void TryParseKeyValueLines_RejectsInvalidLine()
     {
-        var parsed = RuntimeConfiguration.TryParseKeyValueLines("network.use_dhcp=true\ninvalidline", out _, out var error);
+        var parsed = RuntimeConfiguration.TryParseKeyValueLines("network.static_ip=10.0.0.2\ninvalidline", out _, out var error);
 
         Assert.False(parsed);
         Assert.Equal("Invalid persisted config line: invalidline", error);
