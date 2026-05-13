@@ -33,7 +33,7 @@ From `software/nanoFramework/`:
 
 Managed full-build note:
 
-- `toolchain/build-chain.sh`, `toolchain/build-managed-cli.sh`, and `toolchain/compile-blink-test.sh` include Linux metadata-processor workarounds.
+- `toolchain/build-chain.sh`, `toolchain/build-managed-cli.sh`, and `toolchain/compile-managed.sh` include Linux metadata-processor workarounds.
 - If you still hit metadata processor errors, use the dedicated script outputs and post the failing command/output.
 
 ## Build (Firmware Profiles)
@@ -55,14 +55,15 @@ From `software/nanoFramework/`:
 	- `nanoCLR.hex`
 	- `nanoCLR.elf`
 
-## Build Managed Test App (BlinkBringup)
+## Build Managed Application (DiSEqC_Control)
 
 From `software/nanoFramework/`:
 
-1. Build managed test app:
-	- `./toolchain/compile-blink-test.sh`
+1. Build managed app:
+	- `./toolchain/compile-managed.sh`
 2. Confirm artifact exists:
-	- `tests/BlinkBringup/bin/Release/BlinkBringup.pe`
+	- `DiSEqC_Control/bin/Release/DiSEqC_Control.bin`
+	- fallback: `DiSEqC_Control/bin/Release/DiSEqC_Control.pe`
 
 ## Flash
 

@@ -95,7 +95,7 @@ echo "[stage] Running msbuild..."
   "-p:NF_MDP_MSBUILDTASK_PATH=$NF_MDP_MSBUILDTASK_PATH_EFFECTIVE" \
   -verbosity:minimal
 
-# Deterministic bundle creation (like compile-w5500-test.sh)
+# Deterministic bundle creation for DiSEqC_Control deploy artifacts
 echo "[stage] Creating deterministic deployment bundle..."
 OUTPUT_DIR="$(dirname \"$PROJECT\")/bin/$CONFIGURATION"
 TARGET_NAME="$(basename \"$PROJECT\" .nfproj)"

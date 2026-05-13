@@ -28,7 +28,7 @@ Example:
   ./toolchain/bringup_log_append.sh \
     --result FAIL \
     --commands "gdb: b *0x0802664; b *0x080267a; b *0x08035b0c" \
-    --artifact "tests/BlinkBringup/bin/Release/BlinkBringup.nfmrk2.bin" \
+    --artifact "DiSEqC_Control/bin/Release/DiSEqC_Control.bin" \
     --breakpoints "0x0802664, 0x080267a, 0x08035b0c" \
     --conclusion "Booter handoff reached; CLR reset not hit"
 EOF

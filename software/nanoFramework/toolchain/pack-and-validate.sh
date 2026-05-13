@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-OUT_DIR_DEFAULT="$ROOT_DIR/tests/BlinkBringup/bin/Release"
+OUT_DIR_DEFAULT="$ROOT_DIR/DiSEqC_Control/bin/Release"
 DEPLOY_REGION_MAX_BYTES=$((0x40000))
 
 OUT_DIR="$OUT_DIR_DEFAULT"
@@ -33,19 +33,19 @@ Description:
 
 Examples:
   ./toolchain/pack-and-validate.sh \
-    tests/BlinkBringup/bin/Release/BlinkBringup.pe \
-    tests/BlinkBringup/bin/Release/System.Device.Gpio.pe \
-    tests/BlinkBringup/bin/Release/nanoFramework.Runtime.Events.pe \
-    tests/BlinkBringup/bin/Release/System.Threading.pe
+    DiSEqC_Control/bin/Release/DiSEqC_Control.pe \
+    DiSEqC_Control/bin/Release/System.Device.Gpio.pe \
+    DiSEqC_Control/bin/Release/nanoFramework.Runtime.Events.pe \
+    DiSEqC_Control/bin/Release/System.Threading.pe
 
-  ./toolchain/pack-and-validate.sh --out-base BlinkBringup_complete \
-    tests/BlinkBringup/bin/Release/BlinkBringup.pe \
-    tests/BlinkBringup/bin/Release/System.Device.Gpio.pe \
-    tests/BlinkBringup/bin/Release/System.Threading.pe
+  ./toolchain/pack-and-validate.sh --out-base DiSEqC_Control_complete \
+    DiSEqC_Control/bin/Release/DiSEqC_Control.pe \
+    DiSEqC_Control/bin/Release/System.Device.Gpio.pe \
+    DiSEqC_Control/bin/Release/System.Threading.pe
 
   ./toolchain/pack-and-validate.sh --required-marker NFMRK2 \
-    tests/BlinkBringup/bin/Release/BlinkBringup.pe \
-    tests/BlinkBringup/bin/Release/System.Device.Gpio.pe
+    DiSEqC_Control/bin/Release/DiSEqC_Control.pe \
+    DiSEqC_Control/bin/Release/System.Device.Gpio.pe
 EOF
 }
 

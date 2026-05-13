@@ -107,7 +107,7 @@ From [DiSEqC_Control/](../DiSEqC_Control/) project directory:
        --serialport /dev/ttyUSB0 \
        --baud 115200 \
        --deploy \
-       --image DiSEqC_Control.pe \
+      --image bin/Release/DiSEqC_Control.bin \
        --address 0x080C0000 \
        --reset
    ```
@@ -122,16 +122,16 @@ Use this when your source tree is in WSL/Linux but your USB serial device is exp
    ```bash
    cd /home/cp/Dev/diseqc_cntrl/software/nanoFramework
    ./toolchain/build-managed-cli.sh \
-     --project tests/BlinkBringup/BlinkBringup.nfproj \
+       --project DiSEqC_Control/DiSEqC_Control.nfproj \
      --solution DiSEqC_Control/DiSEqC_Control.sln
    ```
 
 2. **Deploy from Windows PowerShell (COM port):**
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\toolchain\build-managed-cli.ps1 `
-       -Project .\tests\BlinkBringup\BlinkBringup.nfproj `
+       -Project .\DiSEqC_Control\DiSEqC_Control.nfproj `
        -Solution .\DiSEqC_Control\DiSEqC_Control.sln `
-      -Image .\tests\BlinkBringup\bin\Release\BlinkBringup.pe `
+      -Image .\DiSEqC_Control\bin\Release\DiSEqC_Control.bin `
       -DeployOnly -Deploy -SerialPort COM7 -Address 0x080C0000 -Reset
    ```
 
@@ -173,7 +173,7 @@ Use this when your source tree is in WSL/Linux but your USB serial device is exp
 
 ### `devicedetails` Shows Only Native Assemblies
 1. This is expected immediately after flashing `nanoBooter.bin` and `nanoCLR.bin`.
-2. Re-run managed deployment for your app image, for example `tests/BlinkBringup/bin/Release/BlinkBringup.bin`.
+2. Re-run managed deployment for your app image, for example `DiSEqC_Control/bin/Release/DiSEqC_Control.bin`.
 3. Run `nanoff --devicedetails` again after deploy; the managed assembly should then appear under `Assemblies:`.
 
 ---
@@ -181,7 +181,7 @@ Use this when your source tree is in WSL/Linux but your USB serial device is exp
 ## Next Steps
 
 1. **Monitor UART** during boot to confirm no hangs
-2. **Deploy test app** (BlinkBringup in tests/ or custom GPIO toggle)
+2. **Deploy DiSEqC_Control** and confirm its startup path reaches managed code
 3. **Validate I2C/SPI** communication to LNB controller and W5500
 4. **Enable W5500 driver** and test network transport
 

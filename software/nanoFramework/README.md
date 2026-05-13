@@ -107,17 +107,13 @@ Expected firmware outputs in `build/`:
 - `nanoCLR.hex`
 - `nanoCLR.elf`
 
-### Managed Test Applications
+### Managed Deployment Target
 
-Current managed test application(s):
+The only managed deployment app kept in this repo is `DiSEqC_Control/`:
 
-- `tests/BlinkBringup/`:
-	- Purpose: first wire-protocol deployment target that only blinks PA2.
-	- Build: `./toolchain/compile-blink-test.sh`
-	- Output: prefer `tests/BlinkBringup/bin/Release/BlinkBringup.bin` when produced; otherwise deploy `BlinkBringup.pe`
-	- Deploy over USART3 wire protocol with `nanoff` to `0x080C0000`.
-
-This app intentionally avoids serial output so it does not interfere with wire-protocol traffic.
+- Build: `./toolchain/compile-managed.sh`
+- Output: prefer `DiSEqC_Control/bin/Release/DiSEqC_Control.bin` when produced; otherwise deploy `DiSEqC_Control.pe`
+- Deploy over USART3 wire protocol with `nanoff` to `0x080C0000`
 
 ### Bring-up Session Logging
 

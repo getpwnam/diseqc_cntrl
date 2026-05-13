@@ -1130,3 +1130,10 @@ This file should be committed and checked on each build to prevent version drift
     - Clock rate ~350-400 kHz, clean framing, no bus faults
 - Note: I2C1 pin configuration corrected in target_system_device_i2c_config.cpp (PB6=SCL, PB7=SDA per board layout); breadcrumb markers (0xD5E1xxxx) added to startup for future bringup debugging, to be removed in cleanup pass per TODO.md
 
+
+### 2026-05-13 18:19:27 UTC [PASS]
+- Git rev: 6f1dd22
+- Command(s): ./toolchain/interop-checksum.sh --fix --pe Cubley.Interop/bin/Release/Cubley.Interop.pe; ./toolchain/build.sh cubley-uart; st-flash --reset write build/nanoBooter.bin 0x08000000; st-flash --reset write build/nanoCLR.bin 0x08004000; st-flash reset; ./toolchain/build-managed-cli.sh --deploy --serialport /dev/ttyUSB0 --address 0x080C0000 --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails
+- Artifact: build/nanoBooter.bin; build/nanoCLR.bin; DiSEqC_Control/bin/Release/DiSEqC_Control.bin
+- Conclusion: cubley-uart firmware build/flash and DiSEqC_Control managed build/deploy verified end-to-end; device now reports DiSEqC_Control 1.0.0.0 as the deployed managed app.
+- Note: Interop checksum preflight initially failed; checksum was repaired to 0x99CD5157 in Cubley.Interop metadata/native tables before rerunning the successful build.

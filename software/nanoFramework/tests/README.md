@@ -1,54 +1,10 @@
 # Test Assets
 
-This folder contains managed test applications, host unit tests, and MQTT smoke scripts.
+This folder contains host unit tests and MQTT smoke scripts.
 
-## 1) Managed Test App: BlinkBringup
+Managed deployment app source now lives only in `../DiSEqC_Control/`.
 
-Purpose:
-
-- Minimal managed deployment target for first wire-protocol validation.
-- Toggles PA2 continuously and emits managed runtime diagnostics.
-
-Build:
-
-```bash
-cd software/nanoFramework
-./toolchain/compile-blink-test.sh
-```
-
-Output:
-
-- `tests/BlinkBringup/bin/Release/BlinkBringup.pe`
-
-Deploy:
-
-- Deploy with `nanoff` to managed region `0x080C0000` after flashing `nanoBooter.bin` + `nanoCLR.bin`.
-
-## 2) Managed Test App: W5500Bringup
-
-Purpose:
-
-- Dedicated W5500-over-SPI bring-up app with LED-coded step/result statuses.
-- Exercises native `ConfigureNetwork`/`Open`/`Connect`/`Send`/`Receive`/`Close` interop path.
-
-Build:
-
-```bash
-cd software/nanoFramework
-./toolchain/compile-w5500-test.sh
-```
-
-Output:
-
-- `tests/W5500Bringup/bin/Release/W5500Bringup.bin`
-
-Deploy:
-
-- Deploy with `nanoff` to managed region `0x080C0000` after flashing `nanoBooter.bin` + `nanoCLR.bin`.
-
-Failure codes, LED meanings, and SWD mailbox probing are documented in `tests/W5500Bringup/README.md`.
-
-## 3) Host Unit Tests (Managed Logic)
+## 1) Host Unit Tests (Managed Logic)
 
 Run from Linux/WSL host:
 
@@ -63,11 +19,11 @@ Current coverage focus includes:
 - MQTT config command processing (`MqttConfigCommandProcessorTests.cs`)
 - Runtime config and helper utility behavior
 
-## 4) MQTT Smoke Scripts
+## 2) MQTT Smoke Scripts
 
 These scripts validate MQTT behavior without requiring new DiSEqC hardware revisions.
 
-### 4.1) Broker Loopback Self-Test
+### 2.1) Broker Loopback Self-Test
 
 Checks that the MQTT broker can receive and return messages.
 
@@ -84,7 +40,7 @@ Examples:
 ./mqtt_broker_selftest.sh localhost 1883
 ```
 
-### 4.2) Device Config Topic Smoke Test
+### 2.2) Device Config Topic Smoke Test
 
 Sends `config/get` and waits for the controller to publish a config status value.
 
@@ -101,10 +57,11 @@ Example:
 ```
 
 Notes:
+
 - The second script requires the DiSEqC controller app to be connected to the same broker.
 - `mosquitto_pub` and `mosquitto_sub` must be installed (`mosquitto-clients` package).
 
-### 4.3) Topic Watcher
+### 2.3) Topic Watcher
 
 Continuously prints MQTT traffic for a topic filter.
 
