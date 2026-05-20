@@ -6268,6 +6268,157 @@
 		)
 		(embedded_fonts no)
 	)
+	(footprint "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
+		(layer "F.Cu")
+		(uuid "26a660d2-e79a-44bb-bef4-935c9aa36548")
+		(at 125 71)
+		(descr "THT pad as test Point, diameter 1.0mm, hole diameter 0.5mm")
+		(tags "test point THT pad")
+		(property "Reference" "TP22"
+			(at 3.5 0 0)
+			(layer "F.SilkS")
+			(uuid "ee85d169-f3f4-453b-ac6c-16dfb98e9444")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Value" "TP_I2C1_SDA"
+			(at 0 1.55 0)
+			(layer "F.Fab")
+			(uuid "216a8061-c960-46ff-96dd-da1aedd33fbb")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b9630304-26fe-402c-873b-af56661418d8")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "test point"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8cccd158-1f14-4b06-88ae-c5c4008fcff6")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "InvenTree Part" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9aaa8115-1709-4b89-854a-dfd29b1c43b0")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "KLC_S4.2_3V3OUT" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "201e3c4e-3a7a-47f4-bbdf-8c36237dcb57")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "KLC_S4.2_VCC" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1c69a460-3e7e-416f-8f16-925ba698caf8")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property ki_fp_filters "Pin* Test*")
+		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/7450d7ba-1360-439b-89b9-26f185df0bb2/de292dfb-2bd2-4951-8a01-cb0dd9c9181c")
+		(sheetname "/MCU/LNBH26PQR/")
+		(sheetfile "diseqc_cntrl_lnbh26pqr.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
+		(attr exclude_from_bom)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_circle
+			(center 0 0)
+			(end 0 0.7)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.SilkS")
+			(uuid "95f8640d-40d5-4bc9-8fd6-9e8afeee1eea")
+		)
+		(fp_circle
+			(center 0 0)
+			(end 1 0)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.CrtYd")
+			(uuid "6f073fe9-2181-497f-9abb-ff70c8075e6f")
+		)
+		(fp_text user "${REFERENCE}"
+			(at 3.5 -0.002 0)
+			(layer "F.Fab")
+			(uuid "7514dca2-231f-4705-92ae-647457b6607d")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(pad "1" thru_hole circle
+			(at 0 0)
+			(size 1 1)
+			(drill 0.5)
+			(layers "*.Cu" "*.Mask")
+			(remove_unused_layers no)
+			(net "/MCU/I2C1_SDA")
+			(pinfunction "1_1")
+			(pintype "passive")
+			(uuid "ff4245c7-3f49-4b21-8ee7-baa796ff6b0f")
+		)
+		(embedded_fonts no)
+	)
 	(footprint "diseqc_cntrl:PCM12SMTBR"
 		(layer "F.Cu")
 		(uuid "2a31cc35-ae56-4843-83dc-9eae1d06be5c")
@@ -29605,6 +29756,157 @@
 			)
 		)
 	)
+	(footprint "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
+		(layer "F.Cu")
+		(uuid "bc09c218-d4be-4a32-a3f1-73bfcbe6a9ba")
+		(at 125 73)
+		(descr "THT pad as test Point, diameter 1.0mm, hole diameter 0.5mm")
+		(tags "test point THT pad")
+		(property "Reference" "TP21"
+			(at 3.5 0.002 0)
+			(layer "F.SilkS")
+			(uuid "1a464cb5-28f1-4ba8-92bd-d0ac8dd6e44b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Value" "TP_I2C1_SCL"
+			(at 0 1.55 0)
+			(layer "F.Fab")
+			(uuid "36f5a94a-5b7d-4381-a6c0-6e24cb65463b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0f8a97e2-ba1b-4cab-9eba-4336d649f348")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" "test point"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b668d8c3-3fad-4dc3-920d-297626a02af2")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "InvenTree Part" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "18aa8f61-5830-40da-9773-40dee879bcf9")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "KLC_S4.2_3V3OUT" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e681c798-d151-4347-928b-7de2daa3ea64")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "KLC_S4.2_VCC" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b3fb13b5-6910-480e-b2a7-ffc33f4a6da3")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property ki_fp_filters "Pin* Test*")
+		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/7450d7ba-1360-439b-89b9-26f185df0bb2/84649ca9-8105-41ab-b158-001960972843")
+		(sheetname "/MCU/LNBH26PQR/")
+		(sheetfile "diseqc_cntrl_lnbh26pqr.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
+		(attr exclude_from_bom)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_circle
+			(center 0 0)
+			(end 0 0.7)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.SilkS")
+			(uuid "616cb2e7-00cf-499e-8baa-d619636d516a")
+		)
+		(fp_circle
+			(center 0 0)
+			(end 1 0)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.CrtYd")
+			(uuid "09018c80-00ce-4d45-9f1f-35b93ad9c7d8")
+		)
+		(fp_text user "${REFERENCE}"
+			(at 3.5 0 0)
+			(layer "F.Fab")
+			(uuid "6bf701db-84af-4ef2-8cfd-bd426275e21d")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(pad "1" thru_hole circle
+			(at 0 0)
+			(size 1 1)
+			(drill 0.5)
+			(layers "*.Cu" "*.Mask")
+			(remove_unused_layers no)
+			(net "/MCU/I2C1_SCL")
+			(pinfunction "1_1")
+			(pintype "passive")
+			(uuid "72b28231-32d2-4e55-8f44-7163015a1096")
+		)
+		(embedded_fonts no)
+	)
 	(footprint "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
 		(layer "F.Cu")
 		(uuid "bc8cd07c-506f-4a98-9d5c-3b65b0275110")
@@ -43749,6 +44051,30 @@
 		(uuid "11b5604d-3da0-41ad-94dc-7f09518ef073")
 	)
 	(segment
+		(start 121.5 71)
+		(end 125 71)
+		(width 0.2)
+		(layer "F.Cu")
+		(net "/MCU/I2C1_SDA")
+		(uuid "187d2aeb-c239-456c-844f-6c32eb85794d")
+	)
+	(segment
+		(start 119.7275 72.7725)
+		(end 121.5 71)
+		(width 0.2)
+		(layer "F.Cu")
+		(net "/MCU/I2C1_SDA")
+		(uuid "3442a1d8-21b6-4bb9-bf9b-bd46665e2d01")
+	)
+	(segment
+		(start 112.9 73.55)
+		(end 113.6775 72.7725)
+		(width 0.2)
+		(layer "F.Cu")
+		(net "/MCU/I2C1_SDA")
+		(uuid "4a5b59b5-ef00-45ba-a203-a0c2bb409f6f")
+	)
+	(segment
 		(start 113 73.65)
 		(end 112.9 73.55)
 		(width 0.2)
@@ -43795,6 +44121,14 @@
 		(layer "F.Cu")
 		(net "/MCU/I2C1_SDA")
 		(uuid "c9f783d6-4c89-4d61-9942-2d4334c355d8")
+	)
+	(segment
+		(start 113.6775 72.7725)
+		(end 119.7275 72.7725)
+		(width 0.2)
+		(layer "F.Cu")
+		(net "/MCU/I2C1_SDA")
+		(uuid "f98b0f3a-e5aa-41e1-b2a9-77c7543db92a")
 	)
 	(segment
 		(start 93.5309 142.0216)
@@ -49677,6 +50011,14 @@
 		(uuid "a31ca530-ed0a-42b7-92e9-44d12ee0c707")
 	)
 	(segment
+		(start 120.95 73.55)
+		(end 121.5 73)
+		(width 0.2)
+		(layer "F.Cu")
+		(net "/MCU/I2C1_SCL")
+		(uuid "a8793d2f-335e-4376-884d-49437c5d25e2")
+	)
+	(segment
 		(start 95.2 143.15)
 		(end 95.1093 143.15)
 		(width 0.2)
@@ -49693,6 +50035,14 @@
 		(uuid "af074083-3e83-4bf7-9faa-3a15b2f1af5c")
 	)
 	(segment
+		(start 114.75 73.55)
+		(end 120.95 73.55)
+		(width 0.2)
+		(layer "F.Cu")
+		(net "/MCU/I2C1_SCL")
+		(uuid "af7dfe42-3ad2-4e4e-86ae-676d42d3c82f")
+	)
+	(segment
 		(start 93.5309 142.5216)
 		(end 93.5309 142.522)
 		(width 0.2)
@@ -49707,6 +50057,14 @@
 		(layer "F.Cu")
 		(net "/MCU/I2C1_SCL")
 		(uuid "f2327adb-eac3-4d43-8cdb-7d5c20150cc1")
+	)
+	(segment
+		(start 121.5 73)
+		(end 125 73)
+		(width 0.2)
+		(layer "F.Cu")
+		(net "/MCU/I2C1_SCL")
+		(uuid "f6116322-0e12-439e-87e8-70b16ed033dc")
 	)
 	(via
 		(at 114.4 75.96)
