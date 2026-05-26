@@ -10,7 +10,7 @@ namespace DiSEqC_Control
     /// <summary>
     /// MQTT-first slim entry point. Rotor and LNB control are stubbed until their native
     /// InternalCall bindings are registered as g_CLR_AssemblyNative_DiSEqC_Control. Currently
-    /// only Cubley.Interop (W5500 + BringupStatus) is registered with the firmware.
+    /// rotor control remains stubbed while Cubley.Interop owns active W5500/LNB bindings.
     /// </summary>
     public class Program : IMqttCommandSink, IMqttConfigSink
     {
@@ -24,6 +24,7 @@ namespace DiSEqC_Control
         private static Program _instance;
         private static HardwareCapabilities _hardwareCapabilities = HardwareCapabilities.None;
         private static FramConfigurationStorage _framStorage;
+        private static bool _lnbReady;
 
         private const int STATUS_LED_PIN = 2;
         private const int STATUS_LED_BLINK_MS = 500;
@@ -64,6 +65,7 @@ namespace DiSEqC_Control
 
             Beacon(0xA1, 0x01);
             LogHardwareCapabilities();
+            TryInitializeLnbControl();
 
             if (EnableFramStartupLoadIsolation)
             {
@@ -408,12 +410,132 @@ namespace DiSEqC_Control
             PublishStatusInternal("position/angle", "0.0");
             PublishStatusInternal("position/satellite", "unknown");
             PublishStatusInternal("busy", "false");
-            PublishStatusInternal("lnb/voltage", "unknown");
-            PublishStatusInternal("lnb/tone", "unknown");
-            PublishStatusInternal("lnb/polarization", "unknown");
-            PublishStatusInternal("lnb/band", "unknown");
+            PublishLnbStatusSnapshot();
             PublishEffectiveConfigInternal();
             Debug.WriteLine("Initial status published");
+        }
+
+        private static bool TryInitializeLnbControl()
+        {
+            _lnbReady = false;
+
+            if (!HasLnbh26)
+            {
+                Debug.WriteLine("[LNB] LNBH26 not detected; native control disabled.");
+                return false;
+            }
+
+            try
+            {
+                Cubley.Interop.LNBH26.Status status = Cubley.Interop.LNBH26.Init();
+                if (status != Cubley.Interop.LNBH26.Status.Ok)
+                {
+                    Debug.WriteLine("[LNB] Init failed: " + status);
+                    return false;
+                }
+
+                status = Cubley.Interop.LNBH26.SetEnable(true);
+                if (status != Cubley.Interop.LNBH26.Status.Ok)
+                {
+                    Debug.WriteLine("[LNB] SetEnable(true) failed: " + status);
+                    return false;
+                }
+
+                status = Cubley.Interop.LNBH26.SetVoltage(Cubley.Interop.LNBH26.Voltage.V13);
+                if (status != Cubley.Interop.LNBH26.Status.Ok)
+                {
+                    Debug.WriteLine("[LNB] SetVoltage(13V) failed: " + status);
+                    return false;
+                }
+
+                status = Cubley.Interop.LNBH26.SetTone(false);
+                if (status != Cubley.Interop.LNBH26.Status.Ok)
+                {
+                    Debug.WriteLine("[LNB] SetTone(false) failed: " + status);
+                    return false;
+                }
+
+                _lnbReady = true;
+                Debug.WriteLine("[LNB] Init complete: EN=1 V=13V tone=off");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[LNB] Init exception: " + ex.Message);
+                return false;
+            }
+        }
+
+        private static void PublishLnbStatusSnapshot()
+        {
+            if (!HasLnbh26)
+            {
+                PublishStatusInternal("lnb/voltage", "absent");
+                PublishStatusInternal("lnb/tone", "absent");
+                PublishStatusInternal("lnb/polarization", "absent");
+                PublishStatusInternal("lnb/band", "absent");
+                PublishStatusInternal("lnb/status_raw", "absent");
+                return;
+            }
+
+            if (!_lnbReady)
+            {
+                PublishStatusInternal("lnb/voltage", "uninitialized");
+                PublishStatusInternal("lnb/tone", "uninitialized");
+                PublishStatusInternal("lnb/polarization", "uninitialized");
+                PublishStatusInternal("lnb/band", "uninitialized");
+                PublishStatusInternal("lnb/status_raw", "uninitialized");
+                return;
+            }
+
+            PublishStatusInternal("lnb/voltage", Cubley.Interop.LNBH26.GetVoltage() == Cubley.Interop.LNBH26.Voltage.V18 ? "18" : "13");
+            PublishStatusInternal("lnb/tone", Cubley.Interop.LNBH26.GetTone() ? "on" : "off");
+            PublishStatusInternal("lnb/polarization", Cubley.Interop.LNBH26.GetPolarization() == Cubley.Interop.LNBH26.Polarization.Horizontal ? "horizontal" : "vertical");
+            PublishStatusInternal("lnb/band", Cubley.Interop.LNBH26.GetBand() == Cubley.Interop.LNBH26.Band.High ? "high" : "low");
+
+            int statusReg;
+            Cubley.Interop.LNBH26.Status status = Cubley.Interop.LNBH26.ReadStatus(out statusReg);
+            if (status == Cubley.Interop.LNBH26.Status.Ok)
+            {
+                PublishStatusInternal("lnb/status_raw", "0x" + statusReg.ToString("X2"));
+            }
+            else
+            {
+                PublishStatusInternal("lnb/status_raw", "read_error:" + status);
+            }
+        }
+
+        private static bool EnsureLnbReady()
+        {
+            if (_lnbReady)
+            {
+                return true;
+            }
+
+            return TryInitializeLnbControl();
+        }
+
+        private static bool TryApplyLnbOperation(Cubley.Interop.LNBH26.Status status, string context)
+        {
+            if (status != Cubley.Interop.LNBH26.Status.Ok)
+            {
+                PublishErrorInternal(context + ": " + status);
+                return false;
+            }
+
+            PublishStatusInternal("lnb/last_op", context + ":ok");
+            PublishLnbStatusSnapshot();
+            return true;
+        }
+
+        private static string NormalizePayload(string payload)
+        {
+            if (payload == null)
+            {
+                return string.Empty;
+            }
+
+            return payload.Trim().ToLower();
         }
 
         private static void OnMqttMessageReceived(string topic, byte[] message)
@@ -524,10 +646,141 @@ namespace DiSEqC_Control
         public void HandleStepWest(string payload) { PublishErrorInternal("rotor not yet bound"); }
         public void HandleDriveEast() { PublishErrorInternal("rotor not yet bound"); }
         public void HandleDriveWest() { PublishErrorInternal("rotor not yet bound"); }
-        public void HandleLnbVoltage(string payload) { PublishErrorInternal(HasLnbh26 ? "LNB present; control path not yet bound" : "LNB not detected"); }
-        public void HandleLnbPolarization(string payload) { PublishErrorInternal(HasLnbh26 ? "LNB present; control path not yet bound" : "LNB not detected"); }
-        public void HandleLnbTone(string payload) { PublishErrorInternal(HasLnbh26 ? "LNB present; control path not yet bound" : "LNB not detected"); }
-        public void HandleLnbBand(string payload) { PublishErrorInternal(HasLnbh26 ? "LNB present; control path not yet bound" : "LNB not detected"); }
+        public void HandleLnbVoltage(string payload)
+        {
+            if (!HasLnbh26)
+            {
+                PublishErrorInternal("LNB not detected");
+                return;
+            }
+
+            if (!EnsureLnbReady())
+            {
+                PublishErrorInternal("LNB init failed");
+                return;
+            }
+
+            string normalized = NormalizePayload(payload);
+            Cubley.Interop.LNBH26.Voltage voltage;
+
+            if (normalized == "13" || normalized == "13v" || normalized == "v" || normalized == "vertical")
+            {
+                voltage = Cubley.Interop.LNBH26.Voltage.V13;
+            }
+            else if (normalized == "18" || normalized == "18v" || normalized == "h" || normalized == "horizontal")
+            {
+                voltage = Cubley.Interop.LNBH26.Voltage.V18;
+            }
+            else
+            {
+                PublishErrorInternal("lnb/voltage payload must be 13|18|vertical|horizontal");
+                return;
+            }
+
+            TryApplyLnbOperation(Cubley.Interop.LNBH26.SetVoltage(voltage), "lnb/voltage");
+        }
+
+        public void HandleLnbPolarization(string payload)
+        {
+            if (!HasLnbh26)
+            {
+                PublishErrorInternal("LNB not detected");
+                return;
+            }
+
+            if (!EnsureLnbReady())
+            {
+                PublishErrorInternal("LNB init failed");
+                return;
+            }
+
+            string normalized = NormalizePayload(payload);
+            Cubley.Interop.LNBH26.Polarization polarization;
+
+            if (normalized == "vertical" || normalized == "v" || normalized == "13" || normalized == "13v")
+            {
+                polarization = Cubley.Interop.LNBH26.Polarization.Vertical;
+            }
+            else if (normalized == "horizontal" || normalized == "h" || normalized == "18" || normalized == "18v")
+            {
+                polarization = Cubley.Interop.LNBH26.Polarization.Horizontal;
+            }
+            else
+            {
+                PublishErrorInternal("lnb/polarization payload must be vertical|horizontal");
+                return;
+            }
+
+            TryApplyLnbOperation(Cubley.Interop.LNBH26.SetPolarization(polarization), "lnb/polarization");
+        }
+
+        public void HandleLnbTone(string payload)
+        {
+            if (!HasLnbh26)
+            {
+                PublishErrorInternal("LNB not detected");
+                return;
+            }
+
+            if (!EnsureLnbReady())
+            {
+                PublishErrorInternal("LNB init failed");
+                return;
+            }
+
+            string normalized = NormalizePayload(payload);
+            bool enable;
+
+            if (normalized == "on" || normalized == "true" || normalized == "1" || normalized == "high")
+            {
+                enable = true;
+            }
+            else if (normalized == "off" || normalized == "false" || normalized == "0" || normalized == "low")
+            {
+                enable = false;
+            }
+            else
+            {
+                PublishErrorInternal("lnb/tone payload must be on|off");
+                return;
+            }
+
+            TryApplyLnbOperation(Cubley.Interop.LNBH26.SetTone(enable), "lnb/tone");
+        }
+
+        public void HandleLnbBand(string payload)
+        {
+            if (!HasLnbh26)
+            {
+                PublishErrorInternal("LNB not detected");
+                return;
+            }
+
+            if (!EnsureLnbReady())
+            {
+                PublishErrorInternal("LNB init failed");
+                return;
+            }
+
+            string normalized = NormalizePayload(payload);
+            Cubley.Interop.LNBH26.Band band;
+
+            if (normalized == "low" || normalized == "0")
+            {
+                band = Cubley.Interop.LNBH26.Band.Low;
+            }
+            else if (normalized == "high" || normalized == "1")
+            {
+                band = Cubley.Interop.LNBH26.Band.High;
+            }
+            else
+            {
+                PublishErrorInternal("lnb/band payload must be low|high");
+                return;
+            }
+
+            TryApplyLnbOperation(Cubley.Interop.LNBH26.SetBand(band), "lnb/band");
+        }
         public void HandleCalibrateReference() { PublishErrorInternal("calibration not yet bound"); }
 
         // ------------------ IMqttConfigSink ------------------

@@ -14,6 +14,11 @@ static bool g_lnb_initialized = false;
 /* I2C timeout */
 #define I2C_TIMEOUT_MS              100
 
+bool lnb_is_initialized(void)
+{
+    return g_lnb_initialized;
+}
+
 /**
  * @brief Write to LNBH26 control register
  */
@@ -125,9 +130,11 @@ lnb_status_t lnb_set_voltage(lnb_handle_t *hlnb, lnb_voltage_t voltage)
     // Write to device
     lnb_status_t status = lnb_write_control(hlnb);
 
-    // Update global state
-    g_lnb.voltage = voltage;
-    g_lnb.control_reg = hlnb->control_reg;
+    if (status == LNB_OK) {
+        // Update global state only after successful device write.
+        g_lnb.voltage = voltage;
+        g_lnb.control_reg = hlnb->control_reg;
+    }
 
     return status;
 }
@@ -163,9 +170,11 @@ lnb_status_t lnb_set_tone(lnb_handle_t *hlnb, bool enable)
     // Write to device
     lnb_status_t status = lnb_write_control(hlnb);
 
-    // Update global state
-    g_lnb.tone_enabled = enable;
-    g_lnb.control_reg = hlnb->control_reg;
+    if (status == LNB_OK) {
+        // Update global state only after successful device write.
+        g_lnb.tone_enabled = enable;
+        g_lnb.control_reg = hlnb->control_reg;
+    }
 
     return status;
 }
@@ -200,9 +209,11 @@ lnb_status_t lnb_set_enable(lnb_handle_t *hlnb, bool enable)
     // Write to device
     lnb_status_t status = lnb_write_control(hlnb);
 
-    // Update global state
-    g_lnb.enabled = enable;
-    g_lnb.control_reg = hlnb->control_reg;
+    if (status == LNB_OK) {
+        // Update global state only after successful device write.
+        g_lnb.enabled = enable;
+        g_lnb.control_reg = hlnb->control_reg;
+    }
 
     return status;
 }

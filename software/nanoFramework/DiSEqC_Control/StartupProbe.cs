@@ -14,6 +14,8 @@ namespace DiSEqC_Control
         private const int LnbAddress = 0x08;
         private const int FramBusId = 3;
         private const int FramAddress = 0x50;
+        private static bool ProbeW5500OnStartup = false;
+        private static bool ProbeFramOnStartup = false;
 
         private const uint ProbeStageBase = 0xD5E10000u;
         private const uint ProbeStageW5500 = 0x0100u;
@@ -44,15 +46,24 @@ namespace DiSEqC_Control
         {
             byte bitmap = 0;
 
-            WriteProbeStage(ProbeStageW5500, 0x01);
-            if (ProbeW5500())
+            if (ProbeW5500OnStartup)
             {
-                bitmap |= HardwareCapabilities.W5500Bit;
-                WriteProbeStage(ProbeStageW5500, 0x11);
+                WriteProbeStage(ProbeStageW5500, 0x01);
+                if (ProbeW5500())
+                {
+                    bitmap |= HardwareCapabilities.W5500Bit;
+                    WriteProbeStage(ProbeStageW5500, 0x11);
+                }
+                else
+                {
+                    WriteProbeStage(ProbeStageW5500, 0x10);
+                }
             }
             else
             {
-                WriteProbeStage(ProbeStageW5500, 0x10);
+                // Known bring-up mode: skip W5500 probe so LNB/FRAM startup is not gated by SPI path.
+                WriteProbeStage(ProbeStageW5500, 0x12);
+                Debug.WriteLine("[probe] W5500 startup probe skipped by configuration.");
             }
 
             WriteProbeStage(ProbeStageLnb, 0x01);
@@ -66,15 +77,23 @@ namespace DiSEqC_Control
                 WriteProbeStage(ProbeStageLnb, 0x10);
             }
 
-            WriteProbeStage(ProbeStageFram, 0x01);
-            if (ProbeFram())
+            if (ProbeFramOnStartup)
             {
-                bitmap |= HardwareCapabilities.FramBit;
-                WriteProbeStage(ProbeStageFram, 0x11);
+                WriteProbeStage(ProbeStageFram, 0x01);
+                if (ProbeFram())
+                {
+                    bitmap |= HardwareCapabilities.FramBit;
+                    WriteProbeStage(ProbeStageFram, 0x11);
+                }
+                else
+                {
+                    WriteProbeStage(ProbeStageFram, 0x10);
+                }
             }
             else
             {
-                WriteProbeStage(ProbeStageFram, 0x10);
+                WriteProbeStage(ProbeStageFram, 0x12);
+                Debug.WriteLine("[probe] FRAM startup probe skipped by configuration.");
             }
 
             WriteProbeStage(0x0400u, bitmap);

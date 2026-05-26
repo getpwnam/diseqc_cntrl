@@ -82,6 +82,12 @@ typedef enum {
 } lnb_status_t;
 
 /**
+ * @brief Check whether native LNB state has been initialized.
+ * @return true when lnb_init() has successfully completed.
+ */
+bool lnb_is_initialized(void);
+
+/**
  * @brief Initialize LNB control
  * @param hlnb LNB handle
  * @param i2c_driver I2C driver (I2CD1)

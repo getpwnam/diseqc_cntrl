@@ -77,7 +77,25 @@ namespace Cubley.Interop
         public enum Voltage { V13 = 0, V18 = 1 }
         public enum Polarization { Vertical = 0, Horizontal = 1 }
         public enum Band { Low = 0, High = 1 }
-        public enum Status { Ok = 0, InvalidParam = 1, NotInitialized = 2 }
+        public enum Status { Ok = 0, InvalidParam = 1, NotInitialized = 2, IoError = 3 }
+
+        public static Status Init()
+        {
+            int result = NativeInit();
+            return (Status)result;
+        }
+
+        public static Status SetEnable(bool enable)
+        {
+            int result = NativeSetEnable(enable);
+            return (Status)result;
+        }
+
+        public static Status ReadStatus(out int statusRegister)
+        {
+            int result = NativeReadStatus(out statusRegister);
+            return (Status)result;
+        }
 
         public static Status SetVoltage(Voltage voltage)
         {
@@ -118,6 +136,12 @@ namespace Cubley.Interop
             int result = NativeGetBand();
             return (Band)result;
         }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern int NativeInit();
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern int NativeSetEnable(bool enable);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern int NativeReadStatus(out int statusRegister);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern int NativeSetVoltage(int voltage);
         [MethodImpl(MethodImplOptions.InternalCall)]

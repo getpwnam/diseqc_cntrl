@@ -3,8 +3,47 @@
 #include <nanoCLR_Runtime.h>
 #include <nanoCLR_Checks.h>
 #include "lnbh26_native.h"
+#include "board_cubley.h"
 
 // All LNB interop functions previously in cubley_interop.cpp
+
+HRESULT Library_cubley_interop_LNBH26_NativeInit___STATIC__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    lnb_status_t status = LNB_OK;
+
+    if (!lnb_is_initialized())
+    {
+        lnb_handle_t* hlnb = lnb_get_global_handle();
+        status = lnb_init(hlnb, &LNB_I2C_DRIVER, LNB_I2C_ADDRESS);
+    }
+
+    stack.SetResult_I4((int32_t)status);
+
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+    bool enable = stack.Arg0().NumericByRef().u1 != 0;
+    lnb_handle_t* hlnb = lnb_get_global_handle();
+    lnb_status_t status = lnb_set_enable(hlnb, enable);
+    stack.SetResult_I4((int32_t)status);
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+    lnb_handle_t* hlnb = lnb_get_global_handle();
+    uint8_t statusReg = 0;
+    lnb_status_t status = lnb_read_status(hlnb, &statusReg);
+    stack.Arg0().NumericByRef().s4 = (int32_t)statusReg;
+    stack.SetResult_I4((int32_t)status);
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
 
 HRESULT Library_cubley_interop_LNBH26_NativeSetVoltage___STATIC__I4__I4(CLR_RT_StackFrame& stack)
 {

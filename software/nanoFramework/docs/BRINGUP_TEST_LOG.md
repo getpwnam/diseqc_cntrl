@@ -1144,3 +1144,10 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: build/nanoBooter.bin; build/nanoCLR.bin; DiSEqC_Control/bin/Release/latest.deploy.bin
 - Conclusion: Rebuilt and reflashed mailbox refactor; boot probe latch now stable at 0xD5E20006 with bitmap 0x06 (W5500 absent, LNBH26 present, FRAM present).
 - Note: Initial run failed to resolve System.Device.I2c; compile-managed bundle was updated to include System.Device.I2c.pe, after which StartupProbe completed and latch populated.
+
+### 2026-05-26 23:00:38 UTC [INFO]
+- Git rev: 7ce4f54
+- Command(s): toolchain/compile-managed.sh; nanoff --jtag --platform stm32 --target M0DMF_CUBLEY_F407 --deploy --image DiSEqC_Control/bin/Release/latest.deploy.bin --address 0x080C0000 --reset; tests/swd_read_bringup_status.sh
+- Artifact: DiSEqC_Control/bin/Release/DiSEqC_Control_bundle_20260526-235634.bin
+- Conclusion: Managed app is running and LNB detected in boot bitmap, but SMA output measured about 0.6V.
+- Note: User will continue LNB output debug tomorrow.
