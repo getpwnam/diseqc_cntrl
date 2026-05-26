@@ -1137,3 +1137,10 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: build/nanoBooter.bin; build/nanoCLR.bin; DiSEqC_Control/bin/Release/DiSEqC_Control.bin
 - Conclusion: cubley-uart firmware build/flash and DiSEqC_Control managed build/deploy verified end-to-end; device now reports DiSEqC_Control 1.0.0.0 as the deployed managed app.
 - Note: Interop checksum preflight initially failed; checksum was repaired to 0x99CD5157 in Cubley.Interop metadata/native tables before rerunning the successful build.
+
+### 2026-05-26 22:31:45 UTC [PASS]
+- Git rev: d808c7a
+- Command(s): ./toolchain/build.sh cubley-stable; ./toolchain/compile-managed.sh; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; st-flash write DiSEqC_Control/bin/Release/latest.deploy.bin 0x080C0000; ./tests/swd_read_bringup_status.sh
+- Artifact: build/nanoBooter.bin; build/nanoCLR.bin; DiSEqC_Control/bin/Release/latest.deploy.bin
+- Conclusion: Rebuilt and reflashed mailbox refactor; boot probe latch now stable at 0xD5E20006 with bitmap 0x06 (W5500 absent, LNBH26 present, FRAM present).
+- Note: Initial run failed to resolve System.Device.I2c; compile-managed bundle was updated to include System.Device.I2c.pe, after which StartupProbe completed and latch populated.

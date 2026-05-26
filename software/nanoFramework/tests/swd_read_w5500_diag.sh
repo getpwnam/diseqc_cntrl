@@ -45,8 +45,8 @@ set pagination off
 set confirm off
 target extended-remote :3333
 monitor halt
-set $mailbox_addr = &g_w5500_bringup_status
-set $error_addr = &g_w5500_last_native_error
+set $mailbox_addr = &g_cubley_diag_current_status
+set $error_addr = &g_cubley_diag_last_error
 set $link_latch_addr = &g_w5500_first_link_up
 set $connect_params_addr = &g_w5500_connect_params
 x/wx $mailbox_addr

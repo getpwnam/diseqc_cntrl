@@ -213,3 +213,4 @@ The upstream `nf-interpreter` codebase is fetched during Docker build; it is not
 - [Testing Guide](docs/guides/TESTING_GUIDE.md)
 - [MQTT API](docs/reference/MQTT_API.md)
 - [Architecture](docs/reference/ARCHITECTURE.md)
+- [Diagnostics Mailbox](docs/reference/DIAGNOSTICS_MAILBOX.md)

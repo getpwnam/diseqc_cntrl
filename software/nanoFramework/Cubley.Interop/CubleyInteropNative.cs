@@ -17,6 +17,15 @@ namespace Cubley.Interop
         public static extern uint NativeGetLastNativeError();
     }
 
+    public static class DiagnosticsMailbox
+    {
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern bool NativeTryLatchBootProbe(uint statusWord);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern uint NativeGetBootProbe();
+    }
+
     public static class W5500Socket
     {
         public enum Status
@@ -125,5 +134,45 @@ namespace Cubley.Interop
         private static extern int NativeGetPolarization();
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern int NativeGetBand();
+    }
+
+    public static class StatusLed
+    {
+        /// <summary>
+        /// Initialize PA2 as GPIO output. Must be called before any LED operations.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void NativeInit();
+
+        /// <summary>
+        /// Set PA2 HIGH (LED ON).
+        /// </summary>
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void NativeSetHigh();
+
+        /// <summary>
+        /// Set PA2 LOW (LED OFF).
+        /// </summary>
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void NativeSetLow();
+
+        /// <summary>
+        /// Pulse PA2 for bootup marker: count blinks of pulseMs duration each (HIGH then LOW).
+        /// Example: Pulse(3, 300) blinks 3x with 300ms on, 300ms off.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void NativePulse(int count, int pulseMs);
+    }
+
+    public static class UsbCdcConsole
+    {
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern bool NativeIsEnabled();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeReadByte(int timeoutMs);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeWrite(string text);
     }
 }

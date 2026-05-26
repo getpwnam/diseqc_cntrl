@@ -92,6 +92,8 @@ STATIC_AUDIT="${NF_STATIC_AUDIT:-0}"
 
 ENABLE_HSI_PLL="0"  # HSE 8MHz crystal fitted; individual profiles override to HSI if needed
 ENABLE_W5500_EARLY_INIT="FALSE"
+ENABLE_USB_CDC_CONSOLE="FALSE"
+ENABLE_WIRE_PROTOCOL_USB="FALSE"
 
 case "$BUILD_PROFILE" in
     cubley-stable)
@@ -126,17 +128,19 @@ case "$BUILD_PROFILE" in
         ENABLE_MBEDTLS="OFF"
         ENABLE_HAL_MAC="FALSE"
         ENABLE_STM32_MAC_ETH="FALSE"
-        ENABLE_OTG1="FALSE"
+        ENABLE_OTG1="TRUE"
         ENABLE_OTG2="FALSE"
-        ENABLE_HAL_USB="FALSE"
-        ENABLE_HAL_SERIAL_USB="FALSE"
+        ENABLE_HAL_USB="TRUE"
+        ENABLE_HAL_SERIAL_USB="TRUE"
+        ENABLE_USB_CDC_CONSOLE="TRUE"
+        ENABLE_WIRE_PROTOCOL_USB="FALSE"
         ENABLE_BRINGUP_SMOKE="FALSE"
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
         ENABLE_W5500_EARLY_INIT="TRUE"
         PROFILE_STATUS="scaffold"
-        PROFILE_NOTE="Cubley UART wire-protocol profile (USART3 on PB10/PB11; W5500 native, System.Net/lwIP disabled)"
+        PROFILE_NOTE="Cubley UART wire-protocol profile (USART3 wire protocol + USB-CDC config console on PA11/PA12)"
         ;;
     bringup-smoke)
         ENABLE_API_GPIO="ON"
@@ -196,6 +200,8 @@ case "$BUILD_PROFILE" in
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="TRUE"
         ENABLE_HAL_SERIAL_USB="TRUE"
+        ENABLE_USB_CDC_CONSOLE="TRUE"
+        ENABLE_WIRE_PROTOCOL_USB="TRUE"
         ENABLE_BRINGUP_SMOKE="FALSE"
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
@@ -332,6 +338,43 @@ echo -e "${YELLOW}Patching ChibiOS include path leakage...${NC}"
 sed -i '\|list(APPEND CHIBIOS_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/targets/ChibiOS/${TARGET_BOARD}/nanoBooter)|d' \
     "$NF_INTERPRETER_DIR/CMake/Modules/FindChibiOS.cmake"
 
+BINUTILS_COMMON_CMAKE="$NF_INTERPRETER_DIR/CMake/binutils.common.cmake"
+if [ -f "$BINUTILS_COMMON_CMAKE" ]; then
+    echo -e "${YELLOW}Patching objcopy rules to strip stack/heap pseudo-sections...${NC}"
+    python3 - "$BINUTILS_COMMON_CMAKE" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+if "NF_OBJCOPY_STRIP_STACK_HEAP_SECTIONS" not in text:
+    text = text.replace(
+        "    set(TARGET_DUMP_FILE ${CMAKE_BINARY_DIR}/${TARGET_SHORT}.lst)\n",
+        "    set(TARGET_DUMP_FILE ${CMAKE_BINARY_DIR}/${TARGET_SHORT}.lst)\n\n"
+        "    # NF_OBJCOPY_STRIP_STACK_HEAP_SECTIONS\n",
+        1,
+    )
+
+text = text.replace(
+    "COMMAND ${CMAKE_OBJCOPY} -Oihex $<TARGET_FILE:${TARGET_SHORT}.elf> ${TARGET_HEX_FILE}",
+    "COMMAND ${CMAKE_OBJCOPY} -R .mstack -R .pstack -R .heap -Oihex $<TARGET_FILE:${TARGET_SHORT}.elf> ${TARGET_HEX_FILE}",
+)
+
+text = text.replace(
+    "COMMAND ${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:${TARGET_SHORT}.elf> ${TARGET_BIN_FILE}",
+    "COMMAND ${CMAKE_OBJCOPY} -R .mstack -R .pstack -R .heap -Obinary $<TARGET_FILE:${TARGET_SHORT}.elf> ${TARGET_BIN_FILE}",
+)
+
+text = text.replace(
+    "COMMAND ${CMAKE_OBJCOPY} $<TARGET_FILE:${TARGET_SHORT}.elf> ${CMAKE_BINARY_DIR}/${TARGET_SHORT}.elf",
+    "COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TARGET_SHORT}.elf> ${CMAKE_BINARY_DIR}/${TARGET_SHORT}.elf",
+)
+
+path.write_text(text)
+PY
+fi
+
 # Older interpreter refs contain a typo that seeds CHIBIOS source lookup with
 # an invalid NOTFOUND token, which later propagates to target_sources().
 sed -i 's/set(CHIBIOS_SRC_FILE SRC_FILE -NOTFOUND)/set(CHIBIOS_SRC_FILE SRC_FILE-NOTFOUND)/' \
@@ -392,7 +435,7 @@ if [ -f "$CLR_STARTUP_CPP" ]; then
     echo -e "${YELLOW}Patching CLR startup diagnostics in CLRStartup.cpp...${NC}"
 
     if ! grep -Fq 'CUBLEY_CLR_STARTUP_DIAG' "$CLR_STARTUP_CPP"; then
-        perl -0pi -e 's~#include <nanoCLR_Hardware.h>~#include <nanoCLR_Hardware.h>\n#include <stdint.h>\n\nextern "C"\n{\n    extern volatile uint32_t g_w5500_bringup_status;\n    extern volatile uint32_t g_w5500_last_native_error;\n}\n\nstatic inline void CubleySetClrDiag(uint8_t stage, uint8_t result, uint8_t detail)\n{\n    // CUBLEY_CLR_STARTUP_DIAG: 0xD5SSRRDD\n    g_w5500_bringup_status = ((uint32_t)0xD5u << 24) \| ((uint32_t)stage << 16) \| ((uint32_t)result << 8) \| (uint32_t)detail;\n}\n\nstatic inline void CubleySetClrErr(uint8_t op, uint8_t code, uint8_t detail)\n{\n    // CUBLEY_CLR_STARTUP_DIAG: 0xE2OOCCDD\n    g_w5500_last_native_error = ((uint32_t)0xE2u << 24) \| ((uint32_t)op << 16) \| ((uint32_t)code << 8) \| (uint32_t)detail;\n}\n~' "$CLR_STARTUP_CPP"
+        perl -0pi -e 's~#include <nanoCLR_Hardware.h>~#include <nanoCLR_Hardware.h>\n#include <stdint.h>\n\nextern "C"\n{\n    extern volatile uint32_t g_cubley_diag_current_status;\n    extern volatile uint32_t g_cubley_diag_last_error;\n    extern volatile uint32_t g_cubley_diag_clr_status;\n}\n\nstatic inline void CubleySetClrDiag(uint8_t stage, uint8_t result, uint8_t detail)\n{\n    // CUBLEY_CLR_STARTUP_DIAG: 0xD5SSRRDD\n    const uint32_t word = ((uint32_t)0xD5u << 24) \| ((uint32_t)stage << 16) \| ((uint32_t)result << 8) \| (uint32_t)detail;\n    g_cubley_diag_current_status = word;\n    g_cubley_diag_clr_status = word;\n}\n\nstatic inline void CubleySetClrErr(uint8_t op, uint8_t code, uint8_t detail)\n{\n    // CUBLEY_CLR_STARTUP_DIAG: 0xE2OOCCDD\n    g_cubley_diag_last_error = ((uint32_t)0xE2u << 24) \| ((uint32_t)op << 16) \| ((uint32_t)code << 8) \| (uint32_t)detail;\n}\n~' "$CLR_STARTUP_CPP"
     fi
 
     if ! grep -Fq 'CubleySetClrDiag(0xE0, 0, 1);' "$CLR_STARTUP_CPP"; then
@@ -505,7 +548,7 @@ old = '''#if !defined(BUILD_RTM)
 new = '''#if !defined(BUILD_RTM)
         if (FAILED(hr))
         {
-            if ((g_w5500_bringup_status & 0xFF000000u) != 0x08000000u)
+            if ((g_cubley_diag_current_status & 0xFF000000u) != 0x08000000u)
             {
                 CubleySetClrDiag(0xEE, 14, (uint8_t)(hr & 0xFF));
                 CubleySetClrErr(0xEE, 14, (uint8_t)(hr & 0xFF));
@@ -516,7 +559,7 @@ new = '''#if !defined(BUILD_RTM)
             {
                 // exception occurred during type resolution
                 CLR_EE_DBG_SET(StateResolutionFailed);
-                if ((g_w5500_bringup_status & 0xFF000000u) != 0x08000000u)
+                if ((g_cubley_diag_current_status & 0xFF000000u) != 0x08000000u)
                 {
                     CubleySetClrDiag(0xEF, 14, (uint8_t)(hr & 0xFF));
                     CubleySetClrErr(0xEF, 14, (uint8_t)(hr & 0xFF));
@@ -543,7 +586,7 @@ if [ -f "$TYPESYSTEM_CPP" ]; then
     echo -e "${YELLOW}Patching TypeSystem resolve diagnostics...${NC}"
 
     if ! grep -Fq 'CUBLEY_CLR_RESOLVE_PTR' "$TYPESYSTEM_CPP"; then
-        perl -0pi -e 's~#include "corhdr_private.h"~#include "corhdr_private.h"\n#include <stdint.h>\n\nextern "C"\n{\n    extern volatile uint32_t g_w5500_bringup_status;\n    extern volatile uint32_t g_w5500_last_native_error;\n}\n\nstatic inline void CubleySetResolvePtr(const char *owner, const char *needed)\n{\n    // CUBLEY_CLR_RESOLVE_PTR: raw pointers to assembly names for post-mortem reads\n    g_w5500_bringup_status = (uint32_t)(uintptr_t)owner;\n    g_w5500_last_native_error = (uint32_t)(uintptr_t)needed;\n}\n~' "$TYPESYSTEM_CPP"
+        perl -0pi -e 's~#include "corhdr_private.h"~#include "corhdr_private.h"\n#include <stdint.h>\n\nextern "C"\n{\n    extern volatile uint32_t g_cubley_diag_current_status;\n    extern volatile uint32_t g_cubley_diag_last_error;\n}\n\nstatic inline void CubleySetResolvePtr(const char *owner, const char *needed)\n{\n    // CUBLEY_CLR_RESOLVE_PTR: raw pointers to assembly names for post-mortem reads\n    g_cubley_diag_current_status = (uint32_t)(uintptr_t)owner;\n    g_cubley_diag_last_error = (uint32_t)(uintptr_t)needed;\n}\n~' "$TYPESYSTEM_CPP"
     fi
 
     if ! grep -Fq 'CubleySetResolvePtr(m_szName, szName);' "$TYPESYSTEM_CPP"; then
@@ -683,7 +726,7 @@ if [ -d "$LOCAL_TARGET_OVERRIDES_DIR" ]; then
     cp "$LOCAL_TARGET_OVERRIDES_DIR/mcuconf.h" "$TARGET_DIR/nanoBooter/" 2>/dev/null || true
     cp "$LOCAL_TARGET_OVERRIDES_DIR/target_common.h.in" "$TARGET_DIR/" 2>/dev/null || true
     cp "$LOCAL_TARGET_OVERRIDES_DIR/common/Device_BlockStorage.c" "$TARGET_DIR/common/" 2>/dev/null || true
-    if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
+    if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ] || [ "$ENABLE_USB_CDC_CONSOLE" = "TRUE" ]; then
         cp "$LOCAL_TARGET_OVERRIDES_DIR/common/usbcfg.c" "$TARGET_DIR/common/" 2>/dev/null || true
         cp "$LOCAL_TARGET_OVERRIDES_DIR/common/usbcfg.h" "$TARGET_DIR/common/" 2>/dev/null || true
     fi
@@ -754,7 +797,7 @@ if [ "$STATIC_AUDIT" = "1" ] && [ -n "$REFERENCE_BOARD" ]; then
         fi
     done
 
-    if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
+    if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ] || [ "$ENABLE_USB_CDC_CONSOLE" = "TRUE" ]; then
         for usb_required in \
             "$TARGET_DIR/common/usbcfg.c" \
             "$TARGET_DIR/common/usbcfg.h"; do
@@ -783,7 +826,7 @@ fi
 if [ -n "$REFERENCE_BOARD" ]; then
     # Core target configuration sources are now owned by local overrides.
     copy_if_absent "$REFERENCE_BOARD/common/Device_BlockStorage.c" "$TARGET_DIR/common/Device_BlockStorage.c"
-    if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
+    if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ] || [ "$ENABLE_USB_CDC_CONSOLE" = "TRUE" ]; then
         copy_if_absent "$REFERENCE_BOARD/common/usbcfg.c" "$TARGET_DIR/common/usbcfg.c"
         copy_if_absent "$REFERENCE_BOARD/common/usbcfg.h" "$TARGET_DIR/common/usbcfg.h"
     fi
@@ -952,14 +995,14 @@ done
 # Provide a deterministic wire-protocol serial configuration header.
 # This file is included by both nanoBooter and nanoCLR via
 # _common/WireProtocol_HAL_Interface.c. Selecting the right driver per image
-# is driven by the per-image halconf.h (HAL_USE_SERIAL_USB).
+# is driven by the per-image halconf.h (CUBLEY_WIRE_PROTOCOL_USB).
 cat > "$TARGET_DIR/common/serialcfg.h" << 'EOF_SERIALCFG'
 #ifndef SERIALCFG_H
 #define SERIALCFG_H
 
 #include "halconf.h"
 
-#if defined(HAL_USE_SERIAL_USB) && (HAL_USE_SERIAL_USB == TRUE)
+#if defined(CUBLEY_WIRE_PROTOCOL_USB) && (CUBLEY_WIRE_PROTOCOL_USB == TRUE)
 #define SERIAL_DRIVER           SDU1
 #else
 #define SERIAL_DRIVER           SD3
@@ -1151,12 +1194,13 @@ nf_setup_target_build(
 EOF_TARGET_CMAKE
 fi
 
-# Ensure HAL settings match this board capabilities in both firmware images
+# Ensure HAL settings match this board capabilities in both firmware images.
 for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; do
     if [ -f "$cfg" ]; then
         RTC_HAL_SETTING="$ENABLE_HAL_RTC"
         USB_HAL_SETTING="$ENABLE_HAL_USB"
         SERIAL_USB_HAL_SETTING="$ENABLE_HAL_SERIAL_USB"
+        WIRE_PROTOCOL_USB_SETTING="$ENABLE_WIRE_PROTOCOL_USB"
         if [[ "$cfg" == *"/nanoBooter/"* ]]; then
             RTC_HAL_SETTING="FALSE"
             # nanoBooter never uses USB - it just chains into nanoCLR via SWD/ST-Link
@@ -1164,6 +1208,7 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
             # within budget regardless of the profile's USB choice.
             USB_HAL_SETTING="FALSE"
             SERIAL_USB_HAL_SETTING="FALSE"
+            WIRE_PROTOCOL_USB_SETTING="FALSE"
         fi
 
         # ChibiOS 9.x requires these markers in halconf.h.
@@ -1199,6 +1244,12 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
 
 #undef CUBLEY_W5500_EARLY_INIT
 #define CUBLEY_W5500_EARLY_INIT             ${ENABLE_W5500_EARLY_INIT}
+
+#undef CUBLEY_ENABLE_USB_CDC_CONSOLE
+#define CUBLEY_ENABLE_USB_CDC_CONSOLE       ${ENABLE_USB_CDC_CONSOLE}
+
+#undef CUBLEY_WIRE_PROTOCOL_USB
+#define CUBLEY_WIRE_PROTOCOL_USB            ${WIRE_PROTOCOL_USB_SETTING}
 EOF_HAL_OVERRIDES
     fi
 done

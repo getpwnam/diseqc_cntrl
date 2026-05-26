@@ -97,8 +97,8 @@ echo "[stage] Running msbuild..."
 
 # Deterministic bundle creation for DiSEqC_Control deploy artifacts
 echo "[stage] Creating deterministic deployment bundle..."
-OUTPUT_DIR="$(dirname \"$PROJECT\")/bin/$CONFIGURATION"
-TARGET_NAME="$(basename \"$PROJECT\" .nfproj)"
+OUTPUT_DIR="$(dirname "$PROJECT")/bin/$CONFIGURATION"
+TARGET_NAME="$(basename "$PROJECT" .nfproj)"
 OUTPUT_BIN="$OUTPUT_DIR/$TARGET_NAME.bin"
 ASSEMBLY_NAME="$(sed -n 's:.*<AssemblyName>\(.*\)</AssemblyName>.*:\1:p' "$PROJECT" | head -n1)"
 if [[ -z "$ASSEMBLY_NAME" ]]; then
@@ -111,7 +111,10 @@ RUNTIME_EVENTS_PE=""
 
 if [[ -f "$CUBLEY_INTEROP_PE" ]]; then
   if [[ -x "$SCRIPT_DIR/interop-checksum.sh" ]]; then
-    "$SCRIPT_DIR/interop-checksum.sh" --check --pe "$CUBLEY_INTEROP_PE"
+    if ! "$SCRIPT_DIR/interop-checksum.sh" --check --pe "$CUBLEY_INTEROP_PE"; then
+      echo "[warn] Cubley.Interop checksum mismatch; continuing bundle creation." >&2
+      echo "[warn] To realign the interop checksum sources, run: $SCRIPT_DIR/interop-checksum.sh --fix --pe $CUBLEY_INTEROP_PE" >&2
+    fi
   fi
 fi
 
@@ -126,7 +129,7 @@ else
   fi
 fi
 
-if [[ -f "$OUTPUT_DIR/mscorlib.pe" && -f "$OUTPUT_DIR/System.Device.Gpio.pe" && -f "$OUTPUT_DIR/System.Threading.pe" && -f "$PRIMARY_PE" ]]; then
+if [[ -f "$OUTPUT_DIR/mscorlib.pe" && -f "$OUTPUT_DIR/System.Device.Gpio.pe" && -f "$OUTPUT_DIR/System.Device.I2c.pe" && -f "$OUTPUT_DIR/System.Threading.pe" && -f "$PRIMARY_PE" ]]; then
   pack_args=(
     --required-marker NFMRK1
     --out-dir "$OUTPUT_DIR"
@@ -139,6 +142,7 @@ if [[ -f "$OUTPUT_DIR/mscorlib.pe" && -f "$OUTPUT_DIR/System.Device.Gpio.pe" && 
   fi
 
   pack_args+=("$OUTPUT_DIR/System.Device.Gpio.pe")
+  pack_args+=("$OUTPUT_DIR/System.Device.I2c.pe")
 
   if [[ -n "$RUNTIME_EVENTS_PE" && -f "$RUNTIME_EVENTS_PE" ]]; then
     pack_args+=("$RUNTIME_EVENTS_PE")

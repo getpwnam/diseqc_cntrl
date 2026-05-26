@@ -1,14 +1,13 @@
-// Minimal nanoCLR entry point for M0DMF_CUBLEY_F407 (serial wire protocol, no USB)
+// Minimal nanoCLR entry point for M0DMF_CUBLEY_F407.
 
 #include <ch.h>
 #include <hal.h>
 #include <hal_nf_community.h>
 #include <cmsis_os.h>
 
-#if (HAL_USE_SERIAL_USB == TRUE)
-#include <usbcfg.h>
-#else
 #include <serialcfg.h>
+#if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
+#include <usbcfg.h>
 #endif
 #include <swo.h>
 #include <CLR_Startup_Thread.h>
@@ -20,20 +19,40 @@
 #define SWO_OUTPUT 0
 #endif
 
-extern volatile uint32_t g_w5500_bringup_status;
-extern volatile uint32_t g_w5500_last_native_error;
+extern volatile uint32_t g_cubley_diag_current_status;
+extern volatile uint32_t g_cubley_diag_last_error;
+extern volatile uint32_t g_cubley_diag_clr_status;
+volatile uint32_t g_startup_trace;
+
+#if !defined(CUBLEY_WIRE_PROTOCOL_USB)
+#define CUBLEY_WIRE_PROTOCOL_USB HAL_USE_SERIAL_USB
+#endif
+
+#if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
+#define CUBLEY_USB_CDC_ACTIVE TRUE
+#else
+#define CUBLEY_USB_CDC_ACTIVE FALSE
+#endif
 
 static inline void SetStartupDiag(uint8_t stage, uint8_t result, uint8_t detail)
 {
     // 0xD5SSRRDD => signature(0xD5), stage, result, detail.
     // Stages used here: C0..C6 (main path), D0 (receiver thread), D1 (CLR thread), CF (unexpected post-osKernelStart path).
-    g_w5500_bringup_status = ((uint32_t)0xD5 << 24) | ((uint32_t)stage << 16) | ((uint32_t)result << 8) | (uint32_t)detail;
+    const uint32_t word = ((uint32_t)0xD5 << 24) | ((uint32_t)stage << 16) | ((uint32_t)result << 8) | (uint32_t)detail;
+    g_cubley_diag_current_status = word;
+    g_cubley_diag_clr_status = word;
 }
 
 static inline void SetStartupErr(uint8_t op, uint8_t code, uint8_t detail)
 {
     // 0xE2 marks CLR startup diagnostics (distinct from W5500 0xE1 path).
-    g_w5500_last_native_error = ((uint32_t)0xE2 << 24) | ((uint32_t)op << 16) | ((uint32_t)code << 8) | (uint32_t)detail;
+    g_cubley_diag_last_error = ((uint32_t)0xE2 << 24) | ((uint32_t)op << 16) | ((uint32_t)code << 8) | (uint32_t)detail;
+}
+
+static inline void SetStartupTrace(uint8_t stage, uint8_t detail)
+{
+    // Independent startup breadcrumb: 0xA7SS00DD.
+    g_startup_trace = ((uint32_t)0xA7 << 24) | ((uint32_t)stage << 16) | (uint32_t)detail;
 }
 
 static void ReceiverThreadProbe(void const *arg)
@@ -71,48 +90,38 @@ static void CLRStartupThreadProbe(void const *arg)
 osThreadDef(ReceiverThreadProbe, osPriorityHigh, 2048, "ReceiverThread");
 osThreadDef(CLRStartupThreadProbe, osPriorityNormal, 4096, "CLRStartupThread");
 
-#if (HAL_USE_SERIAL_USB == TRUE)
-/*
- * Helper thread that performs the entire USB lifecycle once the ChibiOS
- * scheduler is running.
- *
- * The CMSIS-OS abstraction in nanoFramework only fully arms SysTick after
- * osKernelStart(). If we call chThdSleepMilliseconds() before that point
- * (the canonical ChibiOS USB-CDC sample does, but it uses a different
- * port that arms SysTick inside chSysInit), the main thread sleeps
- * forever and we never reach osKernelStart at all - the OTG_FS clock
- * never gets enabled and the device is invisible to the host. Doing all
- * of this from a thread that starts after osKernelStart sidesteps the
- * issue.
- */
-static THD_WORKING_AREA(waUsbConnectThread, 1024);
-static THD_FUNCTION(UsbConnectThread, arg) {
+#if (CUBLEY_USB_CDC_ACTIVE == TRUE)
+static THD_WORKING_AREA(waUsbCdcInitThread, 768);
+static THD_FUNCTION(UsbCdcInitThread, arg)
+{
     (void)arg;
-    chRegSetThreadName("UsbConnect");
+    chRegSetThreadName("USB_CDC_Init");
 
-    /* Disconnect first so the host sees a clean fresh attach. */
+    SetStartupTrace(0xC3, 1);
+    SetStartupDiag(0xC3, 1, 1);  // USB init starting
+    sduObjectInit(&SDU1);
+    sduStart(&SDU1, &serusbcfg);
+    SetStartupTrace(0xC3, 2);
+    SetStartupDiag(0xC3, 1, 2);  // sduStart completed
+
     usbDisconnectBus(serusbcfg.usbp);
-    chThdSleepMilliseconds(1500);
-
-    /*
-     * usbStart() runs usb_lld_start() which enables the AHB2 OTG_FS
-     * clock, programs GCCFG with NOVBUSSENS|PWRDWN (because
-     * board_cubley.h defines BOARD_OTG_NOVBUSSENS), installs the
-     * OTG_FS_IRQ vector, and leaves the core ready but with the D+
-     * pull-up still off. PA11/PA12 alternate-function setup is done
-     * earlier in boardInit() because ChibiOS does not configure GPIO
-     * pins itself.
-     */
+    SetStartupTrace(0xC3, 3);
+    SetStartupDiag(0xC3, 1, 3);  // usbDisconnectBus completed
+    chThdSleepMilliseconds(100);
     usbStart(serusbcfg.usbp, &usbcfg);
-
-    /* Now assert D+; host will start enumeration. */
+    SetStartupTrace(0xC3, 4);
+    SetStartupDiag(0xC3, 1, 4);  // usbStart completed
     usbConnectBus(serusbcfg.usbp);
+    SetStartupTrace(0xC3, 5);
+    SetStartupDiag(0xC3, 1, 5);  // usbConnectBus completed
+
+    chThdExit(MSG_OK);
 }
 #endif
 
 #if defined(CUBLEY_W5500_EARLY_INIT) && (CUBLEY_W5500_EARLY_INIT == TRUE)
 extern int cubley_w5500_early_init(void);
-extern volatile uint32_t g_w5500_bringup_status;
+extern volatile uint32_t g_cubley_diag_current_status;
 
 /*
  * Helper thread that performs the W5500 hardware bring-up once the
@@ -135,12 +144,12 @@ static THD_FUNCTION(W5500InitThread, arg) {
 
     if (earlyInitStatus == 0)
     {
-        g_w5500_bringup_status =
+        g_cubley_diag_current_status =
             ((uint32_t)0xD5 << 24) | ((uint32_t)0x90 << 16) | ((uint32_t)1 << 8);
     }
     else
     {
-        g_w5500_bringup_status =
+        g_cubley_diag_current_status =
             ((uint32_t)0xD5 << 24) | ((uint32_t)0x90 << 16) |
             ((uint32_t)14 << 8) | ((uint32_t)earlyInitStatus & 0xFFU);
     }
@@ -169,8 +178,8 @@ static THD_FUNCTION(W5500InitThread, arg) {
 }
 #endif
 
-#if (HAL_USE_SERIAL_USB != TRUE)
-static void ForceUsart3PinsOnPb10Pb11(void)
+#if (CUBLEY_WIRE_PROTOCOL_USB != TRUE)
+static void __attribute__((unused)) ForceUsart3PinsOnPb10Pb11(void)
 {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
     (void)RCC->AHB1ENR;
@@ -187,23 +196,12 @@ static void ForceUsart3PinsOnPb10Pb11(void)
 }
 #endif
 
-#if (HAL_USE_SERIAL_USB == TRUE)
-static void PreOsDelayMs(int ms)
-{
-    for (int t = 0; t < ms; t++)
-    {
-        for (volatile int i = 0; i < 7000; i++)
-        {
-            __asm__ volatile ("nop");
-        }
-    }
-}
-#endif
-
 int main(void)
 {
+    SetStartupTrace(0xC0, 1);
     SetStartupDiag(0xC0, 0, 1);
     SetStartupErr(0xC0, 0, 1);
+    SetStartupDiag(0xC0, 2, (CUBLEY_USB_CDC_ACTIVE ? 1 : 0));  // Diagnostic: is USB_CDC active?
 
     halInit();
 
@@ -221,26 +219,12 @@ int main(void)
 
 #if (HAL_NF_USE_STM32_CRC == TRUE)
     crcStart(NULL);
+    SetStartupTrace(0xC3, 0);
     SetStartupDiag(0xC3, 0, 1);
     SetStartupErr(0xC3, 0, 1);
 #endif
 
-#if (HAL_USE_SERIAL_USB == TRUE)
-    sduObjectInit(&SERIAL_DRIVER);
-    sduStart(&SERIAL_DRIVER, &serusbcfg);
-
-    /*
-     * The actual USB lifecycle (usbDisconnectBus -> wait -> usbStart ->
-     * usbConnectBus) is performed by UsbConnectThread once the kernel is
-     * running. Doing it here would call chThdSleepMilliseconds() before
-     * osKernelStart(), which hangs forever in this nanoFramework port
-     * because SysTick is not yet armed (see UsbConnectThread comment).
-     *
-     * VBUS-sense (NOVBUSSENS=1, VBUSASEN/VBUSBSEN cleared) is configured
-     * by ChibiOS inside usb_lld_start() because board_cubley.h defines
-     * BOARD_OTG_NOVBUSSENS.
-     */
-#else
+#if (CUBLEY_WIRE_PROTOCOL_USB != TRUE)
     static const SerialConfig usart3_cfg = {
         115200,
         0,
@@ -252,7 +236,7 @@ int main(void)
     palSetLineMode(PAL_LINE(GPIOB, 11U), PAL_MODE_ALTERNATE(7));
     ForceUsart3PinsOnPb10Pb11();
 
-    sdStart(&SERIAL_DRIVER, &usart3_cfg);
+    sdStart(&SD3, &usart3_cfg);
 #endif
 
     SetStartupDiag(0xC4, 0, 1);
@@ -268,18 +252,14 @@ int main(void)
     palClearLine(PAL_LINE(GPIOA, 2U));
 #endif
 
-#if (HAL_USE_SERIAL_USB == TRUE)
-    /*
-     * Spawn the helper thread that runs the full USB lifecycle once the
-     * scheduler is started by osKernelStart() below.
-     */
-    chThdCreateStatic(waUsbConnectThread, sizeof(waUsbConnectThread),
-                      NORMALPRIO + 1, UsbConnectThread, NULL);
-#endif
-
 #if defined(CUBLEY_W5500_EARLY_INIT) && (CUBLEY_W5500_EARLY_INIT == TRUE)
     chThdCreateStatic(waW5500InitThread, sizeof(waW5500InitThread),
                       NORMALPRIO + 1, W5500InitThread, NULL);
+#endif
+
+#if (CUBLEY_USB_CDC_ACTIVE == TRUE)
+    chThdCreateStatic(waUsbCdcInitThread, sizeof(waUsbCdcInitThread),
+                      NORMALPRIO + 2, UsbCdcInitThread, NULL);
 #endif
 
     osThreadCreate(osThread(ReceiverThreadProbe), NULL);

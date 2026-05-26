@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include "board_cubley.h"
 
-extern volatile uint32_t g_w5500_bringup_status;
-extern volatile uint32_t g_w5500_last_native_error;
+extern volatile uint32_t g_cubley_diag_current_status;
+extern volatile uint32_t g_cubley_diag_last_error;
 
 enum w5500_socket_status_t
 {
@@ -105,13 +105,13 @@ static uint16_t g_nextSourcePort = kDefaultSourcePort;
 
 static inline void set_w5500_bringup_status(uint8_t stage, uint8_t result, uint8_t detail)
 {
-    g_w5500_bringup_status = ((uint32_t)0xD5 << 24) | ((uint32_t)stage << 16) | ((uint32_t)result << 8) | (uint32_t)detail;
+    g_cubley_diag_current_status = ((uint32_t)0xD5 << 24) | ((uint32_t)stage << 16) | ((uint32_t)result << 8) | (uint32_t)detail;
 }
 
 static inline void set_w5500_last_native_error(uint8_t op, uint8_t code, uint8_t detail)
 {
     // 0xE1 marker | op | code | detail (sticky until next update).
-    g_w5500_last_native_error = ((uint32_t)0xE1 << 24) | ((uint32_t)op << 16) | ((uint32_t)code << 8) | (uint32_t)detail;
+    g_cubley_diag_last_error = ((uint32_t)0xE1 << 24) | ((uint32_t)op << 16) | ((uint32_t)code << 8) | (uint32_t)detail;
 }
 
 // Hardware SPI2 for W5500: PB12=NSS, PB13=SCK, PB14=MISO, PB15=MOSI (all AF5).
@@ -941,7 +941,7 @@ HRESULT Library_cubley_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR
             set_w5500_bringup_status(2, 14, (uint8_t)initStatus);
             // Preserve low-byte context from the last native probe record so SWD
             // diagnostics can still infer which init probe failed.
-            set_w5500_last_native_error(0x11, (uint8_t)initStatus, (uint8_t)(g_w5500_last_native_error & 0xFFU));
+            set_w5500_last_native_error(0x11, (uint8_t)initStatus, (uint8_t)(g_cubley_diag_last_error & 0xFFU));
             NANOCLR_SET_AND_LEAVE(S_OK);
         }
 

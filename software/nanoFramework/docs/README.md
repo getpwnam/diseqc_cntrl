@@ -26,6 +26,7 @@ This folder is the canonical documentation root for the `software/nanoFramework`
 - `reference/ARCHITECTURE.md`
 - `reference/MQTT_API.md`
 - `reference/CONFIGURATION.md`
+- `reference/DIAGNOSTICS_MAILBOX.md`
 
 ## Hardware-Oriented Notes (software integration)
 

@@ -22,14 +22,20 @@ namespace DiSEqC_Control
 
         public static void Main()
         {
+            // Sentinel: very first managed instruction. If mailbox shows this,
+            // Main() is reachable and the CLR started the app successfully.
+            Cubley.Interop.BringupStatus.NativeSet(0xD5AA0001u);
+
             // Keep a direct Runtime.Events type reference so metadata processing
             // includes the managed assembly required by System.Device.Gpio.
             _ = typeof(NativeEventDispatcher);
 
+            Cubley.Interop.BringupStatus.NativeSet(0xD5AA0002u);
+
             byte probeBitmap = RunHardwarePresenceProbes();
             Debug.WriteLine("[probe] bitmap=0x" + probeBitmap.ToString("X2") + " (bit0=W5500, bit1=LNBH26, bit2=FRAM)");
 
-            Cubley.Interop.BringupStatus.NativeSet(0xD5E20000u | probeBitmap);
+            Cubley.Interop.DiagnosticsMailbox.NativeTryLatchBootProbe(0xD5E20000u | probeBitmap);
 
             Program.MainApp(HardwareCapabilities.FromBitmap(probeBitmap));
         }
