@@ -5026,6 +5026,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 137.16 80.01 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "110"
+			(at 137.16 80.01 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "88213a14-8c93-409e-b4af-a8d887c32b56")
 		)
@@ -5194,6 +5216,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 111.76 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "75"
+			(at 111.76 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "6d42628d-d732-4891-9507-035de99c3e33")
 		)
@@ -5352,6 +5396,28 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 92.71 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 92.71 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "75"
 			(at 92.71 27.94 0)
 			(hide yes)
 			(show_name no)
@@ -5598,6 +5664,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 254 62.23 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "114"
+			(at 254 62.23 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "09dbf159-7d78-4a2a-869c-0f4afc21c8c4")
 		)
@@ -5756,6 +5844,28 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 82.55 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 82.55 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "75"
 			(at 82.55 27.94 0)
 			(hide yes)
 			(show_name no)
@@ -6001,6 +6111,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 91.44 114.3 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "108"
+			(at 91.44 114.3 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "b1a70b89-6685-4ff2-9e8b-04bcd43a4638")
 		)
@@ -6149,6 +6281,39 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 144.78 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 144.78 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "115"
+			(at 144.78 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ToleranceRequirement" "<=1%"
 			(at 144.78 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -6396,6 +6561,28 @@
 				)
 			)
 		)
+		(property "InvenTree" "221"
+			(at 73.66 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 73.66 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "d67787a0-e85c-46d4-a92b-70db83db8e0c")
 		)
@@ -6620,6 +6807,28 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 137.16 68.58 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 137.16 68.58 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "110"
 			(at 137.16 68.58 90)
 			(hide yes)
 			(show_name no)
@@ -6945,6 +7154,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 175.26 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "69"
+			(at 175.26 39.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "2288089b-0a54-42f7-84aa-a1076be2f5ba")
 		)
@@ -7093,6 +7324,28 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 53.34 161.29 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 53.34 161.29 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "75"
 			(at 53.34 161.29 90)
 			(hide yes)
 			(show_name no)
@@ -7262,6 +7515,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 160.02 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "75"
+			(at 160.02 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "60c9220f-11ea-4b6a-833a-6b696432fa83")
 		)
@@ -7410,6 +7685,28 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 53.34 154.94 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 53.34 154.94 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "76"
 			(at 53.34 154.94 90)
 			(hide yes)
 			(show_name no)
@@ -7735,6 +8032,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 100.33 119.38 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "104"
+			(at 100.33 119.38 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "2289cab2-fb6f-46d1-83c8-f52311c2b512")
 		)
@@ -7884,6 +8203,28 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 45.72 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 45.72 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "106"
 			(at 45.72 31.75 0)
 			(hide yes)
 			(show_name no)
@@ -8140,6 +8481,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 101.6 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "75"
+			(at 101.6 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "d4141923-1463-47d9-a3d6-e9dc88619268")
 		)
@@ -8286,6 +8649,39 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 39.37 147.32 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 39.37 147.32 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "112"
+			(at 39.37 147.32 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ToleranceRequirement" "<=1%"
 			(at 39.37 147.32 90)
 			(hide yes)
 			(show_name no)
@@ -8533,6 +8929,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 82.55 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "66"
+			(at 82.55 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "631d9a25-e222-446b-aa4f-4d0e8c78a566")
 		)
@@ -8731,6 +9149,28 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 27.94 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 27.94 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "92"
 			(at 27.94 96.52 0)
 			(hide yes)
 			(show_name no)
@@ -9087,6 +9527,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 227.33 59.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "80"
+			(at 227.33 59.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "4"
 			(uuid "45563dcf-9304-4c95-a1c8-fd16f4a7de7d")
 		)
@@ -9279,6 +9741,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 137.16 74.93 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "110"
+			(at 137.16 74.93 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "0b036582-22a9-46a5-98b1-3e6c1e77917f")
 		)
@@ -9428,6 +9912,28 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 100.33 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 100.33 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "66"
 			(at 100.33 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -9646,6 +10152,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 86.36 125.73 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "83"
+			(at 86.36 125.73 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "28759aae-7cfd-4227-9567-db0a926d74ee")
 		)
@@ -9794,6 +10322,28 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 254 67.31 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 254 67.31 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "114"
 			(at 254 67.31 90)
 			(hide yes)
 			(show_name no)
@@ -9960,6 +10510,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 137.16 63.5 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "110"
+			(at 137.16 63.5 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "bcb7f66e-10f0-4f3c-bac5-7df47176c1b9")
 		)
@@ -10108,6 +10680,39 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 149.86 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 149.86 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "115"
+			(at 149.86 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "ToleranceRequirement" "<=1%"
 			(at 149.86 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -10277,6 +10882,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 36.83 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "106"
+			(at 36.83 31.75 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "76b02d69-8d8c-4479-8960-0b86cf9551be")
 		)
@@ -10435,6 +11062,28 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 120.65 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 120.65 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "75"
 			(at 120.65 27.94 0)
 			(hide yes)
 			(show_name no)
@@ -10810,6 +11459,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 168.91 59.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "120"
+			(at 168.91 59.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "4"
 			(uuid "780b3ec9-cf80-429f-accc-6c57c1e6c4f7")
 		)
@@ -10999,6 +11670,28 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
+			(at 57.15 74.93 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 57.15 74.93 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "113"
 			(at 57.15 74.93 90)
 			(hide yes)
 			(show_name no)

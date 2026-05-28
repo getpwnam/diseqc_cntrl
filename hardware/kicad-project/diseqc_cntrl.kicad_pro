@@ -724,7 +724,7 @@
         },
         {
           "group_by": false,
-          "label": "Qty",
+          "label": "Quantity",
           "name": "${QUANTITY}",
           "show": true
         },
@@ -762,12 +762,6 @@
           "group_by": false,
           "label": "Datasheet",
           "name": "Datasheet",
-          "show": true
-        },
-        {
-          "group_by": false,
-          "label": "Arrow Price/Stock",
-          "name": "Arrow Price/Stock",
           "show": false
         },
         {
@@ -816,7 +810,7 @@
           "group_by": false,
           "label": "Mouser Part Number",
           "name": "Mouser Part Number",
-          "show": true
+          "show": false
         },
         {
           "group_by": false,
@@ -856,12 +850,6 @@
         },
         {
           "group_by": false,
-          "label": "Arrow Part Number",
-          "name": "Arrow Part Number",
-          "show": false
-        },
-        {
-          "group_by": false,
           "label": "Description",
           "name": "Description",
           "show": false
@@ -895,6 +883,36 @@
           "label": "KLC_S4.2_3V3OUT",
           "name": "KLC_S4.2_3V3OUT",
           "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Tolerance",
+          "name": "Tolerance",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Part URL",
+          "name": "Part URL",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "InvenTree",
+          "name": "InvenTree",
+          "show": true
+        },
+        {
+          "group_by": false,
+          "label": "ToleranceRequirement",
+          "name": "ToleranceRequirement",
+          "show": true
+        },
+        {
+          "group_by": false,
+          "label": "VoltageRequirement",
+          "name": "VoltageRequirement",
+          "show": true
         }
       ],
       "filter_string": "",
@@ -960,7 +978,7 @@
         "uuid": "82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
       }
     ],
-    "used_designators": "",
+    "used_designators": "R32",
     "variants": []
   },
   "sheets": [

@@ -927,6 +927,28 @@
 				)
 			)
 		)
+		(property "Tolerance" ""
+			(at 30.48 30.48 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "101"
+			(at 30.48 30.48 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "3"
 			(uuid "a94b92f3-0e4b-42d7-ab85-4dd1a4f8c35a")
 		)
