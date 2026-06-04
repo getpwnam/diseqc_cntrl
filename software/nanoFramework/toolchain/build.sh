@@ -44,7 +44,15 @@ NC='\033[0m' # No Color
 
 # Configuration
 NF_INTERPRETER_REPO="https://github.com/nanoframework/nf-interpreter.git"
-NF_INTERPRETER_DIR="/nf-interpreter"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+WORKSPACE_ROOT="$PROJECT_ROOT"
+NF_NATIVE_DIR="$WORKSPACE_ROOT/nf-native"
+WORKSPACE_BUILD_DIR="$WORKSPACE_ROOT/build"
+NF_INTERPRETER_DIR="$WORKSPACE_ROOT/.cache/nf-interpreter"
+
+mkdir -p "$NF_INTERPRETER_DIR"
+echo -e "${YELLOW}Using local nf-interpreter path: $NF_INTERPRETER_DIR${NC}"
 NF_INTERPRETER_REF="${NF_INTERPRETER_REF:-main}"
 TARGET_NAME="M0DMF_CUBLEY_F407"
 BUILD_TYPE="Release"
@@ -660,16 +668,16 @@ mkdir -p "$TARGET_DIR/common"
 
 # Copy board files
 echo -e "${YELLOW}Copying board configuration files...${NC}"
-cp /work/nf-native/board_cubley.h $TARGET_DIR/
-cp /work/nf-native/board_cubley.h $TARGET_DIR/board.h
-cp /work/nf-native/board_cubley.cpp $TARGET_DIR/board.c
-cp /work/nf-native/diseqc_native.h $TARGET_DIR/common/
-cp /work/nf-native/diseqc_native.cpp $TARGET_DIR/common/
-cp /work/nf-native/lnbh26_native.h $TARGET_DIR/common/
-cp /work/nf-native/lnbh26_native.cpp $TARGET_DIR/common/
-cp /work/nf-native/cubley_interop.cpp $TARGET_DIR/nanoCLR/
-cp /work/nf-native/lnbh26_interop.cpp $TARGET_DIR/nanoCLR/
-cp /work/nf-native/w5500_interop.cpp $TARGET_DIR/nanoCLR/
+cp "$NF_NATIVE_DIR/board_cubley.h" "$TARGET_DIR/"
+cp "$NF_NATIVE_DIR/board_cubley.h" "$TARGET_DIR/board.h"
+cp "$NF_NATIVE_DIR/board_cubley.cpp" "$TARGET_DIR/board.c"
+cp "$NF_NATIVE_DIR/diseqc_native.h" "$TARGET_DIR/common/"
+cp "$NF_NATIVE_DIR/diseqc_native.cpp" "$TARGET_DIR/common/"
+cp "$NF_NATIVE_DIR/lnbh26_native.h" "$TARGET_DIR/common/"
+cp "$NF_NATIVE_DIR/lnbh26_native.cpp" "$TARGET_DIR/common/"
+cp "$NF_NATIVE_DIR/cubley_interop.cpp" "$TARGET_DIR/nanoCLR/"
+cp "$NF_NATIVE_DIR/lnbh26_interop.cpp" "$TARGET_DIR/nanoCLR/"
+cp "$NF_NATIVE_DIR/w5500_interop.cpp" "$TARGET_DIR/nanoCLR/"
 
 # Register custom interop assembly module so CLR interop table includes
 # Cubley.Interop native bindings.
@@ -690,7 +698,7 @@ EOF_FIND_INTEROP
 
 # Copy required ChibiOS target config files from local overrides first,
 # then fill missing files from an STM32F4 reference target.
-LOCAL_TARGET_OVERRIDES_DIR="/work/nf-native/target-overrides"
+LOCAL_TARGET_OVERRIDES_DIR="$NF_NATIVE_DIR/target-overrides"
 
 copy_if_absent() {
     local src="$1"
@@ -754,7 +762,7 @@ for required_target_file in \
     "$TARGET_DIR/target_system_io_ports_config.h"; do
     if [ ! -f "$required_target_file" ]; then
         echo -e "${RED}Missing required local target override: $required_target_file${NC}"
-        echo -e "${RED}Add it under /work/nf-native/target-overrides and rebuild.${NC}"
+        echo -e "${RED}Add it under $NF_NATIVE_DIR/target-overrides and rebuild.${NC}"
         exit 1
     fi
 done
@@ -845,7 +853,7 @@ if [ -n "$REFERENCE_BOARD" ]; then
     copy_if_absent "$REFERENCE_BOARD/nanoBooter/STM32F407xG_booter.ld" "$TARGET_DIR/nanoBooter/STM32F407xG_booter.ld"
     copy_if_absent "$REFERENCE_BOARD/nanoBooter/main.c" "$TARGET_DIR/nanoBooter/main.c"
 
-    # Ensure linker scripts exist with the exact names expected by /work/build/CMakeLists.txt
+    # Ensure linker scripts exist with the exact names expected by workspace build/CMakeLists.txt
     if [ ! -f "$TARGET_DIR/nanoCLR/STM32F407xG_CLR.ld" ]; then
         REF_CLR_LD="$(find "$REFERENCE_BOARD/nanoCLR" -maxdepth 1 -type f -name '*_CLR.ld' | head -n1)"
         if [ -n "$REF_CLR_LD" ]; then
@@ -874,10 +882,10 @@ fi
 
 # If a workspace mcuconf is provided, use it as the base before appending
 # profile-specific overrides below.
-if [ -f /work/build/mcuconf.h ]; then
-    cp /work/build/mcuconf.h "$TARGET_DIR/"
-    cp /work/build/mcuconf.h "$TARGET_DIR/nanoCLR/"
-    cp /work/build/mcuconf.h "$TARGET_DIR/nanoBooter/"
+if [ -f "$WORKSPACE_BUILD_DIR/mcuconf.h" ]; then
+    cp "$WORKSPACE_BUILD_DIR/mcuconf.h" "$TARGET_DIR/"
+    cp "$WORKSPACE_BUILD_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/"
+    cp "$WORKSPACE_BUILD_DIR/mcuconf.h" "$TARGET_DIR/nanoBooter/"
 fi
 
 # Apply board-specific peripheral usage overrides
@@ -1024,30 +1032,30 @@ if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
 
     # Keep USB and UART profiles on the same shared nanoCLR entrypoint source,
     # selected at compile-time via HAL_USE_SERIAL_USB.
-    if [ -f /work/nf-native/target-overrides/nanoCLR/main.c ]; then
-        cp /work/nf-native/target-overrides/nanoCLR/main.c "$TARGET_DIR/nanoCLR/main.c"
+    if [ -f "$NF_NATIVE_DIR/target-overrides/nanoCLR/main.c" ]; then
+        cp "$NF_NATIVE_DIR/target-overrides/nanoCLR/main.c" "$TARGET_DIR/nanoCLR/main.c"
     fi
 
     # Reference nanoBooter mains often depend on board-specific button/LED macros.
     # Use this target's minimal booter main to keep boot path board-agnostic.
-    if [ -f /work/build/nanoBooter_main.c ]; then
-        cp /work/build/nanoBooter_main.c "$TARGET_DIR/nanoBooter/main.c"
+    if [ -f "$WORKSPACE_BUILD_DIR/nanoBooter_main.c" ]; then
+        cp "$WORKSPACE_BUILD_DIR/nanoBooter_main.c" "$TARGET_DIR/nanoBooter/main.c"
     fi
 else
-    if [ ! -f "$TARGET_DIR/nanoBooter/main.c" ] && [ -f /work/build/nanoBooter_main.c ]; then
-        cp /work/build/nanoBooter_main.c "$TARGET_DIR/nanoBooter/main.c"
+    if [ ! -f "$TARGET_DIR/nanoBooter/main.c" ] && [ -f "$WORKSPACE_BUILD_DIR/nanoBooter_main.c" ]; then
+        cp "$WORKSPACE_BUILD_DIR/nanoBooter_main.c" "$TARGET_DIR/nanoBooter/main.c"
     fi
 
     # Always select nanoCLR entrypoint deterministically per profile.
     # Relying on an existing main.c leaks state across profile switches.
-    if [ "$ENABLE_BRINGUP_HARDALIVE" = "TRUE" ] && [ -f /work/build/nanoCLR_hardalive_main.c ]; then
-        cp /work/build/nanoCLR_hardalive_main.c "$TARGET_DIR/nanoCLR/main.c"
-    elif [ "$ENABLE_BRINGUP_SMOKE" = "TRUE" ] && [ -f /work/build/nanoCLR_bringup_main.c ]; then
-        cp /work/build/nanoCLR_bringup_main.c "$TARGET_DIR/nanoCLR/main.c"
-    elif [ -f /work/nf-native/target-overrides/nanoCLR/main.c ]; then
-        cp /work/nf-native/target-overrides/nanoCLR/main.c "$TARGET_DIR/nanoCLR/main.c"
-    elif [ -f /work/build/nanoCLR_main.c ]; then
-        cp /work/build/nanoCLR_main.c "$TARGET_DIR/nanoCLR/main.c"
+    if [ "$ENABLE_BRINGUP_HARDALIVE" = "TRUE" ] && [ -f "$WORKSPACE_BUILD_DIR/nanoCLR_hardalive_main.c" ]; then
+        cp "$WORKSPACE_BUILD_DIR/nanoCLR_hardalive_main.c" "$TARGET_DIR/nanoCLR/main.c"
+    elif [ "$ENABLE_BRINGUP_SMOKE" = "TRUE" ] && [ -f "$WORKSPACE_BUILD_DIR/nanoCLR_bringup_main.c" ]; then
+        cp "$WORKSPACE_BUILD_DIR/nanoCLR_bringup_main.c" "$TARGET_DIR/nanoCLR/main.c"
+    elif [ -f "$NF_NATIVE_DIR/target-overrides/nanoCLR/main.c" ]; then
+        cp "$NF_NATIVE_DIR/target-overrides/nanoCLR/main.c" "$TARGET_DIR/nanoCLR/main.c"
+    elif [ -f "$WORKSPACE_BUILD_DIR/nanoCLR_main.c" ]; then
+        cp "$WORKSPACE_BUILD_DIR/nanoCLR_main.c" "$TARGET_DIR/nanoCLR/main.c"
     elif [ -f "$TARGET_DIR/nanoCLR/main.c" ]; then
         :
     fi
@@ -1162,8 +1170,8 @@ fi
 # Generate top-level target CMakeLists.txt.
 # This is required by nf-interpreter CMake line 833 (add_subdirectory).
 # A local override takes priority; otherwise generate a standard one.
-if [ -f /work/build/CMakeLists.txt ]; then
-    cp /work/build/CMakeLists.txt "$TARGET_DIR/"
+if [ -f "$WORKSPACE_BUILD_DIR/CMakeLists.txt" ]; then
+    cp "$WORKSPACE_BUILD_DIR/CMakeLists.txt" "$TARGET_DIR/"
 elif [ ! -f "$TARGET_DIR/CMakeLists.txt" ]; then
     cat > "$TARGET_DIR/CMakeLists.txt" << 'EOF_TARGET_CMAKE'
 #
@@ -1414,22 +1422,22 @@ if [ -f "nanoCLR.bin" ]; then
     echo -e "${GREEN}Build SUCCESS!${NC}"
     echo -e "${GREEN}========================================${NC}"
     
-    # Copy output to work directory
-    mkdir -p /work/build
-    cp nanoCLR.bin /work/build/nanoCLR.bin
-    cp nanoCLR.hex /work/build/nanoCLR.hex
-    cp nanoCLR.elf /work/build/nanoCLR.elf
+    # Copy output to workspace build directory
+    mkdir -p "$WORKSPACE_BUILD_DIR"
+    cp nanoCLR.bin "$WORKSPACE_BUILD_DIR/nanoCLR.bin"
+    cp nanoCLR.hex "$WORKSPACE_BUILD_DIR/nanoCLR.hex"
+    cp nanoCLR.elf "$WORKSPACE_BUILD_DIR/nanoCLR.elf"
     if [ -f "nanoBooter.bin" ]; then
-        cp nanoBooter.bin /work/build/nanoBooter.bin
+        cp nanoBooter.bin "$WORKSPACE_BUILD_DIR/nanoBooter.bin"
     fi
     if [ -f "nanoBooter.hex" ]; then
-        cp nanoBooter.hex /work/build/nanoBooter.hex
+        cp nanoBooter.hex "$WORKSPACE_BUILD_DIR/nanoBooter.hex"
     fi
     if [ -f "nanoBooter.elf" ]; then
-        cp nanoBooter.elf /work/build/nanoBooter.elf
+        cp nanoBooter.elf "$WORKSPACE_BUILD_DIR/nanoBooter.elf"
     fi
     
-    echo -e "${GREEN}Firmware files copied to: /work/build/${NC}"
+    echo -e "${GREEN}Firmware files copied to: $WORKSPACE_BUILD_DIR/${NC}"
     if [ -f "nanoBooter.bin" ]; then
         echo -e "${GREEN}  - nanoBooter.bin${NC}"
         echo -e "${GREEN}  - nanoBooter.hex${NC}"
