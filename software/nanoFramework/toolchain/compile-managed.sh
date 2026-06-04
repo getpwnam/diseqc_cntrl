@@ -7,7 +7,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT="$ROOT_DIR/DiSEqC_Control/DiSEqC_Control.nfproj"
 SOLUTION="$ROOT_DIR/DiSEqC_Control/DiSEqC_Control.sln"
 DEFAULT_NANO_PS_PATH=""
-NANO_EXT_ROOT="/home/cp/.vscode-server/extensions"
+NANO_EXT_ROOT="${HOME:-/home/vscode}/.vscode-server/extensions"
 NF_MDP_MSBUILDTASK_PATH_EFFECTIVE="${NF_MDP_MSBUILDTASK_PATH:-}"
 NF_MDP_TEMP_DIR=""
 

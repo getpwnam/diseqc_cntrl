@@ -5,7 +5,29 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT="$ROOT_DIR/DiSEqC_Control/DiSEqC_Control.nfproj"
 SOLUTION="$ROOT_DIR/DiSEqC_Control/DiSEqC_Control.sln"
-NANO_PS_PATH="${NANO_PS_PATH:-/home/cp/.vscode-server/extensions/nanoframework.vscode-nanoframework-1.0.247/dist/utils/nanoFramework/v1.0/}"
+
+resolve_nano_ps_path() {
+  local home_dir="${HOME:-/home/vscode}"
+  local root="$home_dir/.vscode-server/extensions"
+  local latest=""
+
+  if [[ -d "$root" ]]; then
+    latest="$(ls -1d "$root"/nanoframework.vscode-nanoframework-* 2>/dev/null | sort -V | tail -n 1)"
+    if [[ -n "$latest" && -d "$latest/dist/utils/nanoFramework/v1.0" ]]; then
+      echo "$latest/dist/utils/nanoFramework/v1.0/"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+if [[ -n "${NANO_PS_PATH:-}" ]]; then
+  NANO_PS_PATH="$NANO_PS_PATH"
+else
+  NANO_PS_PATH="$(resolve_nano_ps_path || true)"
+fi
+
 CONFIGURATION="${CONFIGURATION:-Release}"
 NF_MDP_MSBUILDTASK_PATH_EFFECTIVE="${NF_MDP_MSBUILDTASK_PATH:-}"
 NF_MDP_TEMP_DIR=""

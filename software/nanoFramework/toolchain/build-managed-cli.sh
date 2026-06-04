@@ -8,7 +8,8 @@ SOLUTION="${SOLUTION:-$ROOT_DIR/DiSEqC_Control/DiSEqC_Control.sln}"
 CHECKSUM_TOOL="$SCRIPT_DIR/interop-checksum.sh"
 
 resolve_nano_ps_path() {
-  local root="/home/cp/.vscode-server/extensions"
+  local home_dir="${HOME:-/home/vscode}"
+  local root="$home_dir/.vscode-server/extensions"
   local latest=""
 
   if [[ -d "$root" ]]; then
