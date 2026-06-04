@@ -106,7 +106,11 @@ for f in "${ARGS[@]}"; do
   if [[ ! -f "$f" ]]; then
     fail "input not found: $f"
   fi
-  marker_hex="$(hexdump -n 6 -e '6/1 "%02X"' "$f" 2>/dev/null || true)"
+  if command -v hexdump >/dev/null 2>&1; then
+    marker_hex="$(hexdump -n 6 -e '6/1 "%02X"' "$f" 2>/dev/null || true)"
+  else
+    marker_hex="$(od -An -N6 -tx1 -v "$f" 2>/dev/null | tr -d ' \n' | tr '[:lower:]' '[:upper:]')"
+  fi
   if [[ "$marker_hex" != "4E464D524B31" && "$marker_hex" != "4E464D524B32" ]]; then
     fail "input is not an NFMRK assembly image: $f (header=$marker_hex)"
   fi

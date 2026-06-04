@@ -7,6 +7,16 @@ PROJECT="${PROJECT:-$ROOT_DIR/DiSEqC_Control/DiSEqC_Control.nfproj}"
 SOLUTION="${SOLUTION:-$ROOT_DIR/DiSEqC_Control/DiSEqC_Control.sln}"
 CHECKSUM_TOOL="$SCRIPT_DIR/interop-checksum.sh"
 
+restore_packages() {
+  if command -v dotnet >/dev/null 2>&1; then
+    dotnet restore "$SOLUTION"
+    return 0
+  fi
+
+  echo "dotnet SDK is required for package restore (dotnet restore)." >&2
+  return 2
+}
+
 resolve_nano_ps_path() {
   local home_dir="${HOME:-/home/vscode}"
   local root="$home_dir/.vscode-server/extensions"
@@ -169,8 +179,10 @@ if [[ -z "$NF_MDP_MSBUILDTASK_PATH_EFFECTIVE" ]]; then
   MONO_SYSTEM_DRAWING=""
   if [[ -f "/usr/lib/mono/4.5/System.Drawing.dll" ]]; then
     MONO_SYSTEM_DRAWING="/usr/lib/mono/4.5/System.Drawing.dll"
-  else
+  elif [[ -d "/usr/lib/mono" ]]; then
     MONO_SYSTEM_DRAWING="$(find /usr/lib/mono -name System.Drawing.dll | head -n 1 || true)"
+  else
+    MONO_SYSTEM_DRAWING=""
   fi
 
   if [[ -n "$MONO_SYSTEM_DRAWING" ]]; then
@@ -199,7 +211,7 @@ if [[ -z "$IMAGE_PATH" ]]; then
 fi
 
 echo "[1/3] Restoring packages"
-/usr/bin/nuget restore "$SOLUTION"
+restore_packages
 
 echo "[2/3] Building managed project ($CONFIGURATION)"
 /usr/local/bin/msbuild "$PROJECT" \

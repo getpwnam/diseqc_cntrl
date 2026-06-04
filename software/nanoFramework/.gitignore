@@ -48,3 +48,6 @@ build.log
 
 # Runtime/debug probe outputs
 .debug/
+
+**/.nuget/
+**/nuget.exe

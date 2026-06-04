@@ -47,6 +47,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     gnupg
 
+# ---- Mono repository (provides apt nuget on slim images) ----
+# RUN gpg --homedir /tmp --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF \
+#     && chmod +r /usr/share/keyrings/mono-official-archive-keyring.gpg \
+#     && echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/debian stable-buster main" | tee /etc/apt/sources.list.d/mono-official-stable.list
+
+# RUN mkdir -p /etc/apt/sequoia \
+#     && printf "[policy]\naccept_hash_algorithms = SHA1\n" \
+#        > /etc/apt/sequoia/allow-sha1.config
+
+# RUN apt update
 
 # ---- Local packages ----
 RUN apt-get install -y --no-install-recommends \
@@ -58,7 +68,12 @@ RUN apt-get install -y --no-install-recommends \
     nano \
     binutils \
     bash-completion \
-    openssh-client
+    openssh-client \
+    unzip \
+    # bsdmainutils required for hexdump
+    bsdmainutils \
+    # mono dependencies for MSBuild support
+    libmono-system-drawing4.0-cil
 
 # ---- GitHub CLI ----
 RUN mkdir -p -m 755 /etc/apt/keyrings \
@@ -149,15 +164,6 @@ RUN git clone --depth 1 --branch v1.8.5 https://github.com/STMicroelectronics/st
 
 # ---- Final cleanup ----
 RUN apt-get autoremove -y && apt-get clean
-
-# ---- Customize bash prompt to show git branch and dirty state ----
-RUN cat << 'EOF' >> /home/vscode/.bashrc
-# Git prompt helpers
-parse_git_branch() { git branch --show-current 2>/dev/null; }
-parse_git_dirty() { [[ $(git status --porcelain 2>/dev/null) ]] && echo "*"; }
-
-export PS1="\[\e[1;36m\]\u@\h\[\e[0m\]:\[\e[1;33m\]\w\[\e[0;32m\]\$(git rev-parse --is-inside-work-tree >/dev/null 2>&1 && echo \" (\$(parse_git_branch)\$(parse_git_dirty))\")\[\e[0m\]\$ "
-EOF
 
 ENV DEBIAN_FRONTEND=dialog
 
