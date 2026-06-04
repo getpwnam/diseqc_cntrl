@@ -73,7 +73,18 @@ RUN apt-get install -y --no-install-recommends \
     # bsdmainutils required for hexdump
     bsdmainutils \
     # mono dependencies for MSBuild support
-    libmono-system-drawing4.0-cil
+    libmono-system-drawing4.0-cil \
+    # debug tools
+    openocd \
+    gdb-multiarch \
+    screen \
+    udev \
+    lsof \
+    setserial \
+    picocom \
+    minicom \
+    strace \
+    tio
 
 # ---- GitHub CLI ----
 RUN mkdir -p -m 755 /etc/apt/keyrings \
