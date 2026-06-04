@@ -1,0 +1,69 @@
+{
+	"name": "nanoFramework-Cubley",
+	// Adjust this file to choose the platform you want using the prebuild containers:
+	// To do this, change the "dockerFile" to use 'Dockerfile.ChibiOS.SRC'.
+	// This will allow you to customize and build the container source and add anything you may need on top.
+	"dockerFile": "Dockerfile",
+	"context": ".",
+	"mounts": [
+		// Bind the Unix socket the Docker daemon listens on by default
+		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+		// Keep command history 
+		"source=nano-bashhistory,target=/home/vscode/commandhistory,type=volume",
+		//OPTIONAL: Mount gh cli config for seamless GitHub auth and access to private repos
+		"source=${env:HOME}${env:USERPROFILE}/.config/gh,target=/home/vscode/.config/gh,type=bind",
+
+		// OPTIONAL: Mount ssh agent socket for seamless ssh auth to git repos and other servers
+    	"source=${env:HOME}${env:USERPROFILE}/.ssh/agent.sock,target=/tmp/ssh-agent.sock,type=bind"
+
+		// OPTIONAL: Mount .azure folder for seamless az cli auth
+		// "source=${env:HOME}${env:USERPROFILE}/.azure,target=/home/vscode/.azure,type=bind"
+	],
+	// Set the *default* container specific settings.json values on container create.
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"cmake.preferredGenerators": [
+					"Ninja"
+				],
+				"cmake.generator": "Ninja",
+				"cmake.autoRestartBuild" : true,
+				"cmake.configureSettings": {
+					"CMAKE_MAKE_PROGRAM":"/usr/bin/ninja"
+				},
+				"cmake.configureOnOpen": false
+			},
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"ms-vsliveshare.vsliveshare-pack",
+				"streetsidesoftware.code-spell-checker",
+				"twxs.cmake",
+				"ms-vscode.cmake-tools",
+				"xaver.clang-format"
+			]
+		}
+	},
+	// You can pull all the repos with the latest changes, this is only valid if you are using the ./sources/Dockerfile.All containers
+	// "postAttachCommand": "/usr/local/git-pull-repos.sh"
+	// WSL/Linux device passthrough for USB debug probes and UART adapters.
+	// Attach the device to WSL first (for example with usbipd), then rebuild/reopen container.
+	"runArgs": [
+	    "--hostname=cubley-dev",
+		// Need privileged mode to access USB devices, as /dev/bus/usb may not appear if there are no shared devices.
+		"--privileged"
+		// "--device=/dev/bus/usb:/dev/bus/usb",
+		// "--device=/dev/ttyUSB0:/dev/ttyUSB0",
+		// "--device=/dev/ttyACM0:/dev/ttyACM0"
+	],
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],	
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// This is needed to allow cloning repositories like the STM32 hal driver ones
+	"postCreateCommand": ".devcontainer/postcreate.sh",
+	// Uncomment to connect as a non-root user. See https: //aka.ms/vscode-remote/containers/non-root.
+	"remoteUser": "vscode",
+	"containerEnv": {
+		"SSH_AUTH_SOCK": "/tmp/ssh-agent.sock"
+	}
+
+}
