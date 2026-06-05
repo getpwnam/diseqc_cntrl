@@ -368,14 +368,18 @@ PROJECT="$(resolve_input_path "$PROJECT")"
 if [[ -d "$PROJECT" ]]; then
   PROJECT_DIR="$PROJECT"
   discovered_nfproj=""
-  if ! discovered_nfproj="$(discover_single_file "$PROJECT_DIR" "*.nfproj" 1)"; then
+  if discovered_nfproj="$(discover_single_file "$PROJECT_DIR" "*.nfproj" 1)"; then
+    :
+  else
     rc=$?
     if [[ $rc -eq 2 ]]; then
       exit 1
     fi
   fi
   if [[ -z "$discovered_nfproj" ]]; then
-    if ! discovered_nfproj="$(discover_single_file "$PROJECT_DIR" "*.nfproj" 2)"; then
+    if discovered_nfproj="$(discover_single_file "$PROJECT_DIR" "*.nfproj" 2)"; then
+      :
+    else
       rc=$?
       if [[ $rc -eq 2 ]]; then
         exit 1
@@ -392,7 +396,9 @@ if [[ -d "$PROJECT" ]]; then
 
   if [[ "$SOLUTION_ARG_SET" != "true" ]]; then
     discovered_sln=""
-    if ! discovered_sln="$(discover_single_file "$PROJECT_DIR" "*.sln" 1)"; then
+    if discovered_sln="$(discover_single_file "$PROJECT_DIR" "*.sln" 1)"; then
+      :
+    else
       rc=$?
       if [[ $rc -eq 2 ]]; then
         exit 1
@@ -411,7 +417,9 @@ fi
 if [[ -z "$SOLUTION" ]]; then
   project_parent_dir="$(dirname "$PROJECT")"
   discovered_sln=""
-  if ! discovered_sln="$(discover_single_file "$project_parent_dir" "*.sln" 1)"; then
+  if discovered_sln="$(discover_single_file "$project_parent_dir" "*.sln" 1)"; then
+    :
+  else
     rc=$?
     if [[ $rc -eq 2 ]]; then
       exit 1
