@@ -12,10 +12,11 @@ namespace DiSEqC_Control
         private const int LedPin = 2;
         private const int LnbBusId = 1;
         private const int LnbAddress = 0x08;
+        private const int LnbSentinelEmptyAddress = 0x7A;
         private const int FramBusId = 3;
         private const int FramAddress = 0x50;
-        private static bool ProbeW5500OnStartup = false;
-        private static bool ProbeFramOnStartup = false;
+        private static bool ProbeW5500OnStartup = true;
+        private static bool ProbeFramOnStartup = true;
 
         private const uint ProbeStageBase = 0xD5E10000u;
         private const uint ProbeStageW5500 = 0x0100u;
@@ -140,23 +141,58 @@ namespace DiSEqC_Control
 
         private static bool ProbeLnbh26()
         {
-            I2cDevice device = null;
+            byte lnbStatus = 0;
+            byte sentinelValue = 0;
 
             try
             {
-                device = new I2cDevice(new I2cConnectionSettings(LnbBusId, LnbAddress));
+                if (!TryReadI2cRegisterByte(LnbBusId, LnbAddress, 0x01, out lnbStatus))
+                {
+                    Debug.WriteLine("[probe] LNBH26 I2C" + LnbBusId + " addr=0x" + LnbAddress.ToString("X2") + " present=false (no ACK/read failure)");
+                    return false;
+                }
 
-                // Probe by reading status register (0x01); ACK on address+register is sufficient for presence.
-                byte[] reg = new byte[1] { 0x01 };
-                byte[] status = new byte[1];
-                device.WriteRead(reg, status);
+                // LNBH26 status register uses only low 3 bits.
+                if ((lnbStatus & 0xF8) != 0)
+                {
+                    Debug.WriteLine("[probe] LNBH26 status=0x" + lnbStatus.ToString("X2") + " invalid bit pattern; treating as absent");
+                    return false;
+                }
 
-                Debug.WriteLine("[probe] LNBH26 I2C" + LnbBusId + " addr=0x" + LnbAddress.ToString("X2") + " present=true");
+                // If an intentionally empty sentinel address also ACKs on the same bus,
+                // the bus/probe path is likely unreliable for presence detection.
+                if (TryReadI2cRegisterByte(LnbBusId, LnbSentinelEmptyAddress, 0x00, out sentinelValue))
+                {
+                    Debug.WriteLine("[probe] LNBH26 false-positive guard tripped: sentinel addr 0x" + LnbSentinelEmptyAddress.ToString("X2") + " also ACKed (value=0x" + sentinelValue.ToString("X2") + ")");
+                    return false;
+                }
+
+                Debug.WriteLine("[probe] LNBH26 I2C" + LnbBusId + " addr=0x" + LnbAddress.ToString("X2") + " status=0x" + lnbStatus.ToString("X2") + " present=true");
                 return true;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("[probe] LNBH26 exception: " + ex.Message);
+                return false;
+            }
+        }
+
+        private static bool TryReadI2cRegisterByte(int busId, int address, byte reg, out byte value)
+        {
+            I2cDevice device = null;
+            value = 0;
+
+            try
+            {
+                device = new I2cDevice(new I2cConnectionSettings(busId, address));
+                byte[] writeBuffer = new byte[1] { reg };
+                byte[] readBuffer = new byte[1];
+                device.WriteRead(writeBuffer, readBuffer);
+                value = readBuffer[0];
+                return true;
+            }
+            catch
+            {
                 return false;
             }
             finally
