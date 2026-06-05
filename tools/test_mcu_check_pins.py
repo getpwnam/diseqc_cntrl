@@ -3,7 +3,6 @@
 import unittest
 from pathlib import Path
 import sys
-import re
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mcu_check_pins import (
@@ -56,6 +55,30 @@ class McuCheckPinsTests(unittest.TestCase):
 
     def test_profile_lists_match_native_build_script(self):
         build_script = (NATIVE_BASE.parent / 'toolchain' / 'build.sh').read_text(encoding='utf-8')
+
+        def extract_case_entries(case_block):
+            entries = []
+            lines = case_block.splitlines()
+            i = 0
+            while i < len(lines):
+                line = lines[i].strip()
+                if not line or line.startswith('#') or not line.endswith(')'):
+                    i += 1
+                    continue
+
+                pattern = line[:-1].strip()
+                body_lines = []
+                i += 1
+                while i < len(lines):
+                    current = lines[i].strip()
+                    if current == ';;':
+                        break
+                    body_lines.append(lines[i])
+                    i += 1
+                entries.append((pattern, '\n'.join(body_lines)))
+                i += 1
+            return entries
+
         case_blocks = []
         marker = 'case "$BUILD_PROFILE" in'
         start = 0
@@ -73,19 +96,20 @@ class McuCheckPinsTests(unittest.TestCase):
 
         alias_block = case_blocks[0]
         alias_map = {}
-        for pattern, body in re.findall(r'^\s*([a-z0-9-]+(?:\|[a-z0-9-]+)*)\)\s*(.*?)\s*;;', alias_block, re.M | re.S):
-            target = re.search(r'BUILD_PROFILE="([a-z0-9-]+)"', body)
+        for pattern, body in extract_case_entries(alias_block):
+            target = None
+            for line in body.splitlines():
+                line = line.strip()
+                if line.startswith('BUILD_PROFILE="'):
+                    target = line.split('"')[1]
+                    break
             if not target:
                 continue
             for alias in pattern.split('|'):
-                alias_map[alias] = target.group(1)
+                alias_map[alias] = target
 
         profile_block = case_blocks[1]
-        native_profiles = {
-            name
-            for name in re.findall(r'\n\s*([a-z0-9-]+)\)', profile_block)
-            if name != '*'
-        }
+        native_profiles = {name for name, _ in extract_case_entries(profile_block) if name != '*'}
 
         self.assertEqual(SUPPORTED_BUILD_PROFILES, native_profiles)
         self.assertEqual(PROFILE_ALIASES, alias_map)
