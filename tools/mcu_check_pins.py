@@ -9,13 +9,35 @@ KiCad coordinate convention:
     maps to absolute (sx + px, sy - py) on the schematic.
 """
 
+import argparse
 import re
 import math
 from pathlib import Path
 from collections import defaultdict
 
 BASE = Path(__file__).resolve().parents[1] / "hardware" / "kicad-project"
+NATIVE_BASE = Path(__file__).resolve().parents[1] / "software" / "nanoFramework" / "nf-native"
 TOLERANCE = 0.05
+
+PROFILE_ALIASES = {
+    'minimal': 'cubley-stable',
+    'w5500-native': 'cubley-uart',
+    'cubley-w5500': 'cubley-uart',
+    'bringup-hardalive': 'cubley-hardalive',
+    'usb-first': 'cubley-usb',
+    'usb-no-vbus-sense': 'cubley-usb',
+    'network': 'legacy-network',
+}
+
+SUPPORTED_BUILD_PROFILES = {
+    'cubley-stable',
+    'cubley-uart',
+    'cubley-usb',
+    'cubley-hardalive',
+    'bringup-smoke',
+    'core-only',
+    'legacy-network',
+}
 
 # ---- STM32F407VGT6 Alternate Function Table ----
 STM32_AF_MAP = {
@@ -474,7 +496,297 @@ def build_connectivity(symbols, labels, global_labels, wires, no_connects, lib_s
     return pin_nets, nc_pins
 
 
-def analyze_mcu(filepath):
+def normalize_profile(profile):
+    profile = (profile or 'cubley-stable').strip()
+    return PROFILE_ALIASES.get(profile, profile)
+
+
+def parse_board_pin_config(board_header):
+    if not board_header.exists():
+        return {}
+
+    lines = board_header.read_text(encoding='utf-8').splitlines()
+    macro_expr = {}
+
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        m = re.match(r'#define\s+VAL_GPIO([A-Z])_(MODER|OTYPER|AFRL|AFRH)\s+(.*)$', line)
+        if not m:
+            i += 1
+            continue
+
+        port = m.group(1)
+        field = m.group(2)
+        expr = m.group(3).strip()
+        while expr.endswith('\\') and i + 1 < len(lines):
+            expr = expr[:-1].rstrip() + ' ' + lines[i + 1].strip()
+            i += 1
+
+        macro_expr[(port, field)] = expr
+        i += 1
+
+    pin_cfg = defaultdict(dict)
+
+    for (port, field), expr in macro_expr.items():
+        for mode, p, n in re.findall(r'PIN_MODE_(INPUT|OUTPUT|ALTERNATE|ANALOG)\(GPIO([A-Z])_PIN(\d+)\)', expr):
+            if field == 'MODER':
+                pin_cfg[f'P{p}{n}']['mode'] = mode
+
+        for otype, p, n in re.findall(r'PIN_OTYPE_(PUSHPULL|OPENDRAIN)\(GPIO([A-Z])_PIN(\d+)\)', expr):
+            if field == 'OTYPER':
+                pin_cfg[f'P{p}{n}']['otype'] = otype
+
+        for p, n, af in re.findall(r'PIN_AFIO_AF\(GPIO([A-Z])_PIN(\d+),\s*(\d+)U?\)', expr):
+            if field in ('AFRL', 'AFRH'):
+                pin_cfg[f'P{p}{n}']['af'] = int(af)
+
+    return dict(pin_cfg)
+
+
+def parse_native_override_mappings():
+    mappings = {'i2c': {}, 'uart': {}, 'spi': {}, 'runtime_modes': {}}
+    overrides = NATIVE_BASE / 'target-overrides'
+
+    i2c_cfg = overrides / 'target_system_device_i2c_config.cpp'
+    if i2c_cfg.exists():
+        text = i2c_cfg.read_text(encoding='utf-8')
+        for bus, scl_port, sda_port, scl_pin, sda_pin, af in re.findall(
+            r'I2C_CONFIG_PINS\((\d+),\s*GPIO([A-Z]),\s*GPIO([A-Z]),\s*(\d+),\s*(\d+),\s*(\d+)\)',
+            text,
+        ):
+            mappings['i2c'][f'I2C{bus}'] = {
+                'SCL': (f'P{scl_port}{scl_pin}', int(af)),
+                'SDA': (f'P{sda_port}{sda_pin}', int(af)),
+            }
+
+    uart_cfg = overrides / 'target_system_io_ports_config.cpp'
+    if uart_cfg.exists():
+        text = uart_cfg.read_text(encoding='utf-8')
+        for bus, tx_port, rx_port, tx_pin, rx_pin, af in re.findall(
+            r'UART_CONFIG_PINS\((\d+),\s*GPIO([A-Z]),\s*GPIO([A-Z]),\s*(\d+),\s*(\d+),\s*(\d+)\)',
+            text,
+        ):
+            mappings['uart'][f'USART{bus}'] = {
+                'TX': (f'P{tx_port}{tx_pin}', int(af)),
+                'RX': (f'P{rx_port}{rx_pin}', int(af)),
+            }
+
+    spi_cfg = overrides / 'target_system_device_spi_config.cpp'
+    if spi_cfg.exists():
+        text = spi_cfg.read_text(encoding='utf-8')
+        for bus, body in re.findall(r'void\s+ConfigPins_SPI(\d+)\([^\)]*\)\s*\{([\s\S]*?)\n\}', text):
+            for port, pin, af in re.findall(
+                r'PAL_LINE\(GPIO([A-Z]),\s*(\d+)U\),\s*PAL_MODE_ALTERNATE\((\d+)\)',
+                body,
+            ):
+                mappings['spi'].setdefault(f'SPI{bus}', []).append((f'P{port}{pin}', int(af)))
+
+    hardalive_cfg = overrides / 'nanoCLR' / 'hardalive_main.c'
+    if hardalive_cfg.exists():
+        text = hardalive_cfg.read_text(encoding='utf-8')
+        aliases = {}
+        for name, port, pin in re.findall(r'const ioline_t\s+([a-zA-Z0-9_]+)\s*=\s*PAL_LINE\(GPIO([A-Z]),\s*(\d+)U\)', text):
+            aliases[name] = f'P{port}{pin}'
+        for alias, mode in re.findall(r'palSetLineMode\(([a-zA-Z0-9_]+),\s*PAL_MODE_([A-Z_0-9]+)\)', text):
+            pin_name = aliases.get(alias)
+            if pin_name:
+                mappings['runtime_modes'][pin_name] = mode
+
+    return mappings
+
+
+def resolve_expected_af(pin_name, bus, signal):
+    for af, func in STM32_AF_MAP.get(pin_name, []):
+        fu = func.upper()
+        if bus in fu and signal in fu:
+            return af
+        if bus.startswith('USART') and bus.replace('USART', 'UART') in fu and signal in fu:
+            return af
+    return None
+
+
+def infer_pin_requirements(net_name, pin_name, profile):
+    nu = net_name.upper()
+    req = {}
+
+    if nu in ('LED_STATUS', 'W5500_RST', 'SCSN'):
+        req['mode'] = 'OUTPUT'
+        req['otype'] = 'PUSHPULL'
+    elif nu in ('W5500_INT', 'LNB_FLT'):
+        req['mode'] = 'INPUT'
+
+    m = re.search(r'(I2C\d+)_(SCL|SDA)', nu)
+    if m:
+        bus, sig = m.group(1), m.group(2)
+        req['mode'] = 'ALTERNATE'
+        req['otype'] = 'OPENDRAIN'
+        af = resolve_expected_af(pin_name, bus, sig)
+        if af is not None:
+            req['af'] = af
+        req['bus'] = bus
+        req['signal'] = sig
+        req['component'] = 'LNBH26' if bus == 'I2C1' else 'FRAM' if bus == 'I2C3' else 'I2C'
+        return req
+
+    m = re.search(r'(USART\d+|UART\d+)_(TX|RX)', nu)
+    if m:
+        bus, sig = m.group(1), m.group(2)
+        if profile == 'cubley-hardalive' and bus in ('USART3', 'UART3'):
+            req['mode'] = 'OUTPUT'
+            req['otype'] = 'PUSHPULL'
+        else:
+            req['mode'] = 'ALTERNATE'
+            req['otype'] = 'PUSHPULL'
+            af = resolve_expected_af(pin_name, bus, sig)
+            if af is not None:
+                req['af'] = af
+        req['bus'] = bus.replace('UART', 'USART') if bus.startswith('UART') else bus
+        req['signal'] = sig
+        return req
+
+    m = re.search(r'(TIM\d+)_(CH\d+N?)', nu.replace('_DSQ', ''))
+    if m:
+        bus, sig = m.group(1), m.group(2)
+        req['mode'] = 'ALTERNATE'
+        req['otype'] = 'PUSHPULL'
+        af = resolve_expected_af(pin_name, bus, sig)
+        if af is not None:
+            req['af'] = af
+        req['bus'] = bus
+        req['signal'] = sig
+        req['component'] = 'LNBH26'
+        return req
+
+    if nu in ('SCLK', 'MISO', 'MOSI'):
+        req['mode'] = 'ALTERNATE'
+        req['otype'] = 'PUSHPULL'
+        req['af'] = 5
+        req['bus'] = 'SPI2'
+        req['component'] = 'W5500'
+        req['signal'] = {'SCLK': 'SCK', 'MISO': 'MISO', 'MOSI': 'MOSI'}[nu]
+        return req
+
+    if nu in ('USB_D-', 'USB_DM'):
+        if profile in ('cubley-uart', 'cubley-usb'):
+            req['mode'] = 'ALTERNATE'
+            req['af'] = 10
+        return req
+
+    if nu in ('USB_D+', 'USB_DP'):
+        if profile in ('cubley-uart', 'cubley-usb'):
+            req['mode'] = 'ALTERNATE'
+            req['af'] = 10
+        return req
+
+    return req
+
+
+def validate_native_pin_configuration(mcu_pins, profile):
+    conflicts = []
+    warnings = []
+    print(f"\n--- Check: Native Pin Configuration ({profile}) ---")
+
+    board_cfg = parse_board_pin_config(NATIVE_BASE / 'board_cubley.h')
+    native_maps = parse_native_override_mappings()
+
+    if not board_cfg:
+        warnings.append('board_cubley.h pin config could not be parsed')
+        print("  WARNING: board_cubley.h pin config could not be parsed")
+        return conflicts, warnings
+
+    net_to_pin = {}
+    for (pname, _), (nets, _) in mcu_pins.items():
+        for net in nets:
+            if net.startswith('__UNLABELED_NET_'):
+                continue
+            net_to_pin[net] = pname
+
+    checked = 0
+    for net, pin_name in sorted(net_to_pin.items()):
+        req = infer_pin_requirements(net, pin_name, profile)
+        if not req:
+            continue
+        checked += 1
+        actual = board_cfg.get(pin_name, {})
+
+        if profile == 'cubley-hardalive' and pin_name in native_maps.get('runtime_modes', {}):
+            mode = native_maps['runtime_modes'][pin_name]
+            if mode == 'OUTPUT_PUSHPULL':
+                actual = dict(actual)
+                actual['mode'] = 'OUTPUT'
+                actual['otype'] = 'PUSHPULL'
+
+        mismatches = []
+        for key in ('mode', 'otype', 'af'):
+            exp = req.get(key)
+            if exp is None:
+                continue
+            got = actual.get(key)
+            if got is None:
+                mismatches.append(f"{key}=<unset>, expected {exp}")
+            elif got != exp:
+                mismatches.append(f"{key}={got}, expected {exp}")
+
+        if mismatches:
+            msg = f"{net} on {pin_name}: " + '; '.join(mismatches)
+            conflicts.append(msg)
+            print(f"  CONFLICT: {msg}")
+        else:
+            details = []
+            if 'mode' in req:
+                details.append(f"mode={req['mode']}")
+            if 'otype' in req:
+                details.append(f"otype={req['otype']}")
+            if 'af' in req:
+                details.append(f"af={req['af']}")
+            print(f"  OK: {net} on {pin_name} ({', '.join(details)})")
+
+        bus = req.get('bus')
+        sig = req.get('signal')
+        if bus and sig:
+            if bus.startswith('I2C'):
+                configured = native_maps.get('i2c', {}).get(bus, {}).get(sig)
+                if configured and configured[0] != pin_name:
+                    msg = f"{bus}_{sig} native config uses {configured[0]} but schematic net {net} is on {pin_name}"
+                    conflicts.append(msg)
+                    print(f"  CONFLICT: {msg}")
+            elif bus.startswith('USART'):
+                configured = native_maps.get('uart', {}).get(bus, {}).get(sig)
+                if configured and configured[0] != pin_name:
+                    msg = f"{bus}_{sig} native config uses {configured[0]} but schematic net {net} is on {pin_name}"
+                    conflicts.append(msg)
+                    print(f"  CONFLICT: {msg}")
+            elif bus.startswith('SPI'):
+                configured = [p for p, _ in native_maps.get('spi', {}).get(bus, [])]
+                if configured and pin_name not in configured:
+                    msg = f"{bus} native config pins {', '.join(configured)} missing schematic pin {pin_name} for net {net}"
+                    conflicts.append(msg)
+                    print(f"  CONFLICT: {msg}")
+
+    if checked == 0:
+        warnings.append('No labeled MCU nets matched native pin-mode checks')
+        print("  WARNING: No labeled MCU nets matched native pin-mode checks")
+
+    print(f"\n--- Check: Key Component Pin Coverage ---")
+    component_expectations = {
+        'FRAM': {'I2C3_SCL', 'I2C3_SDA'},
+        'W5500': {'SCSN', 'SCLK', 'MISO', 'MOSI', 'W5500_RST', 'W5500_INT'},
+        'LNBH26': {'I2C1_SCL', 'I2C1_SDA', 'TIM4_CH1'},
+    }
+    for component, expected_nets in sorted(component_expectations.items()):
+        missing = sorted(n for n in expected_nets if n not in net_to_pin)
+        if missing:
+            msg = f"{component}: missing expected nets in schematic connectivity: {', '.join(missing)}"
+            warnings.append(msg)
+            print(f"  WARNING: {msg}")
+        else:
+            print(f"  {component}: OK")
+
+    return conflicts, warnings
+
+
+def analyze_mcu(filepath, profile='cubley-stable'):
     print(f"\n{'='*70}")
     print(f"MCU Pin Conflict Analysis: {filepath.name}")
     print(f"{'='*70}")
@@ -724,6 +1036,10 @@ def analyze_mcu(filepath):
         warnings.append("PH1/OSC_OUT (pin 13) is floating - needs HSE crystal or NC")
         print(f"  WARNING: PH1/OSC_OUT (pin 13) is FLOATING")
 
+    native_conflicts, native_warnings = validate_native_pin_configuration(mcu_pins, profile)
+    conflicts.extend(native_conflicts)
+    warnings.extend(native_warnings)
+
     # ============================================================
     # SUMMARY
     # ============================================================
@@ -761,10 +1077,24 @@ def analyze_mcu(filepath):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Analyze KiCad MCU pin connectivity and native pin configuration.')
+    parser.add_argument(
+        '--profile',
+        default='cubley-stable',
+        help='Native build profile (e.g. cubley-stable, cubley-uart, cubley-usb, cubley-hardalive)',
+    )
+    args = parser.parse_args()
+    selected_profile = normalize_profile(args.profile)
+    if selected_profile not in SUPPORTED_BUILD_PROFILES:
+        print(f"ERROR: unsupported profile '{args.profile}'")
+        print(f"Supported profiles: {', '.join(sorted(SUPPORTED_BUILD_PROFILES))}")
+        raise SystemExit(2)
+
     mcu_sch = BASE / "diseqc_cntrl_mcu.kicad_sch"
     print("=" * 70)
     print("KiCad STM32F407VGT6 MCU Pin Conflict Analyzer")
     print("DiSEqC Motor Control Project")
+    print(f"Build profile: {selected_profile}")
     print("=" * 70)
 
-    conflicts, warnings = analyze_mcu(mcu_sch)
+    conflicts, warnings = analyze_mcu(mcu_sch, selected_profile)
