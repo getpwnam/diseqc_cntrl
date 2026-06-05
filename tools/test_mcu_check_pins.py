@@ -3,10 +3,13 @@
 import unittest
 from pathlib import Path
 import sys
+import re
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mcu_check_pins import (
     NATIVE_BASE,
+    PROFILE_ALIASES,
+    SUPPORTED_BUILD_PROFILES,
     infer_pin_requirements,
     normalize_profile,
     parse_board_pin_config,
@@ -50,6 +53,30 @@ class McuCheckPinsTests(unittest.TestCase):
         self.assertEqual(maps['uart']['USART3']['TX'][0], 'PB10')
         spi2_pins = {pin for pin, _ in maps['spi']['SPI2']}
         self.assertTrue({'PB13', 'PB14', 'PB15'}.issubset(spi2_pins))
+
+    def test_profile_lists_match_native_build_script(self):
+        build_script = (NATIVE_BASE.parent / 'toolchain' / 'build.sh').read_text(encoding='utf-8')
+        case_blocks = re.findall(r'case "\$BUILD_PROFILE" in(.*?)\nesac', build_script, re.S)
+        self.assertGreaterEqual(len(case_blocks), 2)
+
+        alias_block = case_blocks[0]
+        alias_map = {}
+        for pattern, body in re.findall(r'\n\s*([a-z0-9|-]+)\)\n(.*?)\n\s*;;', alias_block, re.S):
+            target = re.search(r'BUILD_PROFILE="([a-z0-9-]+)"', body)
+            if not target:
+                continue
+            for alias in pattern.split('|'):
+                alias_map[alias] = target.group(1)
+
+        profile_block = case_blocks[1]
+        native_profiles = {
+            name
+            for name in re.findall(r'\n\s*([a-z0-9-]+)\)', profile_block)
+            if name != '*'
+        }
+
+        self.assertEqual(SUPPORTED_BUILD_PROFILES, native_profiles)
+        self.assertEqual(PROFILE_ALIASES, alias_map)
 
 
 if __name__ == '__main__':
