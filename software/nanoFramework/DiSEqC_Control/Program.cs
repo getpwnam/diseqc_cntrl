@@ -427,29 +427,29 @@ namespace DiSEqC_Control
 
             try
             {
-                Cubley.Interop.LNBH26.Status status = Cubley.Interop.LNBH26.Init();
-                if (status != Cubley.Interop.LNBH26.Status.Ok)
+                LNBH26.Status status = LNBH26.Init();
+                if (status != LNBH26.Status.Ok)
                 {
                     Debug.WriteLine("[LNB] Init failed: " + status);
                     return false;
                 }
 
-                status = Cubley.Interop.LNBH26.SetEnable(true);
-                if (status != Cubley.Interop.LNBH26.Status.Ok)
+                status = LNBH26.SetEnable(true);
+                if (status != LNBH26.Status.Ok)
                 {
                     Debug.WriteLine("[LNB] SetEnable(true) failed: " + status);
                     return false;
                 }
 
-                status = Cubley.Interop.LNBH26.SetVoltage(Cubley.Interop.LNBH26.Voltage.V13);
-                if (status != Cubley.Interop.LNBH26.Status.Ok)
+                status = LNBH26.SetVoltage(LNBH26.Voltage.V13);
+                if (status != LNBH26.Status.Ok)
                 {
                     Debug.WriteLine("[LNB] SetVoltage(13V) failed: " + status);
                     return false;
                 }
 
-                status = Cubley.Interop.LNBH26.SetTone(false);
-                if (status != Cubley.Interop.LNBH26.Status.Ok)
+                status = LNBH26.SetTone(false);
+                if (status != LNBH26.Status.Ok)
                 {
                     Debug.WriteLine("[LNB] SetTone(false) failed: " + status);
                     return false;
@@ -488,14 +488,14 @@ namespace DiSEqC_Control
                 return;
             }
 
-            PublishStatusInternal("lnb/voltage", Cubley.Interop.LNBH26.GetVoltage() == Cubley.Interop.LNBH26.Voltage.V18 ? "18" : "13");
-            PublishStatusInternal("lnb/tone", Cubley.Interop.LNBH26.GetTone() ? "on" : "off");
-            PublishStatusInternal("lnb/polarization", Cubley.Interop.LNBH26.GetPolarization() == Cubley.Interop.LNBH26.Polarization.Horizontal ? "horizontal" : "vertical");
-            PublishStatusInternal("lnb/band", Cubley.Interop.LNBH26.GetBand() == Cubley.Interop.LNBH26.Band.High ? "high" : "low");
+            PublishStatusInternal("lnb/voltage", LNBH26.GetVoltage() == LNBH26.Voltage.V18 ? "18" : "13");
+            PublishStatusInternal("lnb/tone", LNBH26.GetTone() ? "on" : "off");
+            PublishStatusInternal("lnb/polarization", LNBH26.GetPolarization() == LNBH26.Polarization.Horizontal ? "horizontal" : "vertical");
+            PublishStatusInternal("lnb/band", LNBH26.GetBand() == LNBH26.Band.High ? "high" : "low");
 
             int statusReg;
-            Cubley.Interop.LNBH26.Status status = Cubley.Interop.LNBH26.ReadStatus(out statusReg);
-            if (status == Cubley.Interop.LNBH26.Status.Ok)
+            LNBH26.Status status = LNBH26.ReadStatus(out statusReg);
+            if (status == LNBH26.Status.Ok)
             {
                 PublishStatusInternal("lnb/status_raw", "0x" + statusReg.ToString("X2"));
             }
@@ -515,9 +515,9 @@ namespace DiSEqC_Control
             return TryInitializeLnbControl();
         }
 
-        private static bool TryApplyLnbOperation(Cubley.Interop.LNBH26.Status status, string context)
+        private static bool TryApplyLnbOperation(LNBH26.Status status, string context)
         {
-            if (status != Cubley.Interop.LNBH26.Status.Ok)
+            if (status != LNBH26.Status.Ok)
             {
                 PublishErrorInternal(context + ": " + status);
                 return false;
@@ -661,15 +661,15 @@ namespace DiSEqC_Control
             }
 
             string normalized = NormalizePayload(payload);
-            Cubley.Interop.LNBH26.Voltage voltage;
+            LNBH26.Voltage voltage;
 
             if (normalized == "13" || normalized == "13v" || normalized == "v" || normalized == "vertical")
             {
-                voltage = Cubley.Interop.LNBH26.Voltage.V13;
+                voltage = LNBH26.Voltage.V13;
             }
             else if (normalized == "18" || normalized == "18v" || normalized == "h" || normalized == "horizontal")
             {
-                voltage = Cubley.Interop.LNBH26.Voltage.V18;
+                voltage = LNBH26.Voltage.V18;
             }
             else
             {
@@ -677,7 +677,7 @@ namespace DiSEqC_Control
                 return;
             }
 
-            TryApplyLnbOperation(Cubley.Interop.LNBH26.SetVoltage(voltage), "lnb/voltage");
+            TryApplyLnbOperation(LNBH26.SetVoltage(voltage), "lnb/voltage");
         }
 
         public void HandleLnbPolarization(string payload)
@@ -695,15 +695,15 @@ namespace DiSEqC_Control
             }
 
             string normalized = NormalizePayload(payload);
-            Cubley.Interop.LNBH26.Polarization polarization;
+            LNBH26.Polarization polarization;
 
             if (normalized == "vertical" || normalized == "v" || normalized == "13" || normalized == "13v")
             {
-                polarization = Cubley.Interop.LNBH26.Polarization.Vertical;
+                polarization = LNBH26.Polarization.Vertical;
             }
             else if (normalized == "horizontal" || normalized == "h" || normalized == "18" || normalized == "18v")
             {
-                polarization = Cubley.Interop.LNBH26.Polarization.Horizontal;
+                polarization = LNBH26.Polarization.Horizontal;
             }
             else
             {
@@ -711,7 +711,7 @@ namespace DiSEqC_Control
                 return;
             }
 
-            TryApplyLnbOperation(Cubley.Interop.LNBH26.SetPolarization(polarization), "lnb/polarization");
+            TryApplyLnbOperation(LNBH26.SetPolarization(polarization), "lnb/polarization");
         }
 
         public void HandleLnbTone(string payload)
@@ -745,7 +745,7 @@ namespace DiSEqC_Control
                 return;
             }
 
-            TryApplyLnbOperation(Cubley.Interop.LNBH26.SetTone(enable), "lnb/tone");
+            TryApplyLnbOperation(LNBH26.SetTone(enable), "lnb/tone");
         }
 
         public void HandleLnbBand(string payload)
@@ -763,15 +763,15 @@ namespace DiSEqC_Control
             }
 
             string normalized = NormalizePayload(payload);
-            Cubley.Interop.LNBH26.Band band;
+            LNBH26.Band band;
 
             if (normalized == "low" || normalized == "0")
             {
-                band = Cubley.Interop.LNBH26.Band.Low;
+                band = LNBH26.Band.Low;
             }
             else if (normalized == "high" || normalized == "1")
             {
-                band = Cubley.Interop.LNBH26.Band.High;
+                band = LNBH26.Band.High;
             }
             else
             {
@@ -779,7 +779,7 @@ namespace DiSEqC_Control
                 return;
             }
 
-            TryApplyLnbOperation(Cubley.Interop.LNBH26.SetBand(band), "lnb/band");
+            TryApplyLnbOperation(LNBH26.SetBand(band), "lnb/band");
         }
         public void HandleCalibrateReference() { PublishErrorInternal("calibration not yet bound"); }
 
@@ -874,14 +874,14 @@ namespace DiSEqC_Control
         }
 
         /// <summary>
-        /// Basic I2C communication test for LNBH25PQR
+        /// Basic I2C communication test for LNBH26
         /// </summary>
         private static void LnbI2cBasicTest()
         {
-            Debug.WriteLine("\n--- LNBH25PQR I2C Basic Test ---");
-            var status = Cubley.Interop.LNBH26.SetVoltage(Cubley.Interop.LNBH26.Voltage.V13);
+            Debug.WriteLine("\n--- LNBH26 I2C Basic Test ---");
+            var status = LNBH26.SetVoltage(LNBH26.Voltage.V13);
             Debug.WriteLine($"SetVoltage(13V) result: {status}");
-            var voltage = Cubley.Interop.LNBH26.GetVoltage();
+            var voltage = LNBH26.GetVoltage();
             Debug.WriteLine($"GetVoltage() -> {voltage}");
             // Optionally, print more status if available
         }

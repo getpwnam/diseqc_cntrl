@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 ASSEMBLY_INFO_PATH="$ROOT_DIR/Cubley.Interop/Properties/AssemblyInfo.cs"
 NATIVE_INTEROP_PATH="$ROOT_DIR/nf-native/cubley_interop.cpp"
-DEFAULT_PE_PATH="$ROOT_DIR/Cubley.Interop/bin/Release/Cubley.Interop.pe"
+DEFAULT_PE_PATH="$ROOT_DIR/build/DiSEqC_Control/Cubley.Interop.pe"
 ALLOWED_NATIVE_VERSION_FILE="$ASSEMBLY_INFO_PATH"
 
 MODE="check"

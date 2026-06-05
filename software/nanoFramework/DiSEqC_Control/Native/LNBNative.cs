@@ -1,5 +1,4 @@
-using System;
-using System.Runtime.CompilerServices;
+using CubleyLnb = Cubley.Interop.LNBH26;
 
 namespace DiSEqC_Control.Native
 {
@@ -43,7 +42,23 @@ namespace DiSEqC_Control.Native
         {
             Ok = 0,
             InvalidParam = 1,
-            NotInitialized = 2
+            NotInitialized = 2,
+            IoError = 3
+        }
+
+        public static Status Init()
+        {
+            return (Status)CubleyLnb.NativeInit();
+        }
+
+        public static Status SetEnable(bool enable)
+        {
+            return (Status)CubleyLnb.NativeSetEnable(enable);
+        }
+
+        public static Status ReadStatus(out int statusRegister)
+        {
+            return (Status)CubleyLnb.NativeReadStatus(out statusRegister);
         }
 
         /// <summary>
@@ -53,8 +68,7 @@ namespace DiSEqC_Control.Native
         /// <returns>Status code</returns>
         public static Status SetVoltage(Voltage voltage)
         {
-            int result = NativeSetVoltage((int)voltage);
-            return (Status)result;
+            return (Status)CubleyLnb.NativeSetVoltage((int)voltage);
         }
 
         /// <summary>
@@ -64,8 +78,7 @@ namespace DiSEqC_Control.Native
         /// <returns>Status code</returns>
         public static Status SetPolarization(Polarization polarization)
         {
-            int result = NativeSetPolarization((int)polarization);
-            return (Status)result;
+            return (Status)CubleyLnb.NativeSetPolarization((int)polarization);
         }
 
         /// <summary>
@@ -75,8 +88,7 @@ namespace DiSEqC_Control.Native
         /// <returns>Status code</returns>
         public static Status SetTone(bool enable)
         {
-            int result = NativeSetTone(enable);
-            return (Status)result;
+            return (Status)CubleyLnb.NativeSetTone(enable);
         }
 
         /// <summary>
@@ -86,8 +98,7 @@ namespace DiSEqC_Control.Native
         /// <returns>Status code</returns>
         public static Status SetBand(Band band)
         {
-            int result = NativeSetBand((int)band);
-            return (Status)result;
+            return (Status)CubleyLnb.NativeSetBand((int)band);
         }
 
         /// <summary>
@@ -96,8 +107,7 @@ namespace DiSEqC_Control.Native
         /// <returns>Current voltage</returns>
         public static Voltage GetVoltage()
         {
-            int result = NativeGetVoltage();
-            return (Voltage)result;
+            return (Voltage)CubleyLnb.NativeGetVoltage();
         }
 
         /// <summary>
@@ -106,7 +116,7 @@ namespace DiSEqC_Control.Native
         /// <returns>True if tone is enabled</returns>
         public static bool GetTone()
         {
-            return NativeGetTone();
+            return CubleyLnb.NativeGetTone();
         }
 
         /// <summary>
@@ -115,8 +125,7 @@ namespace DiSEqC_Control.Native
         /// <returns>Current polarization</returns>
         public static Polarization GetPolarization()
         {
-            int result = NativeGetPolarization();
-            return (Polarization)result;
+            return (Polarization)CubleyLnb.NativeGetPolarization();
         }
 
         /// <summary>
@@ -125,33 +134,7 @@ namespace DiSEqC_Control.Native
         /// <returns>Current band</returns>
         public static Band GetBand()
         {
-            int result = NativeGetBand();
-            return (Band)result;
+            return (Band)CubleyLnb.NativeGetBand();
         }
-
-        /* Native method declarations */
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeSetVoltage(int voltage);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeSetPolarization(int polarization);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeSetTone(bool enable);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeSetBand(int band);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeGetVoltage();
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern bool NativeGetTone();
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeGetPolarization();
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeGetBand();
     }
 }

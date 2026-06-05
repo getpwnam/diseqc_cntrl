@@ -1,0 +1,44 @@
+name: Interop Guard
+
+on:
+  pull_request:
+    paths:
+      - software/nanoFramework/Cubley.Interop/**
+      - software/nanoFramework/DiSEqC_Control/Native/**
+      - software/nanoFramework/nf-native/cubley_interop.cpp
+      - software/nanoFramework/toolchain/interop-checksum.sh
+      - software/nanoFramework/toolchain/interop-guard.sh
+      - software/nanoFramework/tests/DiSEqC_Control.Tests/**
+      - .github/workflows/interop-guard.yml
+  push:
+    branches:
+      - main
+    paths:
+      - software/nanoFramework/Cubley.Interop/**
+      - software/nanoFramework/DiSEqC_Control/Native/**
+      - software/nanoFramework/nf-native/cubley_interop.cpp
+      - software/nanoFramework/toolchain/interop-checksum.sh
+      - software/nanoFramework/toolchain/interop-guard.sh
+      - software/nanoFramework/tests/DiSEqC_Control.Tests/**
+      - .github/workflows/interop-guard.yml
+
+jobs:
+  interop-guard:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Cubley interop mapping
+        run: |
+          cd software/nanoFramework
+          ./toolchain/interop-checksum.sh --check
+          ./toolchain/interop-guard.sh
+
+      - name: Run host-side interop contract tests
+        run: |
+          cd software/nanoFramework/tests/DiSEqC_Control.Tests
+          dotnet test --configuration Release --nologo --filter "FullyQualifiedName~ContractTests"

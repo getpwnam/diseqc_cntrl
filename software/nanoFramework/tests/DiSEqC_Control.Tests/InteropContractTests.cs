@@ -1,6 +1,7 @@
 using DiSEqC_Control.Native;
 using System.Reflection;
 using CubleyW5500 = Cubley.Interop.W5500Socket;
+using CubleyLnb = Cubley.Interop.LNBH26;
 
 namespace DiSEqC_Control.Tests;
 
@@ -127,23 +128,26 @@ public class LnbInteropContractTests
     [Fact]
     public void StatusEnumValues_AreStable()
     {
-        Assert.Equal(0, (int)LNB.Status.Ok);
-        Assert.Equal(1, (int)LNB.Status.InvalidParam);
-        Assert.Equal(2, (int)LNB.Status.NotInitialized);
+        Assert.Equal(0, (int)LNBH26.Status.Ok);
+        Assert.Equal(1, (int)LNBH26.Status.InvalidParam);
+        Assert.Equal(2, (int)LNBH26.Status.NotInitialized);
     }
 
     [Fact]
     public void DomainEnumValues_AreStable()
     {
-        Assert.Equal(0, (int)LNB.Voltage.V13);
-        Assert.Equal(1, (int)LNB.Voltage.V18);
-        Assert.Equal(0, (int)LNB.Polarization.Vertical);
-        Assert.Equal(1, (int)LNB.Polarization.Horizontal);
-        Assert.Equal(0, (int)LNB.Band.Low);
-        Assert.Equal(1, (int)LNB.Band.High);
+        Assert.Equal(0, (int)LNBH26.Voltage.V13);
+        Assert.Equal(1, (int)LNBH26.Voltage.V18);
+        Assert.Equal(0, (int)LNBH26.Polarization.Vertical);
+        Assert.Equal(1, (int)LNBH26.Polarization.Horizontal);
+        Assert.Equal(0, (int)LNBH26.Band.Low);
+        Assert.Equal(1, (int)LNBH26.Band.High);
     }
 
     [Theory]
+    [InlineData("NativeInit")]
+    [InlineData("NativeSetEnable")]
+    [InlineData("NativeReadStatus")]
     [InlineData("NativeSetVoltage")]
     [InlineData("NativeSetPolarization")]
     [InlineData("NativeSetTone")]
@@ -154,11 +158,18 @@ public class LnbInteropContractTests
     [InlineData("NativeGetBand")]
     public void InternalNativeMethods_HaveExternShape(string methodName)
     {
-        var method = typeof(LNB).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static);
+        var method = typeof(CubleyLnb).GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
 
         Assert.NotNull(method);
-        Assert.True(method.IsPrivate);
+        Assert.True(method.IsPublic);
         Assert.True(method.IsStatic);
         Assert.Null(method.GetMethodBody());
+    }
+
+    [Fact]
+    public void ManagedLnbWrapper_PublicApi_IsPresent()
+    {
+        Assert.NotNull(typeof(LNBH26).GetMethod(nameof(LNBH26.SetVoltage), BindingFlags.Public | BindingFlags.Static));
+        Assert.NotNull(typeof(LNBH26).GetMethod(nameof(LNBH26.GetBand), BindingFlags.Public | BindingFlags.Static));
     }
 }

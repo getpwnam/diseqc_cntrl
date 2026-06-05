@@ -113,21 +113,11 @@ namespace DiSEqC_Control
         {
             try
             {
-                int socketHandle;
-                int openStatus = Cubley.Interop.W5500Socket.NativeOpen(out socketHandle);
-                if (openStatus != (int)Cubley.Interop.W5500Socket.Status.Ok)
-                {
-                    Debug.WriteLine("[probe] W5500 open_status=" + openStatus + " present=false");
-                    return false;
-                }
+                Cubley.Interop.BringupStatus.NativeSet(ProbeStageBase | ProbeStageW5500 | 0x02u);
 
                 uint version = Cubley.Interop.W5500Socket.NativeGetVersion();
+                Cubley.Interop.BringupStatus.NativeSet(ProbeStageBase | ProbeStageW5500 | 0x03u);
                 bool present = (version & 0xFFu) == 0x04u;
-
-                if (socketHandle >= 0)
-                {
-                    Cubley.Interop.W5500Socket.NativeClose(socketHandle);
-                }
 
                 Debug.WriteLine("[probe] W5500 version=0x" + version.ToString("X2") + " present=" + present);
                 return present;
