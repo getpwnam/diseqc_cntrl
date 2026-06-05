@@ -874,11 +874,11 @@ namespace DiSEqC_Control
         }
 
         /// <summary>
-        /// Basic I2C communication test for LNBH25PQR
+        /// Basic I2C communication test for LNBH26
         /// </summary>
         private static void LnbI2cBasicTest()
         {
-            Debug.WriteLine("\n--- LNBH25PQR I2C Basic Test ---");
+            Debug.WriteLine("\n--- LNBH26 I2C Basic Test ---");
             var status = LNBH26.SetVoltage(LNBH26.Voltage.V13);
             Debug.WriteLine($"SetVoltage(13V) result: {status}");
             var voltage = LNBH26.GetVoltage();
