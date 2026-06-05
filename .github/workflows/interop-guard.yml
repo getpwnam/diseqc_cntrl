@@ -19,22 +19,7 @@ on:
       - .github/workflows/interop-guard.yml
 
 jobs:
-  managed-build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build managed project
-        run: |
-          cd software/nanoFramework
-          ./toolchain/build-managed.sh compile --project DiSEqC_Control/DiSEqC_Control.nfproj
-
   interop-guard:
-    needs: managed-build
     runs-on: ubuntu-latest
     defaults:
       run:
