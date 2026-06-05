@@ -535,6 +535,45 @@ static void w5500_apply_network_settings()
     w5500_write_buf(W5500_SIPR, W5500_BSB_COMMON, g_networkIp, 4);
 }
 
+static uint8_t w5500_probe_version_minimal(uint8_t *outPhyCfgr)
+{
+    // Presence-only probe: configure pins/SPI, read VERSIONR and PHYCFGR, and
+    // avoid socket allocation and full hardware init side effects.
+    palSetLineMode(PAL_LINE(GPIOB, 13U), PAL_MODE_ALTERNATE(5));
+    palSetLineMode(PAL_LINE(GPIOB, 14U), PAL_MODE_ALTERNATE(5));
+    palSetLineMode(PAL_LINE(GPIOB, 15U), PAL_MODE_ALTERNATE(5));
+    palSetLineMode(W5500_CS_LINE, PAL_MODE_OUTPUT_PUSHPULL);
+    w5500_cs_gpio_release();
+    palSetLineMode(W5500_RESET_LINE, PAL_MODE_OUTPUT_PUSHPULL);
+    palSetLine(W5500_RESET_LINE);
+    palSetLineMode(W5500_INT_LINE, PAL_MODE_INPUT_PULLUP);
+
+    w5500_spi_start();
+    w5500_spi_set_cr1((uint16_t)(SPI_CR1_BR_2 | SPI_CR1_BR_1 | SPI_CR1_BR_0));
+
+    uint8_t version = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        version = w5500_read8(W5500_VERSIONR, W5500_BSB_COMMON);
+        if (version == 0x04)
+        {
+            break;
+        }
+        chThdSleepMilliseconds(1);
+    }
+
+    const uint8_t phycfgr = w5500_read8(W5500_PHYCFGR, W5500_BSB_COMMON);
+    w5500_spi_set_cr1(SPI_CR1_BR_1);
+
+    if (outPhyCfgr != NULL)
+    {
+        *outPhyCfgr = phycfgr;
+    }
+
+    set_w5500_last_native_error(0x56, version, phycfgr);
+    return version;
+}
+
 static w5500_socket_status_t w5500_hw_init()
 {
     set_w5500_last_native_error(0x40, 0x00, 0x00);
@@ -1256,8 +1295,9 @@ HRESULT Library_cubley_interop_W5500Socket_NativeGetVersion___STATIC__U4(CLR_RT_
 
     if (!g_initialized)
     {
-        stack.SetResult_U4(0);
-        set_w5500_last_native_error(0x52, (uint8_t)W5500_SOCKET_NOT_INITIALIZED, 0x00);
+        version = w5500_probe_version_minimal(&phycfgr);
+        stack.SetResult_U4((uint32_t)version);
+        set_w5500_bringup_status(5, version == 0x04 ? 1 : 14, version);
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 
