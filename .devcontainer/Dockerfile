@@ -58,33 +58,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # RUN apt update
 
-# ---- Local packages ----
-RUN apt-get install -y --no-install-recommends \
-    libicu-dev \
-    usbutils \
-    ripgrep \
-    less \
-    vim \
-    nano \
-    binutils \
-    bash-completion \
-    openssh-client \
-    unzip \
-    # bsdmainutils required for hexdump
-    bsdmainutils \
-    # mono dependencies for MSBuild support
-    libmono-system-drawing4.0-cil \
-    # debug tools
-    openocd \
-    gdb-multiarch \
-    screen \
-    udev \
-    lsof \
-    setserial \
-    picocom \
-    minicom \
-    strace \
-    tio
+
 
 # ---- GitHub CLI ----
 RUN mkdir -p -m 755 /etc/apt/keyrings \
@@ -172,6 +146,35 @@ RUN git clone --depth 1 --branch v1.8.5 https://github.com/STMicroelectronics/st
 #  && git clone --depth 1 --branch STABLE-2_1_3_RELEASE https://github.com/lwip-tcpip/lwip.git sources/lwip \
 #  && git clone --depth 1 --branch mbedtls-3.6.5 https://github.com/ARMmbed/mbedtls.git sources/mbedtls \
 #  && cd sources/mbedtls && git submodule update --init --recursive
+
+# ---- Local packages (near the end to allow for faster rebuilds after additions)----
+RUN apt-get install -y --no-install-recommends \
+    libicu-dev \
+    usbutils \
+    ripgrep \
+    less \
+    vim \
+    nano \
+    binutils \
+    bash-completion \
+    openssh-client \
+    iproute2 \
+    unzip \
+    # bsdmainutils required for hexdump
+    bsdmainutils \
+    # mono dependencies for MSBuild support
+    libmono-system-drawing4.0-cil \
+    # debug tools
+    openocd \
+    gdb-multiarch \
+    screen \
+    udev \
+    lsof \
+    setserial \
+    picocom \
+    minicom \
+    strace \
+    tio
 
 # ---- Final cleanup ----
 RUN apt-get autoremove -y && apt-get clean
