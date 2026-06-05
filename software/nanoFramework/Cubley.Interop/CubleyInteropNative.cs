@@ -79,85 +79,28 @@ namespace Cubley.Interop
         public enum Band { Low = 0, High = 1 }
         public enum Status { Ok = 0, InvalidParam = 1, NotInitialized = 2, IoError = 3 }
 
-        public static Status Init()
-        {
-            int result = NativeInit();
-            return (Status)result;
-        }
-
-        public static Status SetEnable(bool enable)
-        {
-            int result = NativeSetEnable(enable);
-            return (Status)result;
-        }
-
-        public static Status ReadStatus(out int statusRegister)
-        {
-            int result = NativeReadStatus(out statusRegister);
-            return (Status)result;
-        }
-
-        public static Status SetVoltage(Voltage voltage)
-        {
-            int result = NativeSetVoltage((int)voltage);
-            return (Status)result;
-        }
-        public static Status SetPolarization(Polarization polarization)
-        {
-            int result = NativeSetPolarization((int)polarization);
-            return (Status)result;
-        }
-        public static Status SetTone(bool enable)
-        {
-            int result = NativeSetTone(enable);
-            return (Status)result;
-        }
-        public static Status SetBand(Band band)
-        {
-            int result = NativeSetBand((int)band);
-            return (Status)result;
-        }
-        public static Voltage GetVoltage()
-        {
-            int result = NativeGetVoltage();
-            return (Voltage)result;
-        }
-        public static bool GetTone()
-        {
-            return NativeGetTone();
-        }
-        public static Polarization GetPolarization()
-        {
-            int result = NativeGetPolarization();
-            return (Polarization)result;
-        }
-        public static Band GetBand()
-        {
-            int result = NativeGetBand();
-            return (Band)result;
-        }
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeInit();
+        public static extern int NativeInit();
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeSetEnable(bool enable);
+        public static extern int NativeSetEnable(bool enable);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeReadStatus(out int statusRegister);
+        public static extern int NativeReadStatus(out int statusRegister);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeSetVoltage(int voltage);
+        public static extern int NativeSetVoltage(int voltage);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeSetPolarization(int polarization);
+        public static extern int NativeSetPolarization(int polarization);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeSetTone(bool enable);
+        public static extern int NativeSetTone(bool enable);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeSetBand(int band);
+        public static extern int NativeSetBand(int band);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeGetVoltage();
+        public static extern int NativeGetVoltage();
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern bool NativeGetTone();
+        public static extern bool NativeGetTone();
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeGetPolarization();
+        public static extern int NativeGetPolarization();
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int NativeGetBand();
+        public static extern int NativeGetBand();
     }
 
     public static class StatusLed

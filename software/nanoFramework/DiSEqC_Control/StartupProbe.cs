@@ -113,11 +113,19 @@ namespace DiSEqC_Control
         {
             try
             {
+                Cubley.Interop.BringupStatus.NativeSet(ProbeStageBase | ProbeStageW5500 | 0x02u);
+
+                // Non-BYREF sanity call first: helps isolate whether stall is generic interop
+                // entry for W5500 class or specific to NativeOpen(out int).
+                uint preVersion = Cubley.Interop.W5500Socket.NativeGetVersion();
+                Cubley.Interop.BringupStatus.NativeSet(ProbeStageBase | ProbeStageW5500 | 0x03u);
+
                 int socketHandle;
                 int openStatus = Cubley.Interop.W5500Socket.NativeOpen(out socketHandle);
+                Cubley.Interop.BringupStatus.NativeSet(ProbeStageBase | ProbeStageW5500 | 0x04u);
                 if (openStatus != (int)Cubley.Interop.W5500Socket.Status.Ok)
                 {
-                    Debug.WriteLine("[probe] W5500 open_status=" + openStatus + " present=false");
+                    Debug.WriteLine("[probe] W5500 pre_version=0x" + preVersion.ToString("X2") + " open_status=" + openStatus + " present=false");
                     return false;
                 }
 

@@ -29,7 +29,7 @@
     <Compile Include="HardwareCapabilities.cs" />
     <!-- <Compile Include="Manager\RotorManagerNative.cs" /> -->
     <!-- <Compile Include="Native\DiSEqCNative.cs" /> -->
-    <!-- <Compile Include="Native\LNBNative.cs" /> -->
+    <Compile Include="Native\LNBNative.cs" />
     <Compile Include="Native\W5500SocketNative.cs" />
     <Compile Include="Mqtt\AsciiCodec.cs" />
     <Compile Include="Mqtt\IMqttCommandSink.cs" />

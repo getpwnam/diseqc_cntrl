@@ -1,0 +1,50 @@
+name: Interop Guard
+
+on:
+  pull_request:
+    paths:
+      - software/nanoFramework/Cubley.Interop/**
+      - software/nanoFramework/nf-native/cubley_interop.cpp
+      - software/nanoFramework/toolchain/interop-checksum.sh
+      - software/nanoFramework/toolchain/interop-guard.sh
+      - .github/workflows/interop-guard.yml
+  push:
+    branches:
+      - main
+    paths:
+      - software/nanoFramework/Cubley.Interop/**
+      - software/nanoFramework/nf-native/cubley_interop.cpp
+      - software/nanoFramework/toolchain/interop-checksum.sh
+      - software/nanoFramework/toolchain/interop-guard.sh
+      - .github/workflows/interop-guard.yml
+
+jobs:
+  managed-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build managed project
+        run: |
+          cd software/nanoFramework
+          ./toolchain/build-managed.sh compile --project DiSEqC_Control/DiSEqC_Control.nfproj
+
+  interop-guard:
+    needs: managed-build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Cubley interop mapping
+        run: |
+          cd software/nanoFramework
+          ./toolchain/interop-checksum.sh --check
+          ./toolchain/interop-guard.sh

@@ -60,13 +60,13 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_DiagnosticsMailbox_NativeTryLatchBootProbe___STATIC__BOOLEAN__U4, // [3] DiagnosticsMailbox.NativeTryLatchBootProbe
     Library_cubley_interop_DiagnosticsMailbox_NativeGetBootProbe___STATIC__U4, // [4] DiagnosticsMailbox.NativeGetBootProbe
     Library_cubley_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4,   // [5] W5500Socket.NativeOpen
-    Library_cubley_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__STRING__STRING__STRING__STRING, // [6]
-    Library_cubley_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4,                     // [7]
-    Library_cubley_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_U1__I4__I4__BYREF_I4,          // [8]
-    Library_cubley_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARRAY_U1__I4__I4__I4__BYREF_I4,   // [9]
+    Library_cubley_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__STRING__STRING__STRING__STRING, // [6] W5500Socket.NativeConfigureNetwork
+    Library_cubley_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4,                     // [7] W5500Socket.NativeConnect
+    Library_cubley_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_U1__I4__I4__BYREF_I4,          // [8] W5500Socket.NativeSend
+    Library_cubley_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARRAY_U1__I4__I4__I4__BYREF_I4,   // [9] W5500Socket.NativeReceive
     Library_cubley_interop_W5500Socket_NativeClose___STATIC__I4__I4,                                       // [10] W5500Socket.NativeClose
-    Library_cubley_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4,                            // [11]
-    Library_cubley_interop_W5500Socket_NativeGetPhyStatus___STATIC__U4,                                    // [12]
+    Library_cubley_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4,                            // [11] W5500Socket.NativeIsConnected
+    Library_cubley_interop_W5500Socket_NativeGetPhyStatus___STATIC__U4,                                    // [12] W5500Socket.NativeGetPhyStatus
     Library_cubley_interop_W5500Socket_NativeGetVersion___STATIC__U4,                                      // [13] W5500Socket.NativeGetVersion
     Library_cubley_interop_W5500Socket_NativeGetVersionPhyStatus___STATIC__U4,                             // [14] W5500Socket.NativeGetVersionPhyStatus
     Library_cubley_interop_W5500Socket_NativeSetPhyMode___STATIC__U4__I4,                                  // [15] W5500Socket.NativeSetPhyMode
@@ -93,7 +93,7 @@ static const CLR_RT_MethodHandler method_lookup[] =
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_Cubley_Interop =
 {
     "Cubley.Interop",
-    0x2F4C7DCD,  // nativeMethodsChecksum from Cubley.Interop.pe (computed by MetaDataProcessor)
+    0xC5EF91C9,  // nativeMethodsChecksum from Cubley.Interop.pe (computed by MetaDataProcessor)
     method_lookup,
     { 1, 0, 0, 0 }
 };
