@@ -7,7 +7,7 @@ Define the software boundaries, control flow, and ownership for the `software/na
 ## Current Build Profile
 
 - Target: `M0DMF_CUBLEY_F407`
-- Build orchestrator: `toolchain/build.sh`
+- Build orchestrator: `toolchain/build-native.sh`
 - Networking (`System.Net`): **disabled** in the currently validated profile
 - Firmware outputs: `build/nanoCLR.bin`, `build/nanoCLR.hex`, `build/nanoCLR.elf`
 
@@ -47,7 +47,7 @@ Define the software boundaries, control flow, and ownership for the `software/na
 
 ### Build Flow
 
-`docker compose run ... /work/toolchain/build.sh` → clone/update `nf-interpreter` → inject target/integration files → CMake/Ninja build → copy artifacts to `build/`
+`docker compose run ... /work/toolchain/build-native.sh` → clone/update `nf-interpreter` → inject target/integration files → CMake/Ninja build → copy artifacts to `build/`
 
 ## Hardware Integration Points
 
@@ -61,14 +61,11 @@ Define the software boundaries, control flow, and ownership for the `software/na
 - PCB/schematic/fabrication ownership is in `hardware/`.
 - `nf-interpreter` is an external dependency; this repo stores integration and build profile decisions, not a full fork layout.
 
-## Related Documents
+## Related Documents (Software + Debug)
 
 - `../README.md`
-- `../../QUICK_START.md`
-- `../guides/DOCKER_BUILD_GUIDE.md`
-- `../guides/TESTING_GUIDE.md`
+- `../debug/TESTING_GUIDE.md`
 - `MQTT_API.md`
 - `CONFIGURATION.md`
-- `../hardware/W5500_ETHERNET.md`
-- `../hardware/LNB_I2C_TESTING.md`
-- `../hardware/MOTOR_ENABLE_NOTES.md`
+- `../debug/LNB_I2C_TESTING.md`
+- `../debug/W5500_LINK_BRINGUP_CHECKLIST.md`

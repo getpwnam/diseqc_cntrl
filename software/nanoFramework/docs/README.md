@@ -4,35 +4,44 @@ This folder is the canonical documentation root for the `software/nanoFramework`
 
 ## Documentation Conventions
 
-- Keep build/run guidance aligned with `../toolchain/build.sh` and `../QUICK_START.md`.
+- Keep build/run guidance aligned with `../toolchain/build-native.sh` and `../../../docs/debug/TESTING_GUIDE.md`.
 - Mark speculative or future features explicitly as optional.
 - Keep hardware manufacturing details out of this tree (place them under `../../hardware/`).
 - Prefer concise, task-oriented sections: Purpose, Prerequisites, Steps, Validation, Troubleshooting.
 
+Top-level docs taxonomy used by this repo:
+
+- `docs/software`: architecture, configuration, and API contracts
+- `docs/debug`: bring-up procedures, validation workflows, and incident logs
+- `docs/hardware`: board-specific hardware references and CAD notes
+
 ## Core Workflow
 
-- Build + flash quick path: `../QUICK_START.md`
-- Full Docker build flow: `guides/DOCKER_BUILD_GUIDE.md`
-- Functional/system testing: `guides/TESTING_GUIDE.md`
-- USB-first migration checklist: `guides/USB_FIRST_PROFILE_CHECKLIST.md`
+- Build + flash quick path: `../../../docs/debug/MANAGED_DEPLOYMENT.md`
+- Functional/system testing: `../../../docs/debug/TESTING_GUIDE.md`
 
 ## User Guides
 
-- `guides/MANUAL_MOTOR_CONTROL.md`
-- `guides/LNB_CONTROL_GUIDE.md`
+- `../../../docs/software/MANUAL_MOTOR_CONTROL.md`
+- `../../../docs/software/LNB_CONTROL_GUIDE.md`
 
 ## Reference
 
-- `reference/ARCHITECTURE.md`
-- `reference/MQTT_API.md`
-- `reference/CONFIGURATION.md`
-- `reference/DIAGNOSTICS_MAILBOX.md`
+- `../../../docs/software/ARCHITECTURE.md`
+- `../../../docs/software/MQTT_API.md`
+- `../../../docs/software/CONFIGURATION.md`
 
-## Hardware-Oriented Notes (software integration)
+## Debug and Bring-up
 
-- `hardware/W5500_ETHERNET.md`
-- `hardware/LNB_I2C_TESTING.md`
-- `hardware/MOTOR_ENABLE_NOTES.md`
+- `../../../docs/debug/DIAGNOSTICS_MAILBOX.md`
+- `../../../docs/debug/BRINGUP_TEST_LOG.md`
+- `../../../docs/debug/LNB_I2C_TESTING.md`
+- `../../../docs/debug/W5500_LINK_BRINGUP_CHECKLIST.md`
+- `../../../docs/debug/POWER_SUPPLY_OSCILLOSCOPE_TESTS.md`
+
+## Hardware Context
+
+- `../../../docs/hardware/KICAD-MISSING-SYMBOLS.md`
 
 ## Scope Boundary
 

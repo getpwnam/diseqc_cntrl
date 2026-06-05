@@ -1,16 +1,5 @@
 # Build artifacts
-build/nanoCLR.bin
-build/nanoCLR.hex
-build/nanoCLR.elf
-build/nanoBooter.bin
-build/nanoBooter.hex
-build/nanoBooter.elf
-build/*.o
-build/*.d
-build/*.map
-
-# nf-interpreter (cloned during build)
-nf-interpreter/
+build/
 
 # Docker volumes
 .docker/

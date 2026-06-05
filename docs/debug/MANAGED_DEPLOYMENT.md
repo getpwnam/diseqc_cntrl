@@ -1,4 +1,4 @@
-# Managed Code Deployment Guide
+# Managed Code Deployment Guide (Debug/Bring-up)
 
 This guide covers deploying managed C# code to the DiSEqC Controller STM32F407 running nanoFramework.
 
@@ -26,32 +26,32 @@ This guide covers deploying managed C# code to the DiSEqC Controller STM32F407 r
 
 ## Deployment Profiles
 
-### minimal (Recommended for Managed Apps)
+### cubley-stable (Recommended for Managed Apps)
 - **Status**: Production-ready
 - **Flash used**: ~281 KB (55% of available)
 - **Features**: Full nanoFramework CLR, GPIO/I2C/SPI support, no networking
-- **Build**: `./toolchain/build.sh minimal`
+- **Build**: `./toolchain/build-native.sh build --profile cubley-stable`
 - **Profile config**: RTC enabled, config block enabled, HSI PLL enabled (`ENABLE_HSI_PLL=1`)
 
-### w5500-native (Native W5500 over SPI)
+### cubley-uart (Native W5500 over SPI)
 - **Status**: Experimental
 - **Features**: System.Device.Spi for W5500, no System.Net (lwIP), custom transport
-- **Build**: `./toolchain/build.sh w5500-native`
+- **Build**: `./toolchain/build-native.sh build --profile cubley-uart`
 
-### network (Deprecated)
+### legacy-network (Deprecated)
 - **Status**: Scheduled for removal
 - **Features**: Full System.Net + lwIP (assumes STM32 internal MAC)
-- **Note**: Our board uses external W5500, not internal MAC; use w5500-native instead
+- **Note**: Our board uses external W5500, not internal MAC; use cubley-uart instead
 
 ### bringup-smoke (Hardware + UART Proof)
 - **Status**: Bring-up only
 - **Purpose**: PA2 LED blink + USART3 heartbeat for electrical/clock verification
-- **Build**: `./toolchain/build.sh bringup-smoke`
+- **Build**: `./toolchain/build-native.sh build --profile bringup-smoke`
 
-### bringup-hardalive (Bare-metal Execution Proof)
+### cubley-hardalive (Bare-metal Execution Proof)
 - **Status**: Bring-up only
 - **Purpose**: direct register-level PA2/PB10 toggling without HAL/RTOS/CLR
-- **Build**: `./toolchain/build.sh bringup-hardalive`
+- **Build**: `./toolchain/build-native.sh build --profile cubley-hardalive`
 
 ---
 
@@ -74,7 +74,7 @@ nanoFramework deploys managed code via **Wire Protocol** over UART (USART3).
 
 1. **Build and flash nanoCLR** (from [software/nanoFramework/](.)/)
    ```bash
-   ./toolchain/build.sh minimal
+   ./toolchain/build-native.sh build --profile cubley-stable
    st-flash write build/nanoBooter.bin 0x08000000
    st-flash write build/nanoCLR.bin 0x08004000
    ```
@@ -89,58 +89,50 @@ nanoFramework deploys managed code via **Wire Protocol** over UART (USART3).
 
 From [DiSEqC_Control/](../DiSEqC_Control/) project directory:
 
-1. **PowerShell (Windows)**
-   ```powershell
-   ..\toolchain\build-managed-cli.ps1 -Configuration Release `
-       -Deploy -SerialPort COM3 -Address 0x080C0000
-   ```
-
-2. **Bash (Linux/WSL)**
+1. **Bash (Linux/WSL)**
    ```bash
-   CONFIGURATION=Release ../toolchain/build-managed-cli.sh \
+   CONFIGURATION=Release ../toolchain/build-managed.sh build \
        --deploy --serialport /dev/ttyUSB0 --address 0x080C0000
    ```
 
-3. **nanoff (standalone)**
+2. **nanoff (standalone)**
    ```bash
    nanoff --nanodevice \
        --serialport /dev/ttyUSB0 \
        --baud 115200 \
        --deploy \
-      --image bin/Release/DiSEqC_Control.bin \
+     --image ../build/DiSEqC_Control/DiSEqC_Control.bin \
        --address 0x080C0000 \
        --reset
    ```
 
-**Address**: `0x080C0000` is the managed deployment region (see QUICK_START.md for layout).
+**Address**: `0x080C0000` is the managed deployment region (see TESTING_GUIDE.md for validation workflow).
 
-### Build In WSL, Flash In Windows (Recommended Hybrid Flow)
+### Build And Deploy In WSL/Linux
 
-Use this when your source tree is in WSL/Linux but your USB serial device is exposed as a Windows COM port.
+Use this when your source tree is in WSL/Linux.
 
-1. **Build in WSL (no deploy):**
+1. **Build in WSL/Linux:**
    ```bash
    cd /home/cp/Dev/diseqc_cntrl/software/nanoFramework
-   ./toolchain/build-managed-cli.sh \
+   ./toolchain/build-managed.sh build \
        --project DiSEqC_Control/DiSEqC_Control.nfproj \
-     --solution DiSEqC_Control/DiSEqC_Control.sln
+       --solution DiSEqC_Control/DiSEqC_Control.sln
    ```
 
-2. **Deploy from Windows PowerShell (COM port):**
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\toolchain\build-managed-cli.ps1 `
-       -Project .\DiSEqC_Control\DiSEqC_Control.nfproj `
-       -Solution .\DiSEqC_Control\DiSEqC_Control.sln `
-      -Image .\DiSEqC_Control\bin\Release\DiSEqC_Control.bin `
-      -DeployOnly -Deploy -SerialPort COM7 -Address 0x080C0000 -Reset
+2. **Deploy in WSL/Linux:**
+   ```bash
+   ./toolchain/build-managed.sh build \
+       --project DiSEqC_Control/DiSEqC_Control.nfproj \
+       --solution DiSEqC_Control/DiSEqC_Control.sln \
+       --image build/DiSEqC_Control/DiSEqC_Control.bin \
+       --deploy --serialport /dev/ttyUSB0 --address 0x080C0000 --reset
    ```
-
-   `-DeployOnly` skips restore/build on Windows and only flashes the prebuilt image.
 
 3. **Important:**
-   - Do not run `./toolchain/build-managed-cli.sh` directly from Windows PowerShell on a `\\wsl.localhost\...` path.
-   - If you need the Bash script from Windows, launch it with `wsl -d Debian -- bash -lc "..."`.
-   - For this target bring-up path, prefer `.bin` when the build produces it. Otherwise deploy the raw `.pe` image. Use `.nfmrk2.bin` only for tooling flows that explicitly require it.
+   - For this target bring-up path, prefer `.bin` when the build produces it.
+   - Otherwise deploy the raw `.pe` image.
+   - Use `.nfmrk2.bin` only for tooling flows that explicitly require it.
 
 ---
 
@@ -149,7 +141,7 @@ Use this when your source tree is in WSL/Linux but your USB serial device is exp
 ### UART Garbled or Silent
 1. Check baud rate (115200 8N1)
 2. Verify boardInit() calls stm32_clock_init() in board_cubley.cpp
-3. If RTC hangs for ~20s: enable HSI_PLL for that profile in build.sh
+3. If RTC hangs for ~20s: enable HSI_PLL for that profile in build-native.sh
 4. Check RCC state via GDB:
    ```gdb
    target extended-remote ...
@@ -173,7 +165,7 @@ Use this when your source tree is in WSL/Linux but your USB serial device is exp
 
 ### `devicedetails` Shows Only Native Assemblies
 1. This is expected immediately after flashing `nanoBooter.bin` and `nanoCLR.bin`.
-2. Re-run managed deployment for your app image, for example `DiSEqC_Control/bin/Release/DiSEqC_Control.bin`.
+2. Re-run managed deployment for your app image, for example `build/DiSEqC_Control/DiSEqC_Control.bin`.
 3. Run `nanoff --devicedetails` again after deploy; the managed assembly should then appear under `Assemblies:`.
 
 ---
@@ -200,9 +192,8 @@ Use this when your source tree is in WSL/Linux but your USB serial device is exp
 
 ## References
 
-- [QUICK_START.md](./QUICK_START.md) — Build + flash commands
-- [DOCKER_BUILD_GUIDE.md](./docs/guides/DOCKER_BUILD_GUIDE.md) — Docker build details
-- [board_cubley.cpp](./nf-native/board_cubley.cpp) — Target board init (includes stm32_clock_init)
+- [TESTING_GUIDE.md](./TESTING_GUIDE.md) — Bring-up and validation workflow
+- [board_cubley.cpp](../../software/nanoFramework/nf-native/board_cubley.cpp) — Target board init (includes stm32_clock_init)
 
 ---
 
@@ -223,7 +214,7 @@ Use this when your source tree is in WSL/Linux but your USB serial device is exp
 
 1. `nf-native/board_cubley.cpp`
    - `boardInit()` now calls `stm32_clock_init()`.
-2. `toolchain/build.sh`
+2. `toolchain/build-native.sh`
    - HSI PLL profile handling moved to script-level logic and re-applied after target config copies.
    - `minimal` profile now forces `ENABLE_HSI_PLL=1` for robust startup on HSE-less/unverified boards.
    - `minimal` profile enables config block so deploy tools can obtain device/deployment metadata.

@@ -1,6 +1,6 @@
 ---
 name: cubley-build-managed-unmanaged
-description: "Use when running end-to-end managed + native build/deploy for M0DMF_CUBLEY_F407, including interop checksum sync, firmware rebuild, payload deployment, and diagnostics mailbox verification. Keywords: compile-managed, build.sh cubley-stable, interop-checksum, st-flash, latest.deploy.bin, diagnostics mailbox, boot probe bitmap."
+description: "Use when running end-to-end managed + native build/deploy for M0DMF_CUBLEY_F407, including interop checksum sync, firmware rebuild, payload deployment, and diagnostics mailbox verification. Keywords: build-managed.sh compile, build-managed.sh build, build-native.sh build --profile cubley-stable, interop-checksum, st-flash, latest.deploy.bin, diagnostics mailbox, boot probe bitmap."
 ---
 
 # Cubley Managed+Native Build/Deploy Workflow
@@ -11,11 +11,11 @@ Run a deterministic workflow for this repo when both managed and native code may
 
 ## Primary Targets
 
-- software/nanoFramework/toolchain/compile-managed.sh
-- software/nanoFramework/toolchain/build.sh
+- software/nanoFramework/toolchain/build-managed.sh
+- software/nanoFramework/toolchain/build-native.sh
 - software/nanoFramework/toolchain/interop-checksum.sh
 - software/nanoFramework/tests/swd_read_bringup_status.sh
-- software/nanoFramework/docs/BRINGUP_TEST_LOG.md
+- docs/debug/BRINGUP_TEST_LOG.md
 
 ## When To Use
 
@@ -34,7 +34,7 @@ Run a deterministic workflow for this repo when both managed and native code may
 ## Canonical Full Flow
 
 1. Build managed assemblies and deterministic deploy bundle:
-   - `./toolchain/compile-managed.sh`
+   - `./toolchain/build-managed.sh compile`
 
 2. Validate interop checksum alignment:
    - `./toolchain/interop-checksum.sh --check --pe DiSEqC_Control/bin/Release/Cubley.Interop.pe`
@@ -44,7 +44,7 @@ Run a deterministic workflow for this repo when both managed and native code may
    - `./toolchain/interop-checksum.sh --check --pe DiSEqC_Control/bin/Release/Cubley.Interop.pe`
 
 4. Rebuild firmware profile:
-   - `./toolchain/build.sh cubley-stable`
+   - `./toolchain/build-native.sh build --profile cubley-stable`
 
 5. Flash fixed firmware regions:
    - `st-flash write build/nanoBooter.bin 0x08000000`
@@ -65,7 +65,7 @@ Run a deterministic workflow for this repo when both managed and native code may
 
 Use only when native binary compatibility is known unchanged.
 
-1. `./toolchain/compile-managed.sh`
+1. `./toolchain/build-managed.sh compile`
 2. `st-flash write DiSEqC_Control/bin/Release/latest.deploy.bin 0x080C0000`
 3. `st-flash reset`
 4. `./tests/swd_read_bringup_status.sh`
@@ -74,8 +74,8 @@ If startup stalls or mailbox values are unexpected, switch to Canonical Full Flo
 
 ## Verification Criteria
 
-1. `compile-managed.sh` ends with `Managed compile succeeded.`
-2. `build.sh cubley-stable` ends with `Build SUCCESS!`.
+1. `./toolchain/build-managed.sh compile` ends with `Compile mode complete`.
+2. `./toolchain/build-native.sh build --profile cubley-stable` exits successfully (and typically prints `Build SUCCESS!`).
 3. `st-flash` verifies booter/CLR/payload writes.
 4. Mailbox script reports sane values with `0xD5` status magic for active diagnostic channels.
 5. Boot probe slot eventually latches non-zero when startup reaches probe completion.
@@ -99,4 +99,4 @@ If startup stalls or mailbox values are unexpected, switch to Canonical Full Flo
 - Never flash payload into booter/CLR regions.
 - Do not skip checksum validation after interop signature/table changes.
 - Treat `latest.deploy.bin` as authoritative payload artifact for SWD deployment.
-- Record every significant run in `docs/BRINGUP_TEST_LOG.md`.
+- Record every significant run in `docs/debug/BRINGUP_TEST_LOG.md`.

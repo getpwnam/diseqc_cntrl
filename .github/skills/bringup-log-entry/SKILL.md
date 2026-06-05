@@ -11,7 +11,7 @@ Append concise, factual test-session entries to the repository bring-up log usin
 
 ## Primary Targets
 
-- software/nanoFramework/docs/BRINGUP_TEST_LOG.md
+- docs/debug/BRINGUP_TEST_LOG.md
 - software/nanoFramework/toolchain/bringup_log_append.sh
 
 ## When To Use

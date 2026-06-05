@@ -2,9 +2,12 @@
 
 **Automated satellite dish positioning and LNB control via MQTT**
 
-## Quick Start
+## Getting Started
 
-See [QUICK_START.md](QUICK_START.md) for build instructions.
+Use the debug bring-up guides as the canonical starting path:
+
+- [Managed Deployment](../../docs/debug/MANAGED_DEPLOYMENT.md)
+- [Testing Guide](../../docs/debug/TESTING_GUIDE.md)
 
 ## Build Components (Build Separately)
 
@@ -16,7 +19,7 @@ Builds the managed application in `DiSEqC_Control/` and validates C# compile hea
 
 Command:
 
-- `./toolchain/compile-managed.sh`
+- `./toolchain/build-managed.sh compile`
 
 Use this as the local pre-commit gate for managed code changes.
 
@@ -28,7 +31,7 @@ Run host-only unit tests for pure managed logic (currently `RuntimeConfiguration
 
 Recommended local sequence before commit:
 
-1. `./toolchain/compile-managed.sh`
+1. `./toolchain/build-managed.sh compile`
 2. `cd tests/DiSEqC_Control.Tests && dotnet test -v minimal`
 
 #### Managed Build + Optional Deploy (CLI helper)
@@ -36,30 +39,16 @@ Recommended local sequence before commit:
 Use the helper script when you want a single command path for full managed build (`/t:Build`) and optional deploy via `nanoff`:
 
 - Build only:
-	- `./toolchain/build-managed-cli.sh`
+	- `./toolchain/build-managed.sh build`
 - Build and deploy:
-	- `./toolchain/build-managed-cli.sh --deploy --serialport /dev/ttyUSB0 --address 0x080C0000`
+	- `./toolchain/build-managed.sh build --deploy --serialport /dev/ttyUSB0 --address 0x080C0000`
 
 Notes:
 
 - Deployment requires a valid target deployment address for your firmware layout.
-- Use `./toolchain/build-managed-cli.sh --help` for all options.
+- Use `./toolchain/build-managed.sh --help` for all options.
 
-Windows PowerShell (outside WSL):
-
-- Build only:
-	- `powershell -ExecutionPolicy Bypass -File .\toolchain\build-managed-cli.ps1`
-- Build and deploy:
-	- `powershell -ExecutionPolicy Bypass -File .\toolchain\build-managed-cli.ps1 -Deploy -SerialPort COM5 -Address 0x080C0000`
-
-PowerShell script auto-detects `NanoFrameworkProjectSystemPath` from the installed VS Code extension, or you can override with `-NanoPsPath`.
-If `nuget.exe` is not in PATH, the script automatically falls back to MSBuild restore. It resolves MSBuild in this order: `msbuild` from PATH, Visual Studio Build Tools via `vswhere`, then `dotnet msbuild`.
-
-If `dotnet msbuild` fails with the known `System.Drawing.Common` metadata processor error while running from a `\\wsl.localhost\...` workspace path, the script automatically retries managed build through WSL using `toolchain/build-managed-cli.sh`. If that retry fails, it performs a second retry through `toolchain/build-chain.sh` (which includes the metadata-processor workaround used on Linux).
-
-If VS Code extension is installed in WSL (remote) rather than Windows, pass it explicitly, for example:
-
-- `powershell -ExecutionPolicy Bypass -File .\toolchain\build-managed-cli.ps1 -NanoPsPath "\\wsl.localhost\Debian\home\cp\.vscode-server\extensions\nanoframework.vscode-nanoframework-1.0.189\dist\utils\nanoFramework\v1.0"`
+Windows users should run the shell scripts through WSL/Linux.
 
 ### 2) Firmware Build (nf-interpreter / nanoCLR)
 
@@ -67,32 +56,24 @@ Builds firmware artifacts by fetching/using `nf-interpreter` inside Docker and c
 
 Commands (recommended wrapper):
 
-- Cubley stable profile (default): `./toolchain/build.sh cubley-stable`
-- Cubley W5500-native profile: `./toolchain/build.sh cubley-w5500`
-- Cubley USB bring-up profile (no-VBUS-sense default): `./toolchain/build.sh cubley-usb`
-- Cubley hardalive profile (PA2 + PB10 hard toggle, no RTOS/CLR): `./toolchain/build.sh cubley-hardalive`
-- Bring-up smoke diagnostic profile (PA2 blink + USART3 heartbeat): `./toolchain/build.sh bringup-smoke`
-- Core-only diagnostic profile: `./toolchain/build.sh core-only`
-
-Legacy aliases are still accepted temporarily:
-
-- `minimal` -> `cubley-stable`
-- `w5500-native` -> `cubley-w5500`
-- `bringup-hardalive` -> `cubley-hardalive`
-- `usb-first` -> `cubley-usb` (VBUS-sense mode)
-- `usb-no-vbus-sense` -> `cubley-usb` (no-VBUS-sense mode)
+- Cubley stable profile (default): `./toolchain/build-native.sh build --profile cubley-stable`
+- Cubley W5500-native profile: `./toolchain/build-native.sh build --profile cubley-uart`
+- Cubley USB bring-up profile (no-VBUS-sense default): `./toolchain/build-native.sh build --profile cubley-usb`
+- Cubley hardalive profile (PA2 + PB10 hard toggle, no RTOS/CLR): `./toolchain/build-native.sh build --profile cubley-hardalive`
+- Bring-up smoke diagnostic profile (PA2 blink + USART3 heartbeat): `./toolchain/build-native.sh build --profile bringup-smoke`
+- Core-only diagnostic profile: `./toolchain/build-native.sh build --profile core-only`
 
 Deprecated profile quarantine:
 
 - `network` now maps to `legacy-network` and is blocked by default.
-- To run it intentionally: `NF_ALLOW_DEPRECATED_PROFILE=1 ./toolchain/build.sh network`
+- To run it intentionally: `NF_ALLOW_DEPRECATED_PROFILE=1 ./toolchain/build-native.sh build --profile legacy-network`
 
 ### Firmware Profile Matrix
 
 | Profile | Status | Primary Purpose | Key Traits |
 |---|---|---|---|
 | `cubley-stable` | stable | Default daily firmware | Non-network, config block on, RTC on, UART wire protocol |
-| `cubley-w5500` | scaffold | Native W5500 bring-up | Non-network, config block off, SPI/GPIO/I2C on |
+| `cubley-uart` | scaffold | Native W5500 bring-up | Non-network, config block off, SPI/GPIO/I2C on |
 | `cubley-usb` | experimental | USB-first transport bring-up | OTG1 + USB serial enabled; VBUS-sense mode selectable |
 | `cubley-hardalive` | experimental | Bare-metal liveness check | No RTOS/CLR startup; hard pin toggles |
 | `bringup-smoke` | experimental | Fast smoke diagnostics | PA2 blink + USART3 heartbeat |
@@ -111,15 +92,15 @@ Expected firmware outputs in `build/`:
 
 The only managed deployment app kept in this repo is `DiSEqC_Control/`:
 
-- Build: `./toolchain/compile-managed.sh`
-- Output: prefer `DiSEqC_Control/bin/Release/DiSEqC_Control.bin` when produced; otherwise deploy `DiSEqC_Control.pe`
+- Build: `./toolchain/build-managed.sh compile`
+- Output: `build/DiSEqC_Control/DiSEqC_Control.bin` when produced; otherwise deploy `build/DiSEqC_Control/DiSEqC_Control.pe`
 - Deploy over USART3 wire protocol with `nanoff` to `0x080C0000`
 
 ### Bring-up Session Logging
 
 To keep debugging history stable across long sessions and context compaction, append test outcomes to:
 
-- `docs/BRINGUP_TEST_LOG.md`
+- `../../docs/debug/BRINGUP_TEST_LOG.md`
 
 Helper command:
 
@@ -152,15 +133,14 @@ Rollback to default:
 Verification:
 
 - Request effective config and check `diseqc/status/config/effective/mqtt/transport_mode`.
-- For full on-device smoke steps, see `docs/guides/TESTING_GUIDE.md` (Step 2.5).
+- For full on-device smoke steps, see `../../docs/debug/TESTING_GUIDE.md` (Step 2.5).
 
-## Optional Local Full Build-Chain Check
+## Optional Managed Build Modes
 
-This path includes metadata/PE generation and now includes a Linux host workaround for metadata processor dependencies.
+Use `./toolchain/build-managed.sh` with an explicit mode:
 
-Command:
-
-- `./toolchain/build-chain.sh`
+- Full managed build (`/t:Build`): `./toolchain/build-managed.sh build`
+- Compile-only mode (`/t:Compile`): `./toolchain/build-managed.sh compile`
 
 Known limitation:
 
@@ -168,12 +148,12 @@ Known limitation:
 
 Linux metadata processor workaround:
 
-- `toolchain/build-chain.sh` now creates a temporary metadata processor override folder and injects Mono `System.Drawing.dll`, then sets `NF_MDP_MSBUILDTASK_PATH` for the `/t:Build` step.
+- `toolchain/build-managed.sh` creates a temporary metadata processor override folder and injects `System.Drawing` dependencies when available.
 - This avoids editing the VS Code extension install and keeps the workaround local/scripted.
 
 Tracking:
 
-- See [TODO.md](TODO.md), section **Current Focus: Build Chain Reliability**.
+- See [TODO.md](../../docs/software/TODO.md), section **Current Focus: Build Chain Reliability**.
 
 ## Host Prerequisites (Linux)
 
@@ -209,8 +189,7 @@ The upstream `nf-interpreter` codebase is fetched during Docker build; it is not
 ## Documentation
 
 - [Docs Index](docs/README.md)
-- [Docker Build Guide](docs/guides/DOCKER_BUILD_GUIDE.md)
-- [Testing Guide](docs/guides/TESTING_GUIDE.md)
-- [MQTT API](docs/reference/MQTT_API.md)
-- [Architecture](docs/reference/ARCHITECTURE.md)
-- [Diagnostics Mailbox](docs/reference/DIAGNOSTICS_MAILBOX.md)
+- [Testing Guide](../../docs/debug/TESTING_GUIDE.md)
+- [MQTT API](../../docs/software/MQTT_API.md)
+- [Architecture](../../docs/software/ARCHITECTURE.md)
+- [Diagnostics Mailbox](../../docs/debug/DIAGNOSTICS_MAILBOX.md)

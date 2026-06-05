@@ -93,8 +93,8 @@ Recommended full form for debug sessions:
 - Git rev: 2f9d1c3
 - Command(s):
   - Rebuilt both firmware profiles from scratch and verified fresh artifact times:
-    - `./toolchain/build.sh bringup-smoke`
-    - `./toolchain/build.sh minimal`
+    - `./toolchain/build-native.sh bringup-smoke`
+    - `./toolchain/build-native.sh minimal`
   - Rebuilt managed test app clean:
     - removed `tests/BlinkBringup/bin/Release` and `tests/BlinkBringup/obj/Release`
     - `./toolchain/compile-blink-test.sh`
@@ -266,7 +266,7 @@ This file should be committed and checked on each build to prevent version drift
   - removed custom `g_CLR_RT_ExecutionEngine.flags` mutation from `nf-native/target-overrides/nanoHAL.cpp`
   - pinned interpreter build to `NF_INTERPRETER_REF=8bc239bd2` with `NF_UPDATE_INTERPRETER=0`
   - restored minimal profile clock path (`ENABLE_HSI_PLL=0`)
-  - forced upstream/reference `nanoHAL.cpp` in `toolchain/build.sh`
+  - forced upstream/reference `nanoHAL.cpp` in `toolchain/build-native.sh`
   - added `nf-native/target-overrides/target_common.c` to map debug COM to USART3 and baud to 115200
 - Firmware artifacts flashed: `build/nanoBooter.bin` @ `0x08000000`, `build/nanoCLR.bin` @ `0x08004000`
 - UART results after each reflash:
@@ -324,7 +324,7 @@ This file should be committed and checked on each build to prevent version drift
   - Added in `boardInit()` after `stm32_clock_init()`:
     - `RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;`
 - Validation after rebuild/reflash/redeploy:
-  1. Rebuilt firmware (`toolchain/build.sh`, profile `minimal`)
+  1. Rebuilt firmware (`toolchain/build-native.sh`, profile `minimal`)
   2. Flashed `build/nanoBooter.bin` and `build/nanoCLR.bin`
   3. Deployed `tests/BlinkBringup/bin/Release/latest.deploy.bin`
   4. Verified post-reset registers without manual poke:
@@ -370,12 +370,12 @@ This file should be committed and checked on each build to prevent version drift
 @@### 2026-04-09 16:30 UTC [DIAGNOSTIC]
 @@- Git rev: 87c3638
 @@- Command(s): 
-@@  1. Recompiled managed assemblies (./toolchain/compile-managed.sh) after fixing W5500Socket.Open() signature
+@@  1. Recompiled managed assemblies (./toolchain/build-managed.sh compile) after fixing W5500Socket.Open() signature
 @@  2. Deployed rebuilt W5500Bringup.bin (nanoff --deploy --image tests/W5500Bringup/bin/Release/W5500Bringup.bin --reset)
 @@  3. Verified Cubley.Interop v1.0.0.0 present in device (nanoff --devicedetails)
 @@  4. Tested CLR startup with mailbox probe (tests/swd_read_bringup_status.sh)
 @@  5. Deployed BlinkBringup.bin test to isolate issue
-@@  6. Rebuilt CLR firmware clean (NF_INCREMENTAL_BUILD=0 ./toolchain/build.sh w5500-native)
+@@  6. Rebuilt CLR firmware clean (NF_INCREMENTAL_BUILD=0 ./toolchain/build-native.sh w5500-native)
 @@  7. Flashed fresh nanoBooter.bin and nanoCLR.bin to 0x08000000 and 0x08004000
 @@- Artifact: tests/W5500Bringup/bin/Release/W5500Bringup.bin + tests/BlinkBringup/bin/Release/BlinkBringup.bin
 @@- Probe results:
@@ -397,7 +397,7 @@ This file should be committed and checked on each build to prevent version drift
 @@  - CubleyInteropNative.cs: wrap Open(out handle) as managed method, call NativeOpen() returning fixed handle=1
 @@  - cubley_interop.cpp: renamed method to `___STATIC__I4` (removed BYREF)
 @@  - w5500_interop.cpp: removed 3x byref assignments in NativeOpen body
-@@  - Recompiled managed assemblies with ./toolchain/compile-managed.sh
+@@  - Recompiled managed assemblies with ./toolchain/build-managed.sh compile
 @@- **Result**: Cubley.Interop loads without dependency errors; all managed assemblies deployed successfully
 @@
 @@**CLRStartupThread Universal Hang (UNRESOLVED)**:
@@ -458,18 +458,18 @@ This file should be committed and checked on each build to prevent version drift
 @@
 @@## NEXT SESSION PLAN
 @@
-@@1. Identify nf-interpreter git ref used in build (check `NF_INTERPRETER_REF` in toolchain/build.sh or docker logs)
+@@1. Identify nf-interpreter git ref used in build (check `NF_INTERPRETER_REF` in toolchain/build-native.sh or docker logs)
 @@2. Clone/check nf-interpreter source for CLRStartupThread implementation
 @@3. Compare against known-good version or check recent commits for breakage
 @@4. Consider building with diagnostic/debug flags to capture CLR startup logs
 @@5. Test with alternative nf-interpreter versions if current is broken
-- Command(s): ./toolchain/build.sh minimal; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; nanoff --nanodevice --listdevices; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails; 8x+5x stress loops with/without st-flash reset
+- Command(s): ./toolchain/build-native.sh minimal; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; nanoff --nanodevice --listdevices; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails; 8x+5x stress loops with/without st-flash reset
 - Artifact: build/nanoBooter.bin; build/nanoCLR.bin; DiSEqC_Control/bin/Release/DiSEqC_Control.bin
 - Conclusion: USART3 wire protocol is operational again on fresh minimal firmware; nanoff list/devicedetails stable across repeated attempts and SWD resets. Hardened HalSystemConfig debug handle mapping to explicit ConvertCOM_DebugHandle(3).
 
 ### 2026-04-09 08:42:20 UTC [PASS]
 - Git rev: ef3c81b
-- Command(s): ./toolchain/build.sh w5500-native; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; ./toolchain/compile-w5500-test.sh; nanoff --deploy tests/W5500Bringup/bin/Release/W5500Bringup.bin @0x080C0000
+- Command(s): ./toolchain/build-native.sh w5500-native; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; ./toolchain/compile-w5500-test.sh; nanoff --deploy tests/W5500Bringup/bin/Release/W5500Bringup.bin @0x080C0000
 - Artifact: build/nanoBooter.bin; build/nanoCLR.bin; tests/W5500Bringup/bin/Release/W5500Bringup.bin
 - Conclusion: Switched target back to W5500 bring-up: w5500-native firmware flashed, W5500Bringup managed bundle deployed, and nanoff devicedetails confirms W5500Bringup 1.0.0.0 loaded with required dependencies.
 
@@ -635,7 +635,7 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-04-09 17:31:21 UTC [FAIL]
 - Git rev: 87c3638
-- Command(s): NF_UPDATE_INTERPRETER=0 ./toolchain/build.sh cubley-stable; timeout 20s st-flash write build/nanoBooter.bin 0x08000000; timeout 20s st-flash write build/nanoCLR.bin 0x08004000; timeout 15s nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails
+- Command(s): NF_UPDATE_INTERPRETER=0 ./toolchain/build-native.sh cubley-stable; timeout 20s st-flash write build/nanoBooter.bin 0x08000000; timeout 20s st-flash write build/nanoCLR.bin 0x08004000; timeout 15s nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails
 - Artifact: build/nanoBooter.bin; build/nanoCLR.bin
 - Conclusion: Cubley firmware rebuilt successfully (target M0DMF_CUBLEY_F407), but validation blocked by transport outage: ST-Link LIBUSB timeouts and UART E2001.
 
@@ -647,7 +647,7 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-04-09 17:52:05 UTC [PASS]
 - Git rev: 87c3638
-- Command(s): NF_UPDATE_INTERPRETER=0 NF_INCREMENTAL_BUILD=0 ./toolchain/build.sh cubley-stable; st-flash --reset write build/nanoBooter.bin 0x08000000; st-flash --reset write build/nanoCLR.bin 0x08004000; st-info --probe; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails
+- Command(s): NF_UPDATE_INTERPRETER=0 NF_INCREMENTAL_BUILD=0 ./toolchain/build-native.sh cubley-stable; st-flash --reset write build/nanoBooter.bin 0x08000000; st-flash --reset write build/nanoCLR.bin 0x08004000; st-info --probe; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails
 - Artifact: build/nanoBooter.bin; build/nanoCLR.bin
 - Conclusion: Clean cubley-stable build flashed successfully over ST-Link; post-flash UART devicedetails reports target M0DMF_CUBLEY_F407 and native assembly Cubley.Interop.
 
@@ -663,7 +663,7 @@ This file should be committed and checked on each build to prevent version drift
   - Applied USART3-only wire-protocol exposure in target serial config:
     - removed `NF_SERIAL_COMM_STM32_UART_USE_USART1` from `nf-native/target-overrides/target_system_io_ports_config.h`
     - removed `UART1` pin/init/uninit blocks from `nf-native/target-overrides/target_system_io_ports_config.cpp`
-  - Built: `./toolchain/build.sh core-only` (SUCCESS)
+  - Built: `./toolchain/build-native.sh core-only` (SUCCESS)
   - Flashed:
     - `st-flash write build/nanoBooter.bin 0x08000000`
     - `st-flash write build/nanoCLR.bin 0x08004000`
@@ -691,7 +691,7 @@ This file should be committed and checked on each build to prevent version drift
 - Git rev: 87c3638
 - Command(s):
   - Rebuilt stable profile with clean flags:
-    - `NF_UPDATE_INTERPRETER=0 NF_INCREMENTAL_BUILD=0 ./toolchain/build.sh cubley-stable`
+    - `NF_UPDATE_INTERPRETER=0 NF_INCREMENTAL_BUILD=0 ./toolchain/build-native.sh cubley-stable`
   - Flashed stable artifacts:
     - `st-flash write build/nanoBooter.bin 0x08000000`
     - `st-flash write build/nanoCLR.bin 0x08004000`
@@ -699,7 +699,7 @@ This file should be committed and checked on each build to prevent version drift
     - `timeout 12s nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --listdevices`
     - `timeout 15s nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails`
   - Rebuilt and flashed hardware smoke profile:
-    - `NF_UPDATE_INTERPRETER=0 NF_INCREMENTAL_BUILD=0 ./toolchain/build.sh bringup-smoke`
+    - `NF_UPDATE_INTERPRETER=0 NF_INCREMENTAL_BUILD=0 ./toolchain/build-native.sh bringup-smoke`
     - `st-flash write build/nanoBooter.bin 0x08000000`
     - `st-flash write build/nanoCLR.bin 0x08004000`
   - Raw UART capture checks (bringup-smoke):
@@ -741,7 +741,7 @@ This file should be committed and checked on each build to prevent version drift
 - Git rev: 87c3638
 - Command(s):
   - Rebuilt core profile:
-    - `./toolchain/build.sh core-only`
+    - `./toolchain/build-native.sh core-only`
   - Flashed:
     - `st-flash write build/nanoBooter.bin 0x08000000`
     - `st-flash write build/nanoCLR.bin 0x08004000`
@@ -785,7 +785,7 @@ This file should be committed and checked on each build to prevent version drift
 - Git rev: 87c3638
 - Command(s):
   - Built and flashed smoke UART heartbeat image:
-    - `./toolchain/build.sh bringup-smoke`
+    - `./toolchain/build-native.sh bringup-smoke`
     - `st-flash write build/nanoBooter.bin 0x08000000`
     - `st-flash write build/nanoCLR.bin 0x08004000`
   - Strict preflight attempt:
@@ -807,7 +807,7 @@ This file should be committed and checked on each build to prevent version drift
 - Git rev: 87c3638
 - Command(s):
   - Rebuilt stable profile (with fetch-content cleanup recovery):
-    - `NF_CLEAN_FETCHCONTENT=1 NF_UPDATE_INTERPRETER=0 ./toolchain/build.sh cubley-stable`
+    - `NF_CLEAN_FETCHCONTENT=1 NF_UPDATE_INTERPRETER=0 ./toolchain/build-native.sh cubley-stable`
   - Flashed:
     - `st-flash write build/nanoBooter.bin 0x08000000`
     - `st-flash write build/nanoCLR.bin 0x08004000`
@@ -827,13 +827,13 @@ This file should be committed and checked on each build to prevent version drift
 ### 2026-04-10 12:15:00 UTC [PASS]
 - Git rev: 87c3638
 - Command(s):
-  - Audited profile/entrypoint mapping in `toolchain/build.sh` and UART config overrides.
+  - Audited profile/entrypoint mapping in `toolchain/build-native.sh` and UART config overrides.
   - Hardened entrypoint selection to reduce drift risk across profiles:
-    - `toolchain/build.sh`
+    - `toolchain/build-native.sh`
       - USB profile now explicitly copies shared `nf-native/target-overrides/nanoCLR/main.c`.
       - Non-smoke/non-hardalive profiles now prefer the same shared `nf-native/target-overrides/nanoCLR/main.c` before any legacy fallback.
   - Validation build:
-    - `NF_UPDATE_INTERPRETER=0 ./toolchain/build.sh core-only` (SUCCESS)
+    - `NF_UPDATE_INTERPRETER=0 ./toolchain/build-native.sh core-only` (SUCCESS)
 - Result highlights:
   - USART serial comm exposure remains USART3-only (`target_system_io_ports_config.h/.cpp`).
   - Debugger COM mapping remains COM3/USART3 in `target_common.c`.
@@ -848,8 +848,8 @@ This file should be committed and checked on each build to prevent version drift
 - Git rev: 87c3638
 - Command(s):
   - Quick profile compile sanity after entrypoint unification:
-    - `NF_UPDATE_INTERPRETER=0 ./toolchain/build.sh cubley-w5500`
-    - `NF_UPDATE_INTERPRETER=0 ./toolchain/build.sh cubley-usb`
+    - `NF_UPDATE_INTERPRETER=0 ./toolchain/build-native.sh cubley-w5500`
+    - `NF_UPDATE_INTERPRETER=0 ./toolchain/build-native.sh cubley-usb`
 - Result highlights:
   - `cubley-w5500` build completed successfully.
   - `cubley-usb` build completed successfully.
@@ -865,7 +865,7 @@ This file should be committed and checked on each build to prevent version drift
     - `tests/W5500Bringup/README.md` wording updated to match W5500-only scope.
     - `nf-native/cubley_interop.cpp` rewritten to a minimal native table containing only `BringupStatus` + `W5500Socket` entries.
   - Rebuilt/flashed/deployed and re-ran W5500 diagnostics:
-    - `./toolchain/build.sh cubley-w5500`
+    - `./toolchain/build-native.sh cubley-w5500`
     - `st-flash write build/nanoBooter.bin 0x08000000`
     - `st-flash write build/nanoCLR.bin 0x08004000`
     - `./toolchain/compile-w5500-test.sh`
@@ -908,17 +908,17 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-04-10 22:27:35 UTC [PASS]
 - Git rev: 311470a
-- Command(s): ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; ./toolchain/w5500-led-observe.sh start; ./tests/swd_read_bringup_status.sh
+- Command(s): ./toolchain/build-native.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; ./toolchain/w5500-led-observe.sh start; ./tests/swd_read_bringup_status.sh
 - Artifact: build/nanoCLR.elf; tests/W5500Bringup/bin/Release/W5500Bringup.bin
 - Conclusion: Interop checksum alignment fixed (Cubley.Interop nativeMethodsChecksum=0x7119BD66). InternalCall dispatch now active; mailbox reaches 0xD50F0E02 (stage 15 FAIL detail 2 = OpenSocket failure), proving runtime progressed past prior interop bind failure.
 - Note: Updated checksums in nf-native/cubley_interop.cpp and Cubley.Interop/Properties/AssemblyInfo.cs to 0x7119BD66.
 
 ### 2026-04-10 22:43:40 UTC [INFO]
 - Git rev: 311470a
-- Command(s): bash -n toolchain/build.sh; ./toolchain/interop-checksum.sh --check --pe Cubley.Interop/bin/Release/Cubley.Interop.pe
-- Artifact: toolchain/build.sh; toolchain/interop-checksum.sh; toolchain/compile-w5500-test.sh; toolchain/compile-mailbox-smoke.sh
+- Command(s): bash -n toolchain/build-native.sh; ./toolchain/interop-checksum.sh --check --pe Cubley.Interop/bin/Release/Cubley.Interop.pe
+- Artifact: toolchain/build-native.sh; toolchain/interop-checksum.sh; toolchain/compile-w5500-test.sh; toolchain/compile-mailbox-smoke.sh
 - Conclusion: Added firmware-build interop checksum preflight and managed-build checksum guards so checksum drift fails fast before build/deploy.
-- Note: Preflight now runs at start of toolchain/build.sh; compile scripts validate Cubley.Interop.pe checksum compatibility.
+- Note: Preflight now runs at start of toolchain/build-native.sh; compile scripts validate Cubley.Interop.pe checksum compatibility.
 
 ### 2026-04-10 22:47:15 UTC [INFO]
 - Git rev: b065a85
@@ -929,7 +929,7 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-04-10 22:55:41 UTC [INFO]
 - Git rev: 9283763
-- Command(s): ./toolchain/compile-w5500-test.sh; ./toolchain/interop-checksum.sh --fix --pe tests/W5500Bringup/bin/Release/Cubley.Interop.pe; NF_INCREMENTAL_BUILD=1 ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; ./toolchain/w5500-led-observe.sh start; st-flash reset; 60x tests/swd_read_bringup_status.sh
+- Command(s): ./toolchain/compile-w5500-test.sh; ./toolchain/interop-checksum.sh --fix --pe tests/W5500Bringup/bin/Release/Cubley.Interop.pe; NF_INCREMENTAL_BUILD=1 ./toolchain/build-native.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; ./toolchain/w5500-led-observe.sh start; st-flash reset; 60x tests/swd_read_bringup_status.sh
 - Artifact: tests/W5500Bringup/bin/Release/Cubley.Interop.pe; build/nanoCLR.elf
 - Conclusion: Added persistent native error telemetry path (BringupStatus.NativeGetLastNativeError) and checksum-sync hardening fix; rapid mailbox sampling now stabilizes at 0xD50E0E03, indicating Open failure with native code 3 (Busy).
 - Note: Telemetry now publishes native op/code in fail loop stages 13/14 for SWD-stable diagnosis.
@@ -943,14 +943,14 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-04-11 00:25:15 UTC [INFO]
 - Git rev: 2466266
-- Command(s): ./toolchain/interop-checksum.sh --check; ./toolchain/compile-w5500-test.sh; ./toolchain/build-managed-cli.sh; ./toolchain/compile-mailbox-smoke.sh; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails; ./tests/swd_read_bringup_status.sh
-- Artifact: toolchain/interop-checksum.sh; toolchain/build-managed-cli.sh; toolchain/compile-w5500-test.sh; toolchain/compile-mailbox-smoke.sh; tests/W5500Bringup/bin/Release/W5500Bringup.bin
+- Command(s): ./toolchain/interop-checksum.sh --check; ./toolchain/compile-w5500-test.sh; ./toolchain/build-managed.sh build; ./toolchain/compile-mailbox-smoke.sh; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails; ./tests/swd_read_bringup_status.sh
+- Artifact: toolchain/interop-checksum.sh; toolchain/build-managed.sh build; toolchain/compile-w5500-test.sh; toolchain/compile-mailbox-smoke.sh; tests/W5500Bringup/bin/Release/W5500Bringup.bin
 - Conclusion: Interop checksum/scope guard now enforced across firmware and managed build entrypoints; managed deployment and execution validated in this session.
 - Note: Removed invalid AssemblyNativeVersion from app AssemblyInfo files to prevent CLR launch rejection.
 
 ### 2026-04-11 00:33:41 UTC [FAIL]
 - Git rev: f0ef2ef
-- Command(s): NF_INCREMENTAL_BUILD=1 ./toolchain/build.sh cubley-w5500; ./toolchain/compile-w5500-test.sh; st-flash --connect-under-reset write build/nanoBooter.bin 0x08000000; st-flash --connect-under-reset write build/nanoCLR.bin 0x08004000; st-flash --connect-under-reset write tests/W5500Bringup/bin/Release/W5500Bringup.bin 0x080C0000; st-flash reset; ./tests/swd_read_bringup_status.sh; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails
+- Command(s): NF_INCREMENTAL_BUILD=1 ./toolchain/build-native.sh cubley-w5500; ./toolchain/compile-w5500-test.sh; st-flash --connect-under-reset write build/nanoBooter.bin 0x08000000; st-flash --connect-under-reset write build/nanoCLR.bin 0x08004000; st-flash --connect-under-reset write tests/W5500Bringup/bin/Release/W5500Bringup.bin 0x080C0000; st-flash reset; ./tests/swd_read_bringup_status.sh; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails
 - Artifact: build/nanoBooter.bin; build/nanoCLR.bin; tests/W5500Bringup/bin/Release/W5500Bringup.bin; build/nanoCLR.elf
 - Conclusion: Managed runtime and deployment are healthy, but W5500 bringup latches at stage 15 FAIL detail 3 (Connect failure).
 - Note: Native error latch sampled from g_w5500_last_native_error at 0x20005B00 = 0xE1130000 (op 0x13, code 0, detail 0), confirming Open completed successfully before Connect failure.
@@ -964,7 +964,7 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-04-11 12:17:39 UTC [INFO]
 - Git rev: 04350b6
-- Command(s): NF_INCREMENTAL_BUILD=1 ./toolchain/build.sh cubley-w5500 && st-flash write build/nanoCLR.bin 0x08004000 && st-flash reset && ./tests/swd_read_w5500_diag.sh (x6)
+- Command(s): NF_INCREMENTAL_BUILD=1 ./toolchain/build-native.sh cubley-w5500 && st-flash write build/nanoCLR.bin 0x08004000 && st-flash reset && ./tests/swd_read_w5500_diag.sh (x6)
 - Artifact: build/nanoCLR.bin (271220 bytes); tests/W5500Bringup/bin/Release/W5500Bringup.nfmrk2.bin
 - Breakpoints: g_w5500_bringup_status=0xd5040030, g_w5500_last_native_error=0xe1540400
 - Conclusion: W5500 VERSIONR=0x04 confirmed; PHYCFGR software override blocked by PMODE HW straps (OPMDC=0x0, link DOWN)
@@ -980,7 +980,7 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-04-11 17:24:53 UTC [INFO]
 - Git rev: aaf81d8
-- Command(s): NF_INCREMENTAL_BUILD=0 ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; nanoff --devicedetails; ./tests/swd_read_w5500_diag.sh; ./tests/swd_read_bringup_status.sh
+- Command(s): NF_INCREMENTAL_BUILD=0 ./toolchain/build-native.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; nanoff --devicedetails; ./tests/swd_read_w5500_diag.sh; ./tests/swd_read_bringup_status.sh
 - Artifact: build/nanoCLR.bin; tests/W5500Bringup/bin/Release/latest.deploy.bin
 - Breakpoints: mailbox=0xD5020000; native_error=0xE1400000
 - Conclusion: HW SPI2 migration builds and deploys; bringup no longer at stage 0x0F/Busy, now stable at stage 0x02 RUNNING.
@@ -988,7 +988,7 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-04-11 19:01:42 UTC [INFO]
 - Git rev: aaf81d8
-- Command(s): ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; for i in 1..120 ./tests/swd_read_w5500_diag.sh
+- Command(s): ./toolchain/build-native.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; for i in 1..120 ./tests/swd_read_w5500_diag.sh
 - Artifact: unique pairs: 0xd50100a0/0xe14100f0, 0xd50f0e02/0xe1540200
 - Breakpoints: SWD mailbox/native-error sampling
 - Conclusion: CS readback stayed high across SPI select/unselect (detail 0xF0), VERSIONR still 0x00 in init path
@@ -996,7 +996,7 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-04-11 19:23:55 UTC [INFO]
 - Git rev: aaf81d8
-- Command(s): ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; post-reset 220x ./tests/swd_read_w5500_diag.sh
+- Command(s): ./toolchain/build-native.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; post-reset 220x ./tests/swd_read_w5500_diag.sh
 - Artifact: unique pairs include 0xd50100a0/0xe14100c7 and 0xd5020000/0xe1490757
 - Breakpoints: SWD mailbox/native-error sampling
 - Conclusion: Manual CS test: PB12 ODR toggles high-low-high but readback stays high; W5500 VERSIONR remains 0x00
@@ -1012,7 +1012,7 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-04-11 20:58:23 UTC [INFO]
 - Git rev: aaf81d8
-- Command(s): ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; post-reset 180x ./tests/swd_read_w5500_diag.sh
+- Command(s): ./toolchain/build-native.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; st-flash write tests/W5500Bringup/bin/Release/latest.deploy.bin 0x080C0000; post-reset 180x ./tests/swd_read_w5500_diag.sh
 - Artifact: Observed pairs include 0xd5900e20/0xe14a0000 and 0xd5a00000/0xe14a0000
 - Breakpoints: SWD mailbox/native-error sampling
 - Conclusion: Raw SPI frame diagnostic shows rx0/rx1 are 0x00 during VERSIONR failure (op 0x4A), consistent with MISO low/undriven data path
@@ -1027,7 +1027,7 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-04-12 08:57:27 UTC [FAIL]
 - Git rev: aaf81d8
-- Command(s): Patched w5500_interop PHY RST polarity + added NativeSetPhyMode mode sweep; ./toolchain/interop-checksum.sh --fix --pe tests/W5500Bringup/bin/Release/Cubley.Interop.pe; ./toolchain/compile-w5500-test.sh; NF_INCREMENTAL_BUILD=1 ./toolchain/build.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; nanoff --deploy --image tests/W5500Bringup/bin/Release/W5500Bringup.bin --address 0x080C0000 --reset; repeated ./tests/swd_read_w5500_diag.sh + ./tests/swd_read_bringup_status.sh sampling
+- Command(s): Patched w5500_interop PHY RST polarity + added NativeSetPhyMode mode sweep; ./toolchain/interop-checksum.sh --fix --pe tests/W5500Bringup/bin/Release/Cubley.Interop.pe; ./toolchain/compile-w5500-test.sh; NF_INCREMENTAL_BUILD=1 ./toolchain/build-native.sh cubley-w5500; st-flash write build/nanoCLR.bin 0x08004000; nanoff --deploy --image tests/W5500Bringup/bin/Release/W5500Bringup.bin --address 0x080C0000 --reset; repeated ./tests/swd_read_w5500_diag.sh + ./tests/swd_read_bringup_status.sh sampling
 - Artifact: build/nanoCLR.bin; tests/W5500Bringup/bin/Release/W5500Bringup.bin; tests/W5500Bringup/bin/Release/Cubley.Interop.pe
 - Conclusion: W5500 responds (VERSIONR=0x04) and accepts forced PHY mode changes, but link never comes up (LNK=0 in all tested modes) and no TX activity observed; evidence now points to TX hardware path fault around T1/CT_1 side rather than firmware.
 - Note: Observed PHYCFGR sequence during mode sweep included 0xF8, 0xC0, 0xCC, 0xD2, 0xDE, 0xF0 with mailbox stage 10 detail 0xE0 throughout. Hardware checks: R23=33R and R24=33R; continuity W5500 TXP->R23->T1 TD+ and W5500 TXN->R24->T1 TD- confirmed; CT_2->3V3 open as expected; CT_1->3V3 measures ~25R (anomalous), suggesting leakage/bridge on TX-side network. Next step: clean/rework T1 pin solder around pins 1-3 and re-measure CT_1 to 3V3, then isolate by lifting R23/R24 if needed.
@@ -1074,42 +1074,42 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-05-09 22:59:45 UTC [FAIL]
 - Git rev: 284b340
-- Command(s): ./toolchain/build.sh cubley-uart; st-flash --connect-under-reset write build/nanoBooter.bin 0x08000000; st-flash --connect-under-reset write build/nanoCLR.bin 0x08004000; ./toolchain/compile-w5500-test.sh; nanoff --serialport /dev/ttyUSB0 --baud 115200 --deploy --image tests/W5500Bringup/bin/Release/W5500Bringup.bin --address 0x080C0000 --reset; ./tests/swd_read_w5500_diag.sh
+- Command(s): ./toolchain/build-native.sh cubley-uart; st-flash --connect-under-reset write build/nanoBooter.bin 0x08000000; st-flash --connect-under-reset write build/nanoCLR.bin 0x08004000; ./toolchain/compile-w5500-test.sh; nanoff --serialport /dev/ttyUSB0 --baud 115200 --deploy --image tests/W5500Bringup/bin/Release/W5500Bringup.bin --address 0x080C0000 --reset; ./tests/swd_read_w5500_diag.sh
 - Artifact: build/nanoCLR.bin (274496 B); tests/W5500Bringup/bin/Release/W5500Bringup.bin (49720 B); Cubley.Interop checksum 0xD2CF401C
 - Breakpoints: Mailbox 0xD50F0E02 (Stage15 FAIL detail 2 = OpenSocket); native_error 0xE1112000 (op 0x11 NativeOpen, code 0x20 = VERSIONR=0x00); first_link_up=0; connect_params=0
 - Conclusion: cubley-uart end-to-end pipeline (build/flash/wire-protocol/deploy) PASS; W5500 SPI regressed: VERSIONR=0x00, same dead-SPI signature as pre-reflow 2026-05-01. Test rig: 20cm CAT6 to known-good switch port.
 
 ### 2026-05-12 23:07:22 UTC [PASS]
 - Git rev: 284b340
-- Command(s): ./toolchain/build.sh cubley-stable; st-flash booter+clr; st-flash DiSEqC_Control_bundle*.deploy.bin @0x080C0000; gdb/openocd RAM reads; nanoff --devicedetails
+- Command(s): ./toolchain/build-native.sh cubley-stable; st-flash booter+clr; st-flash DiSEqC_Control_bundle*.deploy.bin @0x080C0000; gdb/openocd RAM reads; nanoff --devicedetails
 - Artifact: build/nanoCLR.elf, build/nanoCLR.bin, DiSEqC_Control/bin/Release/DiSEqC_Control_bundle-20260512T230012Z.deploy.bin
 - Conclusion: Instrumented nanoCLR now emits startup clues: bringup_status=0xD5D10001 and last_native_error=0xE2D10001 (CLR startup thread entered), while DiSEqC_Control remains deployed.
 - Note: Diagnostic signature 0xE2 reserved for CLR startup path; stale openocd on port 6666 required cleanup via pkill -f openocd.
 
 ### 2026-05-12 23:16:59 UTC [PASS]
 - Git rev: 284b340
-- Command(s): ./toolchain/build.sh cubley-stable; st-flash booter+clr+DiSEqC bundle; SWD read g_w5500_bringup_status/g_w5500_last_native_error; nanoff --devicedetails
+- Command(s): ./toolchain/build-native.sh cubley-stable; st-flash booter+clr+DiSEqC bundle; SWD read g_w5500_bringup_status/g_w5500_last_native_error; nanoff --devicedetails
 - Artifact: build/nanoCLR.bin, build/nanoCLR.elf, DiSEqC_Control/bin/Release/DiSEqC_Control_bundle-20260512T230012Z.deploy.bin
 - Conclusion: Deep CLR startup clues now active: status/error progressed to 0xD5E10001 / 0xE2E10001 (Initialize succeeded, did not reach Load success marker E2), narrowing failure window to startup-load path.
-- Note: build.sh now auto-patches /nf-interpreter/src/CLR/Startup/CLRStartup.cpp with E0..E4 milestone writes.
+- Note: build-native.sh now auto-patches /nf-interpreter/src/CLR/Startup/CLRStartup.cpp with E0..E4 milestone writes.
 
 ### 2026-05-12 23:29:54 UTC [PASS]
 - Git rev: 284b340
-- Command(s): NF_W5500_EARLY_INIT=0 ./toolchain/build.sh cubley-uart; st-flash booter+clr+DiSEqC bundle; SWD read bringup_status/last_native_error; nanoff --devicedetails
+- Command(s): NF_W5500_EARLY_INIT=0 ./toolchain/build-native.sh cubley-uart; st-flash booter+clr+DiSEqC bundle; SWD read bringup_status/last_native_error; nanoff --devicedetails
 - Artifact: build/nanoCLR.bin (md5 736c5da96c4dfd34f3dd902a20b993b4), build/nanoCLR.elf, DiSEqC_Control/bin/Release/DiSEqC_Control_bundle-20260512T230012Z.deploy.bin
 - Conclusion: Granular ClrStartup load tracing active on cubley-uart without W5500 early-init clobber: status/error = 0xD5EA0001 / 0xE2EA0001, narrowing failure to ResolveAll entry boundary (before ResolveAll returns).
 - Note: Added NF_W5500_EARLY_INIT env override + docker passthrough to keep cubley-uart while handling no-W5500 boards.
 
 ### 2026-05-12 23:35:00 UTC [PASS]
 - Git rev: 284b340
-- Command(s): NF_W5500_EARLY_INIT=0 ./toolchain/build.sh cubley-uart; st-flash booter+clr+DiSEqC bundle; SWD read bringup_status/last_native_error; nanoff --devicedetails
+- Command(s): NF_W5500_EARLY_INIT=0 ./toolchain/build-native.sh cubley-uart; st-flash booter+clr+DiSEqC bundle; SWD read bringup_status/last_native_error; nanoff --devicedetails
 - Artifact: build/nanoCLR.bin (md5 ad919a798c214880e978be7d4f5b554), build/nanoCLR.elf, DiSEqC_Control/bin/Release/DiSEqC_Control_bundle-20260512T230012Z.deploy.bin
 - Conclusion: ResolveAll failure classified: status/error=0xD5EF0E00/0xE2EF0E00 indicates CLR_E_TYPE_UNAVAILABLE path during Load() after entering ResolveAll.
 - Note: EE/EF markers added in CLRStartup.cpp patch flow; EF marks CLR_E_TYPE_UNAVAILABLE subtype in Load() cleanup.
 
 ### 2026-05-12 23:51:42 UTC [PASS]
 - Git rev: 284b340
-- Command(s): NF_W5500_EARLY_INIT=0 ./toolchain/build.sh cubley-uart; st-flash booter+clr; pack-and-validate explicit PE list incl nanoFramework.Runtime.Events.pe; st-flash latest.deploy.bin @0x080C0000; nanoff --devicedetails; openocd+gdb read g_w5500_*
+- Command(s): NF_W5500_EARLY_INIT=0 ./toolchain/build-native.sh cubley-uart; st-flash booter+clr; pack-and-validate explicit PE list incl nanoFramework.Runtime.Events.pe; st-flash latest.deploy.bin @0x080C0000; nanoff --devicedetails; openocd+gdb read g_w5500_*
 - Artifact: DiSEqC_Control/bin/Release/DiSEqC_Control_runtimefix-20260512T235044Z.deploy.bin
 - Conclusion: Resolved CLR_E_TYPE_UNAVAILABLE root cause: System.Device.Gpio dependency nanoFramework.Runtime.Events was not present in deployed managed assembly set; explicit runtime-fix bundle now loads nanoFramework.Runtime.Events and startup no longer latches resolve-pointer failure.
 - Note: Post-fix probes show g_w5500_bringup_status=0xD5E24601 and g_w5500_last_native_error=0xE2E30001 (progress markers), replacing prior unresolved pointer pair System.Device.Gpio -> nanoFramework.Runtime.Events.
@@ -1133,21 +1133,21 @@ This file should be committed and checked on each build to prevent version drift
 
 ### 2026-05-13 18:19:27 UTC [PASS]
 - Git rev: 6f1dd22
-- Command(s): ./toolchain/interop-checksum.sh --fix --pe Cubley.Interop/bin/Release/Cubley.Interop.pe; ./toolchain/build.sh cubley-uart; st-flash --reset write build/nanoBooter.bin 0x08000000; st-flash --reset write build/nanoCLR.bin 0x08004000; st-flash reset; ./toolchain/build-managed-cli.sh --deploy --serialport /dev/ttyUSB0 --address 0x080C0000 --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails
+- Command(s): ./toolchain/interop-checksum.sh --fix --pe Cubley.Interop/bin/Release/Cubley.Interop.pe; ./toolchain/build-native.sh cubley-uart; st-flash --reset write build/nanoBooter.bin 0x08000000; st-flash --reset write build/nanoCLR.bin 0x08004000; st-flash reset; ./toolchain/build-managed.sh build --deploy --serialport /dev/ttyUSB0 --address 0x080C0000 --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails
 - Artifact: build/nanoBooter.bin; build/nanoCLR.bin; DiSEqC_Control/bin/Release/DiSEqC_Control.bin
 - Conclusion: cubley-uart firmware build/flash and DiSEqC_Control managed build/deploy verified end-to-end; device now reports DiSEqC_Control 1.0.0.0 as the deployed managed app.
 - Note: Interop checksum preflight initially failed; checksum was repaired to 0x99CD5157 in Cubley.Interop metadata/native tables before rerunning the successful build.
 
 ### 2026-05-26 22:31:45 UTC [PASS]
 - Git rev: d808c7a
-- Command(s): ./toolchain/build.sh cubley-stable; ./toolchain/compile-managed.sh; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; st-flash write DiSEqC_Control/bin/Release/latest.deploy.bin 0x080C0000; ./tests/swd_read_bringup_status.sh
+- Command(s): ./toolchain/build-native.sh cubley-stable; ./toolchain/build-managed.sh compile; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; st-flash write DiSEqC_Control/bin/Release/latest.deploy.bin 0x080C0000; ./tests/swd_read_bringup_status.sh
 - Artifact: build/nanoBooter.bin; build/nanoCLR.bin; DiSEqC_Control/bin/Release/latest.deploy.bin
 - Conclusion: Rebuilt and reflashed mailbox refactor; boot probe latch now stable at 0xD5E20006 with bitmap 0x06 (W5500 absent, LNBH26 present, FRAM present).
 - Note: Initial run failed to resolve System.Device.I2c; compile-managed bundle was updated to include System.Device.I2c.pe, after which StartupProbe completed and latch populated.
 
 ### 2026-05-26 23:00:38 UTC [INFO]
 - Git rev: 7ce4f54
-- Command(s): toolchain/compile-managed.sh; nanoff --jtag --platform stm32 --target M0DMF_CUBLEY_F407 --deploy --image DiSEqC_Control/bin/Release/latest.deploy.bin --address 0x080C0000 --reset; tests/swd_read_bringup_status.sh
+- Command(s): ./toolchain/build-managed.sh compile; nanoff --jtag --platform stm32 --target M0DMF_CUBLEY_F407 --deploy --image DiSEqC_Control/bin/Release/latest.deploy.bin --address 0x080C0000 --reset; ./tests/swd_read_bringup_status.sh
 - Artifact: DiSEqC_Control/bin/Release/DiSEqC_Control_bundle_20260526-235634.bin
 - Conclusion: Managed app is running and LNB detected in boot bitmap, but SMA output measured about 0.6V.
 - Note: User will continue LNB output debug tomorrow.

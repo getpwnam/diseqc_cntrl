@@ -136,7 +136,7 @@ Interop slot order and checksum must remain aligned between managed and native d
 After changing interop methods in `Cubley.Interop` and/or native method table:
 
 1. Build managed assemblies:
-   - `./toolchain/compile-managed.sh`
+   - `./toolchain/build-managed.sh compile`
 2. Sync checksum if needed:
    - `./toolchain/interop-checksum.sh --fix --pe DiSEqC_Control/bin/Release/Cubley.Interop.pe`
 3. Verify checksum:

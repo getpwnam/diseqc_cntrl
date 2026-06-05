@@ -4,7 +4,7 @@
 
 ### Current Decision (2026-02-23)
 
-- Use `./toolchain/compile-managed.sh` as the required local/pre-commit quality gate.
+- Use `./toolchain/build-managed.sh compile` as the required local/pre-commit quality gate.
 - Treat full `msbuild ... /t:Build` on this Linux host as blocked by nanoFramework metadata processor dependency/runtime mismatch.
 - Generate deployable PE artifacts from a known-good packaging environment (e.g., Windows CI/dev box) until Linux metadata processor path is fixed.
 - Do **not** rely on `libgdiplus` as the primary fix path for the current failure mode.
@@ -20,7 +20,7 @@
 - [x] Remove unused direct references/packages not required by current managed code.
 - [x] Keep `System.Net` aligned to M2Mqtt expected version (`1.11.36`) to avoid CS1702 mismatch.
 - [ ] Revisit remaining remap warnings now that full build chain is stable.
-- [x] Keep `./toolchain/compile-managed.sh` as the safe pre-commit gate until metadata processor issue is fixed.
+- [x] Keep `./toolchain/build-managed.sh compile` as the safe pre-commit gate until metadata processor issue is fixed.
 
 ## STM32-Only Cleanup
 
@@ -67,8 +67,8 @@
 
 ### Phase 4: USB Wire Protocol Migration
 
-- [x] Define target USB behavior for deployment/debug wire protocol (native USB as primary interface). See `docs/guides/USB_FIRST_PROFILE_CHECKLIST.md`.
-- [ ] Implement required firmware startup/config changes for USB wire protocol. (Stage A implemented: `usb-first` profile + OTG/HAL USB flag wiring in `toolchain/build.sh`.)
+- [x] Define target USB behavior for deployment/debug wire protocol (native USB as primary interface).
+- [ ] Implement required firmware startup/config changes for USB wire protocol. (Stage A implemented: `usb-first` profile + OTG/HAL USB flag wiring in `toolchain/build-native.sh`.)
 - [ ] Update docs and test procedures for USB-first workflow.
 - [ ] PAUSED: hardware-dependent USB validation is deferred until first working board is available.
 
@@ -92,7 +92,7 @@
 - [x] Update C# namespaces from `DiseqC` to `DiSEqC_Control` across managed code.
 - [x] Update native interop registration names/assembly identifiers and build scripts required by the rename.
 - [x] Update docs and command examples to reference the new project name.
-- [x] Re-run `./toolchain/compile-managed.sh` and `./toolchain/build-chain.sh` after rename (full build remains blocked by known `System.Drawing.Common` metadata processor issue).
+- [x] Re-run `./toolchain/build-managed.sh compile` and `./toolchain/build-chain.sh` after rename (full build remains blocked by known `System.Drawing.Common` metadata processor issue).
 
 ## Managed Startup Preflight (idea)
 
@@ -102,7 +102,7 @@
 
 ## Temporary Diagnostics Cleanup
 
-- [ ] Remove temporary deep CLR startup/resolve diagnostics in `toolchain/build.sh` (`CUBLEY_CLR_STARTUP_DIAG` and `CUBLEY_CLR_RESOLVE_PTR`) after startup regression risk is low and baseline tests are stable.
+- [ ] Remove temporary deep CLR startup/resolve diagnostics in `toolchain/build-native.sh` (`CUBLEY_CLR_STARTUP_DIAG` and `CUBLEY_CLR_RESOLVE_PTR`) after startup regression risk is low and baseline tests are stable.
 
 ## Native/W5500 Follow-up
 
