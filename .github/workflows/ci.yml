@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  shell-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate shell script syntax
+        run: |
+          find software/nanoFramework/tests software/nanoFramework/toolchain -type f -name '*.sh' -print0 \
+            | xargs -0 -n1 bash -n
+
+  python-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate Python script syntax
+        run: |
+          python -m py_compile \
+            tools/mcu_check_pins.py \
+            software/nanoFramework/toolchain/inspect_deploy_bundle.py
+
+  managed-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Run host-side managed tests
+        working-directory: software/nanoFramework/tests/DiSEqC_Control.Tests
+        run: dotnet test -v minimal

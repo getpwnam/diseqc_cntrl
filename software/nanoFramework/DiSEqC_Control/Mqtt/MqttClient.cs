@@ -336,6 +336,10 @@ namespace DiSEqC_Control.Mqtt
 
         private static void BringupBeacon(byte stage, byte detail)
         {
+#if NET8_0_OR_GREATER
+            _ = stage;
+            _ = detail;
+#else
             try
             {
                 uint word = ((uint)0xD5 << 24) | ((uint)stage << 16) | detail;
@@ -344,6 +348,7 @@ namespace DiSEqC_Control.Mqtt
             catch
             {
             }
+#endif
         }
     }
 }
