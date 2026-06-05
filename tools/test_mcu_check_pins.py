@@ -56,12 +56,12 @@ class McuCheckPinsTests(unittest.TestCase):
 
     def test_profile_lists_match_native_build_script(self):
         build_script = (NATIVE_BASE.parent / 'toolchain' / 'build.sh').read_text(encoding='utf-8')
-        case_blocks = re.findall(r'case "\$BUILD_PROFILE" in(.*?)\nesac', build_script, re.S)
+        case_blocks = re.findall(r'case "\$BUILD_PROFILE" in(.*?)esac', build_script, re.S)
         self.assertGreaterEqual(len(case_blocks), 2)
 
         alias_block = case_blocks[0]
         alias_map = {}
-        for pattern, body in re.findall(r'\n\s*([a-z0-9|-]+)\)\n(.*?)\n\s*;;', alias_block, re.S):
+        for pattern, body in re.findall(r'\s*([a-z0-9|-]+)\)\s*(.*?)\s*;;', alias_block, re.S):
             target = re.search(r'BUILD_PROFILE="([a-z0-9-]+)"', body)
             if not target:
                 continue
