@@ -23,7 +23,7 @@ Treat these addresses as fixed for this board unless the firmware linker layout 
 - `software/nanoFramework/build/nanoCLR.bin`
 - Managed payload image, for example:
   - `software/nanoFramework/DiSEqC_Control/bin/Release/latest.deploy.bin`
-- `software/nanoFramework/toolchain/build-managed-cli.sh`
+- `software/nanoFramework/toolchain/build-managed.sh build`
 - `software/nanoFramework/toolchain/interop-checksum.sh`
 
 ## Preconditions
@@ -63,7 +63,7 @@ Use `nanoff` when the wire protocol is healthy and you want the runtime to own d
 
 Use the repo helper when you want build + optional deploy from one entry point:
 
-- `./toolchain/build-managed-cli.sh --deploy --serialport /dev/ttyUSB0 --address 0x080C0000`
+- `./toolchain/build-managed.sh build --deploy --serialport /dev/ttyUSB0 --address 0x080C0000`
 
 Decision rule:
 

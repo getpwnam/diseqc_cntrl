@@ -13,8 +13,8 @@ Run a deterministic, non-destructive transport triage for this board and classif
 
 - software/nanoFramework/toolchain/uart-preflight.sh
 - software/nanoFramework/tests/swd_read_bringup_status.sh
-- software/nanoFramework/toolchain/build.sh
-- software/nanoFramework/docs/BRINGUP_TEST_LOG.md
+- software/nanoFramework/toolchain/build-native.sh
+- docs/debug/BRINGUP_TEST_LOG.md
 
 ## When To Use
 

@@ -5,20 +5,133 @@
 
 set -e  # Exit on error
 
+usage() {
+    cat << 'EOF'
+Usage:
+  ./toolchain/build-native.sh (list|build|flash) [options]
+
+Examples:
+  ./toolchain/build-native.sh list
+  ./toolchain/build-native.sh build --profile cubley-stable
+  ./toolchain/build-native.sh build --profile cubley-uart --flash --reset
+  ./toolchain/build-native.sh flash --bootaddr 0x08000000 --clraddr 0x08004000
+
+Options:
+
+General options (all modes):
+  --profile <name>        Build profile (default: cubley-stable)
+  --help                  Show this help message
+
+Flash options (build with --flash, and flash mode):
+  --bootaddr <hex>        nanoBooter flash address (default: 0x08000000)
+  --clraddr <hex>         nanoCLR flash address (default: 0x08004000)
+  --no-booter             Skip flashing nanoBooter image
+  --reset                 Reset device after flashing
+  --flash                 Flash artifacts after successful build (build mode only)
+EOF
+}
+
+list_profiles() {
+    cat << 'EOF'
+Supported profiles:
+  cubley-stable
+  cubley-uart
+  cubley-usb
+  cubley-hardalive
+  bringup-smoke
+  core-only
+  legacy-network
+EOF
+}
+
+ORIGINAL_ARGS=("$@")
+MODE=""
+BUILD_PROFILE_ARG="${NF_BUILD_PROFILE:-cubley-stable}"
+BOOT_ADDR="0x08000000"
+CLR_ADDR="0x08004000"
+DO_FLASH="false"
+FLASH_BOOTER="true"
+FLASH_RESET="false"
+
+if [ $# -eq 0 ]; then
+    echo "Missing mode argument. Use: build-native.sh (list|build|flash) [options]" >&2
+    usage
+    exit 2
+fi
+
+case "$1" in
+    --help|-h)
+        usage
+        exit 0
+        ;;
+    list|build|flash)
+        MODE="$1"
+        shift
+        ;;
+    *)
+        echo "Invalid mode '$1'. Use list, build, or flash." >&2
+        usage
+        exit 2
+        ;;
+esac
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --profile)
+            BUILD_PROFILE_ARG="$2"
+            shift 2
+            ;;
+        --bootaddr)
+            BOOT_ADDR="$2"
+            shift 2
+            ;;
+        --clraddr)
+            CLR_ADDR="$2"
+            shift 2
+            ;;
+        --no-booter)
+            FLASH_BOOTER="false"
+            shift
+            ;;
+        --reset)
+            FLASH_RESET="true"
+            shift
+            ;;
+        --flash)
+            DO_FLASH="true"
+            shift
+            ;;
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage
+            exit 2
+            ;;
+    esac
+done
+
+if [ "$MODE" = "list" ]; then
+    list_profiles
+    exit 0
+fi
+
 # ── Host bootstrap ──────────────────────────────────────────────────────────
 # This script is designed to run inside the Docker build container.
 # If called from the host (/.dockerenv absent), re-invoke via docker compose.
-if [ ! -f "/.dockerenv" ]; then
+if [ ! -f "/.dockerenv" ] && [ "$MODE" = "build" ]; then
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     COMPOSE_DIR="$(dirname "$SCRIPT_DIR")"
     exec docker compose -f "$COMPOSE_DIR/docker-compose.yml" run --rm \
-        -e NF_BUILD_PROFILE="${1:-${NF_BUILD_PROFILE:-cubley-stable}}" \
+        -e NF_BUILD_PROFILE="${NF_BUILD_PROFILE:-$BUILD_PROFILE_ARG}" \
     -e NF_INTERPRETER_REF="${NF_INTERPRETER_REF:-main}" \
     -e NF_UPDATE_INTERPRETER="${NF_UPDATE_INTERPRETER:-1}" \
     -e NF_STATIC_AUDIT="${NF_STATIC_AUDIT:-0}" \
     -e NF_ALLOW_DEPRECATED_PROFILE="${NF_ALLOW_DEPRECATED_PROFILE:-0}" \
     -e NF_W5500_EARLY_INIT="${NF_W5500_EARLY_INIT:-}" \
-        nanoframework-build /work/toolchain/build.sh
+        nanoframework-build /work/toolchain/build-native.sh "${ORIGINAL_ARGS[@]}"
 fi
 # ────────────────────────────────────────────────────────────────────────────
 
@@ -29,10 +142,10 @@ echo "========================================"
 # Preflight: fail fast if managed/native interop checksum metadata drifts.
 # This catches InternalCall binding breakage before entering CMake/build work.
 CHECKSUM_TOOL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/interop-checksum.sh"
-if [ -x "$CHECKSUM_TOOL" ]; then
+if [ "$MODE" = "build" ] && [ -x "$CHECKSUM_TOOL" ]; then
     echo "Running interop checksum preflight..."
     "$CHECKSUM_TOOL" --check
-else
+elif [ "$MODE" = "build" ]; then
     echo "Warning: checksum preflight tool not found or not executable: $CHECKSUM_TOOL"
 fi
 
@@ -42,6 +155,38 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+flash_firmware() {
+    local booter_bin="$WORKSPACE_BUILD_DIR/nanoBooter.bin"
+    local clr_bin="$WORKSPACE_BUILD_DIR/nanoCLR.bin"
+
+    if ! command -v st-flash >/dev/null 2>&1; then
+        echo -e "${RED}st-flash not found in PATH. Install with: sudo apt install stlink-tools${NC}"
+        exit 2
+    fi
+
+    if [ "$FLASH_BOOTER" = "true" ]; then
+        if [ -f "$booter_bin" ]; then
+            echo -e "${YELLOW}Flashing nanoBooter: $booter_bin @ $BOOT_ADDR${NC}"
+            st-flash write "$booter_bin" "$BOOT_ADDR"
+        else
+            echo -e "${YELLOW}Skipping nanoBooter flash: artifact not found ($booter_bin).${NC}"
+        fi
+    fi
+
+    if [ ! -f "$clr_bin" ]; then
+        echo -e "${RED}nanoCLR artifact not found: $clr_bin${NC}"
+        exit 1
+    fi
+
+    echo -e "${YELLOW}Flashing nanoCLR: $clr_bin @ $CLR_ADDR${NC}"
+    st-flash write "$clr_bin" "$CLR_ADDR"
+
+    if [ "$FLASH_RESET" = "true" ]; then
+        echo -e "${YELLOW}Resetting target...${NC}"
+        st-flash reset
+    fi
+}
+
 # Configuration
 NF_INTERPRETER_REPO="https://github.com/nanoframework/nf-interpreter.git"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -49,42 +194,15 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 WORKSPACE_ROOT="$PROJECT_ROOT"
 NF_NATIVE_DIR="$WORKSPACE_ROOT/nf-native"
 WORKSPACE_BUILD_DIR="$WORKSPACE_ROOT/build"
-NF_INTERPRETER_DIR="$WORKSPACE_ROOT/.cache/nf-interpreter"
+NF_INTERPRETER_BUILD_ROOT="$WORKSPACE_BUILD_DIR/nf-interpreter"
+NF_INTERPRETER_DIR="$NF_INTERPRETER_BUILD_ROOT/src"
 
 mkdir -p "$NF_INTERPRETER_DIR"
 echo -e "${YELLOW}Using local nf-interpreter path: $NF_INTERPRETER_DIR${NC}"
 NF_INTERPRETER_REF="${NF_INTERPRETER_REF:-main}"
 TARGET_NAME="M0DMF_CUBLEY_F407"
 BUILD_TYPE="Release"
-BUILD_PROFILE="${NF_BUILD_PROFILE:-${1:-cubley-stable}}"
-REQUESTED_BUILD_PROFILE="$BUILD_PROFILE"
-PROFILE_ALIAS_USED=""
-DEPRECATED_PROFILE_USED="0"
-
-# Legacy profile aliases. Canonical names use the cubley-* prefix.
-case "$BUILD_PROFILE" in
-    minimal)
-        BUILD_PROFILE="cubley-stable"
-        PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
-        ;;
-    w5500-native|cubley-w5500)
-        BUILD_PROFILE="cubley-uart"
-        PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
-        ;;
-    bringup-hardalive)
-        BUILD_PROFILE="cubley-hardalive"
-        PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
-        ;;
-    usb-first|usb-no-vbus-sense)
-        BUILD_PROFILE="cubley-usb"
-        PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
-        ;;
-    network)
-        BUILD_PROFILE="legacy-network"
-        PROFILE_ALIAS_USED="$REQUESTED_BUILD_PROFILE"
-        DEPRECATED_PROFILE_USED="1"
-        ;;
-esac
+BUILD_PROFILE="$BUILD_PROFILE_ARG"
 
 # Performance knobs (override via environment variables).
 # - NF_BUILD_JOBS: parallel compile jobs (default: all host cores)
@@ -268,9 +386,8 @@ case "$BUILD_PROFILE" in
         PROFILE_NOTE="Smallest managed/API surface profile for fast local firmware iteration"
         ;;
     *)
-        echo -e "${RED}Unknown NF_BUILD_PROFILE='$REQUESTED_BUILD_PROFILE'.${NC}"
-        echo -e "${YELLOW}Canonical profiles:${NC} cubley-stable, cubley-uart, cubley-usb, cubley-hardalive, bringup-smoke, core-only, legacy-network"
-        echo -e "${YELLOW}Legacy aliases:${NC} minimal, w5500-native, cubley-w5500, bringup-hardalive, usb-first, usb-no-vbus-sense, network"
+        echo -e "${RED}Unknown profile '$BUILD_PROFILE'.${NC}"
+        echo -e "${YELLOW}Supported profiles:${NC} cubley-stable, cubley-uart, cubley-usb, cubley-hardalive, bringup-smoke, core-only, legacy-network"
         exit 1
         ;;
 esac
@@ -294,12 +411,15 @@ echo -e "${YELLOW}Build profile: ${BUILD_PROFILE}${NC}"
 echo -e "${YELLOW}Profile note: ${PROFILE_NOTE}${NC}"
 echo -e "${YELLOW}Target board: ${TARGET_NAME}${NC}"
 
-if [ -n "$PROFILE_ALIAS_USED" ]; then
-    echo -e "${YELLOW}Profile alias used: '${PROFILE_ALIAS_USED}' -> '${BUILD_PROFILE}'.${NC}"
+if [ "$PROFILE_STATUS" = "deprecated" ]; then
+    echo -e "${YELLOW}WARNING: deprecated profile in use; migrate to Cubley profiles as soon as practical.${NC}"
 fi
 
-if [ "$DEPRECATED_PROFILE_USED" = "1" ] || [ "$PROFILE_STATUS" = "deprecated" ]; then
-    echo -e "${YELLOW}WARNING: deprecated profile in use; migrate to Cubley profiles as soon as practical.${NC}"
+if [ "$MODE" = "flash" ]; then
+    echo -e "${YELLOW}Flash mode: using artifacts from $WORKSPACE_BUILD_DIR${NC}"
+    flash_firmware
+    echo -e "${GREEN}Flash complete.${NC}"
+    exit 0
 fi
 
 # Check if nf-interpreter exists
@@ -682,7 +802,7 @@ cp "$NF_NATIVE_DIR/w5500_interop.cpp" "$TARGET_DIR/nanoCLR/"
 # Register custom interop assembly module so CLR interop table includes
 # Cubley.Interop native bindings.
 cat > "$NF_INTERPRETER_DIR/CMake/Modules/FindINTEROP-Cubley_Interop.cmake" << EOF_FIND_INTEROP
-# Auto-generated by toolchain/build.sh for custom Cubley interop binding
+# Auto-generated by toolchain/build-native.sh for custom Cubley interop binding
 set(Cubley_Interop_INCLUDE_DIRS "${TARGET_DIR}/nanoCLR")
 set(Cubley_Interop_SOURCES
     "${TARGET_DIR}/nanoCLR/cubley_interop.cpp"
@@ -1106,7 +1226,7 @@ EOF_NANOBOOTER_CMAKE
 # by generated target_os.h. Provide a board-specific defconfig for this custom
 # target so the header is always produced.
 cat > "$TARGET_DIR/defconfig" << EOF_DEFCONFIG
-# defconfig for $TARGET_NAME (generated by toolchain/build.sh)
+# defconfig for $TARGET_NAME (generated by toolchain/build-native.sh)
 CONFIG_RTOS_CHIBIOS=y
 CONFIG_TARGET_BOARD="$TARGET_NAME"
 CONFIG_TARGET_SERIES="STM32F4xx"
@@ -1314,7 +1434,7 @@ fi
 
 # Create build directory
 echo -e "${YELLOW}Creating build directory...${NC}"
-BUILD_DIR="$NF_INTERPRETER_DIR/build/$TARGET_NAME"
+BUILD_DIR="$NF_INTERPRETER_BUILD_ROOT/$TARGET_NAME"
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 
@@ -1450,9 +1570,16 @@ if [ -f "nanoCLR.bin" ]; then
     echo ""
     echo "To flash to board:"
     if [ -f "nanoBooter.bin" ]; then
-        echo "  st-flash write build/nanoBooter.bin 0x08000000"
+        echo "  st-flash write build/nanoBooter.bin $BOOT_ADDR"
     fi
-    echo "  st-flash write build/nanoCLR.bin 0x08004000"
+    echo "  st-flash write build/nanoCLR.bin $CLR_ADDR"
+
+    if [ "$DO_FLASH" = "true" ]; then
+        echo ""
+        echo -e "${YELLOW}--flash requested: flashing artifacts now...${NC}"
+        flash_firmware
+        echo -e "${GREEN}Build + flash completed.${NC}"
+    fi
 else
     echo -e "${RED}========================================${NC}"
     echo -e "${RED}Build FAILED${NC}"

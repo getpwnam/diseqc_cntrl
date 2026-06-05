@@ -143,8 +143,8 @@ Reject invalid updates atomically (all-or-nothing) to avoid partial state drift.
 - Keep device-specific secrets out of examples
 - Version config schema if introducing breaking key changes
 
-## Related Documents
+## Related Documents (Software + Debug)
 
 - `MQTT_API.md`
 - `ARCHITECTURE.md`
-- `../guides/TESTING_GUIDE.md`
+- `../debug/TESTING_GUIDE.md`
