@@ -15,6 +15,11 @@ else
   GDB_BIN="gdb"
 fi
 OPENOCD_BIN="${OPENOCD_BIN:-openocd}"
+STARTUP_PROBE_CS="${STARTUP_PROBE_CS:-$NF_ROOT/DiSEqC_Control/StartupProbe.cs}"
+
+# Allow override from environment; auto-detect from StartupProbe.cs when available.
+probe_w5500_on_startup="${PROBE_W5500_ON_STARTUP:-auto}"
+probe_fram_on_startup="${PROBE_FRAM_ON_STARTUP:-auto}"
 
 if [[ ! -f "$ELF_PATH" ]]; then
   echo "ELF not found: $ELF_PATH" >&2
@@ -29,6 +34,24 @@ fi
 if ! command -v "$GDB_BIN" >/dev/null 2>&1; then
   echo "arm-none-eabi-gdb not found (override with GDB_BIN)." >&2
   exit 1
+fi
+
+if [[ -f "$STARTUP_PROBE_CS" ]]; then
+  if [[ "$probe_w5500_on_startup" == "auto" ]]; then
+    if grep -Eq 'ProbeW5500OnStartup\s*=\s*true' "$STARTUP_PROBE_CS"; then
+      probe_w5500_on_startup="true"
+    elif grep -Eq 'ProbeW5500OnStartup\s*=\s*false' "$STARTUP_PROBE_CS"; then
+      probe_w5500_on_startup="false"
+    fi
+  fi
+
+  if [[ "$probe_fram_on_startup" == "auto" ]]; then
+    if grep -Eq 'ProbeFramOnStartup\s*=\s*true' "$STARTUP_PROBE_CS"; then
+      probe_fram_on_startup="true"
+    elif grep -Eq 'ProbeFramOnStartup\s*=\s*false' "$STARTUP_PROBE_CS"; then
+      probe_fram_on_startup="false"
+    fi
+  fi
 fi
 
 tmp_dir="$(mktemp -d /tmp/w5500-mailbox-XXXXXX)"
@@ -89,6 +112,7 @@ fi
 decode_word() {
   local label="$1"
   local value_hex="$2"
+  local is_boot_probe=0
   local value_dec=$((value_hex))
   local magic=$(((value_dec >> 24) & 0xFF))
   local stage=$(((value_dec >> 16) & 0xFF))
@@ -107,24 +131,47 @@ decode_word() {
   printf '%s raw: %s\n' "$label" "$value_hex"
   printf '  Magic: 0x%02X\n' "$magic"
   printf '  Stage: %d\n' "$stage"
-  printf '  Result: %d (%s)\n' "$result" "$result_label"
+  if [[ "$label" == "Boot probe" && "$magic" -eq 213 && "$stage" -eq 226 ]]; then
+    is_boot_probe=1
+    printf '  Result: %d (bitmap payload; not a pass/fail field for boot probe)\n' "$result"
+  else
+    printf '  Result: %d (%s)\n' "$result" "$result_label"
+  fi
   printf '  Detail: %d\n' "$detail"
 
   if [[ "$magic" -ne 0 && "$magic" -ne 213 ]]; then
     echo "  Warning: magic byte mismatch (expected 0xD5)." >&2
   fi
 
-  if [[ "$label" == "Boot probe" && "$magic" -eq 213 && "$stage" -eq 226 ]]; then
-    local has_w5500="absent"
-    local has_lnb="absent"
-    local has_fram="absent"
+  if [[ "$is_boot_probe" -eq 1 ]]; then
+    local has_w5500="detected"
+    local has_lnb="detected"
+    local has_fram="detected"
 
-    if (( detail & 0x01 )); then has_w5500="present"; fi
-    if (( detail & 0x02 )); then has_lnb="present"; fi
-    if (( detail & 0x04 )); then has_fram="present"; fi
+    if (( (detail & 0x01) == 0 )); then
+      if [[ "$probe_w5500_on_startup" == "false" ]]; then
+        has_w5500="skipped-by-firmware-config"
+      else
+        has_w5500="not-detected"
+      fi
+    fi
 
-    printf '  Hardware: W5500=%s LNBH26=%s FRAM=%s\n' "$has_w5500" "$has_lnb" "$has_fram"
+    if (( (detail & 0x02) == 0 )); then
+      has_lnb="not-detected"
+    fi
+
+    if (( (detail & 0x04) == 0 )); then
+      if [[ "$probe_fram_on_startup" == "false" ]]; then
+        has_fram="skipped-by-firmware-config"
+      else
+        has_fram="not-detected"
+      fi
+    fi
+
+    printf '  Hardware bitmap: W5500=%s LNBH26=%s FRAM=%s\n' "$has_w5500" "$has_lnb" "$has_fram"
     printf '  Bitmap decode: bit0=W5500 bit1=LNBH26 bit2=FRAM\n'
+    printf '  Probe config: W5500=%s FRAM=%s (source: %s)\n' "$probe_w5500_on_startup" "$probe_fram_on_startup" "$STARTUP_PROBE_CS"
+    printf '  Note: LNBH26=detected means the startup I2C probe got ACK at bus1 addr 0x08; if the chip is absent this suggests an address/bus mismatch or a false-positive ACK path.\n'
   fi
 }
 

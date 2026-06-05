@@ -45,7 +45,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     stlink-tools \
     srecord \
     ca-certificates \
-    gnupg
+    gnupg \
+    kmod
 
 # ---- Mono repository (provides apt nuget on slim images) ----
 # RUN gpg --homedir /tmp --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF \
@@ -58,7 +59,34 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # RUN apt update
 
-
+# ---- Local packages ----
+RUN apt-get install -y --no-install-recommends \
+    libicu-dev \
+    usbutils \
+    ripgrep \
+    less \
+    vim \
+    nano \
+    binutils \
+    bash-completion \
+    openssh-client \
+    iproute2 \
+    unzip \
+    # bsdmainutils required for hexdump
+    bsdmainutils \
+    # mono dependencies for MSBuild support
+    libmono-system-drawing4.0-cil \
+    # debug tools
+    openocd \
+    gdb-multiarch \
+    screen \
+    udev \
+    lsof \
+    setserial \
+    picocom \
+    minicom \
+    strace \
+    tio
 
 # ---- GitHub CLI ----
 RUN mkdir -p -m 755 /etc/apt/keyrings \
@@ -89,6 +117,8 @@ RUN groupadd --gid ${USER_GID} ${USERNAME} \
     && useradd --uid ${USER_UID} --gid ${USER_GID} -m -s /bin/bash ${USERNAME} \
     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
     && chmod 0440 /etc/sudoers.d/${USERNAME}
+
+RUN gpasswd -a ${USERNAME} plugdev
 
 # ---- Copy toolchains from downloader ----
 RUN mkdir -p /usr/local/gcc /opt/cmake
@@ -147,34 +177,7 @@ RUN git clone --depth 1 --branch v1.8.5 https://github.com/STMicroelectronics/st
 #  && git clone --depth 1 --branch mbedtls-3.6.5 https://github.com/ARMmbed/mbedtls.git sources/mbedtls \
 #  && cd sources/mbedtls && git submodule update --init --recursive
 
-# ---- Local packages (near the end to allow for faster rebuilds after additions)----
-RUN apt-get install -y --no-install-recommends \
-    libicu-dev \
-    usbutils \
-    ripgrep \
-    less \
-    vim \
-    nano \
-    binutils \
-    bash-completion \
-    openssh-client \
-    iproute2 \
-    unzip \
-    # bsdmainutils required for hexdump
-    bsdmainutils \
-    # mono dependencies for MSBuild support
-    libmono-system-drawing4.0-cil \
-    # debug tools
-    openocd \
-    gdb-multiarch \
-    screen \
-    udev \
-    lsof \
-    setserial \
-    picocom \
-    minicom \
-    strace \
-    tio
+
 
 # ---- Final cleanup ----
 RUN apt-get autoremove -y && apt-get clean
