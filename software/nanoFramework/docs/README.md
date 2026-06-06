@@ -30,6 +30,7 @@ Top-level docs taxonomy used by this repo:
 - `../../../docs/software/ARCHITECTURE.md`
 - `../../../docs/software/MQTT_API.md`
 - `../../../docs/software/CONFIGURATION.md`
+- `../../../docs/software/TODO.md` (includes stable firmware + interop program phase tracker)
 
 ## Debug and Bring-up
 

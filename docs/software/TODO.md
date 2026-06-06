@@ -19,7 +19,7 @@ Program umbrella: [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11)
 ### Dependency order and acceptance gates
 
 - A -> B -> C -> (D1, D2, D3 in parallel) -> E -> F
-- Decision #20 applies through Stage F and must stay linked from the umbrella issue.
+- Decision #20 applies through Phase F and must stay linked from the umbrella issue.
 - Do not roll out managed features from E/F before A-D gates have documented evidence.
 
 ### Gate evidence checklist
