@@ -459,6 +459,18 @@ SWD-probing under load are Phase D scope.  For word encoding reference see
 | 7 | DiSEqC transmit path | Oscilloscope shows ~22 kHz carrier burst with recognisable bit structure | 3 resets |
 | 8 | Diagnostics mailbox | All slots correct magic; boot-probe non-zero; stage order valid; sticky slots persist | 3 resets |
 
+## Phase A Exit Gate
+
+Phase A may exit only when all of the following are true:
+
+1. Every non-exempt component in the summary table above has a documented PASS result against its smoke check.
+2. Each PASS result satisfies the listed minimum iterations, including any per-component repeated-read or repeated-reset requirement.
+3. Any temporary exemption is documented with an owner, a rationale, the affected component, and an expiry condition.
+4. The run history in [BRINGUP_TEST_LOG.md](./BRINGUP_TEST_LOG.md) contains the factual command, artifact, breakpoint, and conclusion evidence for the qualifying runs.
+5. The baseline used for the qualifying runs matches [PHASE_A_BASELINE.md](./PHASE_A_BASELINE.md) unless the run is explicitly marked non-baseline.
+
+The component definitions in the issue #23 minimum bring-up criteria comment are the source template for these checks: capability statement, test action(s), observable evidence, pass/fail rule, retries/failure classification, and deferred deeper validation.
+
 ---
 
 ## References

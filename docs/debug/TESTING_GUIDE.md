@@ -10,6 +10,8 @@ defined in:
 
 > **[PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md](./PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md)**
 
+Phase A exit is also gated by the exit-gate section in that document.
+
 ## Current Profile Notes
 
 - The currently validated build profile has `System.Net` disabled.
