@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NF_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ELF_PATH="${1:-$NF_ROOT/build/nanoCLR.elf}"
 OPENOCD_CFG="${OPENOCD_CFG:-interface/stlink.cfg -f target/stm32f4x.cfg}"
+source "$SCRIPT_DIR/phase_a_result_codec.sh"
 
 if [[ -n "${GDB_BIN:-}" ]]; then
   GDB_BIN="$GDB_BIN"
@@ -101,14 +102,9 @@ mb_stage=$(((mailbox_dec >> 16) & 0xFF))
 mb_result=$(((mailbox_dec >> 8) & 0xFF))
 mb_detail=$((mailbox_dec & 0xFF))
 
-result_label="UNKNOWN"
-case "$mb_result" in
-  0) result_label="RUNNING" ;;
-  1) result_label="PASS" ;;
-  2) result_label="WARN" ;;
-  14) result_label="FAIL" ;;
-  15) result_label="EXCEPTION" ;;
-esac
+if ! result_label="$(phase_a_result_label "$mb_result")"; then
+  result_label="INVALID"
+fi
 
 error_dec=$((error_hex))
 err_op=$(((error_dec >> 16) & 0xFF))
@@ -120,6 +116,9 @@ printf '  Magic: 0x%02X\n' "$mb_magic"
 printf '  Stage: %d\n' "$mb_stage"
 printf '  Result: %d (%s)\n' "$mb_result" "$result_label"
 printf '  Detail: %d (0x%02X)\n' "$mb_detail" "$mb_detail"
+if component_label="$(phase_a_component_label "$mb_detail" 2>/dev/null)"; then
+  printf '  Phase-A component: %s\n' "$component_label"
+fi
 
 printf 'Native error raw:    %s\n' "$error_hex"
 printf '  OpCode: 0x%02X\n' "$err_op"
@@ -167,8 +166,14 @@ decode_phycfgr() {
   fi
 }
 
-if [[ "$mb_magic" -ne 213 ]]; then
-  echo "Warning: mailbox magic mismatch (expected 0xD5)." >&2
+if [[ "$mb_magic" -ne $((0xD5)) ]]; then
+  echo "ERROR: mailbox magic mismatch (expected 0xD5)." >&2
+  exit 1
+fi
+
+if [[ "$result_label" == "INVALID" ]]; then
+  echo "ERROR: unknown/invalid result code (accepted: $(phase_a_result_contract_summary))." >&2
+  exit 1
 fi
 
 if [[ "$err_op" -eq 0x51 ]]; then
@@ -293,4 +298,3 @@ elif [[ "$pc_magic" -eq 0xCE ]]; then
 else
   printf '  Status: unexpected magic 0x%02X (expected 0xCE).\n' "$pc_magic"
 fi
-
