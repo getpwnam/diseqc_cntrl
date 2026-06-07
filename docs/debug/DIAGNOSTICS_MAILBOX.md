@@ -23,8 +23,9 @@ Current mailbox words are implemented as global volatile `uint32_t` symbols in:
    - Write policy: updated by native error paths and CLR diagnostics injection.
 
 3. `g_cubley_diag_boot_probe_status`
-   - Role: sticky managed boot hardware probe result.
+   - Role: sticky managed boot hardware probe aggregate.
    - Write policy: latch-once via `DiagnosticsMailbox.NativeTryLatchBootProbe(...)`.
+   - Encoding: stage `0xF0`, result = aggregate (`PASS`/`WARN`/`FAIL`), detail = hardware bitmap (`bit0=W5500 bit1=LNBH26 bit2=FRAM`).
 
 4. `g_cubley_diag_clr_status`
    - Role: sticky-ish CLR startup progress channel (written alongside CLR current status in startup helpers).

@@ -127,20 +127,18 @@ decode_word() {
     14) result_label="FAIL" ;;
     15) result_label="EXCEPTION" ;;
   esac
-
   printf '%s raw: %s\n' "$label" "$value_hex"
   printf '  Magic: 0x%02X\n' "$magic"
   printf '  Stage: %d\n' "$stage"
-  if [[ "$label" == "Boot probe" && "$magic" -eq 213 && "$stage" -eq 226 ]]; then
-    is_boot_probe=1
-    printf '  Result: %d (bitmap payload; not a pass/fail field for boot probe)\n' "$result"
-  else
-    printf '  Result: %d (%s)\n' "$result" "$result_label"
-  fi
+  printf '  Result: %d (%s)\n' "$result" "$result_label"
   printf '  Detail: %d\n' "$detail"
 
   if [[ "$magic" -ne 0 && "$magic" -ne 213 ]]; then
     echo "  Warning: magic byte mismatch (expected 0xD5)." >&2
+  fi
+
+  if [[ "$label" == "Boot probe" && "$magic" -eq 213 ]]; then
+    is_boot_probe=1
   fi
 
   if [[ "$is_boot_probe" -eq 1 ]]; then
