@@ -27,8 +27,10 @@ Usage:
     [--logfile /path/to/BRINGUP_TEST_LOG.md]
 
 Required fields:
-  --commands   Command summary that reproduces the run conditions.
-  --artifact   Artifact used by the run, or "none" if no artifact applies.
+  --result      PASS, FAIL, or INFO.
+  --conclusion  One-line factual summary.
+  --commands    Command summary that reproduces the run conditions.
+  --artifact    Artifact used by the run, or "none" if no artifact applies.
 
   --baseline yes|no   Mark the entry as baseline (default: yes).
                       Use --baseline no for any run that deviates from the
@@ -46,6 +48,8 @@ Example:
 
   ./toolchain/bringup_log_append.sh \
     --result INFO \
+    --commands "nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails" \
+    --artifact "none" \
     --baseline no \
     --conclusion "Experimental cubley-uart run — non-baseline, W5500 bring-up only"
 EOF
