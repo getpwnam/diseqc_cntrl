@@ -1,5 +1,9 @@
 # Managed Code Deployment Guide (Debug/Bring-up)
 
+> **Phase A baseline**: Before running any deployment, check the pinned build
+> profile, flash addresses, tooling versions, and wiring in
+> [PHASE_A_BASELINE.md](./PHASE_A_BASELINE.md).
+
 This guide covers deploying managed C# code to the DiSEqC Controller STM32F407 running nanoFramework.
 
 ## Hardware Bring-up Path → Managed Deployment
@@ -181,12 +185,15 @@ Use this when your source tree is in WSL/Linux.
 
 ## Flash Layout
 
-| Region | Address | Size | Purpose |
-|--------|---------|------|---------|
-| Sector 0 | 0x08000000 | 16 KB | nanoBooter (bootloader) |
-| Sector 1-2 | 0x08004000 | 72 KB | nanoCLR (runtime kernel) |
-| Sectors 3-6 | 0x0800C000 | 192 KB | nanoCLR continuation |
-| Sectors 7-10 | 0x080C0000 | 256 KB | Managed app deployment zone |
+The build script patches the reference linker to produce this in-use layout:
+
+| Region     | Start address | End address  | Size   | Purpose                         |
+|------------|---------------|--------------|--------|---------------------------------|
+| nanoBooter | `0x08000000`  | `0x08004000` | 16 KB  | nanoBooter (bootloader)         |
+| nanoCLR    | `0x08004000`  | `0x080C0000` | 752 KB | nanoCLR (runtime kernel)        |
+| Deployment | `0x080C0000`  | `0x08100000` | 256 KB | Managed app deployment zone     |
+
+For the authoritative baseline definition see [PHASE_A_BASELINE.md](./PHASE_A_BASELINE.md).
 
 ---
 

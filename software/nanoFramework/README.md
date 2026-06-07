@@ -6,6 +6,7 @@
 
 Use the debug bring-up guides as the canonical starting path:
 
+- [Phase A Baseline](../../docs/debug/PHASE_A_BASELINE.md) — pinned build profile, flash map, tooling, and wiring for all Phase A runs
 - [Managed Deployment](../../docs/debug/MANAGED_DEPLOYMENT.md)
 - [Testing Guide](../../docs/debug/TESTING_GUIDE.md)
 
@@ -155,27 +156,17 @@ Tracking:
 
 - See [TODO.md](../../docs/software/TODO.md), section **Current Focus: Build Chain Reliability**.
 
-## Host Prerequisites (Linux)
+## Host Prerequisites
 
-Before running managed build scripts on Linux, ensure these host tools are available:
+All build, flash, and deploy work is performed **inside the devcontainer**
+(`.devcontainer/`).  Every required tool — `gcc-arm-none-eabi` (15.2.rel1),
+cmake (3.31.6), kconfiglib, stlink-tools, nanoff, dotnet/MSBuild and the
+`xbuild` shim — is pre-installed in the devcontainer image.  No host-side
+tool installs are required.
 
-- Mono/MSBuild toolchain:
-	- `sudo apt update && sudo apt install -y mono-complete`
-- `nanoff` CLI:
-	- `dotnet tool install -g nanoff` (or `dotnet tool update -g nanoff`)
-- Compatibility shim for build flows that still invoke `xbuild`:
-	- `sudo ln -sf "$(command -v msbuild)" /usr/local/bin/xbuild`
-
-Sanity check:
-
-- `msbuild --version`
-- `xbuild --version`
-- `nanoff --help`
-
-Troubleshooting:
-
-- If you see `xbuild: command not found`, recreate the shim:
-	- `sudo ln -sf "$(command -v msbuild)" /usr/local/bin/xbuild`
+USB device passthrough (ST-Link, UART adapter) is configured in
+`.devcontainer/devcontainer.json`.  On WSL2/Windows, attach USB devices to
+WSL first (e.g. with `usbipd`) before rebuilding/reopening the container.
 
 ## Scope
 
@@ -184,11 +175,12 @@ This folder contains:
 - native integration code (`nf-native/`), and
 - build orchestration/scripts for generating firmware artifacts.
 
-The upstream `nf-interpreter` codebase is fetched during Docker build; it is not maintained as a first-class directory in this repository.
+The upstream `nf-interpreter` codebase is fetched during the firmware build; it is not maintained as a first-class directory in this repository.
 
 ## Documentation
 
 - [Docs Index](docs/README.md)
+- [Phase A Baseline](../../docs/debug/PHASE_A_BASELINE.md)
 - [Testing Guide](../../docs/debug/TESTING_GUIDE.md)
 - [MQTT API](../../docs/software/MQTT_API.md)
 - [Architecture](../../docs/software/ARCHITECTURE.md)
