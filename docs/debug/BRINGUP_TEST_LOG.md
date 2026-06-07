@@ -1153,3 +1153,30 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: DiSEqC_Control/bin/Release/DiSEqC_Control_bundle_20260526-235634.bin
 - Conclusion: Managed app is running and LNB detected in boot bitmap, but SMA output measured about 0.6V.
 - Note: User will continue LNB output debug tomorrow.
+
+### 2026-06-07 21:17:18 UTC [INFO] [NON-BASELINE]
+- Git rev: f3cc117
+- Baseline: NO — deviates from Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): st-info --probe; st-flash reset; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; nanoff --listports; ./toolchain/uart-preflight.sh --log-dir .debug/issue26_campaign_20260607T211620Z/cycle_01/uart-preflight --require-raw-bytes
+- Artifact: build/nanoBooter.bin; build/nanoCLR.bin; .debug/issue26_campaign_20260607T211620Z
+- Conclusion: Issue 26 campaign prep reached cycle 01 flash and reset, but UART transport is unavailable in this container so transport-health validation cannot proceed
+
+### 2026-06-07 21:26:54 UTC [FAIL] [NON-BASELINE]
+- Git rev: f3cc117
+- Baseline: NO — deviates from Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-native.sh build --profile core-only; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; st-flash reset; nanoff --listports; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --listdevices; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails
+- Artifact: build/nanoBooter.bin; build/nanoCLR.bin; /tmp/issue26_core_only_*.log
+- Conclusion: Core-only minimal native firmware still returns nanoff No devices found/E2001 on /dev/ttyUSB0, so transport failure is not caused by extra native probe/LED logic
+
+### 2026-06-07 21:36:28 UTC [INFO] [NON-BASELINE]
+- Git rev: f3cc117
+- Baseline: NO — deviates from Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-native.sh build --profile core-only; ./toolchain/build-native.sh build --profile cubley-stable; manual st-flash write/reset sequence; nanoff --listports/listdevices/devicedetails; python serial open /dev/ttyUSB0; ./tests/swd_read_bringup_status.sh
+- Artifact: build/nanoBooter.bin; build/nanoCLR.bin; /tmp/issue26_core_only_*.log; /tmp/issue26_stable_*.log; /tmp/issue26_uart_hexdump.log; /tmp/issue26_swd_status.log
+- Conclusion: Both core-only and cubley-stable produce identical nanoff failure modes, while ST-Link remains stable and ttyUSB0 intermittently reports ENXIO/no COM availability, indicating host/container UART device-path instability rather than profile-specific native firmware behavior
+
+### 2026-06-07 22:09:55 UTC [PASS]
+- Git rev: f3cc117
+- Command(s): st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; st-flash reset; sleep 2; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --listdevices; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails (x20 cycles)
+- Artifact: build/nanoBooter.bin; build/nanoCLR.bin; .debug/issue26_campaign_20260607T215707Z
+- Conclusion: 20/20 flash-reset cycles PASS (0 failures) on cubley-stable profile; explicit st-flash reset before nanoff probe is required for deterministic transport health; per-cycle logs in .debug/issue26_campaign_20260607T215707Z
