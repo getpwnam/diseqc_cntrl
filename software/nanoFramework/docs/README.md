@@ -28,6 +28,8 @@ Top-level docs taxonomy used by this repo:
 ## Reference
 
 - `../../../docs/software/ARCHITECTURE.md`
+- `../../../docs/software/INTEROP_CONTRACT_V1.md`
+- `../../../docs/software/INTEROP_VERSIONING_POLICY.md`
 - `../../../docs/software/MQTT_API.md`
 - `../../../docs/software/CONFIGURATION.md`
 - `../../../docs/software/TODO.md` (includes stable firmware + interop program phase tracker)

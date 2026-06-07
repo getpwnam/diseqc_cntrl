@@ -14,6 +14,13 @@ Use the debug bring-up guides as the canonical starting path:
 
 This project has two independent build components. Run them separately.
 
+Interop governance for these build paths:
+
+- Contract map: `../../docs/software/INTEROP_CONTRACT_V1.md`
+- Versioning policy: `../../docs/software/INTEROP_VERSIONING_POLICY.md`
+- Enforced guards: `./toolchain/interop-guard.sh`, `./toolchain/interop-checksum.sh`
+- Negative drift fixture test: `./toolchain/interop-negative-drift-test.sh`
+
 ### 1) Managed Application Build (C# project)
 
 Builds the managed application in `DiSEqC_Control/` and validates C# compile health.

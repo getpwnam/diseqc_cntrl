@@ -7,6 +7,7 @@ PROJECT="${PROJECT:-}"
 SOLUTION="${SOLUTION:-}"
 PACKAGES_DIR="$ROOT_DIR/packages"
 CHECKSUM_TOOL="$SCRIPT_DIR/interop-checksum.sh"
+INTEROP_GUARD_TOOL="$SCRIPT_DIR/interop-guard.sh"
 
 DEFAULT_NANO_PS_PATH=""
 NANO_EXT_ROOT="${HOME:-/home/vscode}/.vscode-server/extensions"
@@ -472,11 +473,20 @@ if [[ -z "$NANO_PS_PATH" || ! -d "$NANO_PS_PATH" ]]; then
   exit 2
 fi
 
+if [[ -x "$INTEROP_GUARD_TOOL" ]]; then
+  echo "[preflight] Validating interop slot order and append-only baseline"
+  "$INTEROP_GUARD_TOOL"
+else
+  echo "[error] Interop guard tool not found or not executable: $INTEROP_GUARD_TOOL" >&2
+  exit 1
+fi
+
 if [[ -x "$CHECKSUM_TOOL" ]]; then
   echo "[preflight] Validating interop checksum and AssemblyNativeVersion scope"
   "$CHECKSUM_TOOL" --check
 else
-  echo "[warn] Interop checksum tool not found or not executable: $CHECKSUM_TOOL" >&2
+  echo "[error] Interop checksum tool not found or not executable: $CHECKSUM_TOOL" >&2
+  exit 1
 fi
 
 if [[ -z "$NF_MDP_MSBUILDTASK_PATH_EFFECTIVE" ]]; then
@@ -551,8 +561,9 @@ else
 
   if [[ -f "$CUBLEY_INTEROP_PE" && -x "$CHECKSUM_TOOL" ]]; then
     if ! "$CHECKSUM_TOOL" --check --pe "$CUBLEY_INTEROP_PE"; then
-      echo "[warn] Cubley.Interop checksum mismatch; continuing bundle creation." >&2
-      echo "[warn] To realign, run: $CHECKSUM_TOOL --fix --pe $CUBLEY_INTEROP_PE" >&2
+      echo "[error] Cubley.Interop checksum mismatch; refusing to continue." >&2
+      echo "[error] To realign, run: $CHECKSUM_TOOL --fix --pe $CUBLEY_INTEROP_PE" >&2
+      exit 1
     fi
   fi
 

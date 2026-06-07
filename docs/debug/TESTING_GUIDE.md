@@ -19,6 +19,9 @@ The Phase A freeze/handoff decision record is captured in [PHASE_A_EXIT_DECISION
 
 - The currently validated build profile has `System.Net` disabled.
 - MQTT/network test phases in this guide are optional unless networking is re-enabled in the build profile.
+- Interop slot/checksum governance for Cubley native calls is defined in [INTEROP_CONTRACT_V1.md](../software/INTEROP_CONTRACT_V1.md).
+- Interop compatibility and review rules are defined in [INTEROP_VERSIONING_POLICY.md](../software/INTEROP_VERSIONING_POLICY.md).
+- Intentional drift regression check: run `./software/nanoFramework/toolchain/interop-negative-drift-test.sh` and require `PASS`.
 
 ## Prerequisites
 
