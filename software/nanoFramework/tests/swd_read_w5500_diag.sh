@@ -102,7 +102,6 @@ mb_stage=$(((mailbox_dec >> 16) & 0xFF))
 mb_result=$(((mailbox_dec >> 8) & 0xFF))
 mb_detail=$((mailbox_dec & 0xFF))
 
-result_label=""
 if ! result_label="$(phase_a_result_label "$mb_result")"; then
   result_label="INVALID"
 fi
@@ -167,13 +166,13 @@ decode_phycfgr() {
   fi
 }
 
-if [[ "$mb_magic" -ne 213 ]]; then
+if [[ "$mb_magic" -ne $((0xD5)) ]]; then
   echo "ERROR: mailbox magic mismatch (expected 0xD5)." >&2
   exit 1
 fi
 
 if [[ "$result_label" == "INVALID" ]]; then
-  echo "ERROR: unknown/invalid result code (accepted: ENTER=0 PASS=1 FAIL=14 EXCEPTION=15)." >&2
+  echo "ERROR: unknown/invalid result code (accepted: $(phase_a_result_contract_summary))." >&2
   exit 1
 fi
 

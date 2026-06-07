@@ -119,8 +119,8 @@ decode_word() {
   local result=$(((value_dec >> 8) & 0xFF))
   local detail=$((value_dec & 0xFF))
 
-  local result_label=""
   local is_valid_result=1
+  local result_label
   if ! result_label="$(phase_a_result_label "$result")"; then
     result_label="INVALID"
     is_valid_result=0
@@ -132,13 +132,13 @@ decode_word() {
   printf '  Result: %d (%s)\n' "$result" "$result_label"
   printf '  Detail: %d (0x%02X)\n' "$detail" "$detail"
 
-  if [[ "$magic" -ne 213 ]]; then
+  if [[ "$magic" -ne $((0xD5)) ]]; then
     echo "  ERROR: magic byte mismatch (expected 0xD5)." >&2
     return 1
   fi
 
   if [[ "$is_valid_result" -eq 0 ]]; then
-    echo "  ERROR: unknown/invalid result code (accepted: ENTER=0 PASS=1 FAIL=14 EXCEPTION=15)." >&2
+    echo "  ERROR: unknown/invalid result code (accepted: $(phase_a_result_contract_summary))." >&2
     return 1
   fi
 
@@ -178,6 +178,6 @@ decode_word() {
   fi
 }
 
-decode_word "Current status" "$current_hex"
-decode_word "Boot probe" "$boot_probe_hex"
-decode_word "CLR startup" "$clr_hex"
+decode_word "Current status" "$current_hex" || exit 1
+decode_word "Boot probe" "$boot_probe_hex" || exit 1
+decode_word "CLR startup" "$clr_hex" || exit 1

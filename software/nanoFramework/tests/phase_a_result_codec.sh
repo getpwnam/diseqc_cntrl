@@ -3,6 +3,10 @@
 # Shared Phase A status-word decode helpers.
 # Format: 0xD5SSRRDD
 
+phase_a_result_contract_summary() {
+  echo "ENTER=0 [entry/running] PASS=1 FAIL=14 EXCEPTION=15"
+}
+
 phase_a_result_label() {
   local result="$1"
   case "$result" in
@@ -28,4 +32,3 @@ phase_a_component_label() {
     *) return 1 ;;
   esac
 }
-

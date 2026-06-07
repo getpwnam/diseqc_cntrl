@@ -73,7 +73,7 @@ Mailbox words are 32-bit packed values.
 
 Standard Phase A result decode:
 
-- `0`: `ENTER`
+- `0`: `ENTER` (entry/running marker)
 - `1`: `PASS`
 - `14`: `FAIL`
 - `15`: `EXCEPTION`
