@@ -59,10 +59,12 @@ For each run, append one short entry with:
 - Pass/fail result
 - One-line conclusion
 
+Each entry must include `Command(s)` and `Artifact` fields so the run can be replayed from the log. Use `Artifact: none` only when no artifact applies.
+
 ## Quick logging helper
 Use the helper to append timestamped entries consistently:
 
-- `./toolchain/bringup_log_append.sh --result PASS|FAIL|INFO --conclusion "one-line conclusion"`
+- `./toolchain/bringup_log_append.sh --result PASS|FAIL|INFO --commands "..." --artifact "..." --conclusion "one-line conclusion"`
 
 Recommended full form for debug sessions:
 

@@ -31,8 +31,8 @@ Append concise, factual test-session entries to the repository bring-up log usin
    - optional note
 2. Validate that conclusion is factual and non-speculative.
 3. Call the helper script with explicit flags:
-   - ./toolchain/bringup_log_append.sh --result ... --conclusion ...
-   - include --commands, --artifact, --breakpoints, and --note when available
+   - ./toolchain/bringup_log_append.sh --result ... --commands ... --artifact ... --conclusion ...
+   - include --breakpoints and --note when available
 4. Confirm the append succeeded and report the timestamped heading added.
 
 ## Output Format
@@ -49,4 +49,4 @@ Append concise, factual test-session entries to the repository bring-up log usin
 - Never rewrite or reorder prior log history.
 - Keep conclusions short and evidence-based.
 - Prefer one entry per coherent test run.
-- If required fields are missing, ask for only the minimum needed facts (result + conclusion).
+- If required fields are missing, ask for only the minimum needed facts (result, commands, artifact, and conclusion).

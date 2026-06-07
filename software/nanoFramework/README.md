@@ -105,9 +105,9 @@ To keep debugging history stable across long sessions and context compaction, ap
 
 Helper command:
 
-- `./toolchain/bringup_log_append.sh --result PASS|FAIL|INFO --conclusion "one-line conclusion"`
+- `./toolchain/bringup_log_append.sh --result PASS|FAIL|INFO --commands "..." --artifact "..." --conclusion "one-line conclusion"`
 
-Use `--help` for optional fields (`--commands`, `--artifact`, `--breakpoints`, `--note`).
+Use `--help` for optional fields (`--breakpoints`, `--note`, `--baseline`, `--logfile`).
 
 ## MQTT Transport Mode (Phase 3.5)
 
