@@ -4,7 +4,7 @@
 # Format: 0xD5SSRRDD
 
 phase_a_result_contract_summary() {
-  echo "ENTER=0 [entry/running] PASS=1 FAIL=14 EXCEPTION=15"
+  echo "ENTER=0 [entry/running] PASS=1 WARN=2 [aggregate/skipped] FAIL=14 EXCEPTION=15"
 }
 
 phase_a_result_label() {
@@ -12,6 +12,7 @@ phase_a_result_label() {
   case "$result" in
     0) echo "ENTER" ;;
     1) echo "PASS" ;;
+    2) echo "WARN" ;;
     14) echo "FAIL" ;;
     15) echo "EXCEPTION" ;;
     *) return 1 ;;

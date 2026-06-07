@@ -24,6 +24,7 @@
     <Compile Include="../../Cubley.Interop/CubleyInteropNative.cs" Link="Production/Cubley/CubleyInteropNative.cs" />
     <Compile Include="../../DiSEqC_Control/RuntimeConfiguration.cs" Link="Production/RuntimeConfiguration.cs" />
     <Compile Include="../../DiSEqC_Control/ParityHelper.cs" Link="Production/ParityHelper.cs" />
+    <Compile Include="../../DiSEqC_Control/DiagnosticsStatusWord.cs" Link="Production/DiagnosticsStatusWord.cs" />
     <Compile Include="../../DiSEqC_Control/Native/W5500SocketNative.cs" Link="Production/Native/W5500SocketNative.cs" />
     <Compile Include="../../DiSEqC_Control/Mqtt/IW5500SocketApi.cs" Link="Production/Mqtt/IW5500SocketApi.cs" />
     <Compile Include="../../DiSEqC_Control/Mqtt/IMqttCommandSink.cs" Link="Production/Mqtt/IMqttCommandSink.cs" />

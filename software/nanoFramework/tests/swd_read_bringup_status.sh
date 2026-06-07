@@ -142,7 +142,7 @@ decode_word() {
     return 1
   fi
 
-  if [[ "$label" == "Boot probe" && "$stage" -eq 226 ]]; then
+  if [[ "$label" == "Boot probe" && ( "$stage" -eq $((0xF0)) || "$stage" -eq 226 ) ]]; then
     local has_w5500="detected"
     local has_lnb="detected"
     local has_fram="detected"

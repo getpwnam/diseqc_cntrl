@@ -18,92 +18,103 @@ namespace DiSEqC_Control
         private static bool ProbeW5500OnStartup = true;
         private static bool ProbeFramOnStartup = true;
 
-        private const uint ProbeStageBase = 0xD5E10000u;
-        private const uint ProbeStageW5500 = 0x0100u;
-        private const uint ProbeStageLnb = 0x0200u;
-        private const uint ProbeStageFram = 0x0300u;
+        private const byte StageManagedEntry = 0xE0;
+        private const byte StageW5500 = 0xE1;
+        private const byte StageLnbh26 = 0xE2;
+        private const byte StageFram = 0xE3;
+        private const byte StagePhaseAAggregate = 0xEF;
+        private const byte StageBootProbeAggregate = 0xF0;
 
         public static void Main()
         {
-            // Sentinel: very first managed instruction. If mailbox shows this,
-            // Main() is reachable and the CLR started the app successfully.
-            Cubley.Interop.BringupStatus.NativeSet(0xD5AA0001u);
+            // Sentinel: very first managed instruction.
+            WriteProbeMarker(StageManagedEntry, DiagnosticsStatusWord.ResultRunning, 0x01);
 
             // Keep a direct Runtime.Events type reference so metadata processing
             // includes the managed assembly required by System.Device.Gpio.
             _ = typeof(NativeEventDispatcher);
 
-            Cubley.Interop.BringupStatus.NativeSet(0xD5AA0002u);
+            WriteProbeMarker(StageManagedEntry, DiagnosticsStatusWord.ResultPass, 0x02);
 
-            byte probeBitmap = RunHardwarePresenceProbes();
+            byte aggregateResult;
+            byte probeBitmap = RunHardwarePresenceProbes(out aggregateResult);
             Debug.WriteLine("[probe] bitmap=0x" + probeBitmap.ToString("X2") + " (bit0=W5500, bit1=LNBH26, bit2=FRAM)");
 
-            Cubley.Interop.DiagnosticsMailbox.NativeTryLatchBootProbe(0xD5E20000u | probeBitmap);
+            uint aggregateWord = DiagnosticsStatusWord.Compose(StageBootProbeAggregate, aggregateResult, probeBitmap);
+            Cubley.Interop.DiagnosticsMailbox.NativeTryLatchBootProbe(aggregateWord);
+            WriteProbeMarker(StagePhaseAAggregate, aggregateResult, probeBitmap);
 
             Program.MainApp(HardwareCapabilities.FromBitmap(probeBitmap));
         }
 
-        private static byte RunHardwarePresenceProbes()
+        private static byte RunHardwarePresenceProbes(out byte aggregateResult)
         {
             byte bitmap = 0;
+            byte failureCount = 0;
+            byte skippedCount = 0;
 
             if (ProbeW5500OnStartup)
             {
-                WriteProbeStage(ProbeStageW5500, 0x01);
+                WriteProbeMarker(StageW5500, DiagnosticsStatusWord.ResultRunning, 0x01);
                 if (ProbeW5500())
                 {
                     bitmap |= HardwareCapabilities.W5500Bit;
-                    WriteProbeStage(ProbeStageW5500, 0x11);
+                    WriteProbeMarker(StageW5500, DiagnosticsStatusWord.ResultPass, HardwareCapabilities.W5500Bit);
                 }
                 else
                 {
-                    WriteProbeStage(ProbeStageW5500, 0x10);
+                    failureCount++;
+                    WriteProbeMarker(StageW5500, DiagnosticsStatusWord.ResultFail, 0x00);
                 }
             }
             else
             {
                 // Known bring-up mode: skip W5500 probe so LNB/FRAM startup is not gated by SPI path.
-                WriteProbeStage(ProbeStageW5500, 0x12);
+                skippedCount++;
+                WriteProbeMarker(StageW5500, DiagnosticsStatusWord.ResultWarn, 0x01);
                 Debug.WriteLine("[probe] W5500 startup probe skipped by configuration.");
             }
 
-            WriteProbeStage(ProbeStageLnb, 0x01);
+            WriteProbeMarker(StageLnbh26, DiagnosticsStatusWord.ResultRunning, 0x01);
             if (ProbeLnbh26())
             {
                 bitmap |= HardwareCapabilities.LnbBit;
-                WriteProbeStage(ProbeStageLnb, 0x11);
+                WriteProbeMarker(StageLnbh26, DiagnosticsStatusWord.ResultPass, HardwareCapabilities.LnbBit);
             }
             else
             {
-                WriteProbeStage(ProbeStageLnb, 0x10);
+                failureCount++;
+                WriteProbeMarker(StageLnbh26, DiagnosticsStatusWord.ResultFail, 0x00);
             }
 
             if (ProbeFramOnStartup)
             {
-                WriteProbeStage(ProbeStageFram, 0x01);
+                WriteProbeMarker(StageFram, DiagnosticsStatusWord.ResultRunning, 0x01);
                 if (ProbeFram())
                 {
                     bitmap |= HardwareCapabilities.FramBit;
-                    WriteProbeStage(ProbeStageFram, 0x11);
+                    WriteProbeMarker(StageFram, DiagnosticsStatusWord.ResultPass, HardwareCapabilities.FramBit);
                 }
                 else
                 {
-                    WriteProbeStage(ProbeStageFram, 0x10);
+                    failureCount++;
+                    WriteProbeMarker(StageFram, DiagnosticsStatusWord.ResultFail, 0x00);
                 }
             }
             else
             {
-                WriteProbeStage(ProbeStageFram, 0x12);
+                skippedCount++;
+                WriteProbeMarker(StageFram, DiagnosticsStatusWord.ResultWarn, 0x01);
                 Debug.WriteLine("[probe] FRAM startup probe skipped by configuration.");
             }
 
-            WriteProbeStage(0x0400u, bitmap);
+            aggregateResult = DiagnosticsStatusWord.ComputeAggregateResult(failureCount, skippedCount);
             return bitmap;
         }
 
-        private static void WriteProbeStage(uint stageId, uint value)
+        private static void WriteProbeMarker(byte stage, byte result, byte detail)
         {
-            Cubley.Interop.BringupStatus.NativeSet(ProbeStageBase | stageId | (value & 0xFFu));
+            Cubley.Interop.BringupStatus.NativeSet(DiagnosticsStatusWord.Compose(stage, result, detail));
 
             // Keep each marker visible long enough for SWD polling during bring-up.
             Thread.Sleep(75);
@@ -113,10 +124,7 @@ namespace DiSEqC_Control
         {
             try
             {
-                Cubley.Interop.BringupStatus.NativeSet(ProbeStageBase | ProbeStageW5500 | 0x02u);
-
                 uint version = Cubley.Interop.W5500Socket.NativeGetVersion();
-                Cubley.Interop.BringupStatus.NativeSet(ProbeStageBase | ProbeStageW5500 | 0x03u);
                 bool present = (version & 0xFFu) == 0x04u;
 
                 Debug.WriteLine("[probe] W5500 version=0x" + version.ToString("X2") + " present=" + present);
