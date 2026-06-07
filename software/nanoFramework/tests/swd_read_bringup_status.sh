@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NF_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ELF_PATH="${1:-$NF_ROOT/build/nanoCLR.elf}"
 OPENOCD_CFG="${OPENOCD_CFG:-interface/stlink.cfg -f target/stm32f4x.cfg}"
+source "$SCRIPT_DIR/phase_a_result_codec.sh"
 if [[ -n "${GDB_BIN:-}" ]]; then
   GDB_BIN="$GDB_BIN"
 elif command -v arm-none-eabi-gdb >/dev/null 2>&1; then
@@ -112,36 +113,36 @@ fi
 decode_word() {
   local label="$1"
   local value_hex="$2"
-  local is_boot_probe=0
   local value_dec=$((value_hex))
   local magic=$(((value_dec >> 24) & 0xFF))
   local stage=$(((value_dec >> 16) & 0xFF))
   local result=$(((value_dec >> 8) & 0xFF))
   local detail=$((value_dec & 0xFF))
 
-  local result_label="UNKNOWN"
-  case "$result" in
-    0) result_label="RUNNING" ;;
-    1) result_label="PASS" ;;
-    2) result_label="WARN" ;;
-    14) result_label="FAIL" ;;
-    15) result_label="EXCEPTION" ;;
-  esac
+  local is_valid_result=1
+  local result_label
+  if ! result_label="$(phase_a_result_label "$result")"; then
+    result_label="INVALID"
+    is_valid_result=0
+  fi
+
   printf '%s raw: %s\n' "$label" "$value_hex"
   printf '  Magic: 0x%02X\n' "$magic"
   printf '  Stage: %d\n' "$stage"
   printf '  Result: %d (%s)\n' "$result" "$result_label"
-  printf '  Detail: %d\n' "$detail"
+  printf '  Detail: %d (0x%02X)\n' "$detail" "$detail"
 
-  if [[ "$magic" -ne 0 && "$magic" -ne 213 ]]; then
-    echo "  Warning: magic byte mismatch (expected 0xD5)." >&2
+  if [[ "$magic" -ne $((0xD5)) ]]; then
+    echo "  ERROR: magic byte mismatch (expected 0xD5)." >&2
+    return 1
   fi
 
-  if [[ "$label" == "Boot probe" && "$magic" -eq 213 ]]; then
-    is_boot_probe=1
+  if [[ "$is_valid_result" -eq 0 ]]; then
+    echo "  ERROR: unknown/invalid result code (accepted: $(phase_a_result_contract_summary))." >&2
+    return 1
   fi
 
-  if [[ "$is_boot_probe" -eq 1 ]]; then
+  if [[ "$label" == "Boot probe" && ( "$stage" -eq $((0xF0)) || "$stage" -eq 226 ) ]]; then
     local has_w5500="detected"
     local has_lnb="detected"
     local has_fram="detected"
@@ -171,8 +172,12 @@ decode_word() {
     printf '  Probe config: W5500=%s FRAM=%s (source: %s)\n' "$probe_w5500_on_startup" "$probe_fram_on_startup" "$STARTUP_PROBE_CS"
     printf '  Note: LNBH26=detected means the startup I2C probe got ACK at bus1 addr 0x08; if the chip is absent this suggests an address/bus mismatch or a false-positive ACK path.\n'
   fi
+
+  if component_label="$(phase_a_component_label "$detail" 2>/dev/null)"; then
+    printf '  Phase-A component: %s\n' "$component_label"
+  fi
 }
 
-decode_word "Current status" "$current_hex"
-decode_word "Boot probe" "$boot_probe_hex"
-decode_word "CLR startup" "$clr_hex"
+decode_word "Current status" "$current_hex" || exit 1
+decode_word "Boot probe" "$boot_probe_hex" || exit 1
+decode_word "CLR startup" "$clr_hex" || exit 1

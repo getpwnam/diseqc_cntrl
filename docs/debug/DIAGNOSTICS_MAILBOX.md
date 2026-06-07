@@ -69,16 +69,34 @@ Mailbox words are 32-bit packed values.
 
 - `0xD5`: status magic
 - `SS`: stage
-- `RR`: result code
-- `DD`: detail
+- `RR`: result code (Phase A contract)
+- `DD`: detail (Phase A contract: component selector for smoke checks)
 
-Typical result decode used by scripts:
+Standard Phase A result decode:
 
-- `0`: RUNNING
-- `1`: PASS
-- `2`: WARN
-- `14`: FAIL
-- `15`: EXCEPTION
+- `0`: `ENTER` (entry/running marker)
+- `1`: `PASS`
+- `2`: `WARN` (aggregate/skipped)
+- `14`: `FAIL`
+- `15`: `EXCEPTION`
+
+Any other `RR` value is invalid for Phase A check words and must be rejected by readers.
+
+Phase A detail-byte mapping (`DD`) for smoke checks:
+
+- `1`: UART wire protocol
+- `2`: USB CDC serial
+- `3`: LED / GPIO
+- `4`: FRAM
+- `5`: LNBH26
+- `6`: W5500
+- `7`: DiSEqC transmit path
+- `8`: Diagnostics mailbox
+
+`software/nanoFramework/tests/swd_read_bringup_status.sh` and
+`software/nanoFramework/tests/swd_read_w5500_diag.sh` both use the shared
+`software/nanoFramework/tests/phase_a_result_codec.sh` decoder so SWD/UART-side
+readers apply the same rules and fail fast on invalid magic/result codes.
 
 ### Error word format
 

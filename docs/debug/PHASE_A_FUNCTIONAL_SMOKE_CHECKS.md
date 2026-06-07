@@ -398,11 +398,17 @@ cd software/nanoFramework
 ```
 
 3. Inspect the output for:
-   - `g_cubley_diag_boot_probe_status`: magic `0xD5`, non-zero result field.
+   - `g_cubley_diag_boot_probe_status`: magic `0xD5`, valid result code, and
+     non-zero probe bitmap detail after successful startup.
    - `g_cubley_diag_clr_status`: magic `0xD5`, stage progression matching
      startup sequence.
    - `g_cubley_diag_current_status`: magic `0xD5`, valid stage/result.
    - `g_cubley_diag_last_error`: `0x00000000` (no error) for a clean boot.
+   - Result code decode follows the Phase A contract: `ENTER(0)`, `PASS(1)`,
+     `FAIL(14)`, `EXCEPTION(15)`.
+   - When a word represents a Phase A smoke check result, detail-byte decode
+     follows check IDs: `1=UART`, `2=USB`, `3=LED/GPIO`, `4=FRAM`, `5=LNBH26`,
+     `6=W5500`, `7=DiSEqC`, `8=Diagnostics`.
 4. Power-cycle and re-read without new deployment.  Sticky slots must retain
    their values; transient current-status slot may differ.
 5. Repeat across 3 MCU resets.
@@ -429,6 +435,7 @@ deterministic across all iterations.
 - Magic byte in a status slot is not `0xD5` (indicates wrong symbol or
   uninitialised data being read).
 - Stage bytes are out of order or missing.
+- Unknown or invalid result code is seen (reader must reject and flag).
 - Sticky slots do not retain values across power cycles.
 - Results differ across iterations without explanation.
 
