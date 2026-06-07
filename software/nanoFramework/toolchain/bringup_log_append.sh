@@ -19,12 +19,18 @@ Usage:
   ./toolchain/bringup_log_append.sh \
     --result PASS|FAIL|INFO \
     --conclusion "one-line conclusion" \
-    [--commands "command(s) run"] \
-    [--artifact "artifact used"] \
+    --commands "command(s) run" \
+    --artifact "artifact used" \
     [--breakpoints "bp list"] \
     [--note "extra note"] \
     [--baseline yes|no] \
     [--logfile /path/to/BRINGUP_TEST_LOG.md]
+
+Required fields:
+  --result      PASS, FAIL, or INFO.
+  --conclusion  One-line factual summary.
+  --commands    Command summary that reproduces the run conditions.
+  --artifact    Artifact used by the run, or "none" if no artifact applies.
 
   --baseline yes|no   Mark the entry as baseline (default: yes).
                       Use --baseline no for any run that deviates from the
@@ -42,6 +48,8 @@ Example:
 
   ./toolchain/bringup_log_append.sh \
     --result INFO \
+    --commands "nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails" \
+    --artifact "none" \
     --baseline no \
     --conclusion "Experimental cubley-uart run — non-baseline, W5500 bring-up only"
 EOF
@@ -93,8 +101,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$RESULT" || -z "$CONCLUSION" ]]; then
-  echo "Error: --result and --conclusion are required." >&2
+if [[ -z "$RESULT" || -z "$CONCLUSION" || -z "$COMMANDS" || -z "$ARTIFACT" ]]; then
+  echo "Error: --result, --conclusion, --commands, and --artifact are required." >&2
   usage
   exit 2
 fi
@@ -129,12 +137,8 @@ fi
   if [[ "$BASELINE" == "no" ]]; then
     echo "- Baseline: NO — deviates from Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)"
   fi
-  if [[ -n "$COMMANDS" ]]; then
-    echo "- Command(s): ${COMMANDS}"
-  fi
-  if [[ -n "$ARTIFACT" ]]; then
-    echo "- Artifact: ${ARTIFACT}"
-  fi
+  echo "- Command(s): ${COMMANDS}"
+  echo "- Artifact: ${ARTIFACT}"
   if [[ -n "$BREAKPOINTS" ]]; then
     echo "- Breakpoints: ${BREAKPOINTS}"
   fi
