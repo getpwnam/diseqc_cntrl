@@ -243,6 +243,9 @@ case "$BUILD_PROFILE" in
         ENABLE_HSI_PLL="1"
         PROFILE_STATUS="stable"
         PROFILE_NOTE="Default Cubley stable profile (non-network)"
+        # Static-target enforcement: all target files must be locally owned;
+        # no reference-board fallback allowed in the stable profile.
+        STATIC_AUDIT="${NF_STATIC_AUDIT:-1}"
         ;;
     cubley-uart)
         ENABLE_API_GPIO="ON"
@@ -1287,39 +1290,16 @@ else
     echo "# CONFIG_NF_SECURITY_MBEDTLS is not set" >> "$TARGET_DIR/defconfig"
 fi
 
-# Generate top-level target CMakeLists.txt.
+# Copy top-level target CMakeLists.txt.
 # This is required by nf-interpreter CMake line 833 (add_subdirectory).
-# A local override takes priority; otherwise generate a standard one.
+# Priority: workspace build override > local target-overrides static file.
 if [ -f "$WORKSPACE_BUILD_DIR/CMakeLists.txt" ]; then
     cp "$WORKSPACE_BUILD_DIR/CMakeLists.txt" "$TARGET_DIR/"
-elif [ ! -f "$TARGET_DIR/CMakeLists.txt" ]; then
-    cat > "$TARGET_DIR/CMakeLists.txt" << 'EOF_TARGET_CMAKE'
-#
-# Copyright (c) .NET Foundation and Contributors
-# See LICENSE file in the project root for full license information.
-#
-
-include(binutils.common)
-include(binutils.ChibiOS)
-
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/common")
-
-nf_setup_target_build(
-    HAS_NANOBOOTER
-
-    BOOTER_LINKER_FILE
-        STM32F407xG_booter
-
-    CLR_LINKER_FILE
-        STM32F407xG_CLR
-
-    BOOTER_EXTRA_LINKMAP_PROPERTIES
-        ",--library-path=${CMAKE_SOURCE_DIR}/targets/ChibiOS/_common,--defsym=__main_stack_size__=0x400,--defsym=__process_stack_size__=0x400,--defsym=__crt_heap_size__=0x10000"
-
-    CLR_EXTRA_LINKMAP_PROPERTIES
-        ",--library-path=${CMAKE_SOURCE_DIR}/targets/ChibiOS/_common,--defsym=__main_stack_size__=0x400,--defsym=__process_stack_size__=0x800,--defsym=__crt_heap_size__=0x10000"
-)
-EOF_TARGET_CMAKE
+elif [ -f "$LOCAL_TARGET_OVERRIDES_DIR/CMakeLists.txt" ]; then
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/CMakeLists.txt" "$TARGET_DIR/"
+else
+    echo -e "${RED}Missing CMakeLists.txt: expected at $LOCAL_TARGET_OVERRIDES_DIR/CMakeLists.txt${NC}"
+    exit 1
 fi
 
 # Ensure HAL settings match this board capabilities in both firmware images.
