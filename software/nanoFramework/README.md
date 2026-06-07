@@ -6,6 +6,7 @@
 
 Use the debug bring-up guides as the canonical starting path:
 
+- [Phase A Baseline](../../docs/debug/PHASE_A_BASELINE.md) — pinned build profile, flash map, tooling, and wiring for all Phase A runs
 - [Managed Deployment](../../docs/debug/MANAGED_DEPLOYMENT.md)
 - [Testing Guide](../../docs/debug/TESTING_GUIDE.md)
 
@@ -189,6 +190,7 @@ The upstream `nf-interpreter` codebase is fetched during Docker build; it is not
 ## Documentation
 
 - [Docs Index](docs/README.md)
+- [Phase A Baseline](../../docs/debug/PHASE_A_BASELINE.md)
 - [Testing Guide](../../docs/debug/TESTING_GUIDE.md)
 - [MQTT API](../../docs/software/MQTT_API.md)
 - [Architecture](../../docs/software/ARCHITECTURE.md)

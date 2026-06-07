@@ -11,6 +11,7 @@ COMMANDS=""
 ARTIFACT=""
 BREAKPOINTS=""
 NOTE=""
+BASELINE="yes"
 
 usage() {
   cat <<'EOF'
@@ -22,7 +23,14 @@ Usage:
     [--artifact "artifact used"] \
     [--breakpoints "bp list"] \
     [--note "extra note"] \
+    [--baseline yes|no] \
     [--logfile /path/to/BRINGUP_TEST_LOG.md]
+
+  --baseline yes|no   Mark the entry as baseline (default: yes).
+                      Use --baseline no for any run that deviates from the
+                      Phase A baseline profile, flash addresses, tooling, or
+                      wiring documented in docs/debug/PHASE_A_BASELINE.md.
+                      Non-baseline entries are annotated with [NON-BASELINE].
 
 Example:
   ./toolchain/bringup_log_append.sh \
@@ -31,6 +39,11 @@ Example:
     --artifact "DiSEqC_Control/bin/Release/DiSEqC_Control.bin" \
     --breakpoints "0x0802664, 0x080267a, 0x08035b0c" \
     --conclusion "Booter handoff reached; CLR reset not hit"
+
+  ./toolchain/bringup_log_append.sh \
+    --result INFO \
+    --baseline no \
+    --conclusion "Experimental cubley-uart run — non-baseline, W5500 bring-up only"
 EOF
 }
 
@@ -60,6 +73,10 @@ while [[ $# -gt 0 ]]; do
       NOTE="${2:-}"
       shift 2
       ;;
+    --baseline)
+      BASELINE="${2:-}"
+      shift 2
+      ;;
     --logfile)
       LOG_FILE="${2:-}"
       shift 2
@@ -87,6 +104,11 @@ if [[ "$RESULT" != "PASS" && "$RESULT" != "FAIL" && "$RESULT" != "INFO" ]]; then
   exit 2
 fi
 
+if [[ "$BASELINE" != "yes" && "$BASELINE" != "no" ]]; then
+  echo "Error: --baseline must be yes or no." >&2
+  exit 2
+fi
+
 if [[ ! -f "$LOG_FILE" ]]; then
   echo "Error: log file not found: $LOG_FILE" >&2
   exit 1
@@ -95,10 +117,18 @@ fi
 TIMESTAMP="$(date -u +"%Y-%m-%d %H:%M:%S UTC")"
 GIT_REV="$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown")"
 
+BASELINE_TAG=""
+if [[ "$BASELINE" == "no" ]]; then
+  BASELINE_TAG=" [NON-BASELINE]"
+fi
+
 {
   echo
-  echo "### ${TIMESTAMP} [${RESULT}]"
+  echo "### ${TIMESTAMP} [${RESULT}]${BASELINE_TAG}"
   echo "- Git rev: ${GIT_REV}"
+  if [[ "$BASELINE" == "no" ]]; then
+    echo "- Baseline: NO — deviates from Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)"
+  fi
   if [[ -n "$COMMANDS" ]]; then
     echo "- Command(s): ${COMMANDS}"
   fi
