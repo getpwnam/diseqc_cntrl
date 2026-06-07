@@ -109,6 +109,14 @@ Helper command:
 
 Use `--help` for optional fields (`--breakpoints`, `--note`, `--baseline`, `--logfile`).
 
+### Deterministic Cycle Campaign Helper
+
+For Phase A issue #26 style repeatability runs, use:
+
+- `./toolchain/run-deterministic-cycles.sh --cycles 20 --serial /dev/ttyUSB0 --baud 115200 --settle-ms 2000`
+
+The helper performs booter flash, CLR flash, explicit `st-flash reset`, then `nanoff --listdevices` and `--devicedetails` per cycle, writing per-cycle logs under `.debug/`.
+
 ## MQTT Transport Mode (Phase 3.5)
 
 Runtime config key:
