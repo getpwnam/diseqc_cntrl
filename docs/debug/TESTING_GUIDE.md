@@ -4,6 +4,12 @@
 
 Bring up and validate board behavior in a staged way: power, flash, protocol output, and functional control.
 
+Before running a full Phase A validation campaign, confirm that each component
+passes its functional smoke check.  The per-component pass/fail criteria are
+defined in:
+
+> **[PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md](./PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md)**
+
 ## Current Profile Notes
 
 - The currently validated build profile has `System.Net` disabled.
