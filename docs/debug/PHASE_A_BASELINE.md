@@ -93,27 +93,19 @@ nanoff --nanodevice \
 
 ## Tooling Versions
 
-The native firmware build runs inside the Docker container defined by
-`software/nanoFramework/Dockerfile.build`.  The following versions are
-pinned by that file and constitute the baseline toolchain.
+All build, flash, and deploy operations run **inside the devcontainer** defined
+by `.devcontainer/Dockerfile`.  No host-side tool installs or Docker Compose
+invocations are required.  The following versions are pinned by the
+devcontainer image and constitute the baseline toolchain.
 
-| Tool                          | Version constraint       | Source                    |
-|-------------------------------|--------------------------|---------------------------|
-| Docker build base image       | `ubuntu:24.04`           | `Dockerfile.build` line 1 |
-| cmake                         | `>= 3.31` (via pip)      | `Dockerfile.build` line 27|
-| kconfiglib                    | `>= 14.1` (via pip)      | `Dockerfile.build` line 30|
-| gcc-arm-none-eabi             | ubuntu:24.04 package     | `Dockerfile.build` line 20|
-| binutils-arm-none-eabi        | ubuntu:24.04 package     | `Dockerfile.build` line 21|
-| Docker Compose                | V2 (`docker compose`)    | `build-native.sh` line 4  |
-| nf-interpreter branch         | `main`                   | `NF_INTERPRETER_REF` default|
-
-Host-side tools (outside Docker):
-
-| Tool            | Install command                                 | Minimum version |
-|-----------------|-------------------------------------------------|-----------------|
-| stlink-tools    | `sudo apt install stlink-tools`                 | any             |
-| nanoff          | `dotnet tool install -g nanoff`                 | any             |
-| mono-complete   | `sudo apt install mono-complete`                | any             |
+| Tool                | Version / constraint  | Source                                     |
+|---------------------|-----------------------|--------------------------------------------|
+| gcc-arm-none-eabi   | `15.2.rel1` (pinned)  | `.devcontainer/Dockerfile` `ARG GCC_VERSION`   |
+| cmake               | `3.31.6` (pinned)     | `.devcontainer/Dockerfile` `ARG CMAKE_VERSION` |
+| kconfiglib          | `>= 14.1` (pip)       | `.devcontainer/Dockerfile` line 150        |
+| stlink-tools        | ubuntu package        | `.devcontainer/Dockerfile` line 45         |
+| nanoff              | dotnet global tool    | `.devcontainer/Dockerfile` lines 137–139   |
+| nf-interpreter ref  | `main`                | `NF_INTERPRETER_REF` default               |
 
 ---
 
@@ -145,20 +137,23 @@ GND     ←---------→  GND
 
 ---
 
-## Host Setup Assumptions
+## Setup Assumptions
 
-These assumptions apply to all Phase A runs:
+All Phase A runs are performed **inside the devcontainer** defined by
+`.devcontainer/`.  The devcontainer pre-installs every required tool; there
+is no need to install Docker Compose, nanoff, or stlink-tools on the host.
 
-1. **Host OS**: Linux or WSL2 (Ubuntu 22.04 or later recommended).
-2. **Docker Compose V2** is installed and `docker compose` (no hyphen) works.
-3. `stlink-tools` is installed and `st-flash` is on `PATH`.
-4. `nanoff` is installed as a global dotnet tool (`~/.dotnet/tools/nanoff`).
-5. `mono-complete` and `msbuild` are installed for managed builds.
-6. The `xbuild` shim exists:
-   `sudo ln -sf "$(command -v msbuild)" /usr/local/bin/xbuild`
-7. The target board's USB-UART adapter appears as `/dev/ttyUSB0`
-   (adjust `--serialport` if the device path differs).
-8. The ST-Link V2 is connected and recognized by `st-flash --version`.
+1. **Open the devcontainer** in VS Code (or equivalent) — this is the sole
+   prerequisite for build and flash work.
+2. **USB passthrough** is configured in `.devcontainer/devcontainer.json`:
+   - `--privileged` for ST-Link USB access.
+   - `--device=/dev/ttyUSB0:/dev/ttyUSB0` for UART wire protocol.
+   - On WSL2/Windows hosts, attach the USB device to WSL first
+     (e.g. with `usbipd`), then rebuild/reopen the container.
+3. The target board's USB-UART adapter is expected at `/dev/ttyUSB0`
+   inside the container (adjust `--serialport` if the path differs).
+4. The ST-Link V2 is connected and `st-flash --version` works inside the
+   container before running any flash commands.
 
 ---
 
@@ -194,6 +189,7 @@ is outside the parameters above.
 - [MANAGED_DEPLOYMENT.md](./MANAGED_DEPLOYMENT.md) — Detailed deployment guide
 - [TESTING_GUIDE.md](./TESTING_GUIDE.md) — Bring-up validation workflow
 - [BRINGUP_TEST_LOG.md](./BRINGUP_TEST_LOG.md) — Run history
-- [Dockerfile.build](../../software/nanoFramework/Dockerfile.build) — Pinned build image
+- [.devcontainer/Dockerfile](../../.devcontainer/Dockerfile) — Pinned devcontainer image (toolchain versions)
+- [.devcontainer/devcontainer.json](../../.devcontainer/devcontainer.json) — USB device passthrough config
 - [build-native.sh](../../software/nanoFramework/toolchain/build-native.sh) — Firmware build script
 - Parent issue: [getpwnam/diseqc_cntrl#12](https://github.com/getpwnam/diseqc_cntrl/issues/12)
