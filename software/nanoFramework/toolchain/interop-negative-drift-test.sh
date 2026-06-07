@@ -41,13 +41,26 @@ if not match:
 body = match.group(2)
 lines = body.splitlines()
 
-entry_indices = [i for i, line in enumerate(lines) if "// [" in line and "." in line]
+entry_regex = re.compile(r"(//\s*\[(\d+)\]\s+)([A-Za-z0-9_]+\.[A-Za-z0-9_]+)")
+entry_indices = [i for i, line in enumerate(lines) if entry_regex.search(line)]
 if len(entry_indices) < 2:
     raise SystemExit("Not enough method_lookup entries for fixture mutation")
 
-first = entry_indices[0]
-second = entry_indices[1]
-lines[first], lines[second] = lines[second], lines[first]
+first_idx = entry_indices[0]
+second_idx = entry_indices[1]
+
+first_match = entry_regex.search(lines[first_idx])
+second_match = entry_regex.search(lines[second_idx])
+if not first_match or not second_match:
+  raise SystemExit("Failed to parse method_lookup comment markers for fixture mutation")
+
+first_name = first_match.group(3)
+second_name = second_match.group(3)
+
+# Intentionally swap only API names in comments while keeping slot indices/line order.
+# This ensures the guard reaches immutable v1 baseline drift detection.
+lines[first_idx] = lines[first_idx].replace(first_name, second_name, 1)
+lines[second_idx] = lines[second_idx].replace(second_name, first_name, 1)
 
 mutated = text[:match.start(2)] + "\n".join(lines) + text[match.end(2):]
 path.write_text(mutated, encoding="utf-8")
@@ -63,8 +76,8 @@ if [[ $guard_rc -eq 0 ]]; then
   exit 1
 fi
 
-if ! grep -Eq "Non-append slot drift detected|method_lookup index drift|InternalCall method order drift" <<< "$guard_output"; then
-  echo "FAIL: guard failed for fixture but did not report expected drift diagnostics." >&2
+if ! grep -Eq "Non-append slot drift detected in immutable v1 baseline" <<< "$guard_output"; then
+  echo "FAIL: guard failed but did not hit the immutable baseline drift path." >&2
   echo "$guard_output" >&2
   exit 1
 fi

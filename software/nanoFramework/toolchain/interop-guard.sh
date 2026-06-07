@@ -193,7 +193,11 @@ if prefix_drift:
     print("ERROR: Non-append slot drift detected in immutable v1 baseline.")
     for idx, expected, actual in prefix_drift:
         print(f"  [{idx:02d}] expected={expected} | actual={actual}")
-    print("Only append-only additions are allowed after slot 33 for v1.x.")
+    last_baseline_slot = len(V1_BASELINE) - 1
+    print(
+        "Only append-only additions are allowed after "
+        f"slot {last_baseline_slot} for v1.x."
+    )
     sys.exit(1)
 
 if internalcall_methods != lookup_methods:
