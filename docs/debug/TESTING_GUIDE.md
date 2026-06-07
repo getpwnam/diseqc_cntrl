@@ -10,7 +10,7 @@ defined in:
 
 > **[PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md](./PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md)**
 
-Phase A exit is also gated by the exit-gate section in that document.
+Phase A exit is also gated by the [Phase A Exit Gate](./PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md#phase-a-exit-gate) section in that document.
 
 ## Current Profile Notes
 
