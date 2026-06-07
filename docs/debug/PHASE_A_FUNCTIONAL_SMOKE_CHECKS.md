@@ -469,7 +469,7 @@ Phase A may exit only when all of the following are true:
 4. The run history in [BRINGUP_TEST_LOG.md](./BRINGUP_TEST_LOG.md) contains the factual command, artifact, breakpoint, and conclusion evidence for the qualifying runs.
 5. The baseline used for the qualifying runs matches [PHASE_A_BASELINE.md](./PHASE_A_BASELINE.md) unless the run is explicitly marked non-baseline.
 
-The component definitions in the issue #23 minimum bring-up criteria comment are the source template for these checks: capability statement, test action(s), observable evidence, pass/fail rule, retries/failure classification, and deferred deeper validation.
+The component definitions in the Issue #23 “minimum bring-up criteria” comment (https://github.com/getpwnam/diseqc_cntrl/issues/23#issuecomment-4640616409) are the source template for these checks: capability statement, test action(s), observable evidence, pass/fail rule, retries/failure classification, and deferred deeper validation.
 
 ---
 
