@@ -1,5 +1,33 @@
 # nanoFramework TODO
 
+## Program: Stable firmware + interop contract delivery (Phases A-F)
+
+Program umbrella: [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11)
+
+### Child phase checklist (source of truth links)
+
+- [ ] [Phase A: Deterministic firmware baseline and bring-up evidence runbook](https://github.com/getpwnam/diseqc_cntrl/issues/12)
+- [ ] [Phase B: Interop contract governance (v1) and drift prevention](https://github.com/getpwnam/diseqc_cntrl/issues/13)
+- [ ] [Phase C: Stabilize Tier-0/Tier-1 interop reliability](https://github.com/getpwnam/diseqc_cntrl/issues/14)
+- [ ] [Phase D1: Freeze and validate LNBH26 interop contract](https://github.com/getpwnam/diseqc_cntrl/issues/15)
+- [ ] [Phase D2: Freeze W5500 transport interop contract and constraints](https://github.com/getpwnam/diseqc_cntrl/issues/16)
+- [ ] [Phase D3: Complete DiSEqC interop map and experimental gate](https://github.com/getpwnam/diseqc_cntrl/issues/17)
+- [ ] [Phase E: Managed integration on frozen contracts](https://github.com/getpwnam/diseqc_cntrl/issues/18)
+- [ ] [Phase F: Release discipline, compatibility matrix, and regression gate](https://github.com/getpwnam/diseqc_cntrl/issues/19)
+- [ ] [Decision: Monorepo governance and split trigger criteria](https://github.com/getpwnam/diseqc_cntrl/issues/20)
+
+### Dependency order and acceptance gates
+
+- A -> B -> C -> (D1, D2, D3 in parallel) -> E -> F
+- Decision #20 applies through Phase F and must stay linked from the umbrella issue.
+- Do not roll out managed features from E/F before A-D gates have documented evidence.
+
+### Gate evidence checklist
+
+- [ ] Every completed phase includes links to gate evidence artifacts (logs/docs/tests) in its issue body or closing comment.
+- [ ] No phase is marked complete until all declared dependencies are complete.
+- [ ] Umbrella issue #11 reflects current phase status and links to evidence for each completed gate.
+
 ## Current Focus: Build Chain Reliability
 
 ### Current Decision (2026-02-23)
