@@ -58,7 +58,7 @@ All `M0DMF_CUBLEY_F407` target files are statically maintained in this repositor
 | `nf-native/` | Board files: `board_cubley.h/cpp`, native drivers, interop sources |
 | `nf-native/target-overrides/` | All ChibiOS/nf-interpreter integration files (halconf, chconf, linker scripts, CMakeLists.txt, mcuconf, target_*.c/cpp/h) |
 
-The build script copies these files into the nf-interpreter target directory on each build.  No reference-board fallback files are required.  For the `cubley-stable` profile, `NF_STATIC_AUDIT=1` is enforced by default to verify this invariant at build time.
+The build script copies these files into the nf-interpreter target directory on each build. No reference-board fallback files are required. For the `cubley-stable` profile, `NF_STATIC_AUDIT=1` is enforced by default to verify this invariant at build time.
 
 ### Upstream Patches
 
@@ -70,7 +70,7 @@ The build script applies a small number of compatibility patches to nf-interpret
 - `src/CLR/Startup/CLRStartup.cpp` — injects Cubley SWD-mailbox diagnostic hooks
 - `src/CLR/Core/TypeSystem.cpp` — injects Cubley assembly-resolve diagnostic pointers
 
-The first three are upstream bugs/limitations; the last two are board-specific diagnostics added during bring-up.  All patches are idempotent (guarded by `grep -Fq` before applying).
+The first three are upstream bugs/limitations; the last two are board-specific diagnostics added during bring-up. All patches are idempotent (guarded by `grep -Fq` before applying).
 
 ## Hardware Integration Points
 
