@@ -465,7 +465,7 @@ Phase A may exit only when all of the following are true:
 
 1. Every non-exempt component in the summary table above has a documented PASS result against its smoke check.
 2. Each PASS result satisfies the listed minimum iterations, including any per-component repeated-read or repeated-reset requirement.
-3. Any temporary exemption is documented with an owner, a rationale, the affected component, and an expiry condition.
+3. Any temporary exemption is documented in [BRINGUP_TEST_LOG.md](./BRINGUP_TEST_LOG.md) with an owner, a rationale, the affected component, and an expiry condition.
 4. The run history in [BRINGUP_TEST_LOG.md](./BRINGUP_TEST_LOG.md) contains the factual command, artifact, breakpoint, and conclusion evidence for the qualifying runs.
 5. The baseline used for the qualifying runs matches [PHASE_A_BASELINE.md](./PHASE_A_BASELINE.md) unless the run is explicitly marked non-baseline.
 
