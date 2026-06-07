@@ -142,11 +142,21 @@ echo "========================================"
 # Preflight: fail fast if managed/native interop checksum metadata drifts.
 # This catches InternalCall binding breakage before entering CMake/build work.
 CHECKSUM_TOOL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/interop-checksum.sh"
+INTEROP_GUARD_TOOL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/interop-guard.sh"
+if [ "$MODE" = "build" ] && [ -x "$INTEROP_GUARD_TOOL" ]; then
+    echo "Running interop slot guard preflight..."
+    "$INTEROP_GUARD_TOOL"
+elif [ "$MODE" = "build" ]; then
+    echo "Error: interop slot guard tool not found or not executable: $INTEROP_GUARD_TOOL"
+    exit 1
+fi
+
 if [ "$MODE" = "build" ] && [ -x "$CHECKSUM_TOOL" ]; then
     echo "Running interop checksum preflight..."
     "$CHECKSUM_TOOL" --check
 elif [ "$MODE" = "build" ]; then
-    echo "Warning: checksum preflight tool not found or not executable: $CHECKSUM_TOOL"
+    echo "Error: checksum preflight tool not found or not executable: $CHECKSUM_TOOL"
+    exit 1
 fi
 
 # Colors

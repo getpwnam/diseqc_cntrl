@@ -88,6 +88,8 @@ The first three are upstream bugs/limitations; the last two are board-specific d
 
 - `../README.md`
 - `../debug/TESTING_GUIDE.md`
+- `INTEROP_CONTRACT_V1.md`
+- `INTEROP_VERSIONING_POLICY.md`
 - `MQTT_API.md`
 - `CONFIGURATION.md`
 - `../debug/LNB_I2C_TESTING.md`
