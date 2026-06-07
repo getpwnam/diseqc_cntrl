@@ -188,6 +188,7 @@ is outside the parameters above.
 
 - [MANAGED_DEPLOYMENT.md](./MANAGED_DEPLOYMENT.md) — Detailed deployment guide
 - [TESTING_GUIDE.md](./TESTING_GUIDE.md) — Bring-up validation workflow
+- [PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md](./PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md) — Per-component functional smoke check definitions and pass/fail criteria
 - [BRINGUP_TEST_LOG.md](./BRINGUP_TEST_LOG.md) — Run history
 - [.devcontainer/Dockerfile](../../.devcontainer/Dockerfile) — Pinned devcontainer image (toolchain versions)
 - [.devcontainer/devcontainer.json](../../.devcontainer/devcontainer.json) — USB device passthrough config
