@@ -10,15 +10,12 @@ defined in:
 
 > **[PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md](./PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md)**
 
-Phase A exit is also gated by the [Phase A Exit Gate](./PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md#phase-a-exit-gate) section in that document.
+Phase A exit is also gated by the [Phase A Exit Gate](./PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md#phase-a-exit-gate) section in that document.
+
 
 ## Current Profile Notes
 
-- The currently validated build profile has `System.Net` disabled.
-- MQTT/network test phases in this guide are optional unless networking is re-enabled in the build profile.
-
-## Prerequisites
-
+- Tier-0 mailbox semantics check: run `./software/nanoFramework/tests/tier0_interop_semantics_check.sh` and require `PASS`.
 ### Hardware Needed
 - ✅ STM32F407VGT6 DiSEqC controller board (assembled)
 - ✅ USB-to-Serial adapter (for debug output) - USART3 on PB10/PB11

@@ -27,7 +27,11 @@ Current mailbox words are implemented as global volatile `uint32_t` symbols in:
    - Write policy: latch-once via `DiagnosticsMailbox.NativeTryLatchBootProbe(...)`.
    - Encoding: stage `0xF0`, result = aggregate (`PASS`/`WARN`/`FAIL`), detail = hardware bitmap (`bit0=W5500 bit1=LNBH26 bit2=FRAM`).
 
-4. `g_cubley_diag_clr_status`
+4. `g_cubley_diag_boot_probe_latched`
+   - Role: explicit sticky latch state (`0` not latched, `1` latched).
+   - Write policy: native-only guard state used to enforce deterministic one-shot semantics.
+
+5. `g_cubley_diag_clr_status`
    - Role: sticky-ish CLR startup progress channel (written alongside CLR current status in startup helpers).
    - Write policy: written by CLR startup diagnostic emitters.
 
@@ -51,7 +55,8 @@ Interop declarations are in:
 
 - `NativeTryLatchBootProbe(uint statusWord)`
   - Returns `true` on first successful latch.
-  - Returns `false` if already latched.
+   - Returns `false` if already latched.
+   - Returns `false` for invalid probe words (wrong magic or wrong stage).
 - `NativeGetBootProbe()`
   - Returns latched boot-probe word (or `0` if not yet latched).
 
@@ -117,7 +122,8 @@ Use these rules to avoid clobber races and ambiguous traces:
 2. CLR startup diagnostics write to `g_cubley_diag_clr_status` (and may mirror to current status).
 3. Runtime breadcrumbs (LED/network/etc.) may write `g_cubley_diag_current_status`.
 4. Error paths write `g_cubley_diag_last_error`.
-5. Do not clear sticky slots from normal runtime code.
+5. Latch state is enforced by `g_cubley_diag_boot_probe_latched`, not by interpreting probe word value.
+6. Do not clear sticky slots from normal runtime code.
 
 ## SWD Usage
 
@@ -173,6 +179,10 @@ If native interop method signatures changed, rebuild/flash nanoCLR before valida
    - Expected; this slot is transient and intentionally clobberable.
    - Use `Boot probe` slot for stable hardware-present bitmap.
 
-3. Magic byte mismatch warnings
+3. `NativeTryLatchBootProbe()` returns false while boot probe is still `0`
+   - Input word likely failed validation (magic byte must be `0xD5`, stage must be `0xF0`).
+   - Check `g_cubley_diag_last_error` for Tier-0 guard diagnostics (`0xE3` family).
+
+4. Magic byte mismatch warnings
    - Indicates either uninitialized data, different producer encoding, or stale symbol assumptions in scripts.
    - Re-check symbol names against current ELF.

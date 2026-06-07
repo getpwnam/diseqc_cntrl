@@ -50,7 +50,18 @@ HRESULT Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING(CL
 volatile uint32_t g_cubley_diag_current_status;
 volatile uint32_t g_cubley_diag_last_error = 0;
 volatile uint32_t g_cubley_diag_boot_probe_status = 0;
+volatile uint32_t g_cubley_diag_boot_probe_latched = 0;
 volatile uint32_t g_cubley_diag_clr_status = 0;
+
+static const uint32_t kCubleyStatusMagicMask = 0xFF000000u;
+static const uint32_t kCubleyStatusMagic = 0xD5000000u;
+static const uint8_t kCubleyBootProbeStage = 0xF0u;
+
+static inline void set_tier0_interop_error(uint8_t op, uint8_t code, uint8_t detail)
+{
+    // 0xE3 marker reserved for Tier-0 interop guard diagnostics.
+    g_cubley_diag_last_error = ((uint32_t)0xE3u << 24) | ((uint32_t)op << 16) | ((uint32_t)code << 8) | (uint32_t)detail;
+}
 
 static const CLR_RT_MethodHandler method_lookup[] =
 {
@@ -207,14 +218,32 @@ HRESULT Library_cubley_interop_DiagnosticsMailbox_NativeTryLatchBootProbe___STAT
     NANOCLR_HEADER();
 
     const uint32_t statusWord = stack.Arg0().NumericByRef().u4;
-    const bool latched = (g_cubley_diag_boot_probe_status == 0);
 
-    if (latched)
+    if (g_cubley_diag_boot_probe_latched != 0)
     {
-        g_cubley_diag_boot_probe_status = statusWord;
+        stack.SetResult_Boolean(false);
+        NANOCLR_NOCLEANUP_NOLABEL();
     }
 
-    stack.SetResult_Boolean(latched);
+    if ((statusWord & kCubleyStatusMagicMask) != kCubleyStatusMagic)
+    {
+        set_tier0_interop_error(0x01u, 0x01u, (uint8_t)((statusWord >> 24) & 0xFFu));
+        stack.SetResult_Boolean(false);
+        NANOCLR_NOCLEANUP_NOLABEL();
+    }
+
+    const uint8_t stage = (uint8_t)((statusWord >> 16) & 0xFFu);
+    if (stage != kCubleyBootProbeStage)
+    {
+        set_tier0_interop_error(0x01u, 0x02u, stage);
+        stack.SetResult_Boolean(false);
+        NANOCLR_NOCLEANUP_NOLABEL();
+    }
+
+    g_cubley_diag_boot_probe_status = statusWord;
+    g_cubley_diag_boot_probe_latched = 1;
+
+    stack.SetResult_Boolean(true);
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
