@@ -12,14 +12,14 @@ Usage:
 
 Examples:
   ./toolchain/build-native.sh list
-  ./toolchain/build-native.sh build --profile cubley-stable
-  ./toolchain/build-native.sh build --profile cubley-uart --flash --reset
+  ./toolchain/build-native.sh build --profile cubley-base
+  ./toolchain/build-native.sh build --profile cubley-base --flash --reset
   ./toolchain/build-native.sh flash --bootaddr 0x08000000 --clraddr 0x08004000
 
 Options:
 
 General options (all modes):
-    --profile <name>        Build profile (default: cubley-base)
+  --profile <name>        Build profile (default: cubley-base)
   --help                  Show this help message
 
 Safety gates:
@@ -136,6 +136,7 @@ if [ ! -f "/.dockerenv" ] && [ "$MODE" = "build" ]; then
     -e NF_INTERPRETER_REF="${NF_INTERPRETER_REF:-main}" \
     -e NF_UPDATE_INTERPRETER="${NF_UPDATE_INTERPRETER:-1}" \
     -e NF_STATIC_AUDIT="${NF_STATIC_AUDIT:-0}" \
+    -e NF_ALLOW_REFERENCE_PROFILE="${NF_ALLOW_REFERENCE_PROFILE:-0}" \
     -e NF_ALLOW_DEPRECATED_PROFILE="${NF_ALLOW_DEPRECATED_PROFILE:-0}" \
     -e NF_W5500_EARLY_INIT="${NF_W5500_EARLY_INIT:-}" \
         nanoframework-build /work/toolchain/build-native.sh "${ORIGINAL_ARGS[@]}"
@@ -238,7 +239,7 @@ HAL_SPI_SETTING="TRUE"
 IS_CUBLEY_BASE="FALSE"
 
 case "$BUILD_PROFILE" in
-    cubley-base|firstboot-uart3)
+    cubley-base)
         # Minimal first-time bring-up profile:
         # - derive target from ST_STM32F4_DISCOVERY files
         # - force wire protocol on UART3 (PB10/PB11, 115200 8N1)
@@ -981,7 +982,10 @@ fi
 if [ -n "$REFERENCE_BOARD" ]; then
     echo -e "${YELLOW}Backfilling missing target files from reference: $REFERENCE_BOARD${NC}"
 else
-    echo -e "${YELLOW}No reference board checkout found; using vendored target overrides only.${NC}"
+    echo -e "${RED}No reference board checkout found.${NC}"
+    echo -e "${RED}This build requires a reference-board workspace so missing target files can be backfilled.${NC}"
+    echo -e "${RED}Check out the interpreter reference tree and retry.${NC}"
+    exit 1
 fi
 
 if [ "$STATIC_AUDIT" = "1" ] && [ -n "$REFERENCE_BOARD" ]; then
@@ -1038,7 +1042,7 @@ if [ -n "$REFERENCE_BOARD" ]; then
     copy_if_absent "$REFERENCE_BOARD/board.c" "$TARGET_DIR/board.c"
 
     # Backfill generic target source/config files from reference board when
-    # local override packs are intentionally minimal (e.g. firstboot-uart3).
+    # local override packs are intentionally minimal
     copy_glob_if_absent "$REFERENCE_BOARD/target_*.c" "$TARGET_DIR"
     copy_glob_if_absent "$REFERENCE_BOARD/target_*.h" "$TARGET_DIR"
     copy_glob_if_absent "$REFERENCE_BOARD/target_*.cpp" "$TARGET_DIR"
