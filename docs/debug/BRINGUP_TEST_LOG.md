@@ -56,15 +56,18 @@ For each run, append one short entry with:
 - Command(s) run
 - Artifact used
 - Address breakpoints used
+- Baseline status (yes/no)
 - Pass/fail result
 - One-line conclusion
 
 Each entry must include `Command(s)` and `Artifact` fields so the run can be replayed from the log. Use `Artifact: none` only when no artifact applies.
+New entries should also include explicit baseline status, with `yes` as the default for cubley-base runs and `no` for any deviation documented against [PHASE_A_BASELINE.md](./PHASE_A_BASELINE.md).
 
 ## Quick logging helper
 Use the helper to append timestamped entries consistently:
 
 - `./toolchain/bringup_log_append.sh --result PASS|FAIL|INFO --commands "..." --artifact "..." --conclusion "one-line conclusion"`
+  The helper emits the baseline line automatically; pass `--baseline no` only for explicit non-baseline runs.
 
 Recommended full form for debug sessions:
 
@@ -1180,3 +1183,10 @@ This file should be committed and checked on each build to prevent version drift
 - Command(s): st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; st-flash reset; sleep 2; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --listdevices; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails (x20 cycles)
 - Artifact: build/nanoBooter.bin; build/nanoCLR.bin; .debug/issue26_campaign_20260607T215707Z
 - Conclusion: 20/20 flash-reset cycles PASS (0 failures) on cubley-stable profile; explicit st-flash reset before nanoff probe is required for deterministic transport health; per-cycle logs in .debug/issue26_campaign_20260607T215707Z
+
+### 2026-06-08 13:54:44 UTC [PASS]
+- Git rev: b176eaa
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/run-deterministic-cycles.sh --cycles 20 --serial /dev/ttyUSB0 --baud 115200 --settle-ms 2500 --listdevices-retries 1 --devicedetails-retries 2 --retry-delay-ms 700
+- Artifact: .debug/issue26_campaign_20260608T134123Z
+- Conclusion: Deterministic 20-cycle campaign passed (0 failures); UART3 nanoff listdevices/devicedetails remained stable across all cycles.

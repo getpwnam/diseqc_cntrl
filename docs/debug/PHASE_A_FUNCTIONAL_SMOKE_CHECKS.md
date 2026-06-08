@@ -2,9 +2,13 @@
 
 ## Purpose
 
-This document defines **minimal functional smoke checks** for each hardware and
-software component on the `M0DMF_CUBLEY_F407` target.  These checks verify
-that each component *functions*, not merely that it is electrically present.
+This document defines **minimal functional smoke checks** for the cubley-base
+baseline on the `M0DMF_CUBLEY_V0.4` target. These checks verify that each
+baseline component *functions*, not merely that it is electrically present.
+
+Later hardware bring-up items that are not part of the cubley-base baseline are
+kept in this document as deferred checks so the Phase A second pass stays
+explicit about what is baseline and what is reintroduction work.
 
 Smoke checks here are intentionally narrow: they establish a deterministic
 pass/fail gate that is repeatable in the field.  Deeper characterisation,
@@ -17,7 +21,7 @@ campaigns (issues #15–#17).
 
 | Document | Role |
 |----------|------|
-| [PHASE_A_BASELINE.md](./PHASE_A_BASELINE.md) | Build profile, flash map, and toolchain baseline that all Phase A runs must follow |
+| [PHASE_A_BASELINE.md](./PHASE_A_BASELINE.md) | cubley-base build profile, flash map, and toolchain baseline that all Phase A runs must follow |
 | [TESTING_GUIDE.md](./TESTING_GUIDE.md) | Step-by-step bring-up runbook that references these smoke checks |
 | [DIAGNOSTICS_MAILBOX.md](./DIAGNOSTICS_MAILBOX.md) | Mailbox word encoding used by several checks below |
 | [BRINGUP_TEST_LOG.md](./BRINGUP_TEST_LOG.md) | Log where pass/fail outcomes of each run are recorded |
@@ -52,7 +56,7 @@ external host so that `nanoff` can read device status, deploy managed
 assemblies, and the host can read debug output.
 
 **Test procedure:**
-1. Flash `cubley-stable` firmware (see PHASE_A_BASELINE.md).
+1. Flash `cubley-base` firmware (see PHASE_A_BASELINE.md).
 2. Connect USB-UART adapter at `/dev/ttyUSB0`; 115200 8N1.
 3. Run each of the following in sequence:
 
@@ -94,15 +98,21 @@ consecutive MCU resets.
 High-speed baud rates (> 115200), wire-protocol stress testing, and
 multi-host connection scenarios are Phase D scope.
 
+Baseline note: this is one of the cubley-base smoke checks and is expected to
+remain enabled in the second pass.
+
 ---
 
-### 2 · USB (CDC Serial)
+### 2 · USB (CDC Serial) [DEFERRED]
 
 **Component:** USB full-speed peripheral — CDC serial port to external host
 
 **Functional requirement:**
 The USB interface must enumerate on the external host as a CDC serial port and
 support bidirectional data exchange at 115200 8N1.
+
+This check is deferred until a later profile reintroduces USB support. It is
+not part of the cubley-base baseline.
 
 **Test procedure:**
 1. Flash a firmware profile with USB CDC enabled (e.g., `cubley-usb`).
@@ -185,13 +195,15 @@ Phase D scope.
 
 ---
 
-### 4 · FRAM
+### 4 · FRAM [DEFERRED]
 
 **Component:** FRAM (non-volatile memory) on the I2C bus
 
 **Functional requirement:**
 A byte-level write/read round-trip must produce an exact match across the
 tested address range.
+
+This is deferred until FRAM is reintroduced in a later profile.
 
 **Test procedure:**
 1. Deploy the managed application with FRAM driver enabled.
@@ -225,7 +237,7 @@ layer validation are Phase D scope.
 
 ---
 
-### 5 · LNBH26
+### 5 · LNBH26 [DEFERRED]
 
 **Component:** LNBH26 LNB power and tone controller
 
@@ -280,7 +292,7 @@ frequency tolerance, and DiSEqC pulse injection are Phase D scope.
 
 ---
 
-### 6 · W5500 (Ethernet)
+### 6 · W5500 (Ethernet) [DEFERRED]
 
 **Component:** W5500 SPI-connected Ethernet controller
 
@@ -330,7 +342,7 @@ interop contract stability are Phase D2 scope (issue #16).
 
 ---
 
-### 7 · DiSEqC Transmit Path
+### 7 · DiSEqC Transmit Path [DEFERRED]
 
 **Component:** DiSEqC waveform output (TIM4_CH1 / LNBH26 DSQIN path)
 
@@ -388,8 +400,11 @@ Boot-stage and runtime markers written to the diagnostics mailbox must be
 readable over SWD with the correct magic bytes and must progress in the
 expected order, proving the diagnostics channel is reliable and decodable.
 
+Baseline note: this is a cubley-base baseline check and should be validated on
+the second pass.
+
 **Test procedure:**
-1. Flash `cubley-stable` firmware and deploy the managed application.
+1. Flash `cubley-base` firmware and deploy the managed application.
 2. After the managed application reaches its main loop, read all mailbox slots:
 
 ```bash
@@ -451,19 +466,19 @@ SWD-probing under load are Phase D scope.  For word encoding reference see
 | # | Component | Key evidence | Minimum iterations |
 |---|-----------|-------------|-------------------|
 | 1 | UART (wire protocol) | `nanoff --listdevices` + `--devicedetails` both rc=0; deploy succeeds; boot banner visible | 3 resets |
-| 2 | USB (CDC serial) | Host enumerates CDC device; bidirectional data exchange succeeds | 3 resets |
+| 2 | USB (CDC serial) | Deferred until USB returns in a later profile | N/A |
 | 3 | LED / GPIO | `SetHigh`, `SetLow`, `Pulse(3)` all produce observed transitions within tolerance | 3 resets |
-| 4 | FRAM | Exact byte-for-byte match on write/read round-trip; data retained across power cycle | 3 resets |
-| 5 | LNBH26 | Status register changes on `SetVoltage`/`SetTone`; no fault flags; return codes success | 3 resets |
-| 6 | W5500 | `VERSIONR` = `0x04`; stable `PHYCFGR`; no SWD error word | 3 resets × 5 in-run reads |
-| 7 | DiSEqC transmit path | Oscilloscope shows ~22 kHz carrier burst with recognisable bit structure | 3 resets |
+| 4 | FRAM | Deferred until FRAM returns in a later profile | N/A |
+| 5 | LNBH26 | Deferred until LNBH26 returns in a later profile | N/A |
+| 6 | W5500 | Deferred until networking returns in a later profile | N/A |
+| 7 | DiSEqC transmit path | Deferred until DiSEqC transmit support is reintroduced | N/A |
 | 8 | Diagnostics mailbox | All slots correct magic; boot-probe non-zero; stage order valid; sticky slots persist | 3 resets |
 
 ## Phase A Exit Gate
 
 Phase A may exit only when all of the following are true:
 
-1. Every non-exempt component in the summary table above has a documented PASS result against its smoke check.
+1. Every non-exempt baseline component in the summary table above has a documented PASS result against its smoke check.
 2. Each PASS result satisfies the listed minimum iterations, including any per-component repeated-read or repeated-reset requirement.
 3. Any temporary exemption is documented in [BRINGUP_TEST_LOG.md](./BRINGUP_TEST_LOG.md) with an owner, a rationale, the affected component, and an expiry condition.
 4. The run history in [BRINGUP_TEST_LOG.md](./BRINGUP_TEST_LOG.md) contains the factual command, artifact, breakpoint, and conclusion evidence for the qualifying runs.

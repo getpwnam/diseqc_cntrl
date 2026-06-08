@@ -2,23 +2,27 @@
 
 ## Purpose
 
-Bring up and validate board behavior in a staged way: power, flash, protocol output, and functional control.
+Bring up and validate board behavior in a staged way: power, flash, protocol output, and functional control on the cubley-base baseline.
 
-Before running a full Phase A validation campaign, confirm that each component
-passes its functional smoke check.  The per-component pass/fail criteria are
-defined in:
+Before running a full Phase A validation campaign, confirm that each baseline
+component passes its functional smoke check. The per-component pass/fail
+criteria are defined in:
 
 > **[PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md](./PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md)**
 
 Phase A exit is also gated by the [Phase A Exit Gate](./PHASE_A_FUNCTIONAL_SMOKE_CHECKS.md#phase-a-exit-gate) section in that document.
+
+This guide is the cubley-base bring-up runbook. Later-profile network/USB/
+FRAM/LNBH26/DiSEqC testing is intentionally deferred until those features are
+reintroduced.
 
 The Phase A freeze/handoff decision record is captured in [PHASE_A_EXIT_DECISION_2026-06-07.md](./PHASE_A_EXIT_DECISION_2026-06-07.md).
 
 
 ## Current Profile Notes
 
-- The currently validated build profile has `System.Net` disabled.
-- MQTT/network test phases in this guide are optional unless networking is re-enabled in the build profile.
+- The currently validated build profile is `cubley-base`.
+- `System.Net`, MQTT/network, USB CDC, FRAM, LNBH26, and DiSEqC transmit test phases are deferred until their later reintroduction.
 - Interop slot/checksum governance for Cubley native calls is defined in [INTEROP_CONTRACT_V1.md](../software/INTEROP_CONTRACT_V1.md).
 - Interop compatibility and review rules are defined in [INTEROP_VERSIONING_POLICY.md](../software/INTEROP_VERSIONING_POLICY.md).
 - Intentional drift regression check: run `./software/nanoFramework/toolchain/interop-negative-drift-test.sh` and require `PASS`.
@@ -29,18 +33,11 @@ The Phase A freeze/handoff decision record is captured in [PHASE_A_EXIT_DECISION
 - ✅ STM32F407VGT6 DiSEqC controller board (assembled)
 - ✅ USB-to-Serial adapter (for debug output) - USART3 on PB10/PB11
 - ✅ ST-Link V2 (for programming)
-- ✅ Ethernet cable
-- ✅ Router/switch on the static-IP subnet
-- ✅ MQTT broker (Mosquitto on PC or Raspberry Pi)
-- ✅ Oscilloscope (for verifying DiSEqC signal)
+- ✅ Oscilloscope or logic analyzer (for GPIO/diagnostics checks)
 - ✅ Multimeter
-- ✅ DiSEqC rotor (for final testing)
-- ✅ LNBH26 power supply (18V for LNB)
 
 ### Software Needed
 - ✅ nanoFramework firmware (built from `nf-native/`)
-- ✅ Mosquitto MQTT broker
-- ✅ MQTT Explorer or mosquitto_sub/pub
 - ✅ Serial terminal (PuTTY, Arduino IDE, etc.)
 
 ---
@@ -67,8 +64,8 @@ GND      ←-------→   GND
 
 ```bash
 # Using ST-Link (flash both images)
-st-flash write nanoBooter.bin 0x08000000
-st-flash write nanoCLR.bin 0x08004000
+st-flash write build/nanoBooter.bin 0x08000000
+st-flash write build/nanoCLR.bin 0x08004000
 
 # Or using OpenOCD
 openocd -f interface/stlink.cfg -f target/stm32f4x.cfg \
@@ -82,29 +79,8 @@ Expected serial output:
 ```
 ==============================================
 DiSEqC Controller Starting...
-STM32F407VGT6 + W5500 + nanoFramework
+STM32F407VGT6 + cubley-base + nanoFramework
 ==============================================
-
---- Network Initialization ---
-Network Interface: Ethernet
-MAC Address: DE:AD:BE:EF:12:34
-✓ Network Ready!
-  IP Address: 172.17.129.253
-  Subnet Mask: 255.255.255.0
-  Gateway: 172.17.129.1
-
-Initializing DiSEqC native driver...
-
---- MQTT Initialization ---
-Broker: 192.168.1.50:1883
-✓ Connected to MQTT broker!
-Published availability: online
-
---- Subscribing to MQTT Topics ---
-✓ Subscribed to 18 topics
-
---- Publishing Initial Status ---
-✓ Initial status published
 
 Entering main loop...
 [HEARTBEAT] Uptime: 0 seconds
@@ -112,19 +88,20 @@ Entering main loop...
 
 ✅ **Success Criteria:**
 - Serial output appears
-- Network initialized with configured static IP
-- MQTT connection successful
+- Diagnostics and startup markers appear in the expected cubley-base order
+- No legacy networking banner is required for this baseline
 
 ❌ **Troubleshooting:**
 | Issue | Fix |
 |-------|-----|
 | No serial output | Check TX/RX wiring, baud rate |
-| Network init failed | Check Ethernet cable, W5500 connections and static IP settings |
-| MQTT connection failed | Check broker IP, firewall |
+| Startup markers missing | Check diagnostics mailbox, flash layout, and cubley-base build profile |
 
 ---
 
 ## 🌐 Phase 2: Network & MQTT Testing
+
+This section is deferred until the network baseline returns in a later profile.
 
 ### Step 2.1: Verify MQTT Connection
 
