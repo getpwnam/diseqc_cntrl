@@ -244,6 +244,8 @@ EOF_GDB
   done
 
   kill "$openocd_pid" >/dev/null 2>&1 || true
+  # Avoid port 3333 contention between samples: ensure OpenOCD fully exits before the next run.
+  wait "$openocd_pid" >/dev/null 2>&1 || true
 
   if [[ -z "$current_hex" || -z "$boot_probe_hex" || -z "$clr_hex" ]]; then
     echo "ERROR: failed to read diagnostics symbols for sample '$sample_id' after ${gdb_max_attempts} attempts." >&2
