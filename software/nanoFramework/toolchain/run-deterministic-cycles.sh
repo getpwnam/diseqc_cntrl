@@ -148,7 +148,6 @@ fi
 mkdir -p "$LOG_ROOT"
 SUMMARY_FILE="$LOG_ROOT/summary.log"
 FAIL_COUNT=0
-PROBE_RC=1
 
 log() {
   printf '%s\n' "$*" | tee -a "$SUMMARY_FILE"
@@ -208,7 +207,6 @@ run_probe_with_retries() {
     log "cycle ${cycle_id}: ${stem}_attempt=$attempt rc=$rc elapsed_ms=$elapsed log=$(basename "$out_file")"
 
     if [[ "$rc" -eq 0 ]]; then
-      PROBE_RC="$rc"
       return 0
     fi
 
@@ -218,8 +216,7 @@ run_probe_with_retries() {
     fi
   done
 
-  PROBE_RC="$rc"
-  return 0
+  return "$rc"
 }
 
 for i in $(seq 1 "$CYCLES"); do
@@ -264,11 +261,11 @@ for i in $(seq 1 "$CYCLES"); do
 
   run_probe_with_retries "$CYCLE_ID" "$CYCLE_DIR" "nanoff_listdevices" "$LISTDEVICES_RETRIES" \
     nanoff --nanodevice --serialport "$SERIAL_PORT" --baud "$BAUD" --listdevices
-  LD_RC="$PROBE_RC"
+  LD_RC=$?
 
   run_probe_with_retries "$CYCLE_ID" "$CYCLE_DIR" "nanoff_devicedetails" "$DEVICEDETAILS_RETRIES" \
     nanoff --nanodevice --serialport "$SERIAL_PORT" --baud "$BAUD" --devicedetails
-  DD_RC="$PROBE_RC"
+  DD_RC=$?
 
   if [[ "$LD_RC" -eq 0 && "$DD_RC" -eq 0 ]]; then
     log "cycle $CYCLE_ID: listdevices_rc=$LD_RC devicedetails_rc=$DD_RC result=PASS"
