@@ -206,6 +206,28 @@ Expected behavior:
 - `boot_probe`, `clr_status`, and `current_status` words retain valid `0xD5` magic and known result-code encoding.
 - Final summary reports `fails=0/<cycles>`.
 
+### Phase C Tier-0/Tier-1 Reset-Cycle Gate
+
+Use strict mode to enforce combined Tier-0/Tier-1 acceptance in repeated reset cycles:
+
+```bash
+cd software/nanoFramework
+./tests/tier0_mailbox_reliability_smoke.sh \
+   --cycles 20 \
+   --read-count 4 \
+   --require-final-pass \
+   --stop-on-fail
+```
+
+Strict gate semantics (`--require-final-pass`):
+
+- waits for managed final marker in `g_cubley_diag_current_status` before a cycle is considered sampled
+- requires final marker contract: stage `0xCF`, result `PASS`, and Tier-1 pass detail bit (`0x40`) set
+- treats `FAIL`/`EXCEPTION` result words from `current_status` or `clr_status` as blocking
+- retains Tier-0 sticky boot-probe invariants (non-zero latch and unchanged repeated reads)
+
+This mode is the Phase C reliability gate for unresolved InternalCall regressions and latch determinism.
+
 Recommended managed payload for firmware-first smoke campaigns:
 
 - `CubleySmokeTier0` (`software/nanoFramework/CubleySmokeTier0/CubleySmokeTier0.nfproj`)
