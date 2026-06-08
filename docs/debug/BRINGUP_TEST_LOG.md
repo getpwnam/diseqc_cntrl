@@ -1190,3 +1190,9 @@ This file should be committed and checked on each build to prevent version drift
 - Command(s): ./toolchain/run-deterministic-cycles.sh --cycles 20 --serial /dev/ttyUSB0 --baud 115200 --settle-ms 2500 --listdevices-retries 1 --devicedetails-retries 2 --retry-delay-ms 700
 - Artifact: .debug/issue26_campaign_20260608T134123Z
 - Conclusion: Deterministic 20-cycle campaign passed (0 failures); UART3 nanoff listdevices/devicedetails remained stable across all cycles.
+
+### 2026-06-08 14:53:29 UTC [PASS]
+- Git rev: 857cd5f
+- Command(s): ./toolchain/run-deterministic-cycles.sh --cycles 20 --serial /dev/ttyUSB0 --baud 115200 --settle-ms 2000
+- Artifact: .debug/issue26_campaign_20260608T142844Z
+- Conclusion: Deterministic 20-cycle flash-reset rerun completed with fails=0/20.
