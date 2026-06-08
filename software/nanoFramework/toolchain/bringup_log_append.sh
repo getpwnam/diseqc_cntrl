@@ -34,8 +34,9 @@ Required fields:
 
   --baseline yes|no   Mark the entry as baseline (default: yes).
                       Use --baseline no for any run that deviates from the
-                      Phase A baseline profile, flash addresses, tooling, or
-                      wiring documented in docs/debug/PHASE_A_BASELINE.md.
+                      cubley-base Phase A baseline profile, flash addresses,
+                      tooling, or wiring documented in
+                      docs/debug/PHASE_A_BASELINE.md.
                       Non-baseline entries are annotated with [NON-BASELINE].
 
 Example:
@@ -135,7 +136,9 @@ fi
   echo "### ${TIMESTAMP} [${RESULT}]${BASELINE_TAG}"
   echo "- Git rev: ${GIT_REV}"
   if [[ "$BASELINE" == "no" ]]; then
-    echo "- Baseline: NO — deviates from Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)"
+    echo "- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)"
+  else
+    echo "- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)"
   fi
   echo "- Command(s): ${COMMANDS}"
   echo "- Artifact: ${ARTIFACT}"
