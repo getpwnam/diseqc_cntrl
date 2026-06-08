@@ -8,7 +8,9 @@
 int main(void)
 {
     halInit();
+
     chSysInit();
+    chThdSleepMilliseconds(20);
 
     LaunchCLR((uint32_t)&__nanoImage_end__);
 
