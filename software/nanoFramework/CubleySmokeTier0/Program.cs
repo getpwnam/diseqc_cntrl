@@ -97,6 +97,7 @@ namespace CubleySmokeTier0
             try
             {
                 // Tier-1 smoke: LED and USB console interop should execute without exceptions.
+                bool tier1Pass = true;
                 BringupStatus.NativeSet(Compose(StageTier1, ResultEnter, detail));
 
                 StatusLed.NativeInit();
@@ -115,7 +116,7 @@ namespace CubleySmokeTier0
                 }
                 else
                 {
-                    pass = false;
+                    tier1Pass = false;
                 }
 
                 if (!usbEnabled || writeRc >= 0)
@@ -124,10 +125,11 @@ namespace CubleySmokeTier0
                 }
                 else
                 {
-                    pass = false;
+                    tier1Pass = false;
                 }
 
-                BringupStatus.NativeSet(Compose(StageTier1, pass ? ResultPass : ResultWarn, detail));
+                BringupStatus.NativeSet(Compose(StageTier1, tier1Pass ? ResultPass : ResultFail, detail));
+                pass = pass && tier1Pass;
             }
             catch
             {
