@@ -76,12 +76,12 @@ decoder table explicitly defines an opcode.
 - `BringupStatus.NativeGet()` reads transient current status.
 - `BringupStatus.NativeGetLastNativeError()` reads latest error slot.
 - `DiagnosticsMailbox.NativeTryLatchBootProbe(word)` is latch-once per boot:
-	first write succeeds (`true`), subsequent writes fail (`false`) and must not
-	overwrite the latched value.
+  first write succeeds (`true`), subsequent writes fail (`false`) and must not
+  overwrite the latched value.
 - `DiagnosticsMailbox.NativeGetBootProbe()` returns latched value or `0` before
-	first latch.
+  first latch.
 - Sticky latch lifetime is one boot session; device reset/power cycle clears it
-	by runtime reinitialization.
+  by runtime reinitialization.
 
 ## Slot Policy (v1.x)
 
