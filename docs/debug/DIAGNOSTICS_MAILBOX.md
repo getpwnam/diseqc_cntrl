@@ -125,6 +125,7 @@ Primary helper scripts:
 
 - `tests/swd_read_bringup_status.sh`
 - `tests/swd_read_w5500_diag.sh`
+- `tests/tier0_mailbox_reliability_smoke.sh`
 
 ### Read all high-level slots
 
@@ -147,6 +148,34 @@ cd software/nanoFramework
 ```
 
 This includes the generic mailbox/error slots plus W5500-specific latches and decode hints.
+
+### Phase C Tier-0 Reliability Smoke
+
+Run repeated reset/read cycles and enforce sticky boot-probe invariants:
+
+```bash
+cd software/nanoFramework
+./tests/tier0_mailbox_reliability_smoke.sh --cycles 10 --read-count 4
+```
+
+Expected behavior:
+
+- Each cycle reports `PASS` with stable `boot_probe` value across repeated reads.
+- `boot_probe`, `clr_status`, and `current_status` words retain valid `0xD5` magic and known result-code encoding.
+- Final summary reports `fails=0/<cycles>`.
+
+Recommended managed payload for firmware-first smoke campaigns:
+
+- `CubleySmokeTier0` (`software/nanoFramework/CubleySmokeTier0/CubleySmokeTier0.nfproj`)
+
+Build/deploy example:
+
+```bash
+cd software/nanoFramework
+./toolchain/build-managed.sh build \
+   --project CubleySmokeTier0/CubleySmokeTier0.nfproj \
+   --deploy --swd --address 0x080C0000 --reset
+```
 
 ## Build and Compatibility Notes
 

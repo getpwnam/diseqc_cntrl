@@ -70,3 +70,76 @@ cd software/nanoFramework/tests
 chmod +x mqtt_topic_watch.sh
 ./mqtt_topic_watch.sh mqtt.ebnx.net 1883 'diseqc/#'
 ```
+
+## 3) Tier-0 Mailbox Reliability Smoke (Phase C)
+
+Use this script to validate Tier-0 mailbox semantics (`BringupStatus` and
+`DiagnosticsMailbox`) across repeated reset/read cycles.
+
+It verifies:
+
+- `g_cubley_diag_boot_probe_status` is latched (non-zero) and remains sticky within each cycle.
+- status words decode with valid `0xD5SSRRDD` magic/result format.
+- reset-cycle repetition does not break basic Tier-0 mailbox reads.
+
+Command:
+
+```bash
+cd software/nanoFramework
+chmod +x tests/tier0_mailbox_reliability_smoke.sh
+./tests/tier0_mailbox_reliability_smoke.sh --cycles 10 --read-count 4
+```
+
+If your default `build/nanoCLR.elf` is stripped, the script auto-selects a
+symbolized profile ELF when available.
+
+Optional explicit override:
+
+```bash
+./tests/tier0_mailbox_reliability_smoke.sh \
+	--cycles 10 \
+	--read-count 4 \
+	--elf build/nf-interpreter/M0DMF_CUBLEY_F407/nanoCLR.elf
+```
+
+Prerequisites:
+
+- `st-flash`, `openocd`, and `arm-none-eabi-gdb` (or `gdb-multiarch`/`gdb`)
+- Built `build/nanoCLR.elf`
+- Connected ST-Link target
+
+Tip:
+
+- Use `--stop-on-fail` during triage to halt on the first failing cycle.
+
+## 4) CubleySmokeTier0 Managed Harness
+
+`CubleySmokeTier0` is a minimal managed app for firmware-first smoke coverage.
+It exercises only Tier-0/Tier-1 interop calls and avoids full `DiSEqC_Control`
+runtime complexity.
+
+Project path:
+
+- `software/nanoFramework/CubleySmokeTier0/CubleySmokeTier0.nfproj`
+
+Build and deploy by SWD:
+
+```bash
+cd software/nanoFramework
+./toolchain/build-managed.sh build \
+	--project CubleySmokeTier0/CubleySmokeTier0.nfproj \
+	--deploy --swd --address 0x080C0000 --reset
+```
+
+Then run Tier-0 reliability smoke:
+
+```bash
+cd /workspaces/diseqc_cntrl
+./software/nanoFramework/tests/tier0_mailbox_reliability_smoke.sh --cycles 10 --read-count 4 --stop-on-fail
+```
+
+Harness behaviors:
+
+- Tier-0: `BringupStatus` set/get round-trip and `DiagnosticsMailbox` latch-once checks.
+- Tier-1: `StatusLed` and `UsbCdcConsole` calls for non-throwing execution verification.
+- Final marker: writes a deterministic status word so SWD readers can confirm run completion.

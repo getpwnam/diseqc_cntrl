@@ -1196,3 +1196,10 @@ This file should be committed and checked on each build to prevent version drift
 - Command(s): ./toolchain/run-deterministic-cycles.sh --cycles 20 --serial /dev/ttyUSB0 --baud 115200 --settle-ms 2000
 - Artifact: .debug/issue26_campaign_20260608T142844Z
 - Conclusion: Deterministic 20-cycle flash-reset rerun completed with fails=0/20.
+
+### 2026-06-08 15:25:40 UTC [PASS] [NON-BASELINE]
+- Git rev: 07b6213
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-managed.sh build --project CubleySmokeTier0/CubleySmokeTier0.nfproj --deploy --swd --address 0x080C0000 --reset && /workspaces/diseqc_cntrl/software/nanoFramework/tests/tier0_mailbox_reliability_smoke.sh --cycles 20 --read-count 4 --stop-on-fail
+- Artifact: build/CubleySmokeTier0/CubleySmokeTier0.bin
+- Conclusion: CubleySmokeTier0 completed Tier-0/Tier-1 interop harness run; Tier-0 reset-cycle smoke passed 20/20 with stable boot-probe latch 0xD5F00111.

@@ -25,6 +25,7 @@
   <ItemGroup>
     <!-- MQTT-first build. Rotor/LNB/Fram/Serial are excluded until their native
          InternalCall bindings are registered as g_CLR_AssemblyNative_DiSEqC_Control. -->
+    <Compile Include="DiagnosticsStatusWord.cs" />
     <Compile Include="FramConfigurationStorage.cs" />
     <Compile Include="HardwareCapabilities.cs" />
     <!-- <Compile Include="Manager\RotorManagerNative.cs" /> -->
