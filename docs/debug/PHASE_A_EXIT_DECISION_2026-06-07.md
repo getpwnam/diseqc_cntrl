@@ -1,5 +1,12 @@
 # Phase A Exit Decision Record (2026-06-07)
 
+> Status update (2026-06-08): This decision record is historical and was
+> superseded by the cubley-base program re-baseline decision in
+> [getpwnam/diseqc_cntrl#52](https://github.com/getpwnam/diseqc_cntrl/issues/52).
+> Use [PHASE_A_BASELINE.md](./PHASE_A_BASELINE.md) as the authoritative current
+> baseline reference. Mentions of `cubley-stable` below are legacy context from
+> the original 2026-06-07 freeze point.
+
 ## Decision
 
 **Phase A is exited and frozen** as of 2026-06-07.

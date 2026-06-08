@@ -8,6 +8,7 @@ on:
       - software/nanoFramework/nf-native/cubley_interop.cpp
       - software/nanoFramework/toolchain/interop-checksum.sh
       - software/nanoFramework/toolchain/interop-guard.sh
+      - software/nanoFramework/toolchain/interop-negative-drift-test.sh
       - software/nanoFramework/tests/DiSEqC_Control.Tests/**
       - .github/workflows/interop-guard.yml
   push:
@@ -19,6 +20,7 @@ on:
       - software/nanoFramework/nf-native/cubley_interop.cpp
       - software/nanoFramework/toolchain/interop-checksum.sh
       - software/nanoFramework/toolchain/interop-guard.sh
+      - software/nanoFramework/toolchain/interop-negative-drift-test.sh
       - software/nanoFramework/tests/DiSEqC_Control.Tests/**
       - .github/workflows/interop-guard.yml
 
@@ -37,6 +39,11 @@ jobs:
           cd software/nanoFramework
           ./toolchain/interop-checksum.sh --check
           ./toolchain/interop-guard.sh
+
+      - name: Verify intentional negative drift fixture blocks
+        run: |
+          cd software/nanoFramework
+          ./toolchain/interop-negative-drift-test.sh
 
       - name: Run host-side interop contract tests
         run: |
