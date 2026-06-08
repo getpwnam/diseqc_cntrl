@@ -15,6 +15,7 @@ namespace CubleySmokeTier0
         private const byte StageTier0 = 0xC1;
         private const byte StageTier1 = 0xC2;
         private const byte StageFinal = 0xCF;
+        private const byte StageTier1IterationBase = 0xD0;
 
         private const uint LatchWord = 0xD5F00111;
         private const uint LatchOverwriteAttemptWord = 0xD5F00E22;
@@ -29,10 +30,12 @@ namespace CubleySmokeTier0
             //   Then attempt overwrite with LatchOverwriteAttemptWord (0xD5F00E22);
             //   expected second call=false and NativeGetBootProbe() unchanged (still LatchWord).
             // - StatusLed (Tier-1): NativeInit/NativeSetLow/NativePulse are invoked; expected
-            //   behavior is successful non-throwing execution.
+            //   behavior is successful non-throwing execution under repeated mixed-order calls.
             // - UsbCdcConsole (Tier-1): NativeIsEnabled/NativeReadByte(0)/NativeWrite(...)
-            //   are invoked; expected read result >= -1 (timeout is -1) and write >= 0 when USB
-            //   CDC is enabled.
+            //   are invoked repeatedly; expected read result >= -1 (timeout is -1) and
+            //   write >= 0 when USB CDC is enabled.
+            // - Tier-1 safety rule: Tier-1 calls must not clobber boot-probe sticky latch;
+            //   NativeGetBootProbe() must remain equal to LatchWord before/after each Tier-1 iteration.
             byte detail = 0;
             bool pass = true;
 
@@ -96,7 +99,7 @@ namespace CubleySmokeTier0
 
             try
             {
-                // Tier-1 smoke: LED and USB console interop should execute without exceptions.
+                // Tier-1 smoke: repeated mixed-order LED/USB calls with sticky-slot preservation checks.
                 bool tier1Pass = true;
                 BringupStatus.NativeSet(Compose(StageTier1, ResultEnter, detail));
 
@@ -105,27 +108,69 @@ namespace CubleySmokeTier0
                 StatusLed.NativePulse(1, 50);
                 detail |= 0x10;
 
-                bool usbEnabled = UsbCdcConsole.NativeIsEnabled();
-                int readByte = UsbCdcConsole.NativeReadByte(0);
-                int writeRc = usbEnabled ? UsbCdcConsole.NativeWrite("CubleySmokeTier0 ready\r\n") : 0;
+                uint bootProbeBeforeTier1 = DiagnosticsMailbox.NativeGetBootProbe();
+                if (bootProbeBeforeTier1 != LatchWord)
+                {
+                    tier1Pass = false;
+                }
 
-                // Read timeout (-1) is valid for immediate mode; only enforce minimal call success.
-                if (readByte >= -1)
+                bool usbEnabled = UsbCdcConsole.NativeIsEnabled();
+                if (usbEnabled)
                 {
                     detail |= 0x20;
                 }
-                else
+
+                for (int i = 0; i < 6; i++)
                 {
-                    tier1Pass = false;
+                    uint bootProbeBeforeIter = DiagnosticsMailbox.NativeGetBootProbe();
+                    if (bootProbeBeforeIter != LatchWord)
+                    {
+                        tier1Pass = false;
+                    }
+
+                    // Emit deterministic per-iteration breadcrumbs for SWD diagnosis.
+                    BringupStatus.NativeSet(Compose((byte)(StageTier1IterationBase + i), ResultEnter, (byte)i));
+
+                    if ((i % 2) == 0)
+                    {
+                        StatusLed.NativeSetHigh();
+                        int readByte = UsbCdcConsole.NativeReadByte(0);
+                        StatusLed.NativeSetLow();
+                        StatusLed.NativePulse(1, 20 + (i * 5));
+
+                        // Read timeout (-1) is valid for immediate mode; require bounded sentinel semantics.
+                        if (readByte < -1)
+                        {
+                            tier1Pass = false;
+                        }
+                    }
+                    else
+                    {
+                        int writeRc = usbEnabled ? UsbCdcConsole.NativeWrite("CubleySmokeTier0 iter " + i.ToString() + "\r\n") : 0;
+                        StatusLed.NativePulse(2, 15 + (i * 5));
+                        int readByte = UsbCdcConsole.NativeReadByte(0);
+
+                        if (readByte < -1)
+                        {
+                            tier1Pass = false;
+                        }
+
+                        if (usbEnabled && writeRc < 0)
+                        {
+                            tier1Pass = false;
+                        }
+                    }
+
+                    uint bootProbeAfterIter = DiagnosticsMailbox.NativeGetBootProbe();
+                    if (bootProbeAfterIter != LatchWord)
+                    {
+                        tier1Pass = false;
+                    }
                 }
 
-                if (!usbEnabled || writeRc >= 0)
+                if (tier1Pass)
                 {
                     detail |= 0x40;
-                }
-                else
-                {
-                    tier1Pass = false;
                 }
 
                 BringupStatus.NativeSet(Compose(StageTier1, tier1Pass ? ResultPass : ResultFail, detail));
