@@ -1,8 +1,14 @@
 # Phase A Baseline Reference
 
+> IMPORTANT (2026-06-08): The program baseline for Phase A has moved to
+> `cubley-base` (`M0DMF_CUBLEY_V0.4`). This rewrite exists because the native
+> firmware program intentionally re-centered on the new baseline, and Phase A
+> / Phase B must be re-baselined before any further gate-completion claims.
+> See the decision record in [#52](https://github.com/getpwnam/diseqc_cntrl/issues/52).
+
 This document is the **canonical baseline** for all Phase A bring-up and flash
-campaigns on the `M0DMF_CUBLEY_F407` target.  Every Phase A run must be
-executed against this baseline unless the deviation is explicitly declared
+campaigns on the `M0DMF_CUBLEY_V0.4` target. Every Phase A run must be
+executed against `cubley-base` unless the deviation is explicitly declared
 (see [Non-baseline runs](#non-baseline-runs)).
 
 ---
@@ -11,16 +17,16 @@ executed against this baseline unless the deviation is explicitly declared
 
 | Field            | Value           |
 |------------------|-----------------|
-| Profile name     | `cubley-stable` |
-| Profile status   | stable          |
+| Profile name     | `cubley-base`    |
+| Profile status   | bringup         |
 | Wire protocol    | USART3 (UART)   |
-| RTC              | enabled         |
-| Config block     | enabled         |
+| RTC              | disabled        |
+| Config block     | disabled        |
 | System.Net       | disabled        |
 | HSI PLL          | enabled         |
 
-`cubley-stable` is the default Phase A firmware profile.  All runs that do
-not state a different profile are implicitly using `cubley-stable`.
+`cubley-base` is the default Phase A firmware profile. All runs that do not
+state a different profile are implicitly using `cubley-base`.
 
 ---
 
@@ -48,7 +54,7 @@ All commands are run from `software/nanoFramework/`.
 ### 1. Build firmware
 
 ```bash
-./toolchain/build-native.sh build --profile cubley-stable
+./toolchain/build-native.sh build --profile cubley-base
 ```
 
 Artifacts are written to `build/`:
@@ -94,9 +100,9 @@ nanoff --nanodevice \
 ## Tooling Versions
 
 All build, flash, and deploy operations run **inside the devcontainer** defined
-by `.devcontainer/Dockerfile`.  No host-side tool installs or Docker Compose
-invocations are required.  The following versions are pinned by the
-devcontainer image and constitute the baseline toolchain.
+by `.devcontainer/Dockerfile`. No host-side tool installs are required. The
+following versions are pinned by the devcontainer image and constitute the
+baseline toolchain for `cubley-base`.
 
 | Tool                | Version / constraint  | Source                                     |
 |---------------------|-----------------------|--------------------------------------------|
@@ -171,7 +177,7 @@ Use the `--baseline no` flag when appending to `BRINGUP_TEST_LOG.md`:
 ./toolchain/bringup_log_append.sh \
     --result INFO \
     --baseline no \
-    --conclusion "Experimental cubley-uart run — non-baseline, W5500 bring-up only"
+   --conclusion "Experimental cubley-uart run — non-baseline, W5500 bring-up only"
 ```
 
 The log entry will be annotated with `[NON-BASELINE]` to make the deviation
@@ -193,4 +199,5 @@ is outside the parameters above.
 - [.devcontainer/Dockerfile](../../.devcontainer/Dockerfile) — Pinned devcontainer image (toolchain versions)
 - [.devcontainer/devcontainer.json](../../.devcontainer/devcontainer.json) — USB device passthrough config
 - [build-native.sh](../../software/nanoFramework/toolchain/build-native.sh) — Firmware build script
+- Program decision: [getpwnam/diseqc_cntrl#52](https://github.com/getpwnam/diseqc_cntrl/issues/52)
 - Parent issue: [getpwnam/diseqc_cntrl#12](https://github.com/getpwnam/diseqc_cntrl/issues/12)

@@ -12,15 +12,20 @@ Usage:
 
 Examples:
   ./toolchain/build-native.sh list
-  ./toolchain/build-native.sh build --profile cubley-stable
-  ./toolchain/build-native.sh build --profile cubley-uart --flash --reset
+  ./toolchain/build-native.sh build --profile cubley-base
+  ./toolchain/build-native.sh build --profile cubley-base --flash --reset
   ./toolchain/build-native.sh flash --bootaddr 0x08000000 --clraddr 0x08004000
 
 Options:
 
 General options (all modes):
-  --profile <name>        Build profile (default: cubley-stable)
+  --profile <name>        Build profile (default: cubley-base)
   --help                  Show this help message
+
+Safety gates:
+    Non-base profiles are reference-only by default.
+    To use any profile other than cubley-base, set:
+        NF_ALLOW_REFERENCE_PROFILE=1
 
 Flash options (build with --flash, and flash mode):
   --bootaddr <hex>        nanoBooter flash address (default: 0x08000000)
@@ -34,19 +39,21 @@ EOF
 list_profiles() {
     cat << 'EOF'
 Supported profiles:
-  cubley-stable
-  cubley-uart
-  cubley-usb
-  cubley-hardalive
-  bringup-smoke
-  core-only
-  legacy-network
+    cubley-base
+    cubley-stable      [reference-only]
+    cubley-oldstable   [reference-only]
+    cubley-uart        [reference-only]
+    cubley-usb         [reference-only]
+    cubley-hardalive   [reference-only]
+    bringup-smoke      [reference-only]
+    core-only          [reference-only]
+    legacy-network     [reference-only]
 EOF
 }
 
 ORIGINAL_ARGS=("$@")
 MODE=""
-BUILD_PROFILE_ARG="${NF_BUILD_PROFILE:-cubley-stable}"
+BUILD_PROFILE_ARG="${NF_BUILD_PROFILE:-cubley-base}"
 BOOT_ADDR="0x08000000"
 CLR_ADDR="0x08004000"
 DO_FLASH="false"
@@ -129,6 +136,7 @@ if [ ! -f "/.dockerenv" ] && [ "$MODE" = "build" ]; then
     -e NF_INTERPRETER_REF="${NF_INTERPRETER_REF:-main}" \
     -e NF_UPDATE_INTERPRETER="${NF_UPDATE_INTERPRETER:-1}" \
     -e NF_STATIC_AUDIT="${NF_STATIC_AUDIT:-0}" \
+    -e NF_ALLOW_REFERENCE_PROFILE="${NF_ALLOW_REFERENCE_PROFILE:-0}" \
     -e NF_ALLOW_DEPRECATED_PROFILE="${NF_ALLOW_DEPRECATED_PROFILE:-0}" \
     -e NF_W5500_EARLY_INIT="${NF_W5500_EARLY_INIT:-}" \
         nanoframework-build /work/toolchain/build-native.sh "${ORIGINAL_ARGS[@]}"
@@ -230,9 +238,55 @@ ENABLE_HSI_PLL="0"  # HSE 8MHz crystal fitted; individual profiles override to H
 ENABLE_W5500_EARLY_INIT="FALSE"
 ENABLE_USB_CDC_CONSOLE="FALSE"
 ENABLE_WIRE_PROTOCOL_USB="FALSE"
+ENABLE_CUBLEY_STACK="TRUE"
+ENABLE_CLRSTARTUP_PATCHES="TRUE"
+LOCAL_TARGET_OVERRIDES_SUBDIR="target-overrides"
+FORCE_REFERENCE_BOARD=""
+NF_INTEROP_ASSEMBLIES_ARG="Cubley_Interop"
+HAL_GPT_SETTING="TRUE"
+HAL_PWM_SETTING="TRUE"
+HAL_SPI_SETTING="TRUE"
+IS_CUBLEY_BASE="FALSE"
 
 case "$BUILD_PROFILE" in
-    cubley-stable)
+    cubley-base)
+        # Minimal first-time bring-up profile:
+        # - derive target from ST_STM32F4_DISCOVERY files
+        # - force wire protocol on UART3 (PB10/PB11, 115200 8N1)
+        # - disable Cubley native interop/features entirely
+        TARGET_NAME="M0DMF_CUBLEY_V0_4"
+        LOCAL_TARGET_OVERRIDES_SUBDIR="target-overrides-cubley-base"
+        FORCE_REFERENCE_BOARD="ST_STM32F4_DISCOVERY"
+        NF_INTEROP_ASSEMBLIES_ARG=""
+        ENABLE_CUBLEY_STACK="FALSE"
+        ENABLE_CLRSTARTUP_PATCHES="FALSE"
+        IS_CUBLEY_BASE="TRUE"
+
+        ENABLE_API_GPIO="ON"
+        ENABLE_API_I2C="OFF"
+        ENABLE_API_SPI="OFF"
+        ENABLE_SYSTEM_NET="OFF"
+        ENABLE_CONFIG_BLOCK="OFF"
+        ENABLE_SNTP="OFF"
+        ENABLE_MBEDTLS="OFF"
+        ENABLE_HAL_MAC="FALSE"
+        ENABLE_STM32_MAC_ETH="FALSE"
+        ENABLE_OTG1="FALSE"
+        ENABLE_OTG2="FALSE"
+        ENABLE_HAL_USB="FALSE"
+        ENABLE_HAL_SERIAL_USB="FALSE"
+        ENABLE_BRINGUP_SMOKE="FALSE"
+        ENABLE_BRINGUP_HARDALIVE="FALSE"
+        ENABLE_FEATURE_RTC="OFF"
+        ENABLE_HAL_RTC="FALSE"
+        ENABLE_HSI_PLL="1"
+        HAL_GPT_SETTING="FALSE"
+        HAL_PWM_SETTING="FALSE"
+        HAL_SPI_SETTING="FALSE"
+        PROFILE_STATUS="bringup"
+        PROFILE_NOTE="Cubley base profile for hardware rev v0.4: UART3 wire protocol bring-up target derived from ST_STM32F4_DISCOVERY"
+        ;;
+    cubley-stable|cubley-oldstable)
         ENABLE_API_GPIO="ON"
         ENABLE_API_I2C="ON"
         ENABLE_API_SPI="ON"
@@ -400,10 +454,18 @@ case "$BUILD_PROFILE" in
         ;;
     *)
         echo -e "${RED}Unknown profile '$BUILD_PROFILE'.${NC}"
-        echo -e "${YELLOW}Supported profiles:${NC} cubley-stable, cubley-uart, cubley-usb, cubley-hardalive, bringup-smoke, core-only, legacy-network"
+        echo -e "${YELLOW}Supported profiles:${NC} cubley-base, cubley-stable, cubley-oldstable, cubley-uart, cubley-usb, cubley-hardalive, bringup-smoke, core-only, legacy-network"
         exit 1
         ;;
 esac
+
+# Safety gate: by default, only cubley-base is allowed.
+# Any other profile requires explicit user intent.
+if [ "$MODE" != "list" ] && [ "$IS_CUBLEY_BASE" != "TRUE" ] && [ "${NF_ALLOW_REFERENCE_PROFILE:-0}" != "1" ]; then
+    echo -e "${RED}Profile '$BUILD_PROFILE' is reference-only and blocked by default.${NC}"
+    echo -e "${YELLOW}To use it intentionally, re-run with NF_ALLOW_REFERENCE_PROFILE=1.${NC}"
+    exit 1
+fi
 
 if [ -n "${NF_W5500_EARLY_INIT:-}" ]; then
     case "${NF_W5500_EARLY_INIT}" in
@@ -572,7 +634,7 @@ echo -e "${YELLOW}Using upstream CLR assembly loader (no legacy runtime patching
 # Inject deterministic CLR startup breadcrumbs in the interpreter source so
 # failures between thread entry and managed execute are visible in mailbox/error.
 CLR_STARTUP_CPP="$NF_INTERPRETER_DIR/src/CLR/Startup/CLRStartup.cpp"
-if [ -f "$CLR_STARTUP_CPP" ]; then
+if [ "$ENABLE_CLRSTARTUP_PATCHES" = "TRUE" ] && [ -f "$CLR_STARTUP_CPP" ]; then
     echo -e "${YELLOW}Patching CLR startup diagnostics in CLRStartup.cpp...${NC}"
 
     if ! grep -Fq 'CUBLEY_CLR_STARTUP_DIAG' "$CLR_STARTUP_CPP"; then
@@ -723,7 +785,7 @@ fi
 
 # Capture unresolved assembly identity directly in TypeSystem resolve path.
 TYPESYSTEM_CPP="$NF_INTERPRETER_DIR/src/CLR/Core/TypeSystem.cpp"
-if [ -f "$TYPESYSTEM_CPP" ]; then
+if [ "$ENABLE_CLRSTARTUP_PATCHES" = "TRUE" ] && [ -f "$TYPESYSTEM_CPP" ]; then
     echo -e "${YELLOW}Patching TypeSystem resolve diagnostics...${NC}"
 
     if ! grep -Fq 'CUBLEY_CLR_RESOLVE_PTR' "$TYPESYSTEM_CPP"; then
@@ -801,19 +863,22 @@ mkdir -p "$TARGET_DIR/common"
 
 # Copy board files
 echo -e "${YELLOW}Copying board configuration files...${NC}"
-cp "$NF_NATIVE_DIR/board_cubley.h" "$TARGET_DIR/"
-cp "$NF_NATIVE_DIR/board_cubley.h" "$TARGET_DIR/board.h"
-cp "$NF_NATIVE_DIR/board_cubley.cpp" "$TARGET_DIR/board.c"
-cp "$NF_NATIVE_DIR/diseqc_native.h" "$TARGET_DIR/common/"
-cp "$NF_NATIVE_DIR/diseqc_native.cpp" "$TARGET_DIR/common/"
-cp "$NF_NATIVE_DIR/lnbh26_native.h" "$TARGET_DIR/common/"
-cp "$NF_NATIVE_DIR/lnbh26_native.cpp" "$TARGET_DIR/common/"
-cp "$NF_NATIVE_DIR/cubley_interop.cpp" "$TARGET_DIR/nanoCLR/"
-cp "$NF_NATIVE_DIR/lnbh26_interop.cpp" "$TARGET_DIR/nanoCLR/"
-cp "$NF_NATIVE_DIR/w5500_interop.cpp" "$TARGET_DIR/nanoCLR/"
+if [ "$ENABLE_CUBLEY_STACK" = "TRUE" ]; then
+    cp "$NF_NATIVE_DIR/board_cubley.h" "$TARGET_DIR/"
+    cp "$NF_NATIVE_DIR/board_cubley.h" "$TARGET_DIR/board.h"
+    cp "$NF_NATIVE_DIR/board_cubley.cpp" "$TARGET_DIR/board.c"
+    cp "$NF_NATIVE_DIR/diseqc_native.h" "$TARGET_DIR/common/"
+    cp "$NF_NATIVE_DIR/diseqc_native.cpp" "$TARGET_DIR/common/"
+    cp "$NF_NATIVE_DIR/lnbh26_native.h" "$TARGET_DIR/common/"
+    cp "$NF_NATIVE_DIR/lnbh26_native.cpp" "$TARGET_DIR/common/"
+    cp "$NF_NATIVE_DIR/cubley_interop.cpp" "$TARGET_DIR/nanoCLR/"
+    cp "$NF_NATIVE_DIR/lnbh26_interop.cpp" "$TARGET_DIR/nanoCLR/"
+    cp "$NF_NATIVE_DIR/w5500_interop.cpp" "$TARGET_DIR/nanoCLR/"
+fi
 
 # Register custom interop assembly module so CLR interop table includes
 # Cubley.Interop native bindings.
+if [ "$ENABLE_CUBLEY_STACK" = "TRUE" ]; then
 cat > "$NF_INTERPRETER_DIR/CMake/Modules/FindINTEROP-Cubley_Interop.cmake" << EOF_FIND_INTEROP
 # Auto-generated by toolchain/build-native.sh for custom Cubley interop binding
 set(Cubley_Interop_INCLUDE_DIRS "${TARGET_DIR}/nanoCLR")
@@ -825,13 +890,14 @@ set(Cubley_Interop_SOURCES
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(INTEROP-Cubley_Interop DEFAULT_MSG Cubley_Interop_INCLUDE_DIRS Cubley_Interop_SOURCES)
 EOF_FIND_INTEROP
+fi
 
 # board.h selects SERIAL_DRIVER conditionally based on HAL_USE_SERIAL_USB
 # (CLR -> SDU1 when USB on; nanoBooter -> SD3 always). No rewrite needed here.
 
 # Copy required ChibiOS target config files from local overrides first,
 # then fill missing files from an STM32F4 reference target.
-LOCAL_TARGET_OVERRIDES_DIR="$NF_NATIVE_DIR/target-overrides"
+LOCAL_TARGET_OVERRIDES_DIR="$NF_NATIVE_DIR/$LOCAL_TARGET_OVERRIDES_SUBDIR"
 
 copy_if_absent() {
     local src="$1"
@@ -857,6 +923,10 @@ mkdir -p "$TARGET_DIR/common" "$TARGET_DIR/nanoCLR" "$TARGET_DIR/nanoBooter"
 
 if [ -d "$LOCAL_TARGET_OVERRIDES_DIR" ]; then
     echo -e "${YELLOW}Applying local target overrides from $LOCAL_TARGET_OVERRIDES_DIR...${NC}"
+
+    # Optional board definition files for custom board names.
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/board.h" "$TARGET_DIR/" 2>/dev/null || true
+    cp "$LOCAL_TARGET_OVERRIDES_DIR/board.c" "$TARGET_DIR/" 2>/dev/null || true
 
     # Core target configuration sources used by API find modules.
     cp "$LOCAL_TARGET_OVERRIDES_DIR"/target_*.c "$TARGET_DIR/" 2>/dev/null || true
@@ -889,31 +959,43 @@ fi
 
 # Static-target guardrail: these core target overrides must come from this
 # repository, not from a reference board fallback.
-for required_target_file in \
-    "$TARGET_DIR/target_common.c" \
-    "$TARGET_DIR/target_system_io_ports_config.cpp" \
-    "$TARGET_DIR/target_system_io_ports_config.h"; do
-    if [ ! -f "$required_target_file" ]; then
-        echo -e "${RED}Missing required local target override: $required_target_file${NC}"
-        echo -e "${RED}Add it under $NF_NATIVE_DIR/target-overrides and rebuild.${NC}"
-        exit 1
-    fi
-done
+if [ "$ENABLE_CUBLEY_STACK" = "TRUE" ]; then
+    for required_target_file in \
+        "$TARGET_DIR/target_common.c" \
+        "$TARGET_DIR/target_system_io_ports_config.cpp" \
+        "$TARGET_DIR/target_system_io_ports_config.h"; do
+        if [ ! -f "$required_target_file" ]; then
+            echo -e "${RED}Missing required local target override: $required_target_file${NC}"
+            echo -e "${RED}Add it under $NF_NATIVE_DIR/target-overrides and rebuild.${NC}"
+            exit 1
+        fi
+    done
+fi
 
 REFERENCE_BOARD=""
-for candidate in \
-    "$NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F4_DISCOVERY" \
-    "$NF_INTERPRETER_DIR/targets/ChibiOS/ST_STM32F429I_DISCOVERY"; do
+if [ "$FORCE_REFERENCE_BOARD" = "ST_STM32F4_DISCOVERY" ]; then
+    candidate="$NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F4_DISCOVERY"
     if [ -d "$candidate" ]; then
         REFERENCE_BOARD="$candidate"
-        break
     fi
-done
+else
+    for candidate in \
+        "$NF_INTERPRETER_DIR/targets-community/ChibiOS/ST_STM32F4_DISCOVERY" \
+        "$NF_INTERPRETER_DIR/targets/ChibiOS/ST_STM32F429I_DISCOVERY"; do
+        if [ -d "$candidate" ]; then
+            REFERENCE_BOARD="$candidate"
+            break
+        fi
+    done
+fi
 
 if [ -n "$REFERENCE_BOARD" ]; then
     echo -e "${YELLOW}Backfilling missing target files from reference: $REFERENCE_BOARD${NC}"
 else
-    echo -e "${YELLOW}No reference board checkout found; using vendored target overrides only.${NC}"
+    echo -e "${RED}No reference board checkout found.${NC}"
+    echo -e "${RED}This build requires a reference-board workspace so missing target files can be backfilled.${NC}"
+    echo -e "${RED}Check out the interpreter reference tree and retry.${NC}"
+    exit 1
 fi
 
 if [ "$STATIC_AUDIT" = "1" ] && [ -n "$REFERENCE_BOARD" ]; then
@@ -965,6 +1047,16 @@ if [ "$STATIC_AUDIT" = "1" ] && [ -n "$REFERENCE_BOARD" ]; then
 fi
 
 if [ -n "$REFERENCE_BOARD" ]; then
+    # For reference-derived profiles, reuse board definition files directly.
+    copy_if_absent "$REFERENCE_BOARD/board.h" "$TARGET_DIR/board.h"
+    copy_if_absent "$REFERENCE_BOARD/board.c" "$TARGET_DIR/board.c"
+
+    # Backfill generic target source/config files from reference board when
+    # local override packs are intentionally minimal
+    copy_glob_if_absent "$REFERENCE_BOARD/target_*.c" "$TARGET_DIR"
+    copy_glob_if_absent "$REFERENCE_BOARD/target_*.h" "$TARGET_DIR"
+    copy_glob_if_absent "$REFERENCE_BOARD/target_*.cpp" "$TARGET_DIR"
+
     # Core target configuration sources are now owned by local overrides.
     copy_if_absent "$REFERENCE_BOARD/common/Device_BlockStorage.c" "$TARGET_DIR/common/Device_BlockStorage.c"
     if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ] || [ "$ENABLE_USB_CDC_CONSOLE" = "TRUE" ]; then
@@ -1015,7 +1107,7 @@ fi
 
 # If a workspace mcuconf is provided, use it as the base before appending
 # profile-specific overrides below.
-if [ -f "$WORKSPACE_BUILD_DIR/mcuconf.h" ]; then
+if [ "$IS_CUBLEY_BASE" != "TRUE" ] && [ -f "$WORKSPACE_BUILD_DIR/mcuconf.h" ]; then
     cp "$WORKSPACE_BUILD_DIR/mcuconf.h" "$TARGET_DIR/"
     cp "$WORKSPACE_BUILD_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/"
     cp "$WORKSPACE_BUILD_DIR/mcuconf.h" "$TARGET_DIR/nanoBooter/"
@@ -1024,6 +1116,67 @@ fi
 # Apply board-specific peripheral usage overrides
 for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h"; do
     if [ -f "$mcu" ]; then
+        if [ "$IS_CUBLEY_BASE" = "TRUE" ]; then
+            cat >> "$mcu" << 'EOF_MCU_OVERRIDES'
+
+/*
+ * Firstboot UART3-only profile: keep only USART3 SERIAL enabled.
+ * All other board peripherals are intentionally disabled.
+ * USART3 uses PB10/PB11 and is initialized directly in nanoCLR/main.c.
+ */
+
+#if defined(STM32_SERIAL_USE_USART1)
+#undef STM32_SERIAL_USE_USART1
+#define STM32_SERIAL_USE_USART1             FALSE
+#endif
+#if defined(STM32_SERIAL_USE_USART2)
+#undef STM32_SERIAL_USE_USART2
+#define STM32_SERIAL_USE_USART2             FALSE
+#endif
+#if defined(STM32_SERIAL_USE_USART3)
+#undef STM32_SERIAL_USE_USART3
+#define STM32_SERIAL_USE_USART3             TRUE
+#endif
+#if defined(STM32_SERIAL_USE_UART4)
+#undef STM32_SERIAL_USE_UART4
+#define STM32_SERIAL_USE_UART4              FALSE
+#endif
+#if defined(STM32_SERIAL_USE_UART5)
+#undef STM32_SERIAL_USE_UART5
+#define STM32_SERIAL_USE_UART5              FALSE
+#endif
+#if defined(STM32_SERIAL_USE_USART6)
+#undef STM32_SERIAL_USE_USART6
+#define STM32_SERIAL_USE_USART6             FALSE
+#endif
+
+#if defined(STM32_I2C_USE_I2C1)
+#undef STM32_I2C_USE_I2C1
+#define STM32_I2C_USE_I2C1                  FALSE
+#endif
+#if defined(STM32_I2C_USE_I2C2)
+#undef STM32_I2C_USE_I2C2
+#define STM32_I2C_USE_I2C2                  FALSE
+#endif
+#if defined(STM32_I2C_USE_I2C3)
+#undef STM32_I2C_USE_I2C3
+#define STM32_I2C_USE_I2C3                  FALSE
+#endif
+
+#if defined(STM32_SPI_USE_SPI1)
+#undef STM32_SPI_USE_SPI1
+#define STM32_SPI_USE_SPI1                  FALSE
+#endif
+#if defined(STM32_SPI_USE_SPI2)
+#undef STM32_SPI_USE_SPI2
+#define STM32_SPI_USE_SPI2                  FALSE
+#endif
+#if defined(STM32_SPI_USE_SPI3)
+#undef STM32_SPI_USE_SPI3
+#define STM32_SPI_USE_SPI3                  FALSE
+#endif
+EOF_MCU_OVERRIDES
+        else
         cat >> "$mcu" << 'EOF_MCU_OVERRIDES'
 
 #undef STM32_PWM_USE_TIM1
@@ -1049,6 +1202,7 @@ for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/
 #undef STM32_SERIAL_USE_USART3
 #define STM32_SERIAL_USE_USART3             TRUE
 EOF_MCU_OVERRIDES
+    fi
 
     cat >> "$mcu" << EOF_MCU_PROFILE_OVERRIDES
 
@@ -1165,8 +1319,8 @@ if [ "$ENABLE_HAL_SERIAL_USB" = "TRUE" ]; then
 
     # Keep USB and UART profiles on the same shared nanoCLR entrypoint source,
     # selected at compile-time via HAL_USE_SERIAL_USB.
-    if [ -f "$NF_NATIVE_DIR/target-overrides/nanoCLR/main.c" ]; then
-        cp "$NF_NATIVE_DIR/target-overrides/nanoCLR/main.c" "$TARGET_DIR/nanoCLR/main.c"
+    if [ -f "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/main.c" ]; then
+        cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/main.c" "$TARGET_DIR/nanoCLR/main.c"
     fi
 
     # Reference nanoBooter mains often depend on board-specific button/LED macros.
@@ -1185,8 +1339,8 @@ else
         cp "$WORKSPACE_BUILD_DIR/nanoCLR_hardalive_main.c" "$TARGET_DIR/nanoCLR/main.c"
     elif [ "$ENABLE_BRINGUP_SMOKE" = "TRUE" ] && [ -f "$WORKSPACE_BUILD_DIR/nanoCLR_bringup_main.c" ]; then
         cp "$WORKSPACE_BUILD_DIR/nanoCLR_bringup_main.c" "$TARGET_DIR/nanoCLR/main.c"
-    elif [ -f "$NF_NATIVE_DIR/target-overrides/nanoCLR/main.c" ]; then
-        cp "$NF_NATIVE_DIR/target-overrides/nanoCLR/main.c" "$TARGET_DIR/nanoCLR/main.c"
+    elif [ -f "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/main.c" ]; then
+        cp "$LOCAL_TARGET_OVERRIDES_DIR/nanoCLR/main.c" "$TARGET_DIR/nanoCLR/main.c"
     elif [ -f "$WORKSPACE_BUILD_DIR/nanoCLR_main.c" ]; then
         cp "$WORKSPACE_BUILD_DIR/nanoCLR_main.c" "$TARGET_DIR/nanoCLR/main.c"
     elif [ -f "$TARGET_DIR/nanoCLR/main.c" ]; then
@@ -1204,6 +1358,7 @@ cat > "$TARGET_DIR/common/CMakeLists.txt" << 'EOF_COMMON_CMAKE'
 # keep file present for target layout parity
 EOF_COMMON_CMAKE
 
+if [ "$ENABLE_CUBLEY_STACK" = "TRUE" ]; then
 cat > "$TARGET_DIR/nanoCLR/CMakeLists.txt" << 'EOF_NANOCLR_CMAKE'
 #
 # Copyright (c) .NET Foundation and Contributors
@@ -1219,6 +1374,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../common/usbcfg.c")
 endif()
 set(NANOCLR_PROJECT_SOURCES ${NANOCLR_PROJECT_SOURCES} CACHE INTERNAL "make global")
 EOF_NANOCLR_CMAKE
+else
+cat > "$TARGET_DIR/nanoCLR/CMakeLists.txt" << 'EOF_NANOCLR_CMAKE'
+#
+# Copyright (c) .NET Foundation and Contributors
+# See LICENSE file in the project root for full license information.
+#
+
+list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/main.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../common/Device_BlockStorage.c")
+    list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/Device_BlockStorage.c")
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../common/usbcfg.c")
+    list(APPEND NANOCLR_PROJECT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../common/usbcfg.c")
+endif()
+set(NANOCLR_PROJECT_SOURCES ${NANOCLR_PROJECT_SOURCES} CACHE INTERNAL "make global")
+EOF_NANOCLR_CMAKE
+fi
 
 cat > "$TARGET_DIR/nanoBooter/CMakeLists.txt" << 'EOF_NANOBOOTER_CMAKE'
 #
@@ -1346,13 +1518,13 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
 #undef HAL_USE_SERIAL
 #define HAL_USE_SERIAL                      TRUE
 #undef HAL_USE_GPT
-#define HAL_USE_GPT                         TRUE
+#define HAL_USE_GPT                         ${HAL_GPT_SETTING}
 #undef HAL_USE_PWM
-#define HAL_USE_PWM                         TRUE
+#define HAL_USE_PWM                         ${HAL_PWM_SETTING}
 #undef HAL_USE_PAL
 #define HAL_USE_PAL                         TRUE
 #undef HAL_USE_SPI
-#define HAL_USE_SPI                         TRUE
+#define HAL_USE_SPI                         ${HAL_SPI_SETTING}
 #undef HAL_USE_RTC
 #define HAL_USE_RTC                         ${RTC_HAL_SETTING}
 #undef HAL_USE_MAC
@@ -1502,7 +1674,7 @@ if cmake -G Ninja \
     -DAPI_System.Device.Spi=$ENABLE_API_SPI \
     -DAPI_System.Device.I2c=$ENABLE_API_I2C \
     -DAPI_System.Net=$ENABLE_SYSTEM_NET \
-    -DNF_INTEROP_ASSEMBLIES="Cubley_Interop" \
+    -DNF_INTEROP_ASSEMBLIES="$NF_INTEROP_ASSEMBLIES_ARG" \
     -DNF_SECURITY_MBEDTLS=$ENABLE_MBEDTLS \
     -DNF_NETWORKING_SNTP=$ENABLE_SNTP \
     -DUSE_RNG=OFF \
