@@ -141,5 +141,6 @@ cd /workspaces/diseqc_cntrl
 Harness behaviors:
 
 - Tier-0: `BringupStatus` set/get round-trip and `DiagnosticsMailbox` latch-once checks.
-- Tier-1: `StatusLed` and `UsbCdcConsole` calls for non-throwing execution verification.
+- Tier-1: repeated mixed-order `StatusLed` and `UsbCdcConsole` calls for stable execution verification.
+- Tier-1 safety: verifies Tier-1 call sequences do not clobber sticky boot-probe latch.
 - Final marker: writes a deterministic status word so SWD readers can confirm run completion.

@@ -1203,3 +1203,10 @@ This file should be committed and checked on each build to prevent version drift
 - Command(s): ./toolchain/build-managed.sh build --project CubleySmokeTier0/CubleySmokeTier0.nfproj --deploy --swd --address 0x080C0000 --reset && /workspaces/diseqc_cntrl/software/nanoFramework/tests/tier0_mailbox_reliability_smoke.sh --cycles 20 --read-count 4 --stop-on-fail
 - Artifact: build/CubleySmokeTier0/CubleySmokeTier0.bin
 - Conclusion: CubleySmokeTier0 completed Tier-0/Tier-1 interop harness run; Tier-0 reset-cycle smoke passed 20/20 with stable boot-probe latch 0xD5F00111.
+
+### 2026-06-08 15:34:36 UTC [PASS] [NON-BASELINE]
+- Git rev: 6cf4d23
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-managed.sh build --project CubleySmokeTier0/CubleySmokeTier0.nfproj --deploy --swd --address 0x080C0000 --reset && /workspaces/diseqc_cntrl/software/nanoFramework/tests/tier0_mailbox_reliability_smoke.sh --cycles 10 --read-count 4 --stop-on-fail
+- Artifact: build/CubleySmokeTier0/CubleySmokeTier0.bin
+- Conclusion: Tier-1 hardening run PASS: repeated mixed-order StatusLed/UsbCdcConsole interop executed across 10 reset cycles with stable boot_probe latch (0xD5F00111) and no unresolved Tier-1 failures.
