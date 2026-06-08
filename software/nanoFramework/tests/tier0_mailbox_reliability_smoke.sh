@@ -15,6 +15,7 @@ Options:
   --read-delay-ms <ms>         Delay between repeated reads (default: 150)
   --boot-probe-timeout-ms <ms> Max wait for boot-probe latch to become non-zero (default: 6000)
   --boot-probe-poll-ms <ms>    Poll interval while waiting for boot-probe latch (default: 250)
+  --require-final-pass         Require managed final marker (0xD5CF01DD) with Tier-1 pass bit set
   --elf <path>                 Path to nanoCLR ELF (default: build/nanoCLR.elf)
   --openocd-cfg <args>         OpenOCD cfg args string (default: "interface/stlink.cfg -f target/stm32f4x.cfg")
   --stop-on-fail               Stop at first failed cycle
@@ -35,6 +36,7 @@ READ_COUNT=4
 READ_DELAY_MS=150
 BOOT_PROBE_TIMEOUT_MS=6000
 BOOT_PROBE_POLL_MS=250
+REQUIRE_FINAL_PASS=0
 ELF_PATH="$NF_ROOT/build/nanoCLR.elf"
 ELF_EXPLICIT=0
 OPENOCD_CFG="interface/stlink.cfg -f target/stm32f4x.cfg"
@@ -65,6 +67,10 @@ while [[ $# -gt 0 ]]; do
     --boot-probe-poll-ms)
       BOOT_PROBE_POLL_MS="${2:-}"
       shift 2
+      ;;
+    --require-final-pass)
+      REQUIRE_FINAL_PASS=1
+      shift
       ;;
     --elf)
       ELF_PATH="${2:-}"
@@ -292,6 +298,48 @@ validate_status_word() {
   return 0
 }
 
+decode_word_fields() {
+  local value_hex="$1"
+  local value_dec=$((value_hex))
+  local magic=$(((value_dec >> 24) & 0xFF))
+  local stage=$(((value_dec >> 16) & 0xFF))
+  local result=$(((value_dec >> 8) & 0xFF))
+  local detail=$((value_dec & 0xFF))
+  printf '%d %d %d %d\n' "$magic" "$stage" "$result" "$detail"
+}
+
+is_failure_result_word() {
+  local value_hex="$1"
+  local _magic _stage result _detail
+  read -r _magic _stage result _detail <<< "$(decode_word_fields "$value_hex")"
+  [[ "$result" -eq 14 || "$result" -eq 15 ]]
+}
+
+is_expected_final_pass_word() {
+  local value_hex="$1"
+  local magic stage result detail
+  read -r magic stage result detail <<< "$(decode_word_fields "$value_hex")"
+
+  if [[ "$magic" -ne $((0xD5)) ]]; then
+    return 1
+  fi
+
+  if [[ "$stage" -ne $((0xCF)) ]]; then
+    return 1
+  fi
+
+  if [[ "$result" -ne 1 ]]; then
+    return 1
+  fi
+
+  # CubleySmokeTier0 sets detail bit 0x40 only when Tier-1 call sequence passes.
+  if (( (detail & 0x40) == 0 )); then
+    return 1
+  fi
+
+  return 0
+}
+
 FAIL_COUNT=0
 
 printf 'tier0_mailbox_reliability_smoke: cycles=%s read_count=%s settle_ms=%s\n' "$CYCLES" "$READ_COUNT" "$SETTLE_MS"
@@ -317,6 +365,10 @@ for cycle in $(seq 1 "$CYCLES"); do
     if sample="$(read_mailboxes_once "${cycle_id}_wait")"; then
       read -r current_hex boot_probe_hex clr_hex <<< "$sample"
       if [[ "$boot_probe_hex" != "0x0" && "$boot_probe_hex" != "0x00000000" ]]; then
+        if [[ "$REQUIRE_FINAL_PASS" -eq 1 ]] && ! is_expected_final_pass_word "$current_hex"; then
+          sleep_ms "$BOOT_PROBE_POLL_MS"
+          continue
+        fi
         probe_sample="$sample"
         break
       fi
@@ -345,6 +397,21 @@ for cycle in $(seq 1 "$CYCLES"); do
     cycle_fail=1
   fi
 
+  if [[ "$REQUIRE_FINAL_PASS" -eq 1 ]] && ! is_expected_final_pass_word "$first_current"; then
+    echo "ERROR: cycle $cycle_id current_status does not show final PASS with Tier-1 bit set (expected 0xD5CF01DD semantics)." >&2
+    cycle_fail=1
+  fi
+
+  if [[ "$REQUIRE_FINAL_PASS" -eq 1 ]] && is_failure_result_word "$first_clr"; then
+    echo "ERROR: cycle $cycle_id clr_status reports blocking failure/exception result." >&2
+    cycle_fail=1
+  fi
+
+  if [[ "$REQUIRE_FINAL_PASS" -eq 1 ]] && is_failure_result_word "$first_current"; then
+    echo "ERROR: cycle $cycle_id current_status reports blocking failure/exception result." >&2
+    cycle_fail=1
+  fi
+
   for read_idx in $(seq 2 "$READ_COUNT"); do
     sleep_ms "$READ_DELAY_MS"
     if ! sample="$(read_mailboxes_once "${cycle_id}_r${read_idx}")"; then
@@ -360,6 +427,21 @@ for cycle in $(seq 1 "$CYCLES"); do
       cycle_fail=1
     fi
     if ! validate_status_word "current_status" "$current_hex"; then
+      cycle_fail=1
+    fi
+
+    if [[ "$REQUIRE_FINAL_PASS" -eq 1 ]] && ! is_expected_final_pass_word "$current_hex"; then
+      echo "ERROR: cycle $cycle_id current_status lost final PASS/Tier-1-pass contract on read $read_idx." >&2
+      cycle_fail=1
+    fi
+
+    if [[ "$REQUIRE_FINAL_PASS" -eq 1 ]] && is_failure_result_word "$clr_hex"; then
+      echo "ERROR: cycle $cycle_id clr_status reports blocking failure/exception on read $read_idx." >&2
+      cycle_fail=1
+    fi
+
+    if [[ "$REQUIRE_FINAL_PASS" -eq 1 ]] && is_failure_result_word "$current_hex"; then
+      echo "ERROR: cycle $cycle_id current_status reports blocking failure/exception on read $read_idx." >&2
       cycle_fail=1
     fi
 

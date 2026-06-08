@@ -27,6 +27,31 @@ The Phase A freeze/handoff decision record is captured in [PHASE_A_EXIT_DECISION
 - Interop compatibility and review rules are defined in [INTEROP_VERSIONING_POLICY.md](../software/INTEROP_VERSIONING_POLICY.md).
 - Intentional drift regression check: run `./software/nanoFramework/toolchain/interop-negative-drift-test.sh` and require `PASS`.
 
+## Phase C Reliability Gate (Tier-0/Tier-1)
+
+After deploying `CubleySmokeTier0`, run the combined reset-cycle gate to block
+on Tier-0/Tier-1 regressions and unresolved InternalCall failures.
+
+```bash
+cd /workspaces/diseqc_cntrl/software/nanoFramework
+./toolchain/build-managed.sh build \
+    --project CubleySmokeTier0/CubleySmokeTier0.nfproj \
+    --deploy --swd --address 0x080C0000 --reset
+
+./tests/tier0_mailbox_reliability_smoke.sh \
+    --cycles 20 \
+    --read-count 4 \
+    --require-final-pass \
+    --stop-on-fail
+```
+
+Pass criteria:
+
+- summary ends with `fails=0/<cycles>`
+- `g_cubley_diag_boot_probe_status` remains sticky within each cycle
+- `g_cubley_diag_current_status` reaches final marker semantics (`0xD5CF01DD` class)
+- no `FAIL` or `EXCEPTION` result words are observed in `current_status` or `clr_status`
+
 ## Prerequisites
 
 ### Hardware Needed

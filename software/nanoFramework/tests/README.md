@@ -138,6 +138,24 @@ cd /workspaces/diseqc_cntrl
 ./software/nanoFramework/tests/tier0_mailbox_reliability_smoke.sh --cycles 10 --read-count 4 --stop-on-fail
 ```
 
+Then run the combined Tier-0/Tier-1 reset-cycle gate (Phase C #49):
+
+```bash
+cd /workspaces/diseqc_cntrl
+./software/nanoFramework/tests/tier0_mailbox_reliability_smoke.sh \
+	--cycles 20 \
+	--read-count 4 \
+	--require-final-pass \
+	--stop-on-fail
+```
+
+`--require-final-pass` upgrades the smoke from format-only validation to a
+blocking gate:
+
+- requires managed final marker semantics (`current_status` stage `0xCF`, result `PASS`, Tier-1 detail bit `0x40` set)
+- treats `FAIL`/`EXCEPTION` result words in `current_status` or `clr_status` as blocking failures
+- preserves Tier-0 sticky-latch checks across repeated reads in each reset cycle
+
 Harness behaviors:
 
 - Tier-0: `BringupStatus` set/get round-trip and `DiagnosticsMailbox` latch-once checks.
