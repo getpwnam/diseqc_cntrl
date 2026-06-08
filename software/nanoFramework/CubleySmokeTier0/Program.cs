@@ -122,6 +122,12 @@ namespace CubleySmokeTier0
 
                 for (int i = 0; i < 6; i++)
                 {
+                    uint bootProbeBeforeIter = DiagnosticsMailbox.NativeGetBootProbe();
+                    if (bootProbeBeforeIter != LatchWord)
+                    {
+                        tier1Pass = false;
+                    }
+
                     // Emit deterministic per-iteration breadcrumbs for SWD diagnosis.
                     BringupStatus.NativeSet(Compose((byte)(StageTier1IterationBase + i), ResultEnter, (byte)i));
 
