@@ -15,7 +15,7 @@ Options:
   --read-delay-ms <ms>         Delay between repeated reads (default: 150)
   --boot-probe-timeout-ms <ms> Max wait for boot-probe latch to become non-zero (default: 6000)
   --boot-probe-poll-ms <ms>    Poll interval while waiting for boot-probe latch (default: 250)
-  --require-final-pass         Require managed final marker (0xD5CF01DD) with Tier-1 pass bit set
+  --require-final-pass         Require final-pass semantics (magic 0xD5, stage 0xCF, result PASS, detail bit 0x40)
   --elf <path>                 Path to nanoCLR ELF (default: build/nanoCLR.elf)
   --openocd-cfg <args>         OpenOCD cfg args string (default: "interface/stlink.cfg -f target/stm32f4x.cfg")
   --stop-on-fail               Stop at first failed cycle
@@ -377,7 +377,11 @@ for cycle in $(seq 1 "$CYCLES"); do
   done
 
   if [[ -z "$probe_sample" ]]; then
-    echo "cycle $cycle_id: FAIL (boot_probe did not latch before timeout ${BOOT_PROBE_TIMEOUT_MS}ms)" >&2
+    if [[ "$REQUIRE_FINAL_PASS" -eq 1 ]]; then
+      echo "cycle $cycle_id: FAIL (strict mode timeout: boot_probe latch and final-pass current_status were not both observed within ${BOOT_PROBE_TIMEOUT_MS}ms)" >&2
+    else
+      echo "cycle $cycle_id: FAIL (boot_probe did not latch before timeout ${BOOT_PROBE_TIMEOUT_MS}ms)" >&2
+    fi
     FAIL_COUNT=$((FAIL_COUNT + 1))
     [[ "$STOP_ON_FAIL" -eq 1 ]] && break
     continue
