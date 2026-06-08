@@ -86,7 +86,9 @@ RUN apt-get install -y --no-install-recommends \
     picocom \
     minicom \
     strace \
-    tio
+    tio \
+    xxd \
+    jq
 
 # ---- GitHub CLI ----
 RUN mkdir -p -m 755 /etc/apt/keyrings \
