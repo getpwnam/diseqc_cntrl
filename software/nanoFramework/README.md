@@ -65,11 +65,11 @@ Builds firmware artifacts by fetching/using `nf-interpreter` inside Docker and c
 Commands (recommended wrapper):
 
 - Cubley base profile (default/canonical): `./toolchain/build-native.sh build --profile cubley-base`
-- Cubley W5500-native profile: `./toolchain/build-native.sh build --profile cubley-uart`
-- Cubley USB bring-up profile (no-VBUS-sense default): `./toolchain/build-native.sh build --profile cubley-usb`
-- Cubley hardalive profile (PA2 + PB10 hard toggle, no RTOS/CLR): `./toolchain/build-native.sh build --profile cubley-hardalive`
-- Bring-up smoke diagnostic profile (PA2 blink + USART3 heartbeat): `./toolchain/build-native.sh build --profile bringup-smoke`
-- Core-only diagnostic profile: `./toolchain/build-native.sh build --profile core-only`
+- Cubley W5500-native profile (reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile cubley-uart`
+- Cubley USB bring-up profile (no-VBUS-sense default, reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile cubley-usb`
+- Cubley hardalive profile (PA2 + PB10 hard toggle, no RTOS/CLR, reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile cubley-hardalive`
+- Bring-up smoke diagnostic profile (PA2 blink + USART3 heartbeat, reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile bringup-smoke`
+- Core-only diagnostic profile (reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile core-only`
 
 Reference-only profile safety gate:
 
