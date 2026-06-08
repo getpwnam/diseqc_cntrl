@@ -1210,3 +1210,27 @@ This file should be committed and checked on each build to prevent version drift
 - Command(s): ./toolchain/build-managed.sh build --project CubleySmokeTier0/CubleySmokeTier0.nfproj --deploy --swd --address 0x080C0000 --reset && /workspaces/diseqc_cntrl/software/nanoFramework/tests/tier0_mailbox_reliability_smoke.sh --cycles 10 --read-count 4 --stop-on-fail
 - Artifact: build/CubleySmokeTier0/CubleySmokeTier0.bin
 - Conclusion: Tier-1 hardening run PASS: repeated mixed-order StatusLed/UsbCdcConsole interop executed across 10 reset cycles with stable boot_probe latch (0xD5F00111) and no unresolved Tier-1 failures.
+
+### 2026-06-08 16:27:08 UTC [PASS] [NON-BASELINE]
+- Git rev: c7ba87d
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-managed.sh build --project CubleySmokeTier0/CubleySmokeTier0.nfproj --deploy --swd --address 0x080C0000 --reset && ./tests/tier0_mailbox_reliability_smoke.sh --cycles 20 --read-count 4 --require-final-pass --stop-on-fail
+- Artifact: build/CubleySmokeTier0/CubleySmokeTier0.bin; strict smoke summary fails=0/20
+- Conclusion: Phase C full strict smoke passed with stable Tier-0 latch and Tier-1 final-pass semantics across 20 reset cycles.
+- Note: Non-baseline by policy: Phase C CubleySmokeTier0 + strict Tier-0/Tier-1 gate validation.
+
+### 2026-06-08 16:28:35 UTC [FAIL] [NON-BASELINE]
+- Git rev: c7ba87d
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile cubley-stable --flash --reset && ./toolchain/build-managed.sh build --project CubleySmokeTier0/CubleySmokeTier0.nfproj --deploy --swd --address 0x080C0000 --reset && ./tests/tier0_mailbox_reliability_smoke.sh --cycles 20 --read-count 4 --require-final-pass --stop-on-fail
+- Artifact: build/nanoCLR.elf; build/CubleySmokeTier0/CubleySmokeTier0.pe
+- Conclusion: Phase C strict gate failed at cycle 01: final-pass current_status was not observed before timeout.
+- Note: This FAIL supersedes the earlier PASS append made before the failed smoke output was noticed.
+
+### 2026-06-08 16:31:42 UTC [PASS] [NON-BASELINE]
+- Git rev: c7ba87d
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile cubley-stable --flash --reset && ./toolchain/build-managed.sh build --project CubleySmokeTier0/CubleySmokeTier0.nfproj --deploy --swd --address 0x080C0000 --reset && ./tests/tier0_mailbox_reliability_smoke.sh --cycles 20 --read-count 4 --require-final-pass --stop-on-fail
+- Artifact: build/nanoCLR.elf; build/CubleySmokeTier0/CubleySmokeTier0.bin
+- Conclusion: Phase C strict gate PASS: 20/20 reset cycles with stable boot_probe and final-pass current_status semantics.
+- Note: Root cause fixed by disabling CLR startup pointer-breadcrumb patching for cubley-stable so current_status remains contract-clean for strict mailbox decoding.

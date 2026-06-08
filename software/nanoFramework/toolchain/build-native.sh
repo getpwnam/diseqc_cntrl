@@ -305,6 +305,9 @@ case "$BUILD_PROFILE" in
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
         ENABLE_HSI_PLL="1"
+        # Keep mailbox words contract-clean for Phase C smoke gates.
+        # CLR startup pointer breadcrumbs use non-0xD5 words and interfere with strict status decoding.
+        ENABLE_CLRSTARTUP_PATCHES="FALSE"
         PROFILE_STATUS="stable"
         PROFILE_NOTE="Default Cubley stable profile (non-network)"
         # Static-target enforcement: all target files must be locally owned;
