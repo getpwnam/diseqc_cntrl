@@ -4,6 +4,20 @@
 
 Program umbrella: [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11)
 
+### Program Decision (2026-06-08): Reimplement native firmware incrementally from cubley-base
+
+- Decision: adopt `cubley-base` as the canonical native firmware baseline, and treat all other build profiles as reference-only/deprecated-by-default.
+- Motivation: repeated wire-protocol instability on the previous profile stack blocked deterministic bring-up; a minimal STM32F407 reference-derived baseline proved stable (`nanoff --listdevices` PASS over UART3 at 115200 8N1).
+- Action: all native features (LNBH26, W5500, FRAM, diagnostics, etc.) will be reintroduced incrementally on top of `cubley-base` with explicit regression checks after each step.
+- Action: keep `cubley-oldstable` available for comparison only; do not use it as the forward development path.
+- Required follow-up: revisit and re-baseline **Phase A** and **Phase B** on the new configuration before advancing downstream phases.
+
+#### Re-baseline tasks tied to this decision
+
+- [ ] Phase A revisit: update baseline docs and smoke checks to `cubley-base` + `M0DMF_CUBLEY_V0.4`, then rerun deterministic bring-up evidence campaign ([#12](https://github.com/getpwnam/diseqc_cntrl/issues/12)).
+- [ ] Phase B revisit: re-evaluate interop governance/contract drift assumptions against the new incremental native reimplementation plan ([#13](https://github.com/getpwnam/diseqc_cntrl/issues/13)).
+- [ ] Update umbrella tracking and dependency notes in [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11) once Phase A/B re-baselines are recorded.
+
 ### Child phase checklist (source of truth links)
 
 - [ ] [Phase A: Deterministic firmware baseline and bring-up evidence runbook](https://github.com/getpwnam/diseqc_cntrl/issues/12)

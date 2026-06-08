@@ -1,5 +1,11 @@
 # Phase A Baseline Reference
 
+> IMPORTANT (2026-06-08): This document describes the legacy `cubley-stable`
+> baseline and is now **reference-only**. The program baseline has moved to
+> `cubley-base` (`M0DMF_CUBLEY_V0.4`) as part of the native firmware
+> reimplementation decision. Phase A and Phase B must be revisited and
+> re-baselined on the new configuration before gate completion claims.
+
 This document is the **canonical baseline** for all Phase A bring-up and flash
 campaigns on the `M0DMF_CUBLEY_F407` target.  Every Phase A run must be
 executed against this baseline unless the deviation is explicitly declared
