@@ -64,12 +64,17 @@ Builds firmware artifacts by fetching/using `nf-interpreter` inside Docker and c
 
 Commands (recommended wrapper):
 
-- Cubley stable profile (default): `./toolchain/build-native.sh build --profile cubley-stable`
-- Cubley W5500-native profile: `./toolchain/build-native.sh build --profile cubley-uart`
-- Cubley USB bring-up profile (no-VBUS-sense default): `./toolchain/build-native.sh build --profile cubley-usb`
-- Cubley hardalive profile (PA2 + PB10 hard toggle, no RTOS/CLR): `./toolchain/build-native.sh build --profile cubley-hardalive`
-- Bring-up smoke diagnostic profile (PA2 blink + USART3 heartbeat): `./toolchain/build-native.sh build --profile bringup-smoke`
-- Core-only diagnostic profile: `./toolchain/build-native.sh build --profile core-only`
+- Cubley base profile (default/canonical): `./toolchain/build-native.sh build --profile cubley-base`
+- Cubley W5500-native profile (reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile cubley-uart`
+- Cubley USB bring-up profile (no-VBUS-sense default, reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile cubley-usb`
+- Cubley hardalive profile (PA2 + PB10 hard toggle, no RTOS/CLR, reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile cubley-hardalive`
+- Bring-up smoke diagnostic profile (PA2 blink + USART3 heartbeat, reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile bringup-smoke`
+- Core-only diagnostic profile (reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile core-only`
+
+Reference-only profile safety gate:
+
+- Non-base profiles are blocked by default.
+- To run intentionally: `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile <profile>`
 
 Deprecated profile quarantine:
 
@@ -80,12 +85,13 @@ Deprecated profile quarantine:
 
 | Profile | Status | Primary Purpose | Key Traits |
 |---|---|---|---|
-| `cubley-stable` | stable | Default daily firmware | Non-network, config block on, RTC on, UART wire protocol |
-| `cubley-uart` | scaffold | Native W5500 bring-up | Non-network, config block off, SPI/GPIO/I2C on |
-| `cubley-usb` | experimental | USB-first transport bring-up | OTG1 + USB serial enabled; VBUS-sense mode selectable |
-| `cubley-hardalive` | experimental | Bare-metal liveness check | No RTOS/CLR startup; hard pin toggles |
-| `bringup-smoke` | experimental | Fast smoke diagnostics | PA2 blink + USART3 heartbeat |
-| `core-only` | experimental | Fast firmware iteration | Smallest managed/API footprint |
+| `cubley-base` | canonical | Default baseline firmware | Minimal UART3 wire-protocol baseline on `M0DMF_CUBLEY_V0.4` |
+| `cubley-stable` | reference-only | Historical stable comparison profile | Non-network, config block on, RTC on, UART wire protocol |
+| `cubley-uart` | reference-only | Native W5500 bring-up scaffold | Non-network, config block off, SPI/GPIO/I2C on |
+| `cubley-usb` | reference-only | USB-first transport bring-up | OTG1 + USB serial enabled; VBUS-sense mode selectable |
+| `cubley-hardalive` | reference-only | Bare-metal liveness check | No RTOS/CLR startup; hard pin toggles |
+| `bringup-smoke` | reference-only | Fast smoke diagnostics | PA2 blink + USART3 heartbeat |
+| `core-only` | reference-only | Fast firmware iteration | Smallest managed/API footprint |
 | `legacy-network` | deprecated | Transitional compatibility only | lwIP/System.Net path; gated by env var |
 
 The wrapper auto-runs inside Docker when invoked from host Linux/WSL, and also works when already inside the container.
