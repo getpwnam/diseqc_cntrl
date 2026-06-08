@@ -18,6 +18,71 @@ This document is the source of truth for method slot governance in v1.x.
 - Native methods checksum (v1 baseline): `0xC5EF91C9`
 - Native assembly version tuple: `{ 1, 0, 0, 0 }`
 
+## Normative Tier-0/Tier-1 Diagnostics Semantics (Phase C)
+
+This section is normative for Tier-0/Tier-1 diagnostics behavior consumed by
+bring-up tooling and smoke gates.
+
+### Tier Ownership
+
+- Tier-0 APIs: `BringupStatus.*`, `DiagnosticsMailbox.*`
+- Tier-1 APIs: `StatusLed.*`, `UsbCdcConsole.*`
+
+Tier-1 APIs must not overwrite Tier-0 sticky diagnostics slot
+(`g_cubley_diag_boot_probe_status`).
+
+### Status Word Encoding (Normative)
+
+Status words are encoded as:
+
+- `0xD5SSRRDD`
+
+Where:
+
+- `0xD5` = status magic (required)
+- `SS` = stage byte (producer-defined stage)
+- `RR` = result code
+- `DD` = detail byte
+
+Normative result codes for Tier-0/Tier-1 diagnostics readers:
+
+- `0` = `ENTER`
+- `1` = `PASS`
+- `2` = `WARN`
+- `14` = `FAIL`
+- `15` = `EXCEPTION`
+
+Any other result code is invalid for Tier-0/Tier-1 smoke interpretation.
+
+### Error Word Encoding (Normative)
+
+Error words are encoded as:
+
+- `0xE?OOCCDD`
+
+Where:
+
+- top byte `0xE?` identifies producer family
+- `OO` = operation/opcode
+- `CC` = code
+- `DD` = detail
+
+Tier-0/Tier-1 tooling must treat `OO/CC/DD` as producer-specific unless a
+decoder table explicitly defines an opcode.
+
+### Reset and Stickiness Rules (Normative)
+
+- `BringupStatus.NativeSet()` writes transient current status.
+- `BringupStatus.NativeGet()` reads transient current status.
+- `BringupStatus.NativeGetLastNativeError()` reads latest error slot.
+- `DiagnosticsMailbox.NativeTryLatchBootProbe(word)` is latch-once per boot:
+  first write succeeds (`true`), subsequent writes fail (`false`) and must not
+  overwrite the latched value.
+- `DiagnosticsMailbox.NativeGetBootProbe()` returns latched value or `0` before
+  first latch.
+- Sticky latch lifetime is one boot session; device reset/power cycle clears it
+  by runtime reinitialization.
+
 ## Slot Policy (v1.x)
 
 - Slots `0..33` are immutable in v1.x.

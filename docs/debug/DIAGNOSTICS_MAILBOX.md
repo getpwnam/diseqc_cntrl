@@ -63,6 +63,9 @@ Managed startup now latches its bitmap via:
 
 Mailbox words are 32-bit packed values.
 
+For Tier-0/Tier-1 diagnostics, this section is normative and must stay aligned
+with `docs/software/INTEROP_CONTRACT_V1.md`.
+
 ### Status word format
 
 `0xD5SSRRDD`
@@ -81,6 +84,29 @@ Standard Phase A result decode:
 - `15`: `EXCEPTION`
 
 Any other `RR` value is invalid for Phase A check words and must be rejected by readers.
+
+### Normative stage usage (Tier-0/Tier-1)
+
+The stage byte is producer-owned. Readers must interpret stage values in
+producer context, because stage ranges can overlap between producers.
+
+- Managed smoke harness (`CubleySmokeTier0`) currently emits:
+   - `0xC0` start, `0xC1` Tier-0 checks, `0xC2` Tier-1 checks, `0xCF` final
+- Managed startup probe currently emits:
+   - `0xE0` managed entry, `0xE1` W5500 probe, `0xE2` LNBH26 probe,
+      `0xE3` FRAM probe, `0xEF` aggregate status
+- CLR startup producer may emit additional stage values (including values in the
+   `0xC*`/`0xD*` region); do not assume those regions are exclusive to managed
+   harness producers.
+- `0xF0` is reserved for sticky boot-probe aggregate latch stage.
+
+Unlisted stage values are reserved for future producers and must be treated as
+unknown stage (not unknown format) if magic/result decode is valid.
+
+`DD` interpretation note:
+
+- For stage `0xF0`, `DD` is a hardware bitmap (`bit0=W5500 bit1=LNBH26 bit2=FRAM`).
+- For other documented Phase A check words, `DD` follows the component mapping below.
 
 Phase A detail-byte mapping (`DD`) for smoke checks:
 
@@ -102,12 +128,18 @@ readers apply the same rules and fail fast on invalid magic/result codes.
 
 `0xE?OOCCDD`
 
-- Top byte identifies producer family (`0xE1` or `0xE2` seen currently)
+- Top byte identifies producer family (`0xE0..0xEF`; `0xE1` and `0xE2` observed currently)
 - `OO`: operation/opcode
 - `CC`: code
 - `DD`: detail
 
 Interpretation of opcode/code/detail is subsystem-specific.
+
+Normative reader rule for Tier-0/Tier-1:
+
+- validate top-byte family range (`0xE0..0xEF`) and preserve raw word
+- decode opcode/code/detail only when the opcode has a documented decoder path
+- do not fail parsing solely because an opcode is unknown
 
 ## Ownership Rules
 
@@ -118,6 +150,16 @@ Use these rules to avoid clobber races and ambiguous traces:
 3. Runtime breadcrumbs (LED/network/etc.) may write `g_cubley_diag_current_status`.
 4. Error paths write `g_cubley_diag_last_error`.
 5. Do not clear sticky slots from normal runtime code.
+
+### Reset behavior
+
+- `g_cubley_diag_boot_probe_status` is sticky within a boot session and is
+   expected to reset to `0` on reboot/power-cycle before first managed latch.
+- `g_cubley_diag_current_status` is transient and may change frequently.
+- `g_cubley_diag_clr_status` reflects CLR/startup progression for the current
+   boot session.
+- `g_cubley_diag_last_error` reflects latest producer error for the current
+   boot session.
 
 ## SWD Usage
 
