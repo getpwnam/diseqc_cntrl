@@ -30,12 +30,25 @@ This guide covers deploying managed C# code to the DiSEqC Controller STM32F407 r
 
 ## Deployment Profiles
 
+### cubley-base (Frozen hardware baseline)
+- **Status**: Phase A baseline only
+- **Purpose**: Minimal board bring-up anchor with Cubley stack disabled
+- **Build**: `./toolchain/build-native.sh build --profile cubley-base`
+- **Note**: Do not add subsystem-specific W5500/LNBH26/FRAM exposure here; Phase D smoke work should move to `phase-d-smoke` instead.
+
 ### cubley-stable (Recommended for Managed Apps)
 - **Status**: Production-ready
 - **Flash used**: ~281 KB (55% of available)
 - **Features**: Full nanoFramework CLR, GPIO/I2C/SPI support, no networking
 - **Build**: `./toolchain/build-native.sh build --profile cubley-stable`
 - **Profile config**: RTC enabled, config block enabled, HSI PLL enabled (`ENABLE_HSI_PLL=1`)
+
+### phase-d-smoke (Phase D subsystem smoke)
+- **Status**: Experimental / Phase D only
+- **Purpose**: Managed-triggered subsystem interop bring-up without repurposing the frozen `cubley-base` baseline
+- **Features**: Full CLR, GPIO/I2C/SPI support, config block enabled, no networking, W5500 early init disabled by default
+- **Build**: `./toolchain/build-native.sh build --profile phase-d-smoke`
+- **Profile config**: RTC enabled, config block enabled, CLR startup mailbox patches disabled, subsystem behavior remains managed-triggered
 
 ### cubley-uart (Native W5500 over SPI)
 - **Status**: Experimental

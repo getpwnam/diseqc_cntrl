@@ -13,6 +13,7 @@
 
 extern volatile uint32_t g_cubley_diag_current_status;
 extern volatile uint32_t g_cubley_diag_last_error;
+volatile uint32_t g_w5500_diag_trace = 0;
 
 enum w5500_socket_status_t
 {
@@ -111,7 +112,10 @@ static inline void set_w5500_bringup_status(uint8_t stage, uint8_t result, uint8
 static inline void set_w5500_last_native_error(uint8_t op, uint8_t code, uint8_t detail)
 {
     // 0xE1 marker | op | code | detail (sticky until next update).
-    g_cubley_diag_last_error = ((uint32_t)0xE1 << 24) | ((uint32_t)op << 16) | ((uint32_t)code << 8) | (uint32_t)detail;
+    const uint32_t packed = ((uint32_t)0xE1 << 24) | ((uint32_t)op << 16) | ((uint32_t)code << 8) | (uint32_t)detail;
+    g_cubley_diag_last_error = packed;
+    // Mirror native W5500 breadcrumbs into a dedicated mailbox that CLR startup does not touch.
+    g_w5500_diag_trace = packed;
 }
 
 // Hardware SPI2 for W5500: PB12=NSS, PB13=SCK, PB14=MISO, PB15=MOSI (all AF5).
@@ -1293,11 +1297,16 @@ HRESULT Library_cubley_interop_W5500Socket_NativeGetVersion___STATIC__U4(CLR_RT_
     uint8_t version = 0;
     uint8_t phycfgr = 0;
 
+    // Dedicated trace for proving this entrypoint was reached even if VERSIONR reads fail.
+    g_w5500_diag_trace = ((uint32_t)0xE3 << 24) | ((uint32_t)0x53 << 16) | ((uint32_t)(g_initialized ? 0x01 : 0x00) << 8);
+
     if (!g_initialized)
     {
+        g_w5500_diag_trace = ((uint32_t)0xE3 << 24) | ((uint32_t)0x56 << 16) | ((uint32_t)0x01 << 8);
         version = w5500_probe_version_minimal(&phycfgr);
         stack.SetResult_U4((uint32_t)version);
         set_w5500_bringup_status(5, version == 0x04 ? 1 : 14, version);
+        g_w5500_diag_trace = ((uint32_t)0xE3 << 24) | ((uint32_t)0x57 << 16) | ((uint32_t)version << 8) | (uint32_t)phycfgr;
         NANOCLR_SET_AND_LEAVE(S_OK);
     }
 

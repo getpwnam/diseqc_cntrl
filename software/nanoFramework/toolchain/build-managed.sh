@@ -187,6 +187,7 @@ restore_packages_from_config() {
 bootstrap_packages() {
   echo "[stage] Ensuring nanoFramework package cache is present..."
   restore_packages_from_config "$ROOT_DIR/Cubley.Interop/packages.config"
+  restore_packages_from_config "$ROOT_DIR/SmokeW5500.Interop/packages.config"
   restore_packages_from_config "$ROOT_DIR/DiSEqC_Control/packages.config"
 
   if command -v dotnet >/dev/null 2>&1; then
@@ -557,13 +558,31 @@ else
   fi
   PRIMARY_PE="$OUTPUT_DIR/$ASSEMBLY_NAME.pe"
   CUBLEY_INTEROP_PE="$OUTPUT_DIR/Cubley.Interop.pe"
+  SMOKE_W5500_INTEROP_PE="$OUTPUT_DIR/SmokeW5500.Interop.pe"
   RUNTIME_EVENTS_PE=""
+  CUBLEY_INTEROP_CHECK_ASSEMBLY="Cubley.Interop"
 
-  if [[ -f "$CUBLEY_INTEROP_PE" && -x "$CHECKSUM_TOOL" ]]; then
-    if ! "$CHECKSUM_TOOL" --check --pe "$CUBLEY_INTEROP_PE"; then
-      echo "[error] Cubley.Interop checksum mismatch; refusing to continue." >&2
-      echo "[error] To realign, run: $CHECKSUM_TOOL --fix --pe $CUBLEY_INTEROP_PE" >&2
-      exit 1
+  # Tier2 smoke references SmokeW5500.Interop but currently emits Cubley.Interop.pe.
+  # In this case validate that PE against SmokeW5500 interop checksum policy.
+  if grep -Fq "SmokeW5500.Interop.nfproj" "$PROJECT"; then
+    CUBLEY_INTEROP_CHECK_ASSEMBLY="SmokeW5500.Interop"
+  fi
+
+  if [[ -x "$CHECKSUM_TOOL" ]]; then
+    if [[ -f "$CUBLEY_INTEROP_PE" ]]; then
+      if ! "$CHECKSUM_TOOL" --check --assembly "$CUBLEY_INTEROP_CHECK_ASSEMBLY" --pe "$CUBLEY_INTEROP_PE"; then
+        echo "[error] $CUBLEY_INTEROP_CHECK_ASSEMBLY checksum mismatch; refusing to continue." >&2
+        echo "[error] To realign, run: $CHECKSUM_TOOL --fix --assembly $CUBLEY_INTEROP_CHECK_ASSEMBLY --pe $CUBLEY_INTEROP_PE" >&2
+        exit 1
+      fi
+    fi
+
+    if [[ -f "$SMOKE_W5500_INTEROP_PE" ]]; then
+      if ! "$CHECKSUM_TOOL" --check --assembly SmokeW5500.Interop --pe "$SMOKE_W5500_INTEROP_PE"; then
+        echo "[error] SmokeW5500.Interop checksum mismatch; refusing to continue." >&2
+        echo "[error] To realign, run: $CHECKSUM_TOOL --fix --assembly SmokeW5500.Interop --pe $SMOKE_W5500_INTEROP_PE" >&2
+        exit 1
+      fi
     fi
   fi
 
@@ -578,7 +597,7 @@ else
     fi
   fi
 
-  if [[ -f "$OUTPUT_DIR/mscorlib.pe" && -f "$OUTPUT_DIR/System.Device.Gpio.pe" && -f "$OUTPUT_DIR/System.Device.I2c.pe" && -f "$OUTPUT_DIR/System.Threading.pe" && -f "$PRIMARY_PE" ]]; then
+  if [[ -f "$PRIMARY_PE" ]]; then
     pack_args=(
       --required-marker NFMRK1
       --out-dir "$OUTPUT_DIR"
@@ -590,15 +609,29 @@ else
       pack_args+=("$CUBLEY_INTEROP_PE")
     fi
 
-    pack_args+=("$OUTPUT_DIR/System.Device.Gpio.pe")
-    pack_args+=("$OUTPUT_DIR/System.Device.I2c.pe")
+    if [[ -f "$SMOKE_W5500_INTEROP_PE" ]]; then
+      pack_args+=("$SMOKE_W5500_INTEROP_PE")
+    fi
+
+    if [[ -f "$OUTPUT_DIR/System.Device.Gpio.pe" ]]; then
+      pack_args+=("$OUTPUT_DIR/System.Device.Gpio.pe")
+    fi
+
+    if [[ -f "$OUTPUT_DIR/System.Device.I2c.pe" ]]; then
+      pack_args+=("$OUTPUT_DIR/System.Device.I2c.pe")
+    fi
 
     if [[ -n "$RUNTIME_EVENTS_PE" && -f "$RUNTIME_EVENTS_PE" ]]; then
       pack_args+=("$RUNTIME_EVENTS_PE")
     fi
 
-    pack_args+=("$OUTPUT_DIR/System.Threading.pe")
-    pack_args+=("$OUTPUT_DIR/mscorlib.pe")
+    if [[ -f "$OUTPUT_DIR/System.Threading.pe" ]]; then
+      pack_args+=("$OUTPUT_DIR/System.Threading.pe")
+    fi
+
+    if [[ -f "$OUTPUT_DIR/mscorlib.pe" ]]; then
+      pack_args+=("$OUTPUT_DIR/mscorlib.pe")
+    fi
 
     if [[ -x "$SCRIPT_DIR/pack-and-validate.sh" ]]; then
       "$SCRIPT_DIR/pack-and-validate.sh" "${pack_args[@]}" >/dev/null
