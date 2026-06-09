@@ -270,7 +270,7 @@
       "internal_id": "",
       "mfg": "",
       "mpn": "",
-      "sch_revision": ""
+      "sch_revision": "0.5-dev"
     },
     "layer_pairs": [],
     "layer_presets": [],

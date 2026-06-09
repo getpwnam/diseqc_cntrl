@@ -6,6 +6,8 @@
 	(paper "A4")
 	(title_block
 		(title "DiSEqc Motor Control")
+		(date "2026-06-09")
+		(rev "0.5-dev")
 		(company "M0DMF ")
 	)
 	(lib_symbols
@@ -11099,7 +11101,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "TP_W5500_RST"
+		(property "Value" "TP_W5500_INT"
 			(at 269.494 144.018 90)
 			(show_name no)
 			(do_not_autoplace no)
