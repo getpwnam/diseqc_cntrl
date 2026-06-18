@@ -39,9 +39,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 0.5,
-          "height": 1.0,
-          "width": 1.0
+          "drill": 0.0,
+          "height": 1.15,
+          "width": 0.3
         },
         "silk_line_width": 0.1,
         "silk_text_italic": false,
@@ -952,6 +952,14 @@
         "RXP",
         "RXN"
       ],
+      "I2C1_FRAM": [
+        "SDA",
+        "SCL"
+      ],
+      "I2C3_LNB": [
+        "SDA",
+        "SCL"
+      ],
       "RMII": [
         "TX_EN",
         "TXD0",
@@ -1019,7 +1027,7 @@
         "uuid": "82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
       }
     ],
-    "used_designators": "",
+    "used_designators": "D1-7,#PWR1-73,IC1-6,R1-37,#FLG1-8,C1-39,FB1-2,F1,J1-8,JP1-2,L1-4,NT1-4,PS1,SW1,TP1-24,U1,Y1-2",
     "variants": []
   },
   "sheets": [
@@ -1036,7 +1044,7 @@
       "USB-UART"
     ],
     [
-      "7450d7ba-1360-439b-89b9-26f185df0bb2",
+      "114baf94-7b4a-4d2d-92f4-f2fc3fb70423",
       "LNBH26PQR"
     ],
     [
