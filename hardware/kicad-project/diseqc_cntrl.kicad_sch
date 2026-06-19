@@ -835,6 +835,129 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Connector:TestPoint_Square"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0.762)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "TP"
+				(at 0 3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "TestPoint_Square"
+				(at 0 2.032 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "test point"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "test point tp"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Pin* Test*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "TestPoint_Square_0_1"
+				(rectangle
+					(start -0.762 0.762)
+					(end 0.762 -0.762)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "TestPoint_Square_1_1"
+				(pin passive line
+					(at 0 0 90)
+					(length 0)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Device:FerriteBead"
 			(pin_numbers
 				(hide yes)
@@ -4335,6 +4458,12 @@
 		(uuid "75b8e198-54b6-4c45-be8c-08d3d7356c20")
 	)
 	(junction
+		(at 52.07 57.15)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "761dd648-bd3a-44af-aed6-62589c0e2664")
+	)
+	(junction
 		(at 118.11 39.37)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -4351,6 +4480,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "9eb10e79-39c4-43c0-a32c-6b65f90e836d")
+	)
+	(junction
+		(at 17.78 50.8)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "a077431e-a2b3-4e35-8190-ce98b8c35413")
 	)
 	(junction
 		(at 78.74 110.49)
@@ -4506,6 +4641,16 @@
 	)
 	(wire
 		(pts
+			(xy 17.78 50.8) (xy 17.78 57.15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1595406b-efa9-4718-a921-5be450b3a0a6")
+	)
+	(wire
+		(pts
 			(xy 184.15 41.91) (xy 186.69 41.91)
 		)
 		(stroke
@@ -4536,6 +4681,16 @@
 	)
 	(wire
 		(pts
+			(xy 43.18 57.15) (xy 52.07 57.15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "23444d6b-4c5a-4325-a6cb-2547b3d5c6dc")
+	)
+	(wire
+		(pts
 			(xy 175.26 120.65) (xy 175.26 127)
 		)
 		(stroke
@@ -4556,7 +4711,7 @@
 	)
 	(wire
 		(pts
-			(xy 52.07 50.8) (xy 52.07 54.61)
+			(xy 52.07 50.8) (xy 52.07 57.15)
 		)
 		(stroke
 			(width 0)
@@ -4856,6 +5011,16 @@
 	)
 	(wire
 		(pts
+			(xy 17.78 48.26) (xy 17.78 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7400299f-adb1-48c7-8766-319ffa1a2e76")
+	)
+	(wire
+		(pts
 			(xy 78.74 121.92) (xy 86.36 121.92)
 		)
 		(stroke
@@ -5026,6 +5191,16 @@
 	)
 	(wire
 		(pts
+			(xy 52.07 57.15) (xy 52.07 59.69)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c7502939-cb62-414c-a1d5-622d32216d95")
+	)
+	(wire
+		(pts
 			(xy 143.51 138.43) (xy 143.51 139.7)
 		)
 		(stroke
@@ -5043,16 +5218,6 @@
 			(type default)
 		)
 		(uuid "caa9eb30-dc74-4daf-b025-e21b77e94f38")
-	)
-	(wire
-		(pts
-			(xy 17.78 50.8) (xy 17.78 48.26)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "cf49f038-3052-4b13-a7ca-615bd3212ca7")
 	)
 	(wire
 		(pts
@@ -7737,6 +7902,85 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:TestPoint_Square")
+		(at 17.78 57.15 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "4840bf57-91e6-44cc-a4f6-154720554fff")
+		(property "Reference" "TP26"
+			(at 20.32 55.8799 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "VIN_RAW"
+			(at 20.32 58.4199 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_4.0x4.0mm"
+			(at 22.86 57.15 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 22.86 57.15 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "test point"
+			(at 17.78 57.15 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "2b00c3ff-a1e4-4d69-83e7-87e06b57887e")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
+					(reference "TP26")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "diseqc_cntrl:PWR_FLAG")
 		(at 143.51 106.68 270)
 		(unit 1)
@@ -7810,6 +8054,84 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
 					(reference "#FLG08")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TestPoint_Square")
+		(at 43.18 57.15 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "4c3aaedb-7b4e-4698-99fd-f3dfea7f6732")
+		(property "Reference" "TP27"
+			(at 37.338 55.88 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "GND"
+			(at 37.338 58.42 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_4.0x4.0mm"
+			(at 48.26 57.15 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 48.26 57.15 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "test point"
+			(at 43.18 57.15 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "b5a58398-2c79-4902-b388-acc8fb07d908")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
+					(reference "TP27")
 					(unit 1)
 				)
 			)
@@ -11253,7 +11575,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 52.07 54.61 0)
+		(at 52.07 59.69 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -11264,7 +11586,7 @@
 		(fields_autoplaced yes)
 		(uuid "d5877e17-cc52-4f3c-8d2d-56405869b8eb")
 		(property "Reference" "#PWR02"
-			(at 52.07 60.96 0)
+			(at 52.07 66.04 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11275,7 +11597,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 54.61 55.8799 0)
+			(at 54.61 60.9599 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -11286,7 +11608,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 52.07 54.61 0)
+			(at 52.07 59.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11297,7 +11619,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 52.07 54.61 0)
+			(at 52.07 59.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11308,7 +11630,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 52.07 54.61 0)
+			(at 52.07 59.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
