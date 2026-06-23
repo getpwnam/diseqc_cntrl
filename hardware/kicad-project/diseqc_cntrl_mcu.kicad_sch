@@ -6952,10 +6952,10 @@
 		(uuid "1a7c2759-3856-44cb-aa13-1cddde7471d9")
 	)
 	(junction
-		(at 180.34 78.74)
+		(at 185.42 68.58)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "2181535b-a6ab-48a1-be43-7e2c82059687")
+		(uuid "24320716-f9e9-4657-a268-1151b127d836")
 	)
 	(junction
 		(at 233.68 123.19)
@@ -7018,6 +7018,12 @@
 		(uuid "6392079f-4833-468a-ad27-8d04bd56fad5")
 	)
 	(junction
+		(at 185.42 78.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "64b24755-ba0f-4581-b1d9-009c4196fc10")
+	)
+	(junction
 		(at 25.4 172.72)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -7058,12 +7064,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "7aa0c045-75c9-40bb-8ddb-636fef9960bc")
-	)
-	(junction
-		(at 186.69 68.58)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "7ba19d93-1e54-497b-996a-a13eb6a5748e")
 	)
 	(junction
 		(at 265.43 143.51)
@@ -7118,12 +7118,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "916cbcb9-64b7-408b-98f8-151d27261dff")
-	)
-	(junction
-		(at 186.69 78.74)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "9750514c-2dc4-47c0-b25e-5e07d16aba46")
 	)
 	(junction
 		(at 45.72 162.56)
@@ -7634,16 +7628,6 @@
 	)
 	(wire
 		(pts
-			(xy 180.34 78.74) (xy 180.34 77.47)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "047c3326-d866-4719-a787-ebf6bffbd11a")
-	)
-	(wire
-		(pts
 			(xy 260.35 146.05) (xy 265.43 146.05)
 		)
 		(stroke
@@ -7671,16 +7655,6 @@
 			(type default)
 		)
 		(uuid "09bcf7e3-be6f-4e1c-a7b7-53b1219b7a00")
-	)
-	(wire
-		(pts
-			(xy 180.34 68.58) (xy 189.23 68.58)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "0a2856e1-66de-4d13-9367-e8c65249a216")
 	)
 	(wire
 		(pts
@@ -7844,6 +7818,16 @@
 	)
 	(wire
 		(pts
+			(xy 185.42 78.74) (xy 190.5 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "17677e40-2e02-4bf3-b989-1d5c07f8a568")
+	)
+	(wire
+		(pts
 			(xy 265.43 143.51) (xy 265.43 146.05)
 		)
 		(stroke
@@ -8004,16 +7988,6 @@
 	)
 	(wire
 		(pts
-			(xy 186.69 68.58) (xy 186.69 69.85)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "3fd09567-275d-454c-93bc-47bdfa5b4546")
-	)
-	(wire
-		(pts
 			(xy 157.48 119.38) (xy 157.48 116.84)
 		)
 		(stroke
@@ -8041,16 +8015,6 @@
 			(type default)
 		)
 		(uuid "4b4a07d9-34d8-4666-8c02-179de9738d83")
-	)
-	(wire
-		(pts
-			(xy 153.67 78.74) (xy 180.34 78.74)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "4d9d1f7d-226c-4970-8cc3-fb8c3a0ef1e2")
 	)
 	(wire
 		(pts
@@ -8174,7 +8138,7 @@
 	)
 	(wire
 		(pts
-			(xy 180.34 78.74) (xy 190.5 78.74)
+			(xy 153.67 78.74) (xy 185.42 78.74)
 		)
 		(stroke
 			(width 0)
@@ -8474,16 +8438,6 @@
 	)
 	(wire
 		(pts
-			(xy 180.34 69.85) (xy 180.34 68.58)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "821d7047-6531-4f14-8b7b-cd055e0ff069")
-	)
-	(wire
-		(pts
 			(xy 275.59 138.43) (xy 275.59 139.7)
 		)
 		(stroke
@@ -8734,6 +8688,16 @@
 	)
 	(wire
 		(pts
+			(xy 185.42 68.58) (xy 189.23 68.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9d959afd-487a-4f14-b418-b20836f63012")
+	)
+	(wire
+		(pts
 			(xy 142.24 166.37) (xy 142.24 168.91)
 		)
 		(stroke
@@ -8824,7 +8788,7 @@
 	)
 	(wire
 		(pts
-			(xy 186.69 67.31) (xy 186.69 68.58)
+			(xy 185.42 67.31) (xy 185.42 68.58)
 		)
 		(stroke
 			(width 0)
@@ -8991,6 +8955,16 @@
 			(type default)
 		)
 		(uuid "c3b3e53c-228b-40a7-9bcd-adcd03478728")
+	)
+	(wire
+		(pts
+			(xy 185.42 68.58) (xy 185.42 69.85)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c447f988-6986-4816-864f-2e5f3194142d")
 	)
 	(wire
 		(pts
@@ -9414,7 +9388,7 @@
 	)
 	(wire
 		(pts
-			(xy 186.69 77.47) (xy 186.69 78.74)
+			(xy 185.42 77.47) (xy 185.42 78.74)
 		)
 		(stroke
 			(width 0)
@@ -11810,7 +11784,7 @@
 		(body_style 1)
 		(exclude_from_sim no)
 		(in_bom no)
-		(on_board yes)
+		(on_board no)
 		(in_pos_files yes)
 		(dnp yes)
 		(fields_autoplaced yes)
@@ -14392,7 +14366,7 @@
 	)
 	(symbol
 		(lib_id "diseqc_cntrl:+3V3")
-		(at 186.69 67.31 0)
+		(at 185.42 67.31 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -14403,7 +14377,7 @@
 		(fields_autoplaced yes)
 		(uuid "6e00484b-a51e-4ca7-9626-da65e4d84fe8")
 		(property "Reference" "#PWR032"
-			(at 186.69 71.12 0)
+			(at 185.42 71.12 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14414,7 +14388,7 @@
 			)
 		)
 		(property "Value" "+3V3"
-			(at 186.69 62.23 0)
+			(at 185.42 62.23 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -14424,7 +14398,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 186.69 67.31 0)
+			(at 185.42 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14435,7 +14409,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 186.69 67.31 0)
+			(at 185.42 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14446,7 +14420,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+3V3\""
-			(at 186.69 67.31 0)
+			(at 185.42 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14470,7 +14444,7 @@
 	)
 	(symbol
 		(lib_id "diseqc_cntrl:R")
-		(at 186.69 73.66 0)
+		(at 185.42 73.66 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -14480,7 +14454,7 @@
 		(dnp no)
 		(uuid "707c185d-2ffd-4d39-bf41-54f9c7cd549e")
 		(property "Reference" "R12"
-			(at 175.26 72.136 0)
+			(at 180.594 72.136 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -14491,7 +14465,7 @@
 			)
 		)
 		(property "Value" "4k7"
-			(at 181.864 74.168 0)
+			(at 180.594 74.168 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -14502,7 +14476,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
-			(at 184.912 73.66 90)
+			(at 183.642 73.66 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14513,7 +14487,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.mouser.co.uk/datasheet/3/508/1/PYU_AC_51_ROHS_L.pdf"
-			(at 186.69 73.66 0)
+			(at 185.42 73.66 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14524,7 +14498,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 186.69 73.66 0)
+			(at 185.42 73.66 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14535,7 +14509,7 @@
 			)
 		)
 		(property "Maufacturer_Part_Number" ""
-			(at 186.69 73.66 0)
+			(at 185.42 73.66 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14546,7 +14520,7 @@
 			)
 		)
 		(property "Manufacturer_Part_Code" ""
-			(at 186.69 73.66 0)
+			(at 185.42 73.66 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14557,7 +14531,7 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 186.69 73.66 0)
+			(at 185.42 73.66 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14568,7 +14542,7 @@
 			)
 		)
 		(property "Mouser Part Number" "603-AC0603FR-074K7L"
-			(at 186.69 73.66 0)
+			(at 185.42 73.66 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14579,7 +14553,7 @@
 			)
 		)
 		(property "InvenTree Part" "R_4k7_0603"
-			(at 186.69 73.66 0)
+			(at 185.42 73.66 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14590,7 +14564,7 @@
 			)
 		)
 		(property "KLC_S4.2_3V3OUT" ""
-			(at 186.69 73.66 0)
+			(at 185.42 73.66 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14601,7 +14575,7 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
-			(at 186.69 73.66 0)
+			(at 185.42 73.66 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14612,7 +14586,7 @@
 			)
 		)
 		(property "Tolerance" ""
-			(at 186.69 73.66 0)
+			(at 185.42 73.66 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14623,7 +14597,7 @@
 			)
 		)
 		(property "InvenTree" "113"
-			(at 186.69 73.66 0)
+			(at 185.42 73.66 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -15001,185 +14975,6 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
 					(reference "R8")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "diseqc_cntrl:R")
-		(at 180.34 73.66 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "7baa8112-6403-438d-9d29-e504dcf08730")
-		(property "Reference" "R6"
-			(at 181.864 72.136 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "4k7"
-			(at 177.038 74.168 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
-			(at 178.562 73.66 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" "https://www.mouser.co.uk/datasheet/3/508/1/PYU_AC_51_ROHS_L.pdf"
-			(at 180.34 73.66 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Resistor"
-			(at 180.34 73.66 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Maufacturer_Part_Number" ""
-			(at 180.34 73.66 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer_Part_Code" ""
-			(at 180.34 73.66 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Mouser_Part_Number" ""
-			(at 180.34 73.66 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Mouser Part Number" "603-AC0603FR-074K7L"
-			(at 180.34 73.66 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree Part" "R_4k7_0603"
-			(at 180.34 73.66 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_3V3OUT" ""
-			(at 180.34 73.66 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_VCC" ""
-			(at 180.34 73.66 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Tolerance" ""
-			(at 180.34 73.66 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree" "113"
-			(at 180.34 73.66 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "6a5a0764-ba36-4729-a06a-65483950157f")
-		)
-		(pin "1"
-			(uuid "ca7c1143-899f-4676-800e-293aae766130")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
-					(reference "R6")
 					(unit 1)
 				)
 			)
