@@ -4276,6 +4276,17 @@
 	)
 	(hierarchical_label "DISEQC"
 		(shape input)
+		(at 256.54 151.13 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "79a6656e-7506-497a-acf1-b1cef16e9f75")
+	)
+	(hierarchical_label "DISEQC"
+		(shape input)
 		(at 140.97 69.85 90)
 		(effects
 			(font
@@ -7400,7 +7411,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "I2C1_SCL"
+		(property "Value" "I2C3_SCL"
 			(at 261.874 140.208 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7754,6 +7765,128 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
 					(reference "#PWR055")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
+		(at 256.54 151.13 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "b3c754b8-c548-43af-816c-ad2f8cf390cf")
+		(property "Reference" "TP23"
+			(at 261.874 150.368 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "TIM4_CH1"
+			(at 261.874 152.908 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
+			(at 256.54 156.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 256.54 156.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "test point"
+			(at 256.54 151.13 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree Part" ""
+			(at 256.54 151.13 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "KLC_S4.2_3V3OUT" ""
+			(at 256.54 151.13 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "KLC_S4.2_VCC" ""
+			(at 256.54 151.13 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 256.54 151.13 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "c8e59e37-4248-46fe-9870-310eca948c98")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
+					(reference "TP23")
 					(unit 1)
 				)
 			)
@@ -8530,7 +8663,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "I2C1_SDA"
+		(property "Value" "I2C3_SDA"
 			(at 261.874 146.558 90)
 			(show_name no)
 			(do_not_autoplace no)

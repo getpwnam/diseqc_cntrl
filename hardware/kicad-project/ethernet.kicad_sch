@@ -3884,12 +3884,6 @@
 		(uuid "04068fb5-1cec-4149-aabb-7f56b0919b0f")
 	)
 	(junction
-		(at 172.72 105.41)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "05302913-ed14-44eb-a6d7-c5e59dd08f12")
-	)
-	(junction
 		(at 48.26 60.96)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3900,12 +3894,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "129dc555-21ca-402a-b061-40af4ea8256c")
-	)
-	(junction
-		(at 167.64 105.41)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "18968102-504a-4e46-89b5-e29aa18c6bc3")
 	)
 	(junction
 		(at 60.96 148.59)
@@ -3966,6 +3954,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "613fe160-c9b9-4ba0-8abd-b484f3afc48f")
+	)
+	(junction
+		(at 167.64 105.41)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "637db3e1-e3ce-4a57-be3f-8384c6816bf7")
 	)
 	(junction
 		(at 269.24 114.3)
@@ -4046,28 +4040,10 @@
 		(uuid "bb716e32-edaf-4dc5-9119-213ca1d78e3d")
 	)
 	(junction
-		(at 193.04 139.7)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "c31e50ab-0332-445b-9858-c3398ecef21c")
-	)
-	(junction
-		(at 177.8 105.41)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "c7903b40-398c-4fdf-8cc9-9d5b47d618ae")
-	)
-	(junction
 		(at 167.64 92.71)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "cb768166-5530-4f15-99b9-de6ea9b6eac9")
-	)
-	(junction
-		(at 177.8 139.7)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "cd60da6c-9472-4ad6-b801-5488f37e07f7")
 	)
 	(junction
 		(at 172.72 139.7)
@@ -4088,10 +4064,10 @@
 		(uuid "deca239a-1493-4787-8ade-ac58240cf8a0")
 	)
 	(junction
-		(at 193.04 105.41)
+		(at 172.72 105.41)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "dfd2801d-b796-40ce-b836-3d0011bb797b")
+		(uuid "e1ccb0c7-1eaf-459d-b5a0-d5e75bb9a89f")
 	)
 	(junction
 		(at 55.88 113.03)
@@ -4580,13 +4556,13 @@
 	)
 	(wire
 		(pts
-			(xy 196.85 133.35) (xy 196.85 139.7)
+			(xy 172.72 105.41) (xy 177.8 105.41)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "1d0654a3-5e82-4c1c-85b3-73c6f24096cf")
+		(uuid "216dbf15-4cd2-484f-9de6-20644f2c681c")
 	)
 	(wire
 		(pts
@@ -4980,6 +4956,16 @@
 	)
 	(wire
 		(pts
+			(xy 167.64 105.41) (xy 172.72 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5a8c0004-b6f0-430b-9e06-e0dce400c5e3")
+	)
+	(wire
+		(pts
 			(xy 64.77 53.34) (xy 57.15 53.34)
 		)
 		(stroke
@@ -5217,16 +5203,6 @@
 			(type default)
 		)
 		(uuid "801b6ebc-7ce6-46b5-ba07-61d0098271c0")
-	)
-	(wire
-		(pts
-			(xy 167.64 105.41) (xy 196.85 105.41)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "853668c2-a85c-455f-b5fa-55367a2c0bf9")
 	)
 	(wire
 		(pts
@@ -5560,16 +5536,6 @@
 	)
 	(wire
 		(pts
-			(xy 193.04 119.38) (xy 193.04 105.41)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c4c3d39c-8ac5-4413-ba3b-78a8e08c588a")
-	)
-	(wire
-		(pts
 			(xy 165.1 139.7) (xy 172.72 139.7)
 		)
 		(stroke
@@ -5700,26 +5666,6 @@
 	)
 	(wire
 		(pts
-			(xy 196.85 125.73) (xy 196.85 105.41)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d6ef5381-4949-442a-9304-f82a8cd5f958")
-	)
-	(wire
-		(pts
-			(xy 177.8 139.7) (xy 193.04 139.7)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d7488bef-6dd8-461d-b20c-d2ed2392caf4")
-	)
-	(wire
-		(pts
 			(xy 246.38 95.25) (xy 246.38 101.6)
 		)
 		(stroke
@@ -5737,16 +5683,6 @@
 			(type default)
 		)
 		(uuid "de924c7e-b6de-4824-8de0-7b1d60812108")
-	)
-	(wire
-		(pts
-			(xy 193.04 127) (xy 193.04 139.7)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "de9e3215-28fe-44c1-97b5-b04a764ffa3e")
 	)
 	(wire
 		(pts
@@ -5827,16 +5763,6 @@
 			(type default)
 		)
 		(uuid "e4dec819-cfc6-4421-9146-febb6885d177")
-	)
-	(wire
-		(pts
-			(xy 193.04 139.7) (xy 196.85 139.7)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e553193b-7f80-4cee-9d02-1e97ed0de847")
 	)
 	(wire
 		(pts
@@ -9840,234 +9766,6 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
 					(reference "TP20")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "#InvenTree:C_100n_0603")
-		(at 196.85 129.54 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "a2cb9eda-ae3a-486e-a278-2c8e78d04648")
-		(property "Reference" "C39"
-			(at 200.406 128.27 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "100nF"
-			(at 200.406 130.81 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
-			(at 197.8152 133.35 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 196.85 129.54 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "100nF Ceramic Capacitor"
-			(at 196.85 129.54 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree" "75"
-			(at 196.85 129.54 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Part URL" "https://inventree.ebnx.net/web/part/75/"
-			(at 196.85 129.54 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree Part" "C_100n_0603"
-			(at 196.85 129.54 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 0.762 0.762)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "21501a00-757e-4cb0-bf88-2839c949e98f")
-		)
-		(pin "1"
-			(uuid "eebfca29-375a-4fe3-b320-ec1025c7c88e")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
-					(reference "C39")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "#InvenTree:C_100n_0603")
-		(at 193.04 123.19 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "a32ee180-7e89-4e09-9792-9bf9496ebdf3")
-		(property "Reference" "C38"
-			(at 184.404 122.174 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "100nF"
-			(at 184.404 124.714 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder"
-			(at 194.0052 127 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 193.04 123.19 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "100nF Ceramic Capacitor"
-			(at 193.04 123.19 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree" "75"
-			(at 193.04 123.19 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Part URL" "https://inventree.ebnx.net/web/part/75/"
-			(at 193.04 123.19 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree Part" "C_100n_0603"
-			(at 193.04 123.19 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 0.762 0.762)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "c16d0a0f-9d30-4d58-b239-fcfa39cd7ceb")
-		)
-		(pin "1"
-			(uuid "b4bc2537-a60e-4ff8-ba0c-7176b621c4a2")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
-					(reference "C38")
 					(unit 1)
 				)
 			)

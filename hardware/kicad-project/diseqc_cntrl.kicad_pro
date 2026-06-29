@@ -39,9 +39,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 0.2,
-          "height": 0.5,
-          "width": 0.5
+          "drill": 0.0,
+          "height": 2.45,
+          "width": 2.45
         },
         "silk_line_width": 0.1,
         "silk_text_italic": false,
@@ -586,7 +586,7 @@
     "classes": [
       {
         "bus_width": 12,
-        "clearance": 0.19,
+        "clearance": 0.15,
         "diff_pair_gap": 0.2,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.2,
@@ -1039,7 +1039,7 @@
         "uuid": "82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
       }
     ],
-    "used_designators": "TP4,TP16-19,R38-39",
+    "used_designators": "TP4,TP16-19,TP23,R38-39",
     "variants": []
   },
   "sheets": [
