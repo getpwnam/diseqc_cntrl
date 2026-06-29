@@ -2220,129 +2220,6 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Connector:TestPoint"
-			(pin_numbers
-				(hide yes)
-			)
-			(pin_names
-				(offset 0.762)
-				(hide yes)
-			)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(in_pos_files yes)
-			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "TP"
-				(at 0 6.858 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Value" "TestPoint"
-				(at 0 5.08 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" ""
-				(at 5.08 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Datasheet" ""
-				(at 5.08 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Description" "test point"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_keywords" "test point tp"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "Pin* Test*"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(symbol "TestPoint_0_1"
-				(circle
-					(center 0 3.302)
-					(radius 0.762)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "TestPoint_1_1"
-				(pin passive line
-					(at 0 0 90)
-					(length 2.54)
-					(name "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
 		(symbol "Device:FerriteBead"
 			(pin_numbers
 				(hide yes)
@@ -3425,6 +3302,175 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "ebnx_symbols:TestPoint_Annotated_Silkscreen"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0.762)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "TP"
+				(at 0 5.08 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Value" ""
+				(at 0 10.668 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "test point"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "InvenTree Part" ""
+				(at 0 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "KLC_S4.2_3V3OUT" ""
+				(at 0 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "KLC_S4.2_VCC" ""
+				(at 0 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Tolerance" ""
+				(at 0 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "test point tp"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Pin* Test*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "TestPoint_Annotated_Silkscreen_0_1"
+				(circle
+					(center 0 3.302)
+					(radius 0.762)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "TestPoint_Annotated_Silkscreen_1_1"
+				(pin passive line
+					(at 0 0 90)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "power:+3.3VP"
 			(power global)
 			(pin_numbers
@@ -3916,6 +3962,12 @@
 		(uuid "6117b5e9-0003-455e-9d10-a819275d6807")
 	)
 	(junction
+		(at 59.69 90.17)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "613fe160-c9b9-4ba0-8abd-b484f3afc48f")
+	)
+	(junction
 		(at 269.24 114.3)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3962,6 +4014,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "81a5d308-bc6c-4525-bfbc-115ba85146b2")
+	)
+	(junction
+		(at 60.96 92.71)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "863572b8-c884-47cb-9da4-95d4495a6c58")
 	)
 	(junction
 		(at 167.64 57.15)
@@ -4018,6 +4076,12 @@
 		(uuid "cfa047c5-9be5-4714-9a05-10b55a656c31")
 	)
 	(junction
+		(at 58.42 85.09)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "dada114c-5949-4899-b36b-413712db0a7f")
+	)
+	(junction
 		(at 251.46 114.3)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -4060,6 +4124,12 @@
 		(uuid "fa3c286e-cf78-4e4c-ab22-d2a6e385a982")
 	)
 	(junction
+		(at 57.15 82.55)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "fc95fb80-096b-42a7-b363-fef04044b290")
+	)
+	(junction
 		(at 127 120.65)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -4073,15 +4143,6 @@
 			(type default)
 		)
 		(uuid "094870d8-8965-43ea-83ee-5653dce69e8b")
-	)
-	(bus_entry
-		(at 15.24 24.13)
-		(size 2.54 2.54)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "0a7cf97d-1052-409d-8743-d7560d184806")
 	)
 	(bus_entry
 		(at 15.24 99.06)
@@ -4102,16 +4163,7 @@
 		(uuid "186d0b7c-a5ce-45a9-a6c8-37cab0d1dae0")
 	)
 	(bus_entry
-		(at 15.24 36.83)
-		(size 2.54 2.54)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "1c901794-ced5-4e5e-96b8-753136848286")
-	)
-	(bus_entry
-		(at 15.24 29.21)
+		(at 15.24 19.05)
 		(size 2.54 2.54)
 		(stroke
 			(width 0)
@@ -4120,7 +4172,7 @@
 		(uuid "31514000-4f35-4df9-9e89-0986b2aad61e")
 	)
 	(bus_entry
-		(at 15.24 34.29)
+		(at 15.24 24.13)
 		(size 2.54 2.54)
 		(stroke
 			(width 0)
@@ -4165,15 +4217,6 @@
 		(uuid "4e9ddb2e-6433-4261-8f2f-890adf7fa3f8")
 	)
 	(bus_entry
-		(at 15.24 26.67)
-		(size 2.54 2.54)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "57977888-82c7-46df-b55d-2081ec2a9d05")
-	)
-	(bus_entry
 		(at 15.24 101.6)
 		(size 2.54 2.54)
 		(stroke
@@ -4181,15 +4224,6 @@
 			(type default)
 		)
 		(uuid "5c6fc4af-d874-4e41-bb7a-f56e6625cd80")
-	)
-	(bus_entry
-		(at 15.24 21.59)
-		(size 2.54 2.54)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6cad29f3-0e7b-43bf-9cf1-434a4b7abf83")
 	)
 	(bus_entry
 		(at 15.24 16.51)
@@ -4219,16 +4253,7 @@
 		(uuid "90345a8c-be7c-4d2f-95d6-8b52afa8ffb6")
 	)
 	(bus_entry
-		(at 15.24 19.05)
-		(size 2.54 2.54)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "9bc2a9ba-b7b6-4aa5-84a0-99f57481b052")
-	)
-	(bus_entry
-		(at 15.24 31.75)
+		(at 15.24 21.59)
 		(size 2.54 2.54)
 		(stroke
 			(width 0)
@@ -4255,7 +4280,7 @@
 		(uuid "ab179b04-3d4e-4844-98f7-4b13cd92a87b")
 	)
 	(bus_entry
-		(at 15.24 39.37)
+		(at 15.24 26.67)
 		(size 2.54 2.54)
 		(stroke
 			(width 0)
@@ -4445,6 +4470,16 @@
 	)
 	(wire
 		(pts
+			(xy 60.96 92.71) (xy 62.23 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "112ade1d-ed3a-4940-96b5-1205ff7a0a6c")
+	)
+	(wire
+		(pts
 			(xy 151.13 57.15) (xy 151.13 60.96)
 		)
 		(stroke
@@ -4482,6 +4517,16 @@
 			(type default)
 		)
 		(uuid "155c3ad7-1ef2-4f22-9fbb-5e06c7929b41")
+	)
+	(wire
+		(pts
+			(xy 57.15 53.34) (xy 57.15 82.55)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "15f8f86c-089b-4d5d-bace-9b53926c4966")
 	)
 	(wire
 		(pts
@@ -4665,6 +4710,16 @@
 	)
 	(wire
 		(pts
+			(xy 60.96 60.96) (xy 60.96 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "30ab3141-b36b-4f0a-b927-f95dcd8954ac")
+	)
+	(wire
+		(pts
 			(xy 52.07 72.39) (xy 52.07 95.25)
 		)
 		(stroke
@@ -4692,6 +4747,16 @@
 			(type default)
 		)
 		(uuid "33557249-cfe3-4556-8e18-d00a24a81588")
+	)
+	(wire
+		(pts
+			(xy 58.42 85.09) (xy 62.23 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "359dc375-7d82-4ccb-8863-b74871737a38")
 	)
 	(wire
 		(pts
@@ -4725,7 +4790,17 @@
 	)
 	(wire
 		(pts
-			(xy 48.26 92.71) (xy 62.23 92.71)
+			(xy 64.77 60.96) (xy 60.96 60.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3bf0cc14-b986-4122-9da6-9cb78e5b7905")
+	)
+	(wire
+		(pts
+			(xy 48.26 92.71) (xy 60.96 92.71)
 		)
 		(stroke
 			(width 0)
@@ -4815,7 +4890,17 @@
 	)
 	(wire
 		(pts
-			(xy 17.78 36.83) (xy 24.13 36.83)
+			(xy 36.83 85.09) (xy 58.42 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "45a54d4a-8a01-4e08-8fd3-7909abe6aef2")
+	)
+	(wire
+		(pts
+			(xy 17.78 26.67) (xy 24.13 26.67)
 		)
 		(stroke
 			(width 0)
@@ -4842,16 +4927,6 @@
 			(type default)
 		)
 		(uuid "4a4c154b-1f09-44dd-92aa-60a45c0c8484")
-	)
-	(wire
-		(pts
-			(xy 17.78 21.59) (xy 24.13 21.59)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "4ce0a157-a375-4159-a8e0-7a2a97e6707f")
 	)
 	(wire
 		(pts
@@ -4905,6 +4980,16 @@
 	)
 	(wire
 		(pts
+			(xy 64.77 53.34) (xy 57.15 53.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5aa7f3e4-1b90-4eed-9f5b-a4d504a1cc73")
+	)
+	(wire
+		(pts
 			(xy 238.76 114.3) (xy 242.57 114.3)
 		)
 		(stroke
@@ -4935,16 +5020,6 @@
 	)
 	(wire
 		(pts
-			(xy 17.78 39.37) (xy 24.13 39.37)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6399573a-71f9-42cc-b704-b34ce85c1c6f")
-	)
-	(wire
-		(pts
 			(xy 36.83 99.06) (xy 62.23 99.06)
 		)
 		(stroke
@@ -4955,7 +5030,7 @@
 	)
 	(wire
 		(pts
-			(xy 44.45 90.17) (xy 62.23 90.17)
+			(xy 44.45 90.17) (xy 59.69 90.17)
 		)
 		(stroke
 			(width 0)
@@ -5015,6 +5090,26 @@
 	)
 	(wire
 		(pts
+			(xy 64.77 58.42) (xy 59.69 58.42)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6ebd0a84-e936-4534-a53d-c1c940e32b6b")
+	)
+	(wire
+		(pts
+			(xy 57.15 82.55) (xy 62.23 82.55)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "70070b26-9f5a-4f33-b601-7ae0560b809f")
+	)
+	(wire
+		(pts
 			(xy 36.83 113.03) (xy 55.88 113.03)
 		)
 		(stroke
@@ -5022,6 +5117,16 @@
 			(type default)
 		)
 		(uuid "71462c04-47b9-412a-9db2-57fee8f8991f")
+	)
+	(wire
+		(pts
+			(xy 36.83 82.55) (xy 57.15 82.55)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "72bb28b1-9992-4487-87ea-27718fd85921")
 	)
 	(wire
 		(pts
@@ -5055,6 +5160,16 @@
 	)
 	(wire
 		(pts
+			(xy 59.69 58.42) (xy 59.69 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7882f739-5327-45b0-a090-33e78c397f74")
+	)
+	(wire
+		(pts
 			(xy 48.26 107.95) (xy 55.88 107.95)
 		)
 		(stroke
@@ -5085,7 +5200,7 @@
 	)
 	(wire
 		(pts
-			(xy 17.78 34.29) (xy 24.13 34.29)
+			(xy 17.78 24.13) (xy 24.13 24.13)
 		)
 		(stroke
 			(width 0)
@@ -5125,7 +5240,7 @@
 	)
 	(wire
 		(pts
-			(xy 17.78 41.91) (xy 24.13 41.91)
+			(xy 17.78 29.21) (xy 24.13 29.21)
 		)
 		(stroke
 			(width 0)
@@ -5182,6 +5297,16 @@
 			(type default)
 		)
 		(uuid "952c89bc-cfba-4cfd-adeb-72acb546a554")
+	)
+	(wire
+		(pts
+			(xy 59.69 90.17) (xy 62.23 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "97c19316-85dc-437b-b8aa-4a2cee6c6f56")
 	)
 	(wire
 		(pts
@@ -5295,7 +5420,7 @@
 	)
 	(wire
 		(pts
-			(xy 17.78 31.75) (xy 24.13 31.75)
+			(xy 17.78 21.59) (xy 24.13 21.59)
 		)
 		(stroke
 			(width 0)
@@ -5355,7 +5480,7 @@
 	)
 	(wire
 		(pts
-			(xy 17.78 82.55) (xy 62.23 82.55)
+			(xy 17.78 82.55) (xy 29.21 82.55)
 		)
 		(stroke
 			(width 0)
@@ -5395,16 +5520,6 @@
 	)
 	(wire
 		(pts
-			(xy 17.78 26.67) (xy 24.13 26.67)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b6e6d261-6b95-467c-a552-14a4fd10d348")
-	)
-	(wire
-		(pts
 			(xy 60.96 148.59) (xy 60.96 146.05)
 		)
 		(stroke
@@ -5415,17 +5530,17 @@
 	)
 	(wire
 		(pts
-			(xy 17.78 24.13) (xy 24.13 24.13)
+			(xy 64.77 55.88) (xy 58.42 55.88)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "bf6ce376-f289-49e9-98b4-e989269408c6")
+		(uuid "bf4ee378-2677-4008-8f29-6ab3e542efa0")
 	)
 	(wire
 		(pts
-			(xy 17.78 85.09) (xy 62.23 85.09)
+			(xy 17.78 85.09) (xy 29.21 85.09)
 		)
 		(stroke
 			(width 0)
@@ -5705,6 +5820,16 @@
 	)
 	(wire
 		(pts
+			(xy 58.42 55.88) (xy 58.42 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e4dec819-cfc6-4421-9146-febb6885d177")
+	)
+	(wire
+		(pts
 			(xy 193.04 139.7) (xy 196.85 139.7)
 		)
 		(stroke
@@ -5765,16 +5890,6 @@
 	)
 	(wire
 		(pts
-			(xy 17.78 29.21) (xy 24.13 29.21)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "f392e1f5-2763-4d18-8679-ebefeda41b9e")
-	)
-	(wire
-		(pts
 			(xy 260.35 114.3) (xy 269.24 114.3)
 		)
 		(stroke
@@ -5822,16 +5937,6 @@
 			(type default)
 		)
 		(uuid "fdeadae5-85c3-4ae3-b6c1-2b43854a42f3")
-	)
-	(label "TXD0"
-		(at 17.78 21.59 0)
-		(effects
-			(font
-				(size 0.762 0.762)
-			)
-			(justify left bottom)
-		)
-		(uuid "02eaee0b-6e1e-4ecc-be2c-11142d513b4c")
 	)
 	(label "TXN"
 		(at 203.2 82.55 0)
@@ -5883,16 +5988,6 @@
 		)
 		(uuid "18ec5199-e1de-4d3b-a901-8d0973f875b4")
 	)
-	(label "RXD0"
-		(at 17.78 26.67 0)
-		(effects
-			(font
-				(size 0.762 0.762)
-			)
-			(justify left bottom)
-		)
-		(uuid "2176159f-95cf-41df-940f-773d7ac52014")
-	)
 	(label "TXN"
 		(at 143.51 72.39 0)
 		(effects
@@ -5924,7 +6019,7 @@
 		(uuid "46084606-086a-4ff8-b719-19acad33ad11")
 	)
 	(label "MDIO"
-		(at 17.78 36.83 0)
+		(at 17.78 26.67 0)
 		(effects
 			(font
 				(size 0.762 0.762)
@@ -5932,16 +6027,6 @@
 			(justify left bottom)
 		)
 		(uuid "4ca370a8-5a99-4cd1-bb49-1a16236bffe1")
-	)
-	(label "TXD1"
-		(at 17.78 24.13 0)
-		(effects
-			(font
-				(size 0.762 0.762)
-			)
-			(justify left bottom)
-		)
-		(uuid "62b3947e-0fa0-460f-8988-47c68d97035c")
 	)
 	(label "LED2_A"
 		(at 260.35 82.55 0)
@@ -5954,7 +6039,7 @@
 		(uuid "63f660fe-aa70-4765-af7e-373d27f2587b")
 	)
 	(label "REF_CLK"
-		(at 17.78 41.91 0)
+		(at 17.78 29.21 0)
 		(effects
 			(font
 				(size 0.762 0.762)
@@ -6004,7 +6089,7 @@
 		(uuid "8c468746-797f-4cc0-bc1d-cd533dfae9a9")
 	)
 	(label "CRS_DV"
-		(at 17.78 31.75 0)
+		(at 17.78 21.59 0)
 		(effects
 			(font
 				(size 0.762 0.762)
@@ -6012,16 +6097,6 @@
 			(justify left bottom)
 		)
 		(uuid "9619d1f6-c653-4e32-844c-3fca49def3eb")
-	)
-	(label "RXD1"
-		(at 17.78 29.21 0)
-		(effects
-			(font
-				(size 0.762 0.762)
-			)
-			(justify left bottom)
-		)
-		(uuid "9792560b-fc5c-458d-895a-4a9bce70f026")
 	)
 	(label "CRS_DV"
 		(at 17.78 95.25 0)
@@ -6042,16 +6117,6 @@
 			(justify left bottom)
 		)
 		(uuid "9ec0c0d5-e2dd-4876-bfe4-f80f55191017")
-	)
-	(label "NRST"
-		(at 17.78 39.37 0)
-		(effects
-			(font
-				(size 0.762 0.762)
-			)
-			(justify left bottom)
-		)
-		(uuid "a49bcdbd-028b-4842-89fd-f5b0966b1906")
 	)
 	(label "MDIO"
 		(at 17.78 104.14 0)
@@ -6094,7 +6159,7 @@
 		(uuid "b9e42775-93df-4e6e-bd83-adcfa5596f18")
 	)
 	(label "MDC"
-		(at 17.78 34.29 0)
+		(at 17.78 24.13 0)
 		(effects
 			(font
 				(size 0.762 0.762)
@@ -6235,18 +6300,18 @@
 		(uuid "c8f104b2-9d32-4271-a112-7094c3674383")
 	)
 	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 24.13 36.83 270)
+		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
+		(at 24.13 26.67 270)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "0532ff6b-c758-468c-8f6a-9f5f8292507c")
 		(property "Reference" "TP22"
-			(at 29.21 36.83 90)
+			(at 29.21 26.67 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6256,8 +6321,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" ""
-			(at 34.798 36.83 90)
+		(property "Value" "RMII_MDIO"
+			(at 34.798 26.67 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -6267,8 +6332,8 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
-			(at 24.13 41.91 0)
+		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
+			(at 24.13 31.75 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6279,7 +6344,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 24.13 41.91 0)
+			(at 24.13 31.75 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6290,7 +6355,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 24.13 36.83 0)
+			(at 24.13 26.67 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6301,7 +6366,7 @@
 			)
 		)
 		(property "InvenTree Part" ""
-			(at 24.13 36.83 90)
+			(at 24.13 26.67 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6312,7 +6377,7 @@
 			)
 		)
 		(property "KLC_S4.2_3V3OUT" ""
-			(at 24.13 36.83 90)
+			(at 24.13 26.67 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6323,7 +6388,7 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
-			(at 24.13 36.83 90)
+			(at 24.13 26.67 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6334,7 +6399,7 @@
 			)
 		)
 		(property "Tolerance" ""
-			(at 24.13 36.83 90)
+			(at 24.13 26.67 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7216,134 +7281,12 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 24.13 26.67 270)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "2080202c-bfdd-48a3-884f-82f864f33f48")
-		(property "Reference" "TP18"
-			(at 29.21 26.67 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" ""
-			(at 34.798 26.67 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
-			(at 24.13 31.75 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 24.13 31.75 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 24.13 26.67 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree Part" ""
-			(at 24.13 26.67 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_3V3OUT" ""
-			(at 24.13 26.67 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_VCC" ""
-			(at 24.13 26.67 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Tolerance" ""
-			(at 24.13 26.67 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "a178e5fe-2373-4931-88a0-aa4029d3e431")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
-					(reference "TP18")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:TestPoint")
+		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
 		(at 24.13 19.05 270)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
@@ -7359,7 +7302,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" ""
+		(property "Value" "RMII_TXEN"
 			(at 34.798 19.05 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7370,7 +7313,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
+		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
 			(at 24.13 24.13 0)
 			(hide yes)
 			(show_name no)
@@ -7648,6 +7591,128 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
 					(reference "C34")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
+		(at 64.77 53.34 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "34626375-f833-407d-839a-15ee69c96fa6")
+		(property "Reference" "TP16"
+			(at 69.85 53.34 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "RMII_TXD0"
+			(at 75.438 53.34 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
+			(at 64.77 58.42 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 64.77 58.42 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "test point"
+			(at 64.77 53.34 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree Part" ""
+			(at 64.77 53.34 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "KLC_S4.2_3V3OUT" ""
+			(at 64.77 53.34 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "KLC_S4.2_VCC" ""
+			(at 64.77 53.34 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 64.77 53.34 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "ecfc85bb-99f2-4a6e-abb8-982ed7a45fbe")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
+					(reference "TP16")
 					(unit 1)
 				)
 			)
@@ -8640,6 +8705,107 @@
 		)
 	)
 	(symbol
+		(lib_id "#InvenTree:R_33r_0603")
+		(at 33.02 85.09 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "678d63d4-8ada-4c74-b8b9-4f3eedb71c6b")
+		(property "Reference" "R39"
+			(at 27.94 83.82 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "33r"
+			(at 38.354 83.82 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(at 33.02 86.868 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 33.02 85.09 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "33r Resistor"
+			(at 33.02 85.09 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "110"
+			(at 33.02 85.09 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Part URL" "https://inventree.ebnx.net/web/part/110/"
+			(at 33.02 85.09 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "32658ab5-42ac-4334-adad-b1eb79068657")
+		)
+		(pin "1"
+			(uuid "03bd3ddc-8ef6-417c-847c-c47b1dff4011")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
+					(reference "R39")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "#InvenTree:R_10k_0603")
 		(at 33.02 99.06 90)
 		(unit 1)
@@ -8737,6 +8903,107 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
 					(reference "R23")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "#InvenTree:R_33r_0603")
+		(at 33.02 82.55 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "6a745329-bcdb-4dcd-8506-48b5c5f21ad6")
+		(property "Reference" "R38"
+			(at 27.94 81.28 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "33r"
+			(at 38.354 81.28 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(at 33.02 84.328 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 33.02 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "33r Resistor"
+			(at 33.02 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "110"
+			(at 33.02 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Part URL" "https://inventree.ebnx.net/web/part/110/"
+			(at 33.02 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "ee97e176-7f9c-4421-9989-682789ee46ac")
+		)
+		(pin "1"
+			(uuid "ab7787e4-01a6-4602-8c93-76d90dba3a15")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
+					(reference "R38")
 					(unit 1)
 				)
 			)
@@ -9457,17 +9724,17 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:TestPoint")
+		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
 		(at 24.13 21.59 270)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "9f4c9ee6-f08c-40d3-8934-e545f781e026")
-		(property "Reference" "TP16"
+		(uuid "a14e7ec1-c5f3-42fb-aa85-73b8790a5aec")
+		(property "Reference" "TP20"
 			(at 29.21 21.59 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9478,7 +9745,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" ""
+		(property "Value" "RMII_CRSDV"
 			(at 34.798 21.59 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9489,7 +9756,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
+		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
 			(at 24.13 26.67 0)
 			(hide yes)
 			(show_name no)
@@ -9557,128 +9824,6 @@
 		)
 		(property "Tolerance" ""
 			(at 24.13 21.59 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "ca6ea17a-c265-4da1-9d4c-2d3760ffe793")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
-					(reference "TP16")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 24.13 31.75 270)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "a14e7ec1-c5f3-42fb-aa85-73b8790a5aec")
-		(property "Reference" "TP20"
-			(at 29.21 31.75 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" ""
-			(at 34.798 31.75 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
-			(at 24.13 36.83 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 24.13 36.83 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 24.13 31.75 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree Part" ""
-			(at 24.13 31.75 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_3V3OUT" ""
-			(at 24.13 31.75 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_VCC" ""
-			(at 24.13 31.75 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Tolerance" ""
-			(at 24.13 31.75 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10263,18 +10408,18 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 24.13 34.29 270)
+		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
+		(at 24.13 24.13 270)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "a7e5fa34-4a0a-4784-8861-fccab5f2e024")
 		(property "Reference" "TP21"
-			(at 29.21 34.29 90)
+			(at 29.21 24.13 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -10284,8 +10429,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" ""
-			(at 34.798 34.29 90)
+		(property "Value" "RMII_MDC"
+			(at 34.798 24.13 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -10295,8 +10440,8 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
-			(at 24.13 39.37 0)
+		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
+			(at 24.13 29.21 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10307,7 +10452,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 24.13 39.37 0)
+			(at 24.13 29.21 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10318,7 +10463,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 24.13 34.29 0)
+			(at 24.13 24.13 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10329,7 +10474,7 @@
 			)
 		)
 		(property "InvenTree Part" ""
-			(at 24.13 34.29 90)
+			(at 24.13 24.13 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10340,7 +10485,7 @@
 			)
 		)
 		(property "KLC_S4.2_3V3OUT" ""
-			(at 24.13 34.29 90)
+			(at 24.13 24.13 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10351,7 +10496,7 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
-			(at 24.13 34.29 90)
+			(at 24.13 24.13 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10362,7 +10507,7 @@
 			)
 		)
 		(property "Tolerance" ""
-			(at 24.13 34.29 90)
+			(at 24.13 24.13 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10859,6 +11004,128 @@
 		)
 	)
 	(symbol
+		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
+		(at 64.77 55.88 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "bff277a3-769b-4f7e-aa25-563320579096")
+		(property "Reference" "TP17"
+			(at 69.85 55.88 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "RMII_TXD1"
+			(at 75.438 55.88 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
+			(at 64.77 60.96 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 64.77 60.96 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "test point"
+			(at 64.77 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree Part" ""
+			(at 64.77 55.88 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "KLC_S4.2_3V3OUT" ""
+			(at 64.77 55.88 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "KLC_S4.2_VCC" ""
+			(at 64.77 55.88 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 64.77 55.88 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "104860a6-97dd-41d4-95b9-34df7d31b986")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
+					(reference "TP17")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:+3.3VP")
 		(at 39.37 116.84 90)
 		(unit 1)
@@ -10932,6 +11199,128 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
 					(reference "#PWR058")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
+		(at 64.77 60.96 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "c70aa7b4-60c6-4b7d-a9dc-e3eb8e9c3dba")
+		(property "Reference" "TP19"
+			(at 69.85 60.96 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "RMII_RXD1"
+			(at 75.438 60.96 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
+			(at 64.77 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 64.77 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "test point"
+			(at 64.77 60.96 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree Part" ""
+			(at 64.77 60.96 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "KLC_S4.2_3V3OUT" ""
+			(at 64.77 60.96 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "KLC_S4.2_VCC" ""
+			(at 64.77 60.96 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 64.77 60.96 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "4c06f2f0-b588-486a-a459-c3c2ebcdb5b6")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
+					(reference "TP19")
 					(unit 1)
 				)
 			)
@@ -11095,17 +11484,17 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:TestPoint")
+		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
 		(at 24.13 29.21 270)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "c9f38751-867f-4d51-8860-df6394632f70")
-		(property "Reference" "TP19"
+		(uuid "cd7c3365-4864-4122-86db-7233eb7df12a")
+		(property "Reference" "TP24"
 			(at 29.21 29.21 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11116,7 +11505,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" ""
+		(property "Value" "RMII_REFCLK"
 			(at 34.798 29.21 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11127,7 +11516,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
+		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
 			(at 24.13 34.29 0)
 			(hide yes)
 			(show_name no)
@@ -11195,128 +11584,6 @@
 		)
 		(property "Tolerance" ""
 			(at 24.13 29.21 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "b6f6c55d-bd32-46ff-a09e-e040a805bf4d")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
-					(reference "TP19")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 24.13 41.91 270)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "cd7c3365-4864-4122-86db-7233eb7df12a")
-		(property "Reference" "TP24"
-			(at 29.21 41.91 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" ""
-			(at 34.798 41.91 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
-			(at 24.13 46.99 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 24.13 46.99 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 24.13 41.91 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree Part" ""
-			(at 24.13 41.91 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_3V3OUT" ""
-			(at 24.13 41.91 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_VCC" ""
-			(at 24.13 41.91 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Tolerance" ""
-			(at 24.13 41.91 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11763,18 +12030,18 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 24.13 24.13 270)
+		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
+		(at 64.77 58.42 270)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "dc731e1c-db8c-42d8-8101-51535088e773")
-		(property "Reference" "TP17"
-			(at 29.21 24.13 90)
+		(uuid "e24c577a-a6b4-4c42-aad4-e43555b76b08")
+		(property "Reference" "TP18"
+			(at 69.85 58.42 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -11784,8 +12051,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" ""
-			(at 34.798 24.13 90)
+		(property "Value" "RMII_RXD0"
+			(at 75.438 58.42 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -11795,8 +12062,8 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
-			(at 24.13 29.21 0)
+		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
+			(at 64.77 63.5 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11807,7 +12074,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 24.13 29.21 0)
+			(at 64.77 63.5 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11818,7 +12085,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 24.13 24.13 0)
+			(at 64.77 58.42 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11829,7 +12096,7 @@
 			)
 		)
 		(property "InvenTree Part" ""
-			(at 24.13 24.13 90)
+			(at 64.77 58.42 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11840,7 +12107,7 @@
 			)
 		)
 		(property "KLC_S4.2_3V3OUT" ""
-			(at 24.13 24.13 90)
+			(at 64.77 58.42 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11851,7 +12118,7 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
-			(at 24.13 24.13 90)
+			(at 64.77 58.42 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11862,7 +12129,7 @@
 			)
 		)
 		(property "Tolerance" ""
-			(at 24.13 24.13 90)
+			(at 64.77 58.42 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11873,12 +12140,12 @@
 			)
 		)
 		(pin "1"
-			(uuid "f1c8c45e-3352-4676-ad29-e5cb3665a212")
+			(uuid "bcf2d27f-0db9-4bdc-8548-9385e0841d55")
 		)
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
-					(reference "TP17")
+					(reference "TP18")
 					(unit 1)
 				)
 			)
@@ -11958,128 +12225,6 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
 					(reference "#PWR069")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 24.13 39.37 270)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "e51a5e20-e140-4695-96c5-4894483bd675")
-		(property "Reference" "TP23"
-			(at 29.21 39.37 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" ""
-			(at 34.798 39.37 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "TestPoint:TestPoint_THTPad_D1.0mm_Drill0.5mm"
-			(at 24.13 44.45 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 24.13 44.45 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 24.13 39.37 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree Part" ""
-			(at 24.13 39.37 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_3V3OUT" ""
-			(at 24.13 39.37 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_VCC" ""
-			(at 24.13 39.37 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Tolerance" ""
-			(at 24.13 39.37 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "b2736cc9-f537-4032-b87c-828faf586cfe")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d"
-					(reference "TP23")
 					(unit 1)
 				)
 			)

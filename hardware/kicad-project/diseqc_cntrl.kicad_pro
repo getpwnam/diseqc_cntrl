@@ -1039,7 +1039,7 @@
         "uuid": "82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
       }
     ],
-    "used_designators": "C23,#PWR44-48,#PWR50,#PWR74-75,NT2",
+    "used_designators": "TP4,TP16-19,R38-39",
     "variants": []
   },
   "sheets": [

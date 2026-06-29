@@ -84,10 +84,6 @@
         [
           "lib_footprint_mismatch|141020000|132870000|acfd90b6-f7a3-4609-9ffb-5957cd5e9133|00000000-0000-0000-0000-000000000000",
           ""
-        ],
-        [
-          "solder_mask_bridge|56360000|118600000|a38f0b25-161c-43f5-8015-a5a42d3d65bf|70c63ea5-1ae2-49a8-9934-36d9b40e4aa7",
-          ""
         ]
       ],
       "meta": {
@@ -592,7 +588,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "diseqc_cntrl.kicad_pro",
+    "filename": "diseqc_cntrl_bak.kicad_pro",
     "version": 3
   },
   "net_settings": {
