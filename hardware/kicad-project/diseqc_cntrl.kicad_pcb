@@ -1485,7 +1485,7 @@
 		(descr "VQFN, 24 Pin (https://ww1.microchip.com/downloads/aemDocuments/documents/product-documents/package-drawings/24L-VQFN%E2%80%934x4x0.9mm-MJ-C04-00143b.pdf)")
 		(tags "VQFN NoLead")
 		(property "Reference" "IC6"
-			(at 0 -3.33 90)
+			(at 2.98 2.48 180)
 			(layer "F.SilkS")
 			(uuid "033fa045-2279-4737-be62-368c12447201")
 			(effects
@@ -20056,6 +20056,7 @@
 		(property "Reference" "G***"
 			(at 0 0 0)
 			(layer "F.SilkS")
+			(hide yes)
 			(uuid "fde574b4-b906-438d-b0b3-aebb1b5cda39")
 			(effects
 				(font
