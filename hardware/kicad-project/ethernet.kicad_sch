@@ -7677,7 +7677,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "diseqc_cntrl:ABLS25000MHZDFT"
+		(property "Footprint" "ebnx_footprints:ABLS25000MHZDFT"
 			(at 45.72 37.16 0)
 			(hide yes)
 			(show_name no)
@@ -9904,7 +9904,7 @@
 				)
 			)
 		)
-		(property "Footprint" "ebnx_footprints:LAN8750A_SQFN24"
+		(property "Footprint" "Package_DFN_QFN:VQFN-24-1EP_4x4mm_P0.5mm_EP2.5x2.5mm_ThermalVias"
 			(at 119.38 173.66 0)
 			(hide yes)
 			(show_name no)
@@ -12063,7 +12063,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Inductor_SMD:L_0603_1608Metric_Pad1.05x0.95mm_HandSolder"
+		(property "Footprint" "Inductor_SMD:L_0603_1608Metric"
 			(at 165.862 53.34 90)
 			(hide yes)
 			(show_name no)
