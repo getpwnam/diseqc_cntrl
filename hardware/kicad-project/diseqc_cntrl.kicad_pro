@@ -920,7 +920,7 @@
           "show": false
         },
         {
-          "group_by": false,
+          "group_by": true,
           "label": "InvenTree",
           "name": "InvenTree",
           "show": true
@@ -955,7 +955,7 @@
       "include_excluded_from_bom": true,
       "name": "",
       "sort_asc": true,
-      "sort_field": "Reference"
+      "sort_field": "Footprint"
     },
     "bus_aliases": {
       "ETH_PHY": [
