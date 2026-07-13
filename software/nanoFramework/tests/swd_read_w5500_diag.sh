@@ -19,6 +19,15 @@ fi
 
 OPENOCD_BIN="${OPENOCD_BIN:-openocd}"
 
+has_elf_symbol() {
+  local symbol="$1"
+  if ! command -v nm >/dev/null 2>&1; then
+    return 1
+  fi
+
+  nm "$ELF_PATH" 2>/dev/null | awk '{print $3}' | grep -Fxq "$symbol"
+}
+
 if [[ ! -f "$ELF_PATH" ]]; then
   echo "ELF not found: $ELF_PATH" >&2
   exit 1
@@ -37,6 +46,27 @@ fi
 tmp_dir="$(mktemp -d /tmp/w5500-diag-XXXXXX)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
+HAS_LINK_LATCH=0
+HAS_CONNECT_PARAMS=0
+HAS_POST_CONNECT=0
+HAS_W5500_TRACE=0
+
+if has_elf_symbol "g_w5500_first_link_up"; then
+  HAS_LINK_LATCH=1
+fi
+
+if has_elf_symbol "g_w5500_connect_params"; then
+  HAS_CONNECT_PARAMS=1
+fi
+
+if has_elf_symbol "g_w5500_post_connect_sr"; then
+  HAS_POST_CONNECT=1
+fi
+
+if has_elf_symbol "g_w5500_diag_trace"; then
+  HAS_W5500_TRACE=1
+fi
+
 openocd_log="$tmp_dir/openocd.log"
 gdb_cmd="$tmp_dir/read_diag.gdb"
 gdb_out="$tmp_dir/gdb.out"
@@ -48,14 +78,39 @@ target extended-remote :3333
 monitor halt
 set $mailbox_addr = &g_cubley_diag_current_status
 set $error_addr = &g_cubley_diag_last_error
-set $link_latch_addr = &g_w5500_first_link_up
-set $connect_params_addr = &g_w5500_connect_params
 x/wx $mailbox_addr
 x/wx $error_addr
+EOF_GDB
+
+if [[ "$HAS_LINK_LATCH" -eq 1 ]]; then
+  cat >> "$gdb_cmd" <<'EOF_GDB'
+set $link_latch_addr = &g_w5500_first_link_up
 x/wx $link_latch_addr
+EOF_GDB
+fi
+
+if [[ "$HAS_CONNECT_PARAMS" -eq 1 ]]; then
+  cat >> "$gdb_cmd" <<'EOF_GDB'
+set $connect_params_addr = &g_w5500_connect_params
 x/wx $connect_params_addr
+EOF_GDB
+fi
+
+if [[ "$HAS_POST_CONNECT" -eq 1 ]]; then
+  cat >> "$gdb_cmd" <<'EOF_GDB'
 set $post_connect_addr = &g_w5500_post_connect_sr
 x/wx $post_connect_addr
+EOF_GDB
+fi
+
+if [[ "$HAS_W5500_TRACE" -eq 1 ]]; then
+  cat >> "$gdb_cmd" <<'EOF_GDB'
+set $w5500_trace_addr = &g_w5500_diag_trace
+x/wx $w5500_trace_addr
+EOF_GDB
+fi
+
+cat >> "$gdb_cmd" <<'EOF_GDB'
 monitor resume
 quit
 EOF_GDB
@@ -73,9 +128,34 @@ for _ in $(seq 1 15); do
     if [[ ${#vals[@]} -ge 2 ]]; then
       mailbox_hex="${vals[0]}"
       error_hex="${vals[1]}"
-      link_latch_hex="${vals[2]:-0x00000000}"
-      connect_params_hex="${vals[3]:-0x00000000}"
-      post_connect_hex="${vals[4]:-0x00000000}"
+      val_idx=2
+
+      if [[ "$HAS_LINK_LATCH" -eq 1 ]]; then
+        link_latch_hex="${vals[$val_idx]:-0x00000000}"
+        val_idx=$((val_idx + 1))
+      else
+        link_latch_hex="0x00000000"
+      fi
+
+      if [[ "$HAS_CONNECT_PARAMS" -eq 1 ]]; then
+        connect_params_hex="${vals[$val_idx]:-0x00000000}"
+        val_idx=$((val_idx + 1))
+      else
+        connect_params_hex="0x00000000"
+      fi
+
+      if [[ "$HAS_POST_CONNECT" -eq 1 ]]; then
+        post_connect_hex="${vals[$val_idx]:-0x00000000}"
+        val_idx=$((val_idx + 1))
+      else
+        post_connect_hex="0x00000000"
+      fi
+
+      if [[ "$HAS_W5500_TRACE" -eq 1 ]]; then
+        w5500_trace_hex="${vals[$val_idx]:-0x00000000}"
+      else
+        w5500_trace_hex="0x00000000"
+      fi
       break
     fi
   fi
@@ -95,6 +175,7 @@ fi
 
 connect_params_hex="${connect_params_hex:-0x00000000}"
 post_connect_hex="${post_connect_hex:-0x00000000}"
+w5500_trace_hex="${w5500_trace_hex:-0x00000000}"
 
 mailbox_dec=$((mailbox_hex))
 mb_magic=$(((mailbox_dec >> 24) & 0xFF))
@@ -124,6 +205,20 @@ printf 'Native error raw:    %s\n' "$error_hex"
 printf '  OpCode: 0x%02X\n' "$err_op"
 printf '  Code:   0x%02X\n' "$err_code"
 printf '  Detail: 0x%02X\n' "$err_detail"
+
+w5500_trace_dec=$((w5500_trace_hex))
+w5500_trace_tag=$(((w5500_trace_dec >> 24) & 0xFF))
+w5500_trace_op=$(((w5500_trace_dec >> 16) & 0xFF))
+w5500_trace_code=$(((w5500_trace_dec >> 8) & 0xFF))
+w5500_trace_detail=$((w5500_trace_dec & 0xFF))
+
+if [[ "$HAS_W5500_TRACE" -eq 1 ]]; then
+  printf 'W5500 trace raw:     %s\n' "$w5500_trace_hex"
+  printf '  Tag:    0x%02X\n' "$w5500_trace_tag"
+  printf '  OpCode: 0x%02X\n' "$w5500_trace_op"
+  printf '  Code:   0x%02X\n' "$w5500_trace_code"
+  printf '  Detail: 0x%02X\n' "$w5500_trace_detail"
+fi
 
 decode_phycfgr() {
   local phy="$1"

@@ -13,6 +13,7 @@ Usage:
 Examples:
   ./toolchain/build-native.sh list
   ./toolchain/build-native.sh build --profile cubley-base
+    ./toolchain/build-native.sh build --profile phase-d-smoke
   ./toolchain/build-native.sh build --profile cubley-base --flash --reset
   ./toolchain/build-native.sh flash --bootaddr 0x08000000 --clraddr 0x08004000
 
@@ -42,6 +43,7 @@ Supported profiles:
     cubley-base
     cubley-stable      [reference-only]
     cubley-oldstable   [reference-only]
+    phase-d-smoke      [reference-only]
     cubley-uart        [reference-only]
     cubley-usb         [reference-only]
     cubley-hardalive   [reference-only]
@@ -240,6 +242,7 @@ ENABLE_USB_CDC_CONSOLE="FALSE"
 ENABLE_WIRE_PROTOCOL_USB="FALSE"
 ENABLE_CUBLEY_STACK="TRUE"
 ENABLE_CLRSTARTUP_PATCHES="TRUE"
+ENABLE_CLR_DEEP_DIAG="${NF_CLR_DEEP_DIAG:-0}"
 LOCAL_TARGET_OVERRIDES_SUBDIR="target-overrides"
 FORCE_REFERENCE_BOARD=""
 NF_INTEROP_ASSEMBLIES_ARG="Cubley_Interop"
@@ -314,6 +317,39 @@ case "$BUILD_PROFILE" in
         # no reference-board fallback allowed in the stable profile.
         STATIC_AUDIT="${NF_STATIC_AUDIT:-1}"
         ;;
+    phase-d-smoke)
+        NF_INTEROP_ASSEMBLIES_ARG="SmokeW5500_Interop"
+        ENABLE_API_GPIO="ON"
+        ENABLE_API_I2C="ON"
+        ENABLE_API_SPI="ON"
+        ENABLE_SYSTEM_NET="OFF"
+        ENABLE_CONFIG_BLOCK="OFF"
+        ENABLE_SNTP="OFF"
+        ENABLE_MBEDTLS="OFF"
+        ENABLE_HAL_MAC="FALSE"
+        ENABLE_STM32_MAC_ETH="FALSE"
+        ENABLE_OTG1="FALSE"
+        ENABLE_OTG2="FALSE"
+        ENABLE_HAL_USB="FALSE"
+        ENABLE_HAL_SERIAL_USB="FALSE"
+        ENABLE_BRINGUP_SMOKE="FALSE"
+        ENABLE_BRINGUP_HARDALIVE="FALSE"
+        ENABLE_FEATURE_RTC="OFF"
+        ENABLE_HAL_RTC="FALSE"
+        ENABLE_HSI_PLL="1"
+        HAL_GPT_SETTING="TRUE"
+        HAL_PWM_SETTING="TRUE"
+        HAL_SPI_SETTING="TRUE"
+        # Keep diagnostics contract-clean for Phase D smoke work while leaving
+        # subsystem behavior explicitly managed-triggered.
+        ENABLE_CLRSTARTUP_PATCHES="${NF_CLRSTARTUP_PATCHES:-FALSE}"
+        ENABLE_W5500_EARLY_INIT="FALSE"
+        PROFILE_STATUS="experimental"
+        PROFILE_NOTE="Phase D smoke profile derived from cubley-base semantics with only Cubley target, SPI, and interop support enabled for managed-triggered W5500 bring-up"
+        # Like cubley-stable, Phase D smoke should not silently inherit
+        # reference-board target files.
+        STATIC_AUDIT="${NF_STATIC_AUDIT:-1}"
+        ;;
     cubley-uart)
         ENABLE_API_GPIO="ON"
         ENABLE_API_I2C="ON"
@@ -334,7 +370,9 @@ case "$BUILD_PROFILE" in
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
-        ENABLE_W5500_EARLY_INIT="TRUE"
+        # Phase D2.1 default: keep W5500 early init disabled unless explicitly overridden
+        # with NF_W5500_EARLY_INIT=1 for targeted diagnostics.
+        ENABLE_W5500_EARLY_INIT="FALSE"
         PROFILE_STATUS="scaffold"
         PROFILE_NOTE="Cubley UART wire-protocol profile (USART3 wire protocol + USB-CDC config console on PA11/PA12)"
         ;;
@@ -402,7 +440,9 @@ case "$BUILD_PROFILE" in
         ENABLE_BRINGUP_HARDALIVE="FALSE"
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
-        ENABLE_W5500_EARLY_INIT="TRUE"
+        # Phase D2.1 default: keep W5500 early init disabled unless explicitly overridden
+        # with NF_W5500_EARLY_INIT=1 for targeted diagnostics.
+        ENABLE_W5500_EARLY_INIT="FALSE"
         PROFILE_STATUS="experimental"
         PROFILE_NOTE="Cubley USB bring-up profile (USB-CDC wire protocol on PA11/PA12, VBUS sensed on PA9)"
         ;;
@@ -457,7 +497,7 @@ case "$BUILD_PROFILE" in
         ;;
     *)
         echo -e "${RED}Unknown profile '$BUILD_PROFILE'.${NC}"
-        echo -e "${YELLOW}Supported profiles:${NC} cubley-base, cubley-stable, cubley-oldstable, cubley-uart, cubley-usb, cubley-hardalive, bringup-smoke, core-only, legacy-network"
+        echo -e "${YELLOW}Supported profiles:${NC} cubley-base, cubley-stable, cubley-oldstable, phase-d-smoke, cubley-uart, cubley-usb, cubley-hardalive, bringup-smoke, core-only, legacy-network"
         exit 1
         ;;
 esac
@@ -513,7 +553,7 @@ else
 
     # Optionally update existing clone. Skipped by default for faster local rebuilds.
     cd "$NF_INTERPRETER_DIR"
-    git checkout -- CMake/Modules/FindChibiOS.cmake targets/ChibiOS/CMakeLists.txt src/CLR/Core/TypeSystem.cpp src/CLR/Startup/CLRStartup.cpp || true
+    git checkout -- CMake/Modules/FindChibiOS.cmake targets/ChibiOS/CMakeLists.txt src/CLR/Core/Execution.cpp src/CLR/Core/TypeSystem.cpp src/CLR/Core/Thread.cpp src/CLR/Startup/CLRStartup.cpp || true
     if [ "$UPDATE_INTERPRETER" = "1" ]; then
         echo -e "${YELLOW}Updating nf-interpreter (NF_UPDATE_INTERPRETER=1)...${NC}"
         git fetch --all --tags --prune || true
@@ -641,7 +681,7 @@ if [ "$ENABLE_CLRSTARTUP_PATCHES" = "TRUE" ] && [ -f "$CLR_STARTUP_CPP" ]; then
     echo -e "${YELLOW}Patching CLR startup diagnostics in CLRStartup.cpp...${NC}"
 
     if ! grep -Fq 'CUBLEY_CLR_STARTUP_DIAG' "$CLR_STARTUP_CPP"; then
-        perl -0pi -e 's~#include <nanoCLR_Hardware.h>~#include <nanoCLR_Hardware.h>\n#include <stdint.h>\n\nextern "C"\n{\n    extern volatile uint32_t g_cubley_diag_current_status;\n    extern volatile uint32_t g_cubley_diag_last_error;\n    extern volatile uint32_t g_cubley_diag_clr_status;\n}\n\nstatic inline void CubleySetClrDiag(uint8_t stage, uint8_t result, uint8_t detail)\n{\n    // CUBLEY_CLR_STARTUP_DIAG: 0xD5SSRRDD\n    const uint32_t word = ((uint32_t)0xD5u << 24) \| ((uint32_t)stage << 16) \| ((uint32_t)result << 8) \| (uint32_t)detail;\n    g_cubley_diag_current_status = word;\n    g_cubley_diag_clr_status = word;\n}\n\nstatic inline void CubleySetClrErr(uint8_t op, uint8_t code, uint8_t detail)\n{\n    // CUBLEY_CLR_STARTUP_DIAG: 0xE2OOCCDD\n    g_cubley_diag_last_error = ((uint32_t)0xE2u << 24) \| ((uint32_t)op << 16) \| ((uint32_t)code << 8) \| (uint32_t)detail;\n}\n~' "$CLR_STARTUP_CPP"
+        perl -0pi -e 's~#include <nanoCLR_Hardware.h>~#include <nanoCLR_Hardware.h>\n#include <stdint.h>\n\nextern "C"\n{\n    extern volatile uint32_t g_cubley_diag_current_status;\n    extern volatile uint32_t g_cubley_diag_last_error;\n    extern volatile uint32_t g_cubley_diag_clr_status;\n    extern volatile uint32_t g_cubley_diag_boot_probe_status;\n    extern volatile uint32_t g_w5500_diag_trace;\n}\n\nstatic inline void CubleySetClrDiag(uint8_t stage, uint8_t result, uint8_t detail)\n{\n    // CUBLEY_CLR_STARTUP_DIAG: 0xD5SSRRDD\n    const uint32_t word = ((uint32_t)0xD5u << 24) \| ((uint32_t)stage << 16) \| ((uint32_t)result << 8) \| (uint32_t)detail;\n    g_cubley_diag_current_status = word;\n    g_cubley_diag_clr_status = word;\n}\n\nstatic inline void CubleySetClrErr(uint8_t op, uint8_t code, uint8_t detail)\n{\n    // CUBLEY_CLR_STARTUP_DIAG: 0xE2OOCCDD\n    g_cubley_diag_last_error = ((uint32_t)0xE2u << 24) \| ((uint32_t)op << 16) \| ((uint32_t)code << 8) \| (uint32_t)detail;\n}\n~' "$CLR_STARTUP_CPP"
     fi
 
     if ! grep -Fq 'CubleySetClrDiag(0xE0, 0, 1);' "$CLR_STARTUP_CPP"; then
@@ -782,13 +822,13 @@ PY
 
 
     if ! grep -Fq 'CubleySetClrDiag(0xE3, 0, 1);' "$CLR_STARTUP_CPP"; then
-        perl -0pi -e 's~\n                hr = g_CLR_RT_ExecutionEngine\.Execute\(NULL, params\.MaxContextSwitches\);~\n                CubleySetClrDiag(0xE3, 0, 1);\n                CubleySetClrErr(0xE3, 0, 1);\n                hr = g_CLR_RT_ExecutionEngine.Execute(NULL, params.MaxContextSwitches);\n                CubleySetClrDiag(0xE4, FAILED(hr) ? 14 : 0, (uint8_t)(hr & 0xFF));\n                CubleySetClrErr(0xE4, FAILED(hr) ? 14 : 0, (uint8_t)(hr & 0xFF));~' "$CLR_STARTUP_CPP"
+        perl -0pi -e 's~\n                hr = g_CLR_RT_ExecutionEngine\.Execute\(NULL, params\.MaxContextSwitches\);~\n                CubleySetClrDiag(0xE3, 0, 1);\n                CubleySetClrErr(0xE3, 0, 1);\n                hr = g_CLR_RT_ExecutionEngine.Execute(NULL, params.MaxContextSwitches);\n                g_w5500_diag_trace = g_cubley_diag_current_status;\n                g_cubley_diag_boot_probe_status = (uint32_t)hr;\n                CubleySetClrDiag(0xE4, FAILED(hr) ? 14 : 0, (uint8_t)(((uint32_t)hr) & 0xFF));\n                CubleySetClrErr(0xE4, (uint8_t)((((uint32_t)hr) >> 8) & 0xFF), (uint8_t)(((uint32_t)hr) & 0xFF));~' "$CLR_STARTUP_CPP"
     fi
 fi
 
 # Capture unresolved assembly identity directly in TypeSystem resolve path.
 TYPESYSTEM_CPP="$NF_INTERPRETER_DIR/src/CLR/Core/TypeSystem.cpp"
-if [ "$ENABLE_CLRSTARTUP_PATCHES" = "TRUE" ] && [ -f "$TYPESYSTEM_CPP" ]; then
+if [ "$ENABLE_CLRSTARTUP_PATCHES" = "TRUE" ] && [ "$ENABLE_CLR_DEEP_DIAG" = "1" ] && [ -f "$TYPESYSTEM_CPP" ]; then
     echo -e "${YELLOW}Patching TypeSystem resolve diagnostics...${NC}"
 
     if ! grep -Fq 'CUBLEY_CLR_RESOLVE_PTR' "$TYPESYSTEM_CPP"; then
@@ -852,6 +892,239 @@ PY
     fi
 fi
 
+# Capture scheduler-level failure details before startup flattens Execute() hr.
+EXECUTION_CPP="$NF_INTERPRETER_DIR/src/CLR/Core/Execution.cpp"
+if [ "$ENABLE_CLRSTARTUP_PATCHES" = "TRUE" ] && [ "$ENABLE_CLR_DEEP_DIAG" = "1" ] && [ -f "$EXECUTION_CPP" ]; then
+    echo -e "${YELLOW}Patching ExecutionEngine diagnostics...${NC}"
+
+    if ! grep -Fq 'CUBLEY_CLR_EXEC_DIAG' "$EXECUTION_CPP"; then
+        perl -0pi -e 's~#include "Core.h"~#include "Core.h"\n#include <stdint.h>\n\nextern "C"\n{\n    extern volatile uint32_t g_cubley_diag_current_status;\n    extern volatile uint32_t g_cubley_diag_last_error;\n    extern volatile uint32_t g_cubley_diag_boot_probe_status;\n    extern volatile uint32_t g_cubley_diag_clr_status;\n}\n\nstatic inline void CubleySetExecDiag(uint8_t stage, uint8_t hi, uint8_t lo)\n{\n    // CUBLEY_CLR_EXEC_DIAG: 0xD5SSHHLL + 0xE2SSHHLL\n    const uint32_t state = ((uint32_t)0xD5u << 24) | ((uint32_t)stage << 16) | ((uint32_t)hi << 8) | (uint32_t)lo;\n    g_cubley_diag_current_status = state;\n    g_cubley_diag_clr_status = state;\n    g_cubley_diag_last_error = ((uint32_t)0xE2u << 24) | ((uint32_t)stage << 16) | ((uint32_t)hi << 8) | (uint32_t)lo;\n}\n~' "$EXECUTION_CPP"
+    fi
+
+    if ! grep -Fq 'CubleySetExecDiag(0xF2' "$EXECUTION_CPP"; then
+        python3 - "$EXECUTION_CPP" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+old = '''        if (FAILED(hr))
+        {
+            switch (hr)
+            {
+                case CLR_E_RESCHEDULE:
+                    break;
+
+                case CLR_E_THREAD_WAITING:
+                    th->m_status = CLR_RT_Thread::TH_S_Waiting;
+                    break;
+
+                default:
+                    th->m_status = CLR_RT_Thread::TH_S_Terminated;
+                    break;
+            }
+        }
+'''
+
+new = '''        if (FAILED(hr))
+        {
+            g_cubley_diag_boot_probe_status = (uint32_t)hr;
+            CubleySetExecDiag(0xF2, (uint8_t)(((uint32_t)hr >> 8) & 0xFF), (uint8_t)((uint32_t)hr & 0xFF));
+
+            if (th->m_currentException.Dereference() != NULL)
+            {
+                const uint32_t exHr = Library_corlib_native_System_Exception::GetHResult(th->m_currentException.Dereference());
+                g_cubley_diag_boot_probe_status = exHr;
+                CubleySetExecDiag(0xF3, (uint8_t)((exHr >> 8) & 0xFF), (uint8_t)(exHr & 0xFF));
+            }
+
+            switch (hr)
+            {
+                case CLR_E_RESCHEDULE:
+                    break;
+
+                case CLR_E_THREAD_WAITING:
+                    th->m_status = CLR_RT_Thread::TH_S_Waiting;
+                    break;
+
+                default:
+                    th->m_status = CLR_RT_Thread::TH_S_Terminated;
+                    break;
+            }
+        }
+'''
+
+if old in text:
+    text = text.replace(old, new, 1)
+
+path.write_text(text)
+PY
+    fi
+
+    if ! grep -Fq 'CubleySetExecDiag(0xA0, 0, 1);' "$EXECUTION_CPP"; then
+        python3 - "$EXECUTION_CPP" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+text = text.replace(
+    "    CLR_RT_HeapBlock ref;\n    CLR_RT_Thread *thMain = NULL;\n\n",
+    "    CLR_RT_HeapBlock ref;\n    CLR_RT_Thread *thMain = NULL;\n\n    CubleySetExecDiag(0xA0, 0, 1);\n",
+    1,
+)
+
+text = text.replace(
+    "        NANOCLR_SET_AND_LEAVE(CLR_E_ENTRYPOINT_NOT_FOUND);\n",
+    "        g_cubley_diag_boot_probe_status = (uint32_t)CLR_E_ENTRYPOINT_NOT_FOUND;\n        CubleySetExecDiag(0xA1, (uint8_t)(((uint32_t)CLR_E_ENTRYPOINT_NOT_FOUND >> 8) & 0xFF), (uint8_t)((uint32_t)CLR_E_ENTRYPOINT_NOT_FOUND & 0xFF));\n        NANOCLR_SET_AND_LEAVE(CLR_E_ENTRYPOINT_NOT_FOUND);\n",
+    1,
+)
+
+text = text.replace(
+    "    NANOCLR_CHECK_HRESULT(WaitForDebugger());\n",
+    "    {\n        const HRESULT hrWait = WaitForDebugger();\n        if (FAILED(hrWait))\n        {\n            g_cubley_diag_boot_probe_status = (uint32_t)hrWait;\n            CubleySetExecDiag(0xA2, (uint8_t)(((uint32_t)hrWait >> 8) & 0xFF), (uint8_t)((uint32_t)hrWait & 0xFF));\n            NANOCLR_SET_AND_LEAVE(hrWait);\n        }\n    }\n",
+    1,
+)
+
+text = text.replace(
+    "    NANOCLR_CHECK_HRESULT(CLR_RT_HeapBlock_Delegate::CreateInstance(ref, g_CLR_RT_TypeSystem.m_entryPoint, NULL));\n",
+    "    {\n        const HRESULT hrCreateDelegate = CLR_RT_HeapBlock_Delegate::CreateInstance(ref, g_CLR_RT_TypeSystem.m_entryPoint, NULL);\n        if (FAILED(hrCreateDelegate))\n        {\n            g_cubley_diag_boot_probe_status = (uint32_t)hrCreateDelegate;\n            CubleySetExecDiag(0xA3, (uint8_t)(((uint32_t)hrCreateDelegate >> 8) & 0xFF), (uint8_t)((uint32_t)hrCreateDelegate & 0xFF));\n            NANOCLR_SET_AND_LEAVE(hrCreateDelegate);\n        }\n    }\n",
+    1,
+)
+
+text = text.replace(
+    "        NANOCLR_CHECK_HRESULT(NewThread(thMain, ref.DereferenceDelegate(), ThreadPriority::Normal, -1));\n",
+    "        const HRESULT hrNewThread = NewThread(thMain, ref.DereferenceDelegate(), ThreadPriority::Normal, -1);\n        if (FAILED(hrNewThread))\n        {\n            g_cubley_diag_boot_probe_status = (uint32_t)hrNewThread;\n            CubleySetExecDiag(0xA4, (uint8_t)(((uint32_t)hrNewThread >> 8) & 0xFF), (uint8_t)((uint32_t)hrNewThread & 0xFF));\n            NANOCLR_SET_AND_LEAVE(hrNewThread);\n        }\n",
+    1,
+)
+
+text = text.replace(
+    "    NANOCLR_CHECK_HRESULT(WaitForDebugger());\n",
+    "    {\n        const HRESULT hrWait = WaitForDebugger();\n        if (FAILED(hrWait))\n        {\n            g_cubley_diag_boot_probe_status = (uint32_t)hrWait;\n            CubleySetExecDiag(0xA5, (uint8_t)(((uint32_t)hrWait >> 8) & 0xFF), (uint8_t)((uint32_t)hrWait & 0xFF));\n            NANOCLR_SET_AND_LEAVE(hrWait);\n        }\n    }\n",
+    1,
+)
+
+text = text.replace(
+    "    SpawnStaticConstructor(m_cctorThread);\n",
+    "    SpawnStaticConstructor(m_cctorThread);\n    CubleySetExecDiag(0xA6, 0, 1);\n",
+    1,
+)
+
+text = text.replace(
+    "        HRESULT hr2 = ScheduleThreads(maxContextSwitch);\n        NANOCLR_CHECK_HRESULT(hr2);\n",
+    "        CubleySetExecDiag(0xA7, 0, 1);\n        HRESULT hr2 = ScheduleThreads(maxContextSwitch);\n        if (FAILED(hr2))\n        {\n            g_cubley_diag_boot_probe_status = (uint32_t)hr2;\n            CubleySetExecDiag(0xA8, (uint8_t)(((uint32_t)hr2 >> 8) & 0xFF), (uint8_t)((uint32_t)hr2 & 0xFF));\n            NANOCLR_SET_AND_LEAVE(hr2);\n        }\n",
+    1,
+)
+
+path.write_text(text)
+PY
+    fi
+fi
+
+# Capture process-exception identity in the thread execution loop.
+THREAD_CPP="$NF_INTERPRETER_DIR/src/CLR/Core/Thread.cpp"
+if [ "$ENABLE_CLRSTARTUP_PATCHES" = "TRUE" ] && [ "$ENABLE_CLR_DEEP_DIAG" = "1" ] && [ -f "$THREAD_CPP" ]; then
+    echo -e "${YELLOW}Patching Thread process-exception diagnostics...${NC}"
+
+    if ! grep -Fq 'CUBLEY_CLR_THREAD_DIAG' "$THREAD_CPP"; then
+        perl -0pi -e 's~#include "Core.h"~#include "Core.h"\n#include <stdint.h>\n\nextern "C"\n{\n    extern volatile uint32_t g_cubley_diag_current_status;\n    extern volatile uint32_t g_cubley_diag_last_error;\n    extern volatile uint32_t g_cubley_diag_boot_probe_status;\n    extern volatile uint32_t g_cubley_diag_clr_status;\n}\n\nstatic inline void CubleySetThreadDiag(uint8_t stage, uint8_t code, uint8_t hi, uint8_t lo)\n{\n    // CUBLEY_CLR_THREAD_DIAG: 0xD5SSHHLL + 0xE2SSCCDD\n    const uint32_t state = ((uint32_t)0xD5u << 24) | ((uint32_t)stage << 16) | ((uint32_t)hi << 8) | (uint32_t)lo;\n    g_cubley_diag_current_status = state;\n    g_cubley_diag_clr_status = state;\n    g_cubley_diag_last_error = ((uint32_t)0xE2u << 24) | ((uint32_t)stage << 16) | ((uint32_t)code << 8) | (uint32_t)lo;\n}\n~' "$THREAD_CPP"
+    fi
+
+    if ! grep -Fq 'CubleySetThreadDiag(0xF0, 0x01' "$THREAD_CPP"; then
+        python3 - "$THREAD_CPP" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+old = '''            case CLR_E_PROCESS_EXCEPTION:
+                CLR_RT_DUMP::POST_PROCESS_EXCEPTION(m_currentException);
+                break;
+'''
+
+new = '''            case CLR_E_PROCESS_EXCEPTION:
+                CLR_RT_DUMP::POST_PROCESS_EXCEPTION(m_currentException);
+                CubleySetThreadDiag(0xF0, 0x01, m_currentException.Dereference() ? 1 : 0, 0);
+                if (m_currentException.Dereference() != NULL)
+                {
+                    const uint32_t exHr = Library_corlib_native_System_Exception::GetHResult(m_currentException.Dereference());
+                    g_cubley_diag_boot_probe_status = exHr;
+                    CubleySetThreadDiag(0xF0, 0x02, (uint8_t)((exHr >> 8) & 0xFF), (uint8_t)(exHr & 0xFF));
+                }
+                break;
+'''
+
+if old in text:
+    text = text.replace(old, new, 1)
+
+path.write_text(text)
+PY
+    fi
+
+    if ! grep -Fq 'CubleySetThreadDiag(0xF1, 0x01' "$THREAD_CPP"; then
+        python3 - "$THREAD_CPP" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+old = '''                if (stack->Prev() != NULL)
+                {
+'''
+
+new = '''                if (stack->Prev() != NULL)
+                {
+                    g_cubley_diag_boot_probe_status = (uint32_t)hr;
+                    CubleySetThreadDiag(0xF1, 0x01, (uint8_t)(((uint32_t)hr >> 8) & 0xFF), (uint8_t)((uint32_t)hr & 0xFF));
+'''
+
+if old in text:
+    text = text.replace(old, new, 1)
+
+path.write_text(text)
+PY
+    fi
+
+    if ! grep -Fq 'CubleySetThreadDiag(0xF1, 0x02' "$THREAD_CPP"; then
+        python3 - "$THREAD_CPP" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+old = '''                    (void)Library_corlib_native_System_Exception::CreateInstance(m_currentException, hr, stack);
+                }
+
+                hr = CLR_E_PROCESS_EXCEPTION;
+                break;
+'''
+
+new = '''                    (void)Library_corlib_native_System_Exception::CreateInstance(m_currentException, hr, stack);
+                    if (m_currentException.Dereference() != NULL)
+                    {
+                        const uint32_t exHr = Library_corlib_native_System_Exception::GetHResult(m_currentException.Dereference());
+                        g_cubley_diag_boot_probe_status = exHr;
+                        CubleySetThreadDiag(0xF1, 0x02, (uint8_t)((exHr >> 8) & 0xFF), (uint8_t)(exHr & 0xFF));
+                    }
+                }
+
+                hr = CLR_E_PROCESS_EXCEPTION;
+                break;
+'''
+
+if old in text:
+    text = text.replace(old, new, 1)
+
+path.write_text(text)
+PY
+    fi
+fi
+
 # Create target directory structure
 echo -e "${YELLOW}Setting up target directory...${NC}"
 TARGET_DIR="$NF_INTERPRETER_DIR/targets/ChibiOS/$TARGET_NAME"
@@ -875,6 +1148,7 @@ if [ "$ENABLE_CUBLEY_STACK" = "TRUE" ]; then
     cp "$NF_NATIVE_DIR/lnbh26_native.h" "$TARGET_DIR/common/"
     cp "$NF_NATIVE_DIR/lnbh26_native.cpp" "$TARGET_DIR/common/"
     cp "$NF_NATIVE_DIR/cubley_interop.cpp" "$TARGET_DIR/nanoCLR/"
+    cp "$NF_NATIVE_DIR/smoke_w5500_interop.cpp" "$TARGET_DIR/nanoCLR/"
     cp "$NF_NATIVE_DIR/lnbh26_interop.cpp" "$TARGET_DIR/nanoCLR/"
     cp "$NF_NATIVE_DIR/w5500_interop.cpp" "$TARGET_DIR/nanoCLR/"
 fi
@@ -893,6 +1167,17 @@ set(Cubley_Interop_SOURCES
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(INTEROP-Cubley_Interop DEFAULT_MSG Cubley_Interop_INCLUDE_DIRS Cubley_Interop_SOURCES)
 EOF_FIND_INTEROP
+
+cat > "$NF_INTERPRETER_DIR/CMake/Modules/FindINTEROP-SmokeW5500_Interop.cmake" << EOF_FIND_INTEROP_W5500
+# Auto-generated by toolchain/build-native.sh for W5500-only smoke interop binding
+set(SmokeW5500_Interop_INCLUDE_DIRS "${TARGET_DIR}/nanoCLR")
+set(SmokeW5500_Interop_SOURCES
+    "${TARGET_DIR}/nanoCLR/smoke_w5500_interop.cpp"
+    "${TARGET_DIR}/nanoCLR/w5500_interop.cpp")
+
+include(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(INTEROP-SmokeW5500_Interop DEFAULT_MSG SmokeW5500_Interop_INCLUDE_DIRS SmokeW5500_Interop_SOURCES)
+EOF_FIND_INTEROP_W5500
 fi
 
 # board.h selects SERIAL_DRIVER conditionally based on HAL_USE_SERIAL_USB

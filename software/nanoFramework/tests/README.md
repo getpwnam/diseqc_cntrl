@@ -162,3 +162,52 @@ Harness behaviors:
 - Tier-1: repeated mixed-order `StatusLed` and `UsbCdcConsole` calls for stable execution verification.
 - Tier-1 safety: verifies Tier-1 call sequences do not clobber sticky boot-probe latch.
 - Final marker: writes a deterministic status word so SWD readers can confirm run completion.
+
+## 5) CubleySmokeTier2_W5500 Managed Harness
+
+`CubleySmokeTier2_W5500` is a dedicated managed W5500 smoke app for Phase D.
+It isolates managed-triggered W5500 activation from full application startup.
+
+Recommended native profile for this harness during Phase D:
+
+- `phase-d-smoke` for component-sliced interop bring-up and managed-triggered W5500 debugging
+- `cubley-base` remains the frozen Phase A board baseline and should not be extended with W5500-specific exposure
+
+Project path:
+
+- `software/nanoFramework/CubleySmokeTier2_W5500/CubleySmokeTier2_W5500.nfproj`
+
+Build the native firmware profile first:
+
+```bash
+cd software/nanoFramework
+NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile phase-d-smoke
+st-flash write build/nanoBooter.bin 0x08000000
+st-flash write build/nanoCLR.bin 0x08004000
+st-flash reset
+```
+
+Build and deploy by SWD:
+
+```bash
+cd software/nanoFramework
+./toolchain/build-managed.sh build \
+	--project CubleySmokeTier2_W5500/CubleySmokeTier2_W5500.nfproj \
+	--deploy --swd --address 0x080C0000 --reset
+```
+
+Then read current status + W5500 diagnostics:
+
+```bash
+cd /workspaces/diseqc_cntrl/software/nanoFramework
+./tests/swd_read_bringup_status.sh
+./tests/swd_read_w5500_diag.sh build/nanoCLR.elf
+```
+
+Harness behaviors:
+
+- Reads `VERSIONR` and `PHYCFGR` through `Cubley.Interop.W5500Socket`.
+- Configures static network parameters through native interop.
+- Opens and closes the single socket path deterministically.
+- Attempts `NativeConnect` only when PHY link is up; records timeout as warning.
+- Emits deterministic stage markers `0xB0..0xB6` and final `0xBF`.

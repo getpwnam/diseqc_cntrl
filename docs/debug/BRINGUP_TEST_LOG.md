@@ -1234,3 +1234,75 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: build/nanoCLR.elf; build/CubleySmokeTier0/CubleySmokeTier0.bin
 - Conclusion: Phase C strict gate PASS: 20/20 reset cycles with stable boot_probe and final-pass current_status semantics.
 - Note: Root cause fixed by disabling CLR startup pointer-breadcrumb patching for cubley-stable so current_status remains contract-clean for strict mailbox decoding.
+
+### 2026-06-08 17:12:59 UTC [FAIL] [NON-BASELINE]
+- Git rev: eec3d9f
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-managed.sh build --project CubleySmokeTier2_W5500/CubleySmokeTier2_W5500.nfproj --deploy --swd --address 0x080C0000 --reset && ./tests/swd_read_bringup_status.sh && ./tests/swd_read_w5500_diag.sh build/nanoCLR.elf
+- Artifact: build/CubleySmokeTier2_W5500/CubleySmokeTier2_W5500.bin
+- Conclusion: Tier-2 W5500 smoke harness executed and failed at stage 0xB1 (VERSIONR check), indicating managed path runs but W5500 version read was not 0x04 in this run.
+- Note: nanoff --devicedetails returned E2001 immediately after SWD deploy; SWD mailbox decode remained available and reported 0xD5B10E00.
+
+### 2026-06-08 17:54:58 UTC [INFO]
+- Git rev: eec3d9f
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile phase-d-smoke; st-flash write build/nanoBooter.bin 0x08000000; st-flash write build/nanoCLR.bin 0x08004000; st-flash reset; ./toolchain/build-managed.sh build --project CubleySmokeTier2_W5500/CubleySmokeTier2_W5500.nfproj --configuration Release; st-flash write build/CubleySmokeTier2_W5500/latest.deploy.bin 0x080C0000; st-flash reset; ./tests/swd_read_bringup_status.sh; ./tests/swd_read_w5500_diag.sh
+- Artifact: software/nanoFramework/toolchain/build-native.sh; docs/debug/MANAGED_DEPLOYMENT.md; software/nanoFramework/tests/README.md
+- Conclusion: phase-d-smoke profile builds, flashes, and preserves the known W5500 failure signature without mutating cubley-base semantics
+- Note: SWD after deploy reported current_status=0xD5B10EE2, last_native_error=0xE2D10001, g_w5500_diag_trace=0x00000000.
+
+### 2026-06-08 18:04:17 UTC [INFO]
+- Git rev: eec3d9f
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile phase-d-smoke && ./toolchain/build-managed.sh build --project ./CubleySmokeTier2_W5500/CubleySmokeTier2_W5500.nfproj
+- Artifact: build/nf-interpreter/M0DMF_CUBLEY_F407 + build/CubleySmokeTier2_W5500/latest.deploy.bin
+- Conclusion: Phase-d-smoke now builds against SmokeW5500_Interop (W5500-only interop import) and CubleySmokeTier2_W5500 builds without Cubley.Interop project reference.
+- Note: Native CMake reports interop assemblies included: SmokeW5500_Interop.
+
+### 2026-06-08 18:07:48 UTC [INFO]
+- Git rev: eec3d9f
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile phase-d-smoke (with I2C=OFF,GPT/PWM=FALSE trial)
+- Artifact: build/nf-interpreter/M0DMF_CUBLEY_F407 compile logs
+- Conclusion: Phase-d-smoke minimization trial still fails: lnbh26_native.cpp requires I2CDriver/i2cMasterTransmitTimeout and diseqc_native.cpp requires PWMDriver/GPTDriver due to unconditional target source compilation.
+- Note: Restored phase-d-smoke I2C/GPT/PWM settings to known buildable values.
+
+### 2026-06-08 18:07:53 UTC [INFO]
+- Git rev: eec3d9f
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile phase-d-smoke && ./toolchain/build-managed.sh build --project ./CubleySmokeTier2_W5500/CubleySmokeTier2_W5500.nfproj && st-flash write build/nanoBooter.bin 0x08000000 && st-flash write build/nanoCLR.bin 0x08004000 && st-flash write build/CubleySmokeTier2_W5500/latest.deploy.bin 0x080C0000 && ./tests/swd_read_w5500_diag.sh
+- Artifact: build/nanoBooter.bin + build/nanoCLR.bin + build/CubleySmokeTier2_W5500/latest.deploy.bin
+- Conclusion: Board refresh completed with SmokeW5500_Interop firmware/payload; SWD diag shows bringup 0xD5D10001, native error 0xE2D10001, W5500 trace 0x00000000.
+- Note: Flash/deploy writes verified by st-flash.
+
+### 2026-06-08 18:19:30 UTC [INFO]
+- Git rev: eec3d9f
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile phase-d-smoke && ./toolchain/build-managed.sh build --project ./CubleySmokeTier2_W5500/CubleySmokeTier2_W5500.nfproj --deploy --serialport /dev/ttyUSB0 --baud 115200 --address 0x080C0000 --reset && nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails
+- Artifact: build/nanoBooter.bin + build/nanoCLR.bin + build/CubleySmokeTier2_W5500/latest.deploy.bin
+- Conclusion: Phase-d firmware built and Tier2 W5500 app deployed; nanoff devicedetails confirms SmokeW5500.Interop is loaded in native assemblies.
+- Note: Native assemblies list includes SmokeW5500.Interop v1.0.0.0 checksum 0x00000000.
+
+### 2026-06-08 19:32:40 UTC [PASS] [NON-BASELINE]
+- Git rev: eec3d9f
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile phase-d-smoke; st-flash write build/nanoCLR.bin 0x08004000; ./toolchain/build-managed.sh build --project CubleySmokeTier2_W5500 --configuration Release; st-flash write build/CubleySmokeTier2_W5500/latest.deploy.bin 0x080C0000; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails; ./tests/swd_read_w5500_diag.sh
+- Artifact: build/nanoCLR.bin + build/CubleySmokeTier2_W5500/latest.deploy.bin
+- Conclusion: Quiet diagnostics run passed smoke status (D5020100) with W5500 native trace active (E1130000).
+- Note: Deep CLR diagnostics disabled (default phase-d-smoke with NF_CLRSTARTUP_PATCHES unset).
+
+### 2026-06-08 19:32:46 UTC [INFO] [NON-BASELINE]
+- Git rev: eec3d9f
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): NF_ALLOW_REFERENCE_PROFILE=1 NF_CLRSTARTUP_PATCHES=TRUE NF_CLR_DEEP_DIAG=1 ./toolchain/build-native.sh build --profile phase-d-smoke; st-flash write build/nanoCLR.bin 0x08004000; ./toolchain/build-managed.sh build --project CubleySmokeTier2_W5500 --configuration Release; st-flash write build/CubleySmokeTier2_W5500/latest.deploy.bin 0x080C0000; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails; ./tests/swd_read_w5500_diag.sh
+- Artifact: build/nanoCLR.bin + build/CubleySmokeTier2_W5500/latest.deploy.bin
+- Conclusion: Deep diagnostics run exposed CLR internal stage F2/thread-wait (boot_probe C2000000) while W5500 native trace remained active (E1130000).
+- Note: Expected diagnostic-noise increase versus quiet run; managed/native assembly load still successful.
+
+### 2026-06-08 19:40:14 UTC [FAIL] [NON-BASELINE]
+- Git rev: eec3d9f
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): build-managed Tier2 + st-flash deploy latest.deploy.bin + SWD diag 40x sample loop
+- Artifact: build/CubleySmokeTier2_W5500/latest.deploy.bin; /tmp/tier2_connect_probe_20260608_1940.log
+- Breakpoints: mailbox=0xD5050E01; native_error=0xE15304F0; connect_params_latch=0x00000000; post_connect_latch=0x00000000
+- Conclusion: Tier2 connect-path harness now advances into native configure step but fails at stage 0x05 with detail 0x01 before open/connect; connect latches remain unset despite VERSIONR=0x04 and PHYCFGR=0xF0 snapshot.
