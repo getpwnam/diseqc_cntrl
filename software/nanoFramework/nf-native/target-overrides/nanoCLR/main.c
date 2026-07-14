@@ -19,6 +19,32 @@
 #define SWO_OUTPUT 0
 #endif
 
+static void BusyDelay(volatile uint32_t cycles)
+{
+    while (cycles-- > 0)
+    {
+        __asm("nop");
+    }
+}
+
+static void PulseStatusLedBeforeManaged(void)
+{
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+    (void)RCC->AHB1ENR;
+
+    palSetPadMode(GPIOB, 0, PAL_MODE_OUTPUT_PUSHPULL);
+    palClearPad(GPIOB, 0);
+
+    // Early boot visibility marker: blink PB0 for ~5 seconds total.
+    for (int i = 0; i < 10; i++)
+    {
+        palSetPad(GPIOB, 0);
+        BusyDelay(14000000U);
+        palClearPad(GPIOB, 0);
+        BusyDelay(14000000U);
+    }
+}
+
 extern volatile uint32_t g_cubley_diag_current_status;
 extern volatile uint32_t g_cubley_diag_last_error;
 extern volatile uint32_t g_cubley_diag_clr_status;
@@ -84,6 +110,7 @@ static uint8_t HaltReasonCode(const char *reason)
 
 static void CaptureMacFailureContext(void)
 {
+#if defined(HAL_USE_MAC) && (HAL_USE_MAC == TRUE)
     enum
     {
         kPhyId1Reg = 2,
@@ -208,6 +235,14 @@ static void CaptureMacFailureContext(void)
     g_cubley_diag_mac_probe4 = ((uint32_t)0xB4 << 24) | ((uint32_t)firstAllZeroAddr << 16) |
                                ((uint32_t)allZeroCount << 8) | (uint32_t)allFFFFCount;
     g_cubley_diag_mac_probe5 = ((uint32_t)0xB5 << 24) | ((uint32_t)firstAllFFFFAddr << 16);
+#else
+    g_cubley_diag_mac_probe0 = ((uint32_t)0xB1 << 24) | 0x00000001u;
+    g_cubley_diag_mac_probe1 = 0;
+    g_cubley_diag_mac_probe2 = 0;
+    g_cubley_diag_mac_probe3 = 0;
+    g_cubley_diag_mac_probe4 = 0;
+    g_cubley_diag_mac_probe5 = 0;
+#endif
 }
 
 void CubleySystemHaltHook(const char *reason)
@@ -290,7 +325,7 @@ static THD_FUNCTION(UsbCdcInitThread, arg)
 #endif
 
 #if (CUBLEY_WIRE_PROTOCOL_USB != TRUE)
-static void __attribute__((unused)) ForceUsart3PinsOnPd8Pd9(void)
+static void ForceUsart3PinsOnPd8Pd9(void)
 {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
     (void)RCC->AHB1ENR;
@@ -325,6 +360,7 @@ int main(void)
     SetStartupTrace(0xC1, 0x10);
     SetStartupDiag(0xC1, 1, 0x10); // halInit entering.
     halInit();
+    PulseStatusLedBeforeManaged();
     SetStartupTrace(0xC1, 0x11);
     SetStartupDiag(0xC1, 1, 0x11); // halInit returned.
 
@@ -349,7 +385,7 @@ int main(void)
 
 #if (CUBLEY_WIRE_PROTOCOL_USB != TRUE)
     static const SerialConfig usart3_cfg = {
-        115200,
+        921600,
         0,
         USART_CR2_STOP1_BITS,
         0

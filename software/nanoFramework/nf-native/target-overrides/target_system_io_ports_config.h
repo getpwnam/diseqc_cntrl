@@ -7,5 +7,6 @@
 // UART3 //
 ///////////
 
-// enable USART3
-#define NF_SERIAL_COMM_STM32_UART_USE_USART3 TRUE
+// USART3 is reserved for nanoFramework wire protocol (PD8/PD9).
+// Keep System.IO.Ports from opening the same peripheral.
+#define NF_SERIAL_COMM_STM32_UART_USE_USART3 FALSE

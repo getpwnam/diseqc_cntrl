@@ -19,7 +19,7 @@ HAL_SYSTEM_CONFIG HalSystemConfig = {
 
     ConvertCOM_DebugHandle(3), // COM3 (USART3 on PD8/PD9)
     0,      // Messaging channel disabled
-    115200, // Wire protocol serial bitrate
+        921600, // Wire protocol serial bitrate
     0,      // STDIO channel disabled
 
     {RAM1_MEMORY_StartAddress, RAM1_MEMORY_Size},
