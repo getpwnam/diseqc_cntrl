@@ -3878,12 +3878,6 @@
 		)
 	)
 	(junction
-		(at 146.05 124.46)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "04068fb5-1cec-4149-aabb-7f56b0919b0f")
-	)
-	(junction
 		(at 48.26 60.96)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3944,12 +3938,6 @@
 		(uuid "600f9a02-1b41-45a2-9770-28894692644a")
 	)
 	(junction
-		(at 127 113.03)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "6117b5e9-0003-455e-9d10-a819275d6807")
-	)
-	(junction
 		(at 59.69 90.17)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3998,6 +3986,12 @@
 		(uuid "77e04625-163e-4038-9bec-8d2f57d2b5df")
 	)
 	(junction
+		(at 127 113.03)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "78eb6b6b-96e9-4525-9451-245904be0163")
+	)
+	(junction
 		(at 55.88 104.14)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -4032,12 +4026,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "ab8607a1-41fd-423b-a3ea-96474c09eea9")
-	)
-	(junction
-		(at 139.7 124.46)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "bb716e32-edaf-4dc5-9119-213ca1d78e3d")
 	)
 	(junction
 		(at 167.64 92.71)
@@ -4104,12 +4092,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "fc95fb80-096b-42a7-b363-fef04044b290")
-	)
-	(junction
-		(at 127 120.65)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "fe1bf918-a1f4-425d-90cf-98d77faf289f")
 	)
 	(bus_entry
 		(at 15.24 110.49)
@@ -4506,16 +4488,6 @@
 	)
 	(wire
 		(pts
-			(xy 139.7 124.46) (xy 146.05 124.46)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "1823e135-bdd3-4006-a940-5c506e28213c")
-	)
-	(wire
-		(pts
 			(xy 203.2 87.63) (xy 208.28 87.63)
 		)
 		(stroke
@@ -4623,16 +4595,6 @@
 			(type default)
 		)
 		(uuid "2587bfe1-2b7d-4d66-8bb2-82a03b2c99e1")
-	)
-	(wire
-		(pts
-			(xy 139.7 127) (xy 139.7 124.46)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "26993fa5-f4a0-44fc-8284-271e46de23cf")
 	)
 	(wire
 		(pts
@@ -4753,6 +4715,16 @@
 			(type default)
 		)
 		(uuid "36c5f11f-a77e-4d50-a306-e66a67728092")
+	)
+	(wire
+		(pts
+			(xy 123.19 139.7) (xy 123.19 120.65)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "373e850b-5e3e-47ee-bcfb-1e3301f70d8a")
 	)
 	(wire
 		(pts
@@ -4926,7 +4898,7 @@
 	)
 	(wire
 		(pts
-			(xy 146.05 110.49) (xy 146.05 124.46)
+			(xy 146.05 110.49) (xy 146.05 127)
 		)
 		(stroke
 			(width 0)
@@ -5023,16 +4995,6 @@
 			(type default)
 		)
 		(uuid "6636dfc7-1005-4c3c-a739-3a690d2aafd0")
-	)
-	(wire
-		(pts
-			(xy 146.05 124.46) (xy 146.05 127)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "68c91072-5908-41bc-8508-9265b077f4e5")
 	)
 	(bus
 		(pts
@@ -5236,7 +5198,7 @@
 	)
 	(wire
 		(pts
-			(xy 123.19 120.65) (xy 127 120.65)
+			(xy 123.19 139.7) (xy 127 139.7)
 		)
 		(stroke
 			(width 0)
@@ -5306,7 +5268,7 @@
 	)
 	(wire
 		(pts
-			(xy 127 139.7) (xy 127 120.65)
+			(xy 127 139.7) (xy 127 127)
 		)
 		(stroke
 			(width 0)
@@ -5526,7 +5488,7 @@
 	)
 	(wire
 		(pts
-			(xy 139.7 113.03) (xy 139.7 124.46)
+			(xy 139.7 113.03) (xy 139.7 127)
 		)
 		(stroke
 			(width 0)
@@ -5853,6 +5815,16 @@
 			(type default)
 		)
 		(uuid "fbe35253-cd17-4a77-b12b-0f6b9b2d2a23")
+	)
+	(wire
+		(pts
+			(xy 127 119.38) (xy 127 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fda66e4e-f129-460d-af0c-5bcd1685ee80")
 	)
 	(wire
 		(pts
@@ -8937,7 +8909,7 @@
 	)
 	(symbol
 		(lib_id "#InvenTree:C_470p_0603")
-		(at 127 116.84 0)
+		(at 127 123.19 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -8948,7 +8920,7 @@
 		(fields_autoplaced yes)
 		(uuid "73f7ada6-60e6-452e-b6c3-c32dcbb5b937")
 		(property "Reference" "C32"
-			(at 130.81 115.5699 0)
+			(at 130.81 121.9199 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8959,7 +8931,7 @@
 			)
 		)
 		(property "Value" "470pF"
-			(at 130.81 118.1099 0)
+			(at 130.81 124.4599 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8970,7 +8942,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
-			(at 127.9652 120.65 0)
+			(at 127.9652 127 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8981,7 +8953,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 127 116.84 0)
+			(at 127 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8992,7 +8964,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 127 116.84 0)
+			(at 127 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9003,7 +8975,7 @@
 			)
 		)
 		(property "InvenTree" "253"
-			(at 127 116.84 0)
+			(at 127 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9014,7 +8986,7 @@
 			)
 		)
 		(property "Part URL" "https://inventree.ebnx.net/web/part/253/"
-			(at 127 116.84 0)
+			(at 127 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9025,7 +8997,7 @@
 			)
 		)
 		(property "InvenTree Part" "C_470p_0603"
-			(at 127 116.84 0)
+			(at 127 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
