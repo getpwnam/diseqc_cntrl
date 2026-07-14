@@ -10,13 +10,13 @@
 // UART3 //
 ///////////
 
-// pin configuration for UART3 (board_cubley.h uses PB10/PB11)
-// port for TX pin is: GPIOB
-// port for RX pin is: GPIOB
-// TX pin: is GPIOB_10
-// RX pin: is GPIOB_11
+// pin configuration for UART3 (board_cubley.h uses PD8/PD9)
+// port for TX pin is: GPIOD
+// port for RX pin is: GPIOD
+// TX pin: is GPIOD_8
+// RX pin: is GPIOD_9
 // GPIO alternate pin function is 7 (STM32F407 alternate function mapping)
-UART_CONFIG_PINS(3, GPIOB, GPIOB, 10, 11, 7)
+UART_CONFIG_PINS(3, GPIOD, GPIOD, 8, 9, 7)
 
 // initialization for UART3
 UART_INIT(3)

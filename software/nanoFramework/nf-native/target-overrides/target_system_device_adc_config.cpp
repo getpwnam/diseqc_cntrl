@@ -8,13 +8,8 @@
 const NF_PAL_ADC_PORT_PIN_CHANNEL AdcPortPinConfig[] = {
 
     // ADC1
-    {1, GPIOC, 1, ADC_CHANNEL_IN11},
-    {1, GPIOC, 2, ADC_CHANNEL_IN12},
-
-    // ADC2
-    {2, GPIOA, 6, ADC_CHANNEL_IN6},
-    {2, GPIOA, 7, ADC_CHANNEL_IN7},
-    {2, GPIOB, 0, ADC_CHANNEL_IN8},
+    {1, GPIOA, 4, ADC_CHANNEL_IN4},
+    {1, GPIOA, 5, ADC_CHANNEL_IN5},
 
     // these are the internal sources, available only at ADC1
     {1, NULL, 0, ADC_CHANNEL_SENSOR},

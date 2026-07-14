@@ -786,7 +786,8 @@
  */
 #define CH_CFG_SYSTEM_HALT_HOOK(reason)                                                                                \
     {                                                                                                                  \
-        /* System halt code here.*/                                                                                    \
+        extern void CubleySystemHaltHook(const char *reason);                                                          \
+        CubleySystemHaltHook((reason));                                                                                \
     }
 
 /**

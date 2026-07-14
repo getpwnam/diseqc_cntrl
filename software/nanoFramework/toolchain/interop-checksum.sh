@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PE_SLOT_GUARD_SCRIPT="$ROOT_DIR/toolchain/interop-pe-slot-guard.sh"
 
 MODE="check"
 ASSEMBLY_NAME="Cubley.Interop"
@@ -248,6 +249,10 @@ if [[ -f "$PE_PATH" ]]; then
     echo "  source: $CS_SUM" >&2
     echo "Run: ./toolchain/interop-checksum.sh --fix --assembly $ASSEMBLY_NAME --pe $PE_PATH" >&2
     exit 1
+  fi
+
+  if [[ -x "$PE_SLOT_GUARD_SCRIPT" ]]; then
+    "$PE_SLOT_GUARD_SCRIPT" "$PE_PATH"
   fi
 fi
 

@@ -5,36 +5,14 @@
 
 #include <sys_dev_spi_native_target.h>
 
-//////////
-// SPI1 //
-//////////
-
-// pin configuration for SPI1
-// port for SCK pin is: SPI1_SCLK
-// port for MISO pin is: SPI1_MISO
-// port for MOSI pin is: SPI1_MOSI
+// Hardware v0.5 repurposes previous SPI lines to RMII and ADC.
+// Keep stubs so target builds remain deterministic while SPI stays disabled.
 void ConfigPins_SPI1(const SPI_DEVICE_CONFIGURATION& spiDeviceConfig)
 {
-	(void)spiDeviceConfig;
-
-	palSetLineMode(PAL_LINE(GPIOA, 5U), PAL_MODE_ALTERNATE(5));
-	palSetLineMode(PAL_LINE(GPIOA, 6U), PAL_MODE_ALTERNATE(5));
-	palSetLineMode(PAL_LINE(GPIOA, 7U), PAL_MODE_ALTERNATE(5));
+    (void)spiDeviceConfig;
 }
 
-//////////
-// SPI2 //
-//////////
-
-// pin configuration for SPI2
-// port for SCK pin is: SPI2_SCLK
-// port for MISO pin is: SPI2_MISO
-// port for MOSI pin is: SPI2_MOSI
 void ConfigPins_SPI2(const SPI_DEVICE_CONFIGURATION& spiDeviceConfig)
 {
-	(void)spiDeviceConfig;
-
-	palSetLineMode(PAL_LINE(GPIOB, 13U), PAL_MODE_ALTERNATE(5));
-	palSetLineMode(PAL_LINE(GPIOB, 14U), PAL_MODE_ALTERNATE(5));
-	palSetLineMode(PAL_LINE(GPIOB, 15U), PAL_MODE_ALTERNATE(5));
+    (void)spiDeviceConfig;
 }

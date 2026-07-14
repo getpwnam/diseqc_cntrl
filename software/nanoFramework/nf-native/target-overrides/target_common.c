@@ -13,11 +13,11 @@
 #endif
 
 // Board-specific system config.
-// Wire protocol debug channel is mapped to COM3 (USART3 -> PB10/PB11).
+// Wire protocol debug channel is mapped to COM3 (USART3 -> PD8/PD9).
 HAL_SYSTEM_CONFIG HalSystemConfig = {
     {true}, // HAL_DRIVER_CONFIG_HEADER Header
 
-    ConvertCOM_DebugHandle(3), // COM3 (USART3 on PB10/PB11)
+    ConvertCOM_DebugHandle(3), // COM3 (USART3 on PD8/PD9)
     0,      // Messaging channel disabled
     115200, // Wire protocol serial bitrate
     0,      // STDIO channel disabled

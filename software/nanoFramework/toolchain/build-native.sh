@@ -253,52 +253,50 @@ IS_CUBLEY_BASE="FALSE"
 
 case "$BUILD_PROFILE" in
     cubley-base)
-        # Minimal first-time bring-up profile:
-        # - derive target from ST_STM32F4_DISCOVERY files
-        # - force wire protocol on UART3 (PB10/PB11, 115200 8N1)
-        # - disable Cubley native interop/features entirely
-        TARGET_NAME="M0DMF_CUBLEY_V0_4"
-        LOCAL_TARGET_OVERRIDES_SUBDIR="target-overrides-cubley-base"
-        FORCE_REFERENCE_BOARD="ST_STM32F4_DISCOVERY"
-        NF_INTEROP_ASSEMBLIES_ARG=""
-        ENABLE_CUBLEY_STACK="FALSE"
+        # Primary Cubley profile on the F407 board definition.
+        TARGET_NAME="M0DMF_CUBLEY_F407"
+        LOCAL_TARGET_OVERRIDES_SUBDIR="target-overrides"
+        FORCE_REFERENCE_BOARD=""
+        NF_INTEROP_ASSEMBLIES_ARG="Cubley_Interop"
+        ENABLE_CUBLEY_STACK="TRUE"
         ENABLE_CLRSTARTUP_PATCHES="FALSE"
         IS_CUBLEY_BASE="TRUE"
 
         ENABLE_API_GPIO="ON"
-        ENABLE_API_I2C="OFF"
+        ENABLE_API_I2C="ON"
         ENABLE_API_SPI="OFF"
-        ENABLE_SYSTEM_NET="OFF"
-        ENABLE_CONFIG_BLOCK="OFF"
-        ENABLE_SNTP="OFF"
+        ENABLE_SYSTEM_NET="ON"
+        ENABLE_CONFIG_BLOCK="ON"
+        ENABLE_SNTP="ON"
         ENABLE_MBEDTLS="OFF"
-        ENABLE_HAL_MAC="FALSE"
-        ENABLE_STM32_MAC_ETH="FALSE"
+        ENABLE_HAL_MAC="TRUE"
+        ENABLE_STM32_MAC_ETH="TRUE"
         ENABLE_OTG1="FALSE"
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="FALSE"
         ENABLE_HAL_SERIAL_USB="FALSE"
         ENABLE_BRINGUP_SMOKE="FALSE"
         ENABLE_BRINGUP_HARDALIVE="FALSE"
-        ENABLE_FEATURE_RTC="OFF"
-        ENABLE_HAL_RTC="FALSE"
-        ENABLE_HSI_PLL="1"
-        HAL_GPT_SETTING="FALSE"
-        HAL_PWM_SETTING="FALSE"
+        ENABLE_FEATURE_RTC="ON"
+        ENABLE_HAL_RTC="TRUE"
+        ENABLE_HSI_PLL="0"
+        HAL_GPT_SETTING="TRUE"
+        HAL_PWM_SETTING="TRUE"
         HAL_SPI_SETTING="FALSE"
-        PROFILE_STATUS="bringup"
-        PROFILE_NOTE="Cubley base profile for hardware rev v0.4: UART3 wire protocol bring-up target derived from ST_STM32F4_DISCOVERY"
+        PROFILE_STATUS="stable"
+        PROFILE_NOTE="Primary Cubley base profile (STM32 MAC + lwIP network path on M0DMF_CUBLEY_F407 using HSE+PLL)"
+        STATIC_AUDIT="${NF_STATIC_AUDIT:-1}"
         ;;
     cubley-stable|cubley-oldstable)
         ENABLE_API_GPIO="ON"
         ENABLE_API_I2C="ON"
-        ENABLE_API_SPI="ON"
-        ENABLE_SYSTEM_NET="OFF"
+        ENABLE_API_SPI="OFF"
+        ENABLE_SYSTEM_NET="ON"
         ENABLE_CONFIG_BLOCK="ON"
-        ENABLE_SNTP="OFF"
+        ENABLE_SNTP="ON"
         ENABLE_MBEDTLS="OFF"
-        ENABLE_HAL_MAC="FALSE"
-        ENABLE_STM32_MAC_ETH="FALSE"
+        ENABLE_HAL_MAC="TRUE"
+        ENABLE_STM32_MAC_ETH="TRUE"
         ENABLE_OTG1="FALSE"
         ENABLE_OTG2="FALSE"
         ENABLE_HAL_USB="FALSE"
@@ -308,11 +306,12 @@ case "$BUILD_PROFILE" in
         ENABLE_FEATURE_RTC="ON"
         ENABLE_HAL_RTC="TRUE"
         ENABLE_HSI_PLL="1"
+        HAL_SPI_SETTING="FALSE"
         # Keep mailbox words contract-clean for Phase C smoke gates.
         # CLR startup pointer breadcrumbs use non-0xD5 words and interfere with strict status decoding.
         ENABLE_CLRSTARTUP_PATCHES="FALSE"
         PROFILE_STATUS="stable"
-        PROFILE_NOTE="Default Cubley stable profile (non-network)"
+        PROFILE_NOTE="Default Cubley stable profile (STM32 MAC + lwIP network path)"
         # Static-target enforcement: all target files must be locally owned;
         # no reference-board fallback allowed in the stable profile.
         STATIC_AUDIT="${NF_STATIC_AUDIT:-1}"
@@ -502,6 +501,16 @@ case "$BUILD_PROFILE" in
         ;;
 esac
 
+# Optional bring-up override to isolate UART wire protocol without touching
+# the selected board/target profile.
+if [ "${NF_DISABLE_MAC:-0}" = "1" ]; then
+    ENABLE_HAL_MAC="FALSE"
+    ENABLE_STM32_MAC_ETH="FALSE"
+    ENABLE_SYSTEM_NET="OFF"
+    ENABLE_SNTP="OFF"
+    PROFILE_NOTE="$PROFILE_NOTE + MAC disabled via NF_DISABLE_MAC=1"
+fi
+
 # Safety gate: by default, only cubley-base is allowed.
 # Any other profile requires explicit user intent.
 if [ "$MODE" != "list" ] && [ "$IS_CUBLEY_BASE" != "TRUE" ] && [ "${NF_ALLOW_REFERENCE_PROFILE:-0}" != "1" ]; then
@@ -574,6 +583,35 @@ else
 
     CURRENT_REF="$(git rev-parse --short HEAD)"
     echo -e "${YELLOW}Using nf-interpreter ref: $NF_INTERPRETER_REF ($CURRENT_REF)${NC}"
+
+    # Ensure ChibiOS lwIP thread has default SNTP server macros when System.Net is enabled.
+    LWIP_THREAD_C="$NF_INTERPRETER_DIR/targets/ChibiOS/_lwIP/nf_lwipthread.c"
+    if [ -f "$LWIP_THREAD_C" ]; then
+        python3 - "$LWIP_THREAD_C" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = "// CUBLEY_SNTP_DEFAULTS"
+
+if marker not in text:
+    anchor = "#include <lwip/apps/sntp.h>\n"
+    block = (
+        "#include <lwip/apps/sntp.h>\n\n"
+        "// CUBLEY_SNTP_DEFAULTS\n"
+        "#ifndef SNTP_SERVER0_DEFAULT_ADDRESS\n"
+        "#define SNTP_SERVER0_DEFAULT_ADDRESS \"0.pool.ntp.org\"\n"
+        "#endif\n"
+        "#ifndef SNTP_SERVER1_DEFAULT_ADDRESS\n"
+        "#define SNTP_SERVER1_DEFAULT_ADDRESS \"1.pool.ntp.org\"\n"
+        "#endif\n"
+    )
+    if anchor in text:
+        text = text.replace(anchor, block, 1)
+        path.write_text(text)
+PY
+    fi
 fi
 
 # Keep the generated nanoCLR target header globally visible for CLR support
@@ -1161,8 +1199,7 @@ cat > "$NF_INTERPRETER_DIR/CMake/Modules/FindINTEROP-Cubley_Interop.cmake" << EO
 set(Cubley_Interop_INCLUDE_DIRS "${TARGET_DIR}/nanoCLR")
 set(Cubley_Interop_SOURCES
     "${TARGET_DIR}/nanoCLR/cubley_interop.cpp"
-    "${TARGET_DIR}/nanoCLR/lnbh26_interop.cpp"
-    "${TARGET_DIR}/nanoCLR/w5500_interop.cpp")
+    "${TARGET_DIR}/nanoCLR/lnbh26_interop.cpp")
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(INTEROP-Cubley_Interop DEFAULT_MSG Cubley_Interop_INCLUDE_DIRS Cubley_Interop_SOURCES)
@@ -1404,67 +1441,6 @@ fi
 # Apply board-specific peripheral usage overrides
 for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/nanoBooter/mcuconf.h"; do
     if [ -f "$mcu" ]; then
-        if [ "$IS_CUBLEY_BASE" = "TRUE" ]; then
-            cat >> "$mcu" << 'EOF_MCU_OVERRIDES'
-
-/*
- * Firstboot UART3-only profile: keep only USART3 SERIAL enabled.
- * All other board peripherals are intentionally disabled.
- * USART3 uses PB10/PB11 and is initialized directly in nanoCLR/main.c.
- */
-
-#if defined(STM32_SERIAL_USE_USART1)
-#undef STM32_SERIAL_USE_USART1
-#define STM32_SERIAL_USE_USART1             FALSE
-#endif
-#if defined(STM32_SERIAL_USE_USART2)
-#undef STM32_SERIAL_USE_USART2
-#define STM32_SERIAL_USE_USART2             FALSE
-#endif
-#if defined(STM32_SERIAL_USE_USART3)
-#undef STM32_SERIAL_USE_USART3
-#define STM32_SERIAL_USE_USART3             TRUE
-#endif
-#if defined(STM32_SERIAL_USE_UART4)
-#undef STM32_SERIAL_USE_UART4
-#define STM32_SERIAL_USE_UART4              FALSE
-#endif
-#if defined(STM32_SERIAL_USE_UART5)
-#undef STM32_SERIAL_USE_UART5
-#define STM32_SERIAL_USE_UART5              FALSE
-#endif
-#if defined(STM32_SERIAL_USE_USART6)
-#undef STM32_SERIAL_USE_USART6
-#define STM32_SERIAL_USE_USART6             FALSE
-#endif
-
-#if defined(STM32_I2C_USE_I2C1)
-#undef STM32_I2C_USE_I2C1
-#define STM32_I2C_USE_I2C1                  FALSE
-#endif
-#if defined(STM32_I2C_USE_I2C2)
-#undef STM32_I2C_USE_I2C2
-#define STM32_I2C_USE_I2C2                  FALSE
-#endif
-#if defined(STM32_I2C_USE_I2C3)
-#undef STM32_I2C_USE_I2C3
-#define STM32_I2C_USE_I2C3                  FALSE
-#endif
-
-#if defined(STM32_SPI_USE_SPI1)
-#undef STM32_SPI_USE_SPI1
-#define STM32_SPI_USE_SPI1                  FALSE
-#endif
-#if defined(STM32_SPI_USE_SPI2)
-#undef STM32_SPI_USE_SPI2
-#define STM32_SPI_USE_SPI2                  FALSE
-#endif
-#if defined(STM32_SPI_USE_SPI3)
-#undef STM32_SPI_USE_SPI3
-#define STM32_SPI_USE_SPI3                  FALSE
-#endif
-EOF_MCU_OVERRIDES
-        else
         cat >> "$mcu" << 'EOF_MCU_OVERRIDES'
 
 #undef STM32_PWM_USE_TIM1
@@ -1490,7 +1466,6 @@ EOF_MCU_OVERRIDES
 #undef STM32_SERIAL_USE_USART3
 #define STM32_SERIAL_USE_USART3             TRUE
 EOF_MCU_OVERRIDES
-    fi
 
     cat >> "$mcu" << EOF_MCU_PROFILE_OVERRIDES
 
@@ -1779,6 +1754,7 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
         USB_HAL_SETTING="$ENABLE_HAL_USB"
         SERIAL_USB_HAL_SETTING="$ENABLE_HAL_SERIAL_USB"
         WIRE_PROTOCOL_USB_SETTING="$ENABLE_WIRE_PROTOCOL_USB"
+        HAL_MAC_SETTING="$ENABLE_HAL_MAC"
         if [[ "$cfg" == *"/nanoBooter/"* ]]; then
             RTC_HAL_SETTING="FALSE"
             # nanoBooter never uses USB - it just chains into nanoCLR via SWD/ST-Link
@@ -1787,6 +1763,9 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
             USB_HAL_SETTING="FALSE"
             SERIAL_USB_HAL_SETTING="FALSE"
             WIRE_PROTOCOL_USB_SETTING="FALSE"
+            # Keep nanoBooter independent from Ethernet PHY init; it should just
+            # start clocks/peripherals needed to jump into nanoCLR.
+            HAL_MAC_SETTING="FALSE"
         fi
 
         # ChibiOS 9.x requires these markers in halconf.h.
@@ -1816,7 +1795,7 @@ for cfg in "$TARGET_DIR/nanoCLR/halconf.h" "$TARGET_DIR/nanoBooter/halconf.h"; d
 #undef HAL_USE_RTC
 #define HAL_USE_RTC                         ${RTC_HAL_SETTING}
 #undef HAL_USE_MAC
-#define HAL_USE_MAC                         ${ENABLE_HAL_MAC}
+#define HAL_USE_MAC                         ${HAL_MAC_SETTING}
 #undef HAL_USE_WDG
 #define HAL_USE_WDG                         FALSE
 
@@ -1837,10 +1816,12 @@ for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/
     if [ -f "$mcu" ]; then
         OTG1_SETTING="$ENABLE_OTG1"
         OTG2_SETTING="$ENABLE_OTG2"
+        STM32_MAC_ETH_SETTING="$ENABLE_STM32_MAC_ETH"
         if [[ "$mcu" == *"/nanoBooter/"* ]]; then
             # nanoBooter has no USB stack; keep OTG drivers out of its build.
             OTG1_SETTING="FALSE"
             OTG2_SETTING="FALSE"
+            STM32_MAC_ETH_SETTING="FALSE"
         fi
 
         cat >> "$mcu" << EOF_MCU_USB_OVERRIDES
@@ -1849,6 +1830,8 @@ for mcu in "$TARGET_DIR/mcuconf.h" "$TARGET_DIR/nanoCLR/mcuconf.h" "$TARGET_DIR/
 #define STM32_USB_USE_OTG1                  ${OTG1_SETTING}
 #undef STM32_USB_USE_OTG2
 #define STM32_USB_USE_OTG2                  ${OTG2_SETTING}
+#undef STM32_MAC_USE_ETH
+#define STM32_MAC_USE_ETH                   ${STM32_MAC_ETH_SETTING}
 EOF_MCU_USB_OVERRIDES
 
         if [ "${ENABLE_HSI_PLL}" = "1" ]; then

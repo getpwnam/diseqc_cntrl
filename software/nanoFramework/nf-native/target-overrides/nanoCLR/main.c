@@ -23,6 +23,12 @@ extern volatile uint32_t g_cubley_diag_current_status;
 extern volatile uint32_t g_cubley_diag_last_error;
 extern volatile uint32_t g_cubley_diag_clr_status;
 volatile uint32_t g_startup_trace;
+volatile uint32_t g_cubley_diag_mac_probe0;
+volatile uint32_t g_cubley_diag_mac_probe1;
+volatile uint32_t g_cubley_diag_mac_probe2;
+volatile uint32_t g_cubley_diag_mac_probe3;
+volatile uint32_t g_cubley_diag_mac_probe4;
+volatile uint32_t g_cubley_diag_mac_probe5;
 
 #if !defined(CUBLEY_WIRE_PROTOCOL_USB)
 #define CUBLEY_WIRE_PROTOCOL_USB HAL_USE_SERIAL_USB
@@ -45,7 +51,7 @@ static inline void SetStartupDiag(uint8_t stage, uint8_t result, uint8_t detail)
 
 static inline void SetStartupErr(uint8_t op, uint8_t code, uint8_t detail)
 {
-    // 0xE2 marks CLR startup diagnostics (distinct from W5500 0xE1 path).
+    // 0xE2 marks CLR startup diagnostics.
     g_cubley_diag_last_error = ((uint32_t)0xE2 << 24) | ((uint32_t)op << 16) | ((uint32_t)code << 8) | (uint32_t)detail;
 }
 
@@ -53,6 +59,170 @@ static inline void SetStartupTrace(uint8_t stage, uint8_t detail)
 {
     // Independent startup breadcrumb: 0xA7SS00DD.
     g_startup_trace = ((uint32_t)0xA7 << 24) | ((uint32_t)stage << 16) | (uint32_t)detail;
+}
+
+static uint8_t HaltReasonCode(const char *reason)
+{
+    if (reason == NULL)
+    {
+        return 0x7F;
+    }
+
+    // ChibiOS MACv2 reports PHY autodetect timeout as "MAC failure".
+    if ((reason[0] == 'M') && (reason[1] == 'A') && (reason[2] == 'C') && (reason[3] == ' '))
+    {
+        return 0x31;
+    }
+
+    if ((reason[0] == 'D') && (reason[1] == 'M') && (reason[2] == 'A') && (reason[3] == ' '))
+    {
+        return 0x21;
+    }
+
+    return 0x7E;
+}
+
+static void CaptureMacFailureContext(void)
+{
+    enum
+    {
+        kPhyId1Reg = 2,
+        kPhyId2Reg = 3
+    };
+
+    // probe0: [31:24]=0xB1 tag, [23:16]=decoded PHY address, [15:0]=last MII data low bits.
+    // probe1: raw MII control register at failure (helps identify busy/op/address state).
+    uint8_t phyAddr = 0xFF;
+    uint32_t miiControl = 0;
+    uint32_t miiData = 0;
+    uint8_t firstAddr = 0xFF;
+    uint16_t firstId1 = 0;
+    uint16_t firstId2 = 0;
+    uint8_t firstAllZeroAddr = 0xFF;
+    uint8_t firstAllFFFFAddr = 0xFF;
+    uint8_t allZeroCount = 0;
+    uint8_t allFFFFCount = 0;
+
+#if defined(ETH_MACMDIOAR_MB)
+    extern MACDriver ETHD1;
+    phyAddr = (uint8_t)((ETHD1.phyaddr >> ETH_MACMDIOAR_PA_Pos) & 0x1Fu);
+    miiControl = ETH->MACMDIOAR;
+    miiData = ETH->MACMDIODR;
+
+    for (uint8_t i = 0; i <= 31u; i++)
+    {
+        uint32_t id1;
+        uint32_t id2;
+
+        ETHD1.phyaddr = ((uint32_t)i << ETH_MACMDIOAR_PA_Pos);
+        id1 = mii_read(&ETHD1, kPhyId1Reg);
+        id2 = mii_read(&ETHD1, kPhyId2Reg);
+
+        if (((id1 & 0xFFFFu) == 0u) && ((id2 & 0xFFFFu) == 0u))
+        {
+            if (firstAllZeroAddr == 0xFFu)
+            {
+                firstAllZeroAddr = i;
+            }
+            if (allZeroCount < 0xFFu)
+            {
+                allZeroCount++;
+            }
+        }
+
+        if (((id1 & 0xFFFFu) == 0xFFFFu) && ((id2 & 0xFFFFu) == 0xFFFFu))
+        {
+            if (firstAllFFFFAddr == 0xFFu)
+            {
+                firstAllFFFFAddr = i;
+            }
+            if (allFFFFCount < 0xFFu)
+            {
+                allFFFFCount++;
+            }
+        }
+
+        if (((id1 & 0xFFFFu) != 0u && (id1 & 0xFFFFu) != 0xFFFFu) ||
+            ((id2 & 0xFFFFu) != 0u && (id2 & 0xFFFFu) != 0xFFFFu))
+        {
+            firstAddr = i;
+            firstId1 = (uint16_t)(id1 & 0xFFFFu);
+            firstId2 = (uint16_t)(id2 & 0xFFFFu);
+            break;
+        }
+    }
+#elif defined(ETH_MACMIIAR_MB)
+    extern MACDriver ETHD1;
+    phyAddr = (uint8_t)((ETHD1.phyaddr >> 11u) & 0x1Fu);
+    miiControl = ETH->MACMIIAR;
+    miiData = ETH->MACMIIDR;
+
+    for (uint8_t i = 0; i <= 31u; i++)
+    {
+        uint32_t id1;
+        uint32_t id2;
+
+        ETHD1.phyaddr = ((uint32_t)i << 11u);
+        id1 = mii_read(&ETHD1, kPhyId1Reg);
+        id2 = mii_read(&ETHD1, kPhyId2Reg);
+
+        if (((id1 & 0xFFFFu) == 0u) && ((id2 & 0xFFFFu) == 0u))
+        {
+            if (firstAllZeroAddr == 0xFFu)
+            {
+                firstAllZeroAddr = i;
+            }
+            if (allZeroCount < 0xFFu)
+            {
+                allZeroCount++;
+            }
+        }
+
+        if (((id1 & 0xFFFFu) == 0xFFFFu) && ((id2 & 0xFFFFu) == 0xFFFFu))
+        {
+            if (firstAllFFFFAddr == 0xFFu)
+            {
+                firstAllFFFFAddr = i;
+            }
+            if (allFFFFCount < 0xFFu)
+            {
+                allFFFFCount++;
+            }
+        }
+
+        if (((id1 & 0xFFFFu) != 0u && (id1 & 0xFFFFu) != 0xFFFFu) ||
+            ((id2 & 0xFFFFu) != 0u && (id2 & 0xFFFFu) != 0xFFFFu))
+        {
+            firstAddr = i;
+            firstId1 = (uint16_t)(id1 & 0xFFFFu);
+            firstId2 = (uint16_t)(id2 & 0xFFFFu);
+            break;
+        }
+    }
+#endif
+
+    g_cubley_diag_mac_probe0 = ((uint32_t)0xB1 << 24) | ((uint32_t)phyAddr << 16) | (miiData & 0xFFFFu);
+    g_cubley_diag_mac_probe1 = miiControl;
+    g_cubley_diag_mac_probe2 = ((uint32_t)0xB2 << 24) | ((uint32_t)firstAddr << 16) | (uint32_t)firstId1;
+    g_cubley_diag_mac_probe3 = ((uint32_t)0xB3 << 24) | ((uint32_t)firstAddr << 16) | (uint32_t)firstId2;
+    g_cubley_diag_mac_probe4 = ((uint32_t)0xB4 << 24) | ((uint32_t)firstAllZeroAddr << 16) |
+                               ((uint32_t)allZeroCount << 8) | (uint32_t)allFFFFCount;
+    g_cubley_diag_mac_probe5 = ((uint32_t)0xB5 << 24) | ((uint32_t)firstAllFFFFAddr << 16);
+}
+
+void CubleySystemHaltHook(const char *reason)
+{
+    const uint8_t reasonCode = HaltReasonCode(reason);
+
+    if (reasonCode == 0x31)
+    {
+        CaptureMacFailureContext();
+    }
+
+    // 0xE0 stage marks fatal pre-scheduler halts (for example MAC/PHY bring-up).
+    SetStartupTrace(0xE0, reasonCode);
+    SetStartupDiag(0xE0, 0xEE, reasonCode);
+    SetStartupErr(0xE0, 0xEE, reasonCode);
 }
 
 static void ReceiverThreadProbe(void const *arg)
@@ -119,80 +289,21 @@ static THD_FUNCTION(UsbCdcInitThread, arg)
 }
 #endif
 
-#if defined(CUBLEY_W5500_EARLY_INIT) && (CUBLEY_W5500_EARLY_INIT == TRUE)
-extern int cubley_w5500_early_init(void);
-extern volatile uint32_t g_cubley_diag_current_status;
-
-/*
- * Helper thread that performs the W5500 hardware bring-up once the
- * ChibiOS scheduler is running.
- *
- * w5500_hw_init() uses chThdSleepMilliseconds() heavily (PHY reset
- * settling, OPMD/OPMDC re-assert windows, RST self-clear poll). Those
- * sleeps deadlock or no-op when called before osKernelStart() because
- * SysTick is not yet armed in this nanoFramework port - the same
- * pre-kernel timing pitfall that affects USB. Running the bring-up
- * after kernel start makes every chThdSleepMilliseconds actually
- * sleep, so the W5500's ~3 ms internal PHY reset window is honoured.
- */
-static THD_WORKING_AREA(waW5500InitThread, 1024);
-static THD_FUNCTION(W5500InitThread, arg) {
-    (void)arg;
-    chRegSetThreadName("W5500Init");
-
-    int earlyInitStatus = cubley_w5500_early_init();
-
-    if (earlyInitStatus == 0)
-    {
-        g_cubley_diag_current_status =
-            ((uint32_t)0xD5 << 24) | ((uint32_t)0x90 << 16) | ((uint32_t)1 << 8);
-    }
-    else
-    {
-        g_cubley_diag_current_status =
-            ((uint32_t)0xD5 << 24) | ((uint32_t)0x90 << 16) |
-            ((uint32_t)14 << 8) | ((uint32_t)earlyInitStatus & 0xFFU);
-    }
-
-    /*
-     * Heartbeat on PA2 (LED_STATUS) so the user can tell at a glance
-     * whether firmware is alive and whether early-init passed:
-     *   - PASS: short blip every second.
-     *   - FAIL: double-blink every second.
-     */
-    const bool pass = (earlyInitStatus == 0);
-    while (true)
-    {
-        palSetLine(PAL_LINE(GPIOA, 2U));
-        chThdSleepMilliseconds(60);
-        palClearLine(PAL_LINE(GPIOA, 2U));
-        if (!pass)
-        {
-            chThdSleepMilliseconds(120);
-            palSetLine(PAL_LINE(GPIOA, 2U));
-            chThdSleepMilliseconds(60);
-            palClearLine(PAL_LINE(GPIOA, 2U));
-        }
-        chThdSleepMilliseconds(900);
-    }
-}
-#endif
-
 #if (CUBLEY_WIRE_PROTOCOL_USB != TRUE)
-static void __attribute__((unused)) ForceUsart3PinsOnPb10Pb11(void)
+static void __attribute__((unused)) ForceUsart3PinsOnPd8Pd9(void)
 {
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
     (void)RCC->AHB1ENR;
 
-    GPIOB->MODER &= ~((3u << (10u * 2u)) | (3u << (11u * 2u)));
-    GPIOB->MODER |= ((2u << (10u * 2u)) | (2u << (11u * 2u)));
+    GPIOD->MODER &= ~((3u << (8u * 2u)) | (3u << (9u * 2u)));
+    GPIOD->MODER |= ((2u << (8u * 2u)) | (2u << (9u * 2u)));
 
-    GPIOB->OTYPER &= ~((1u << 10u) | (1u << 11u));
-    GPIOB->OSPEEDR |= ((3u << (10u * 2u)) | (3u << (11u * 2u)));
-    GPIOB->PUPDR &= ~((3u << (10u * 2u)) | (3u << (11u * 2u)));
+    GPIOD->OTYPER &= ~((1u << 8u) | (1u << 9u));
+    GPIOD->OSPEEDR |= ((3u << (8u * 2u)) | (3u << (9u * 2u)));
+    GPIOD->PUPDR &= ~((3u << (8u * 2u)) | (3u << (9u * 2u)));
 
-    GPIOB->AFRH &= ~((0xFu << ((10u - 8u) * 4u)) | (0xFu << ((11u - 8u) * 4u)));
-    GPIOB->AFRH |= ((7u << ((10u - 8u) * 4u)) | (7u << ((11u - 8u) * 4u)));
+    GPIOD->AFRH &= ~((0xFu << ((8u - 8u) * 4u)) | (0xFu << ((9u - 8u) * 4u)));
+    GPIOD->AFRH |= ((7u << ((8u - 8u) * 4u)) | (7u << ((9u - 8u) * 4u)));
 }
 #endif
 
@@ -203,7 +314,19 @@ int main(void)
     SetStartupErr(0xC0, 0, 1);
     SetStartupDiag(0xC0, 2, (CUBLEY_USB_CDC_ACTIVE ? 1 : 0));  // Diagnostic: is USB_CDC active?
 
+#if (HAL_USE_MAC == TRUE)
+    SetStartupTrace(0xC0, 0xA1);
+    SetStartupDiag(0xC0, 2, 0xA1); // MAC path enabled in this image.
+#else
+    SetStartupTrace(0xC0, 0xA0);
+    SetStartupDiag(0xC0, 2, 0xA0); // MAC path disabled in this image.
+#endif
+
+    SetStartupTrace(0xC1, 0x10);
+    SetStartupDiag(0xC1, 1, 0x10); // halInit entering.
     halInit();
+    SetStartupTrace(0xC1, 0x11);
+    SetStartupDiag(0xC1, 1, 0x11); // halInit returned.
 
     InitBootClipboard();
     SetStartupDiag(0xC1, 0, 1);
@@ -232,30 +355,15 @@ int main(void)
         0
     };
 
-    palSetLineMode(PAL_LINE(GPIOB, 10U), PAL_MODE_ALTERNATE(7));
-    palSetLineMode(PAL_LINE(GPIOB, 11U), PAL_MODE_ALTERNATE(7));
-    ForceUsart3PinsOnPb10Pb11();
+    palSetLineMode(PAL_LINE(GPIOD, 8U), PAL_MODE_ALTERNATE(7));
+    palSetLineMode(PAL_LINE(GPIOD, 9U), PAL_MODE_ALTERNATE(7));
+    ForceUsart3PinsOnPd8Pd9();
 
     sdStart(&SD3, &usart3_cfg);
 #endif
 
     SetStartupDiag(0xC4, 0, 1);
     SetStartupErr(0xC4, 0, 1);
-
-#if defined(CUBLEY_W5500_EARLY_INIT) && (CUBLEY_W5500_EARLY_INIT == TRUE)
-    /*
-     * Configure PA2 as a heartbeat output. The actual W5500 hardware
-     * bring-up runs on W5500InitThread once the kernel is up, so that
-     * its chThdSleepMilliseconds() calls actually sleep.
-     */
-    palSetLineMode(PAL_LINE(GPIOA, 2U), PAL_MODE_OUTPUT_PUSHPULL);
-    palClearLine(PAL_LINE(GPIOA, 2U));
-#endif
-
-#if defined(CUBLEY_W5500_EARLY_INIT) && (CUBLEY_W5500_EARLY_INIT == TRUE)
-    chThdCreateStatic(waW5500InitThread, sizeof(waW5500InitThread),
-                      NORMALPRIO + 1, W5500InitThread, NULL);
-#endif
 
 #if (CUBLEY_USB_CDC_ACTIVE == TRUE)
     chThdCreateStatic(waUsbCdcInitThread, sizeof(waUsbCdcInitThread),

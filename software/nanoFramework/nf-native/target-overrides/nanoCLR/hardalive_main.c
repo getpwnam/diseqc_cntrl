@@ -1,8 +1,8 @@
 // Hardalive nanoCLR entry point: bare-metal GPIO test using raw CPU delay.
 // Uses systick timer loops instead of ChibiOS thread sleep.
-// PA2 (LED) heartbeats every ~500 ms.
-// PB10/PB11 toggle synchronously with PA2 (reference signals for scope correlation).
-// PC6 toggles every ~2 seconds (one edge per 2 sec cycle, slow to verify pull-down capability).
+// PB0 (LED) heartbeats every ~500 ms.
+// PD8/PD9 toggle synchronously with PB0 (reference signals for scope correlation).
+// PD14 toggles every ~2 seconds (one edge per 2 sec cycle).
 
 #include <ch.h>
 #include <hal.h>
@@ -27,20 +27,20 @@ int main(void)
     // Initialize HAL but do NOT start RTOS scheduler
     halInit();
 
-    const ioline_t led = PAL_LINE(GPIOA, 2U);
-    const ioline_t ref_tx = PAL_LINE(GPIOB, 10U);
-    const ioline_t ref_rx = PAL_LINE(GPIOB, 11U);
-    const ioline_t w5500_rst = PAL_LINE(GPIOC, 6U);
+    const ioline_t led = PAL_LINE(GPIOB, 0U);
+    const ioline_t ref_tx = PAL_LINE(GPIOD, 8U);
+    const ioline_t ref_rx = PAL_LINE(GPIOD, 9U);
+    const ioline_t slow_probe = PAL_LINE(GPIOD, 14U);
 
     palSetLineMode(led, PAL_MODE_OUTPUT_PUSHPULL);
     palSetLineMode(ref_tx, PAL_MODE_OUTPUT_PUSHPULL);
     palSetLineMode(ref_rx, PAL_MODE_OUTPUT_PUSHPULL);
-    palSetLineMode(w5500_rst, PAL_MODE_OUTPUT_PUSHPULL);
+    palSetLineMode(slow_probe, PAL_MODE_OUTPUT_PUSHPULL);
 
     palClearLine(led);
     palClearLine(ref_tx);
     palClearLine(ref_rx);
-    palSetLine(w5500_rst);
+    palClearLine(slow_probe);
 
     bool heartbeat = false;
     uint32_t ticks = 0;
@@ -62,10 +62,10 @@ int main(void)
             palClearLine(ref_rx);
         }
 
-        // Toggle PC6 slowly: one transition every 2 seconds (500 ms loop * 4).
+        // Toggle slowly: one transition every 2 seconds (500 ms loop * 4).
         if ((ticks % 4U) == 0U)
         {
-            palToggleLine(w5500_rst);
+            palToggleLine(slow_probe);
         }
 
         ticks++;

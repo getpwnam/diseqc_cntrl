@@ -98,9 +98,8 @@ extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_Cubley_Interop =
     { 1, 0, 0, 0 }
 };
 
-// StatusLed native implementations (PA2 register-level control)
-// PA2 is the LED_STATUS pin. GPIOA clock is enabled in boardInit().
-// MODER bits [5:4] control PA2 mode, ODR bit 2 controls output level.
+// StatusLed native implementations (PB0).
+// PB0 is the LED_STATUS pin. GPIOB clock is enabled in boardInit().
 
 HRESULT Library_cubley_interop_StatusLed_NativeInit___STATIC__VOID(CLR_RT_StackFrame& stack)
 {
@@ -110,9 +109,9 @@ HRESULT Library_cubley_interop_StatusLed_NativeInit___STATIC__VOID(CLR_RT_StackF
     // Beacon: entering NativeInit
     g_cubley_diag_current_status = 0xD5ED0001u;
 
-    // Initialize PA2 as output (done in boardInit() but we reinit here for safety)
-    palSetPadMode(GPIOA, 2, PAL_MODE_OUTPUT_PUSHPULL);
-    palClearPad(GPIOA, 2);  // Start with LED OFF
+    // Initialize PB0 as output (done in boardInit() but we reinit here for safety)
+    palSetPadMode(GPIOB, 0, PAL_MODE_OUTPUT_PUSHPULL);
+    palClearPad(GPIOB, 0);  // Start with LED OFF
     
     // Beacon: initialization complete
     g_cubley_diag_current_status = 0xD5ED0003u;
@@ -128,8 +127,8 @@ HRESULT Library_cubley_interop_StatusLed_NativeSetHigh___STATIC__VOID(CLR_RT_Sta
     // Beacon: SetHigh called
     g_cubley_diag_current_status = 0xD5EE0001u;
     
-    // Set PA2 HIGH (LED ON)
-    palSetPad(GPIOA, 2);
+    // Set PB0 HIGH (LED ON)
+    palSetPad(GPIOB, 0);
     
     // Beacon: SetHigh completed
     g_cubley_diag_current_status = 0xD5EE0002u;
@@ -145,8 +144,8 @@ HRESULT Library_cubley_interop_StatusLed_NativeSetLow___STATIC__VOID(CLR_RT_Stac
     // Beacon: SetLow called
     g_cubley_diag_current_status = 0xD5EF0001u;
     
-    // Set PA2 LOW (LED OFF)
-    palClearPad(GPIOA, 2);
+    // Set PB0 LOW (LED OFF)
+    palClearPad(GPIOB, 0);
     
     // Beacon: SetLow completed
     g_cubley_diag_current_status = 0xD5EF0002u;
@@ -164,11 +163,11 @@ HRESULT Library_cubley_interop_StatusLed_NativePulse___STATIC__VOID__I4__I4(CLR_
     for (int i = 0; i < count; i++)
     {
         // LED ON
-        palSetPad(GPIOA, 2);
+        palSetPad(GPIOB, 0);
         osalThreadSleepMilliseconds(pulseMs);
         
         // LED OFF
-        palClearPad(GPIOA, 2);
+        palClearPad(GPIOB, 0);
         osalThreadSleepMilliseconds(pulseMs);
     }
 
@@ -227,6 +226,115 @@ HRESULT Library_cubley_interop_DiagnosticsMailbox_NativeGetBootProbe___STATIC__U
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
+// W5500 legacy slot stubs.
+// Keep v1 interop slot compatibility while the target migrates to STM32 MAC + lwIP.
+HRESULT Library_cubley_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    stack.Arg0().NumericByRef().s4 = 0;
+    stack.SetResult_I4(-5);
+
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__STRING__STRING__STRING__STRING(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    (void)stack;
+    stack.SetResult_I4(-5);
+
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    (void)stack;
+    stack.SetResult_I4(-5);
+
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_U1__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    stack.Arg4().NumericByRef().s4 = 0;
+    stack.SetResult_I4(-5);
+
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARRAY_U1__I4__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    stack.Arg5().NumericByRef().s4 = 0;
+    stack.SetResult_I4(-5);
+
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_W5500Socket_NativeClose___STATIC__I4__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    (void)stack;
+    stack.SetResult_I4(-5);
+
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    (void)stack;
+    stack.SetResult_Boolean(false);
+
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_W5500Socket_NativeGetPhyStatus___STATIC__U4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    stack.SetResult_U4(0U);
+
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_W5500Socket_NativeGetVersion___STATIC__U4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    stack.SetResult_U4(0U);
+
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_W5500Socket_NativeGetVersionPhyStatus___STATIC__U4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    stack.SetResult_U4(0U);
+
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_W5500Socket_NativeSetPhyMode___STATIC__U4__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    (void)stack;
+    stack.SetResult_U4(0U);
+
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__BOOLEAN(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
@@ -280,7 +388,11 @@ HRESULT Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING(CL
     size_t length = 0;
     size_t written = 0;
 
-    FAULT_ON_NULL(text);
+    if (text == nullptr)
+    {
+        stack.SetResult_I4(-1);
+        NANOCLR_NOCLEANUP_NOLABEL();
+    }
 
     buffer = text->StringText();
 

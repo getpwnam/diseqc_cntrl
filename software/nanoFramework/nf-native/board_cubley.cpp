@@ -12,9 +12,10 @@ void boardInit(void)
 	stm32_clock_init();
 
 	// Enable GPIO clocks for diagnostic and peripheral pins.
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;  // PA2 (LED_STATUS), PA11/PA12 (USB OTG_FS D-/D+)
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;  // PB10, PB11 (diagnostic reference/W5500 SPI)
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;  // PC6 (W5500 reset), PC7 (W5500 INT), PC9 (RMII CRSDV)
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;  // RMII + I2C3 + USB OTG_FS D-/D+
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;  // LED + I2C1 + RMII TX pins
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;  // RMII MDC/RX + LNB fault + I2C3 SDA
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;  // USART3 + TIM4 channels
 	(void)RCC->AHB1ENR;
 
 	// Configure PA11 and PA12 for USB OTG_FS:
