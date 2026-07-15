@@ -18,13 +18,9 @@ HRESULT Library_cubley_interop_LNBH26_NativeInit___STATIC__I4(CLR_RT_StackFrame&
 HRESULT Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeSetVoltage___STATIC__I4__I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_LNBH26_NativeSetPolarization___STATIC__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeSetTone___STATIC__I4__BOOLEAN(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_LNBH26_NativeSetBand___STATIC__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeGetVoltage___STATIC__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeGetTone___STATIC__BOOLEAN(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_LNBH26_NativeGetPolarization___STATIC__I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_LNBH26_NativeGetBand___STATIC__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_StatusLed_NativeInit___STATIC__VOID(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_StatusLed_NativeSetHigh___STATIC__VOID(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_StatusLed_NativeSetLow___STATIC__VOID(CLR_RT_StackFrame& stack);
@@ -52,26 +48,22 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN,                                    // [6] LNBH26.NativeSetEnable
     Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4,                                  // [7] LNBH26.NativeReadStatus
     Library_cubley_interop_LNBH26_NativeSetVoltage___STATIC__I4__I4,                                        // [8] LNBH26.NativeSetVoltage
-    Library_cubley_interop_LNBH26_NativeSetPolarization___STATIC__I4__I4,                                   // [9] LNBH26.NativeSetPolarization
-    Library_cubley_interop_LNBH26_NativeSetTone___STATIC__I4__BOOLEAN,                                      // [10] LNBH26.NativeSetTone
-    Library_cubley_interop_LNBH26_NativeSetBand___STATIC__I4__I4,                                           // [11] LNBH26.NativeSetBand
-    Library_cubley_interop_LNBH26_NativeGetVoltage___STATIC__I4,                                            // [12] LNBH26.NativeGetVoltage
-    Library_cubley_interop_LNBH26_NativeGetTone___STATIC__BOOLEAN,                                           // [13] LNBH26.NativeGetTone
-    Library_cubley_interop_LNBH26_NativeGetPolarization___STATIC__I4,                                       // [14] LNBH26.NativeGetPolarization
-    Library_cubley_interop_LNBH26_NativeGetBand___STATIC__I4,                                               // [15] LNBH26.NativeGetBand
-    Library_cubley_interop_StatusLed_NativeInit___STATIC__VOID,                                             // [16] StatusLed.NativeInit
-    Library_cubley_interop_StatusLed_NativeSetHigh___STATIC__VOID,                                          // [17] StatusLed.NativeSetHigh
-    Library_cubley_interop_StatusLed_NativeSetLow___STATIC__VOID,                                           // [18] StatusLed.NativeSetLow
-    Library_cubley_interop_StatusLed_NativePulse___STATIC__VOID__I4__I4,                                    // [19] StatusLed.NativePulse
-    Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__BOOLEAN,                                 // [20] UsbCdcConsole.NativeIsEnabled
-    Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [21] UsbCdcConsole.NativeReadByte
-    Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [22] UsbCdcConsole.NativeWrite
+    Library_cubley_interop_LNBH26_NativeSetTone___STATIC__I4__BOOLEAN,                                      // [9] LNBH26.NativeSetTone
+    Library_cubley_interop_LNBH26_NativeGetVoltage___STATIC__I4,                                            // [10] LNBH26.NativeGetVoltage
+    Library_cubley_interop_LNBH26_NativeGetTone___STATIC__BOOLEAN,                                           // [11] LNBH26.NativeGetTone
+    Library_cubley_interop_StatusLed_NativeInit___STATIC__VOID,                                             // [12] StatusLed.NativeInit
+    Library_cubley_interop_StatusLed_NativeSetHigh___STATIC__VOID,                                          // [13] StatusLed.NativeSetHigh
+    Library_cubley_interop_StatusLed_NativeSetLow___STATIC__VOID,                                           // [14] StatusLed.NativeSetLow
+    Library_cubley_interop_StatusLed_NativePulse___STATIC__VOID__I4__I4,                                    // [15] StatusLed.NativePulse
+    Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__BOOLEAN,                                 // [16] UsbCdcConsole.NativeIsEnabled
+    Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [17] UsbCdcConsole.NativeReadByte
+    Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [18] UsbCdcConsole.NativeWrite
 };
 
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_Cubley_Interop =
 {
     "Cubley.Interop",
-    0xB5605EC4,  // nativeMethodsChecksum from Cubley.Interop.pe (computed by MetaDataProcessor)
+    0x753888D9,  // nativeMethodsChecksum from Cubley.Interop.pe (computed by MetaDataProcessor)
     method_lookup,
     { 1, 0, 0, 0 }
 };

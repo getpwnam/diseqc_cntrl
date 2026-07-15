@@ -42,19 +42,11 @@ namespace Cubley.Interop
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeSetVoltage(int voltage);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeSetPolarization(int polarization);
-        [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeSetTone(bool enable);
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeSetBand(int band);
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeGetVoltage();
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern bool NativeGetTone();
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeGetPolarization();
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeGetBand();
     }
 
     public static class StatusLed

@@ -78,7 +78,9 @@ namespace DiSEqC_Control.Native
         /// <returns>Status code</returns>
         public static Status SetPolarization(Polarization polarization)
         {
-            return (Status)CubleyLnb.NativeSetPolarization((int)polarization);
+            return polarization == Polarization.Horizontal
+                ? SetVoltage(Voltage.V18)
+                : SetVoltage(Voltage.V13);
         }
 
         /// <summary>
@@ -98,7 +100,7 @@ namespace DiSEqC_Control.Native
         /// <returns>Status code</returns>
         public static Status SetBand(Band band)
         {
-            return (Status)CubleyLnb.NativeSetBand((int)band);
+            return SetTone(band == Band.High);
         }
 
         /// <summary>
@@ -125,7 +127,7 @@ namespace DiSEqC_Control.Native
         /// <returns>Current polarization</returns>
         public static Polarization GetPolarization()
         {
-            return (Polarization)CubleyLnb.NativeGetPolarization();
+            return GetVoltage() == Voltage.V18 ? Polarization.Horizontal : Polarization.Vertical;
         }
 
         /// <summary>
@@ -134,7 +136,7 @@ namespace DiSEqC_Control.Native
         /// <returns>Current band</returns>
         public static Band GetBand()
         {
-            return (Band)CubleyLnb.NativeGetBand();
+            return GetTone() ? Band.High : Band.Low;
         }
     }
 }

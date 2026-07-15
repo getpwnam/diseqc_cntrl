@@ -149,13 +149,9 @@ public class LnbInteropContractTests
     [InlineData("NativeSetEnable")]
     [InlineData("NativeReadStatus")]
     [InlineData("NativeSetVoltage")]
-    [InlineData("NativeSetPolarization")]
     [InlineData("NativeSetTone")]
-    [InlineData("NativeSetBand")]
     [InlineData("NativeGetVoltage")]
     [InlineData("NativeGetTone")]
-    [InlineData("NativeGetPolarization")]
-    [InlineData("NativeGetBand")]
     public void InternalNativeMethods_HaveExternShape(string methodName)
     {
         var method = typeof(CubleyLnb).GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);

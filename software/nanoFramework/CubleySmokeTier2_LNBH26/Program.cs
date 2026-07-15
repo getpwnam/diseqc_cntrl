@@ -50,7 +50,7 @@ namespace CubleySmokeTier2_LNBH26
                 int band = TryParseEnum(args, "--band", DefaultBand);
                 int samples = TryParseEnum(args, "--samples", DefaultSamples);
                 int expectedStatus = TryParseEnum(args, "--expected-status", -1);
-                int phase = TryParseEnum(args, "--phase", 1);
+                int phase = TryParseEnum(args, "--phase", 4);
                 int armBreakMs = TryParseEnum(args, "--arm-break-ms", DefaultArmBreakMs);
 
                 Debug.WriteLine("[LNB-SMOKE] startup");
@@ -62,7 +62,7 @@ namespace CubleySmokeTier2_LNBH26
 
                 if (phase < 0 || phase > 4)
                 {
-                    phase = 1;
+                    phase = 4;
                 }
 
                 if (armBreakMs < 0)
@@ -159,12 +159,15 @@ namespace CubleySmokeTier2_LNBH26
                     Debug.WriteLine("[LNB-SMOKE] write NativeSetVoltage(" + voltage.ToString() + ") rc=" + setVoltageRc.ToString() +
                         " lastNative=0x" + BringupStatus.NativeGetLastNativeError().ToString("X8"));
 
-                    setPolarizationRc = LNBH26.NativeSetPolarization(polarization);
-                    Debug.WriteLine("[LNB-SMOKE] write NativeSetPolarization(" + polarization.ToString() + ") rc=" + setPolarizationRc.ToString() +
+                    int polarizationVoltage = polarization == (int)LNBH26.Polarization.Horizontal ?
+                        (int)LNBH26.Voltage.V18 : (int)LNBH26.Voltage.V13;
+                    setPolarizationRc = LNBH26.NativeSetVoltage(polarizationVoltage);
+                    Debug.WriteLine("[LNB-SMOKE] write polarization via NativeSetVoltage(" + polarizationVoltage.ToString() + ") rc=" + setPolarizationRc.ToString() +
                         " lastNative=0x" + BringupStatus.NativeGetLastNativeError().ToString("X8"));
 
-                    setBandRc = LNBH26.NativeSetBand(band);
-                    Debug.WriteLine("[LNB-SMOKE] write NativeSetBand(" + band.ToString() + ") rc=" + setBandRc.ToString() +
+                    bool bandTone = band == (int)LNBH26.Band.High;
+                    setBandRc = LNBH26.NativeSetTone(bandTone);
+                    Debug.WriteLine("[LNB-SMOKE] write band via NativeSetTone(" + (bandTone ? "1" : "0") + ") rc=" + setBandRc.ToString() +
                         " lastNative=0x" + BringupStatus.NativeGetLastNativeError().ToString("X8"));
 
                     // Phase 2 stops after init + disable + basic writes.
@@ -193,9 +196,10 @@ namespace CubleySmokeTier2_LNBH26
 
                         WriteStatus(StageReadback, ResultEnter, 0x01);
                         int gotVoltage = LNBH26.NativeGetVoltage();
-                        int gotPolarization = LNBH26.NativeGetPolarization();
-                        int gotBand = LNBH26.NativeGetBand();
                         bool gotTone = LNBH26.NativeGetTone();
+                        int gotPolarization = gotVoltage == (int)LNBH26.Voltage.V18 ?
+                            (int)LNBH26.Polarization.Horizontal : (int)LNBH26.Polarization.Vertical;
+                        int gotBand = gotTone ? (int)LNBH26.Band.High : (int)LNBH26.Band.Low;
 
                         readbackOk = (gotVoltage == voltage && gotPolarization == polarization && gotBand == band && gotTone == (band == (int)LNBH26.Band.High)) ? 1 : 0;
                         Debug.WriteLine("[LNB-SMOKE] readback voltage=" + gotVoltage.ToString() +
