@@ -69,24 +69,13 @@ pending_internal = False
 internalcall_methods = []
 non_extern_methods = []
 
-# v1 baseline slots are immutable in v1.x. New methods may only append.
+# Current baseline slots are immutable. New methods may only append.
 V1_BASELINE = [
     "BringupStatus.NativeSet",
     "BringupStatus.NativeGet",
     "BringupStatus.NativeGetLastNativeError",
     "DiagnosticsMailbox.NativeTryLatchBootProbe",
     "DiagnosticsMailbox.NativeGetBootProbe",
-    "W5500Socket.NativeOpen",
-    "W5500Socket.NativeConfigureNetwork",
-    "W5500Socket.NativeConnect",
-    "W5500Socket.NativeSend",
-    "W5500Socket.NativeReceive",
-    "W5500Socket.NativeClose",
-    "W5500Socket.NativeIsConnected",
-    "W5500Socket.NativeGetPhyStatus",
-    "W5500Socket.NativeGetVersion",
-    "W5500Socket.NativeGetVersionPhyStatus",
-    "W5500Socket.NativeSetPhyMode",
     "LNBH26.NativeInit",
     "LNBH26.NativeSetEnable",
     "LNBH26.NativeReadStatus",
@@ -176,8 +165,8 @@ lookup_methods = [name for _, name in lookup_entries]
 
 if len(lookup_methods) < len(V1_BASELINE):
     print(
-        "ERROR: method_lookup[] has fewer entries than the v1 baseline; "
-        "v1 slots cannot be removed."
+        "ERROR: method_lookup[] has fewer entries than the baseline; "
+        "baseline slots cannot be removed."
     )
     print(f"  baseline slots: {len(V1_BASELINE)}")
     print(f"  current slots:  {len(lookup_methods)}")
@@ -190,13 +179,13 @@ for i, expected in enumerate(V1_BASELINE):
         prefix_drift.append((i, expected, actual))
 
 if prefix_drift:
-    print("ERROR: Non-append slot drift detected in immutable v1 baseline.")
+    print("ERROR: Non-append slot drift detected in immutable baseline.")
     for idx, expected, actual in prefix_drift:
         print(f"  [{idx:02d}] expected={expected} | actual={actual}")
     last_baseline_slot = len(V1_BASELINE) - 1
     print(
         "Only append-only additions are allowed after "
-        f"slot {last_baseline_slot} for v1.x."
+        f"slot {last_baseline_slot}."
     )
     sys.exit(1)
 
@@ -213,6 +202,6 @@ if internalcall_methods != lookup_methods:
 appended = len(lookup_methods) - len(V1_BASELINE)
 print(
     "Interop guard PASS: native-only Cubley.Interop, aligned method order, "
-    f"and immutable v1 baseline preserved (appended slots: {appended})."
+    f"and immutable baseline preserved (appended slots: {appended})."
 )
 PYEOF

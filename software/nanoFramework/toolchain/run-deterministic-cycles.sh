@@ -11,7 +11,7 @@ Runs repeated flash/reset cycles and probes UART wire-protocol health.
 Options:
   --cycles <n>            Number of cycles (default: 20)
   --serial <port>         Serial device (default: /dev/ttyUSB0)
-  --baud <rate>           Serial baud rate (default: 115200)
+  --baud <rate>           Serial baud rate (default: 921600)
   --settle-ms <ms>        Delay after reset before nanoff probes (default: 2000)
   --listdevices-retries <n>
                           Extra retries for nanoff --listdevices (default: 0)
@@ -33,7 +33,7 @@ EOF
 
 CYCLES=20
 SERIAL_PORT="/dev/ttyUSB0"
-BAUD=115200
+BAUD=921600
 SETTLE_MS=2000
 LISTDEVICES_RETRIES=0
 DEVICEDETAILS_RETRIES=0

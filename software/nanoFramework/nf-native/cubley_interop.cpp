@@ -14,17 +14,6 @@ HRESULT Library_cubley_interop_BringupStatus_NativeGet___STATIC__U4(CLR_RT_Stack
 HRESULT Library_cubley_interop_BringupStatus_NativeGetLastNativeError___STATIC__U4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_DiagnosticsMailbox_NativeTryLatchBootProbe___STATIC__BOOLEAN__U4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_DiagnosticsMailbox_NativeGetBootProbe___STATIC__U4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__STRING__STRING__STRING__STRING(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_U1__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARRAY_U1__I4__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_W5500Socket_NativeClose___STATIC__I4__I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_W5500Socket_NativeGetPhyStatus___STATIC__U4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_W5500Socket_NativeGetVersion___STATIC__U4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_W5500Socket_NativeGetVersionPhyStatus___STATIC__U4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_W5500Socket_NativeSetPhyMode___STATIC__U4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeInit___STATIC__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4(CLR_RT_StackFrame& stack);
@@ -59,47 +48,54 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_BringupStatus_NativeGetLastNativeError___STATIC__U4, // [2] BringupStatus.NativeGetLastNativeError
     Library_cubley_interop_DiagnosticsMailbox_NativeTryLatchBootProbe___STATIC__BOOLEAN__U4, // [3] DiagnosticsMailbox.NativeTryLatchBootProbe
     Library_cubley_interop_DiagnosticsMailbox_NativeGetBootProbe___STATIC__U4, // [4] DiagnosticsMailbox.NativeGetBootProbe
-    Library_cubley_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4,   // [5] W5500Socket.NativeOpen
-    Library_cubley_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__STRING__STRING__STRING__STRING, // [6] W5500Socket.NativeConfigureNetwork
-    Library_cubley_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4,                     // [7] W5500Socket.NativeConnect
-    Library_cubley_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_U1__I4__I4__BYREF_I4,          // [8] W5500Socket.NativeSend
-    Library_cubley_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARRAY_U1__I4__I4__I4__BYREF_I4,   // [9] W5500Socket.NativeReceive
-    Library_cubley_interop_W5500Socket_NativeClose___STATIC__I4__I4,                                       // [10] W5500Socket.NativeClose
-    Library_cubley_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4,                            // [11] W5500Socket.NativeIsConnected
-    Library_cubley_interop_W5500Socket_NativeGetPhyStatus___STATIC__U4,                                    // [12] W5500Socket.NativeGetPhyStatus
-    Library_cubley_interop_W5500Socket_NativeGetVersion___STATIC__U4,                                      // [13] W5500Socket.NativeGetVersion
-    Library_cubley_interop_W5500Socket_NativeGetVersionPhyStatus___STATIC__U4,                             // [14] W5500Socket.NativeGetVersionPhyStatus
-    Library_cubley_interop_W5500Socket_NativeSetPhyMode___STATIC__U4__I4,                                  // [15] W5500Socket.NativeSetPhyMode
-    Library_cubley_interop_LNBH26_NativeInit___STATIC__I4,                                                  // [16] LNBH26.NativeInit
-    Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN,                                    // [17] LNBH26.NativeSetEnable
-    Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4,                                  // [18] LNBH26.NativeReadStatus
-    Library_cubley_interop_LNBH26_NativeSetVoltage___STATIC__I4__I4,                                        // [19] LNBH26.NativeSetVoltage
-    Library_cubley_interop_LNBH26_NativeSetPolarization___STATIC__I4__I4,                                   // [20] LNBH26.NativeSetPolarization
-    Library_cubley_interop_LNBH26_NativeSetTone___STATIC__I4__BOOLEAN,                                      // [21] LNBH26.NativeSetTone
-    Library_cubley_interop_LNBH26_NativeSetBand___STATIC__I4__I4,                                           // [22] LNBH26.NativeSetBand
-    Library_cubley_interop_LNBH26_NativeGetVoltage___STATIC__I4,                                             // [23] LNBH26.NativeGetVoltage
-    Library_cubley_interop_LNBH26_NativeGetTone___STATIC__BOOLEAN,                                           // [24] LNBH26.NativeGetTone
-    Library_cubley_interop_LNBH26_NativeGetPolarization___STATIC__I4,                                        // [25] LNBH26.NativeGetPolarization
-    Library_cubley_interop_LNBH26_NativeGetBand___STATIC__I4,                                                // [26] LNBH26.NativeGetBand
-    Library_cubley_interop_StatusLed_NativeInit___STATIC__VOID,                                              // [27] StatusLed.NativeInit
-    Library_cubley_interop_StatusLed_NativeSetHigh___STATIC__VOID,                                           // [28] StatusLed.NativeSetHigh
-    Library_cubley_interop_StatusLed_NativeSetLow___STATIC__VOID,                                            // [29] StatusLed.NativeSetLow
-    Library_cubley_interop_StatusLed_NativePulse___STATIC__VOID__I4__I4,                                     // [30] StatusLed.NativePulse
-    Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__BOOLEAN,                                  // [31] UsbCdcConsole.NativeIsEnabled
-    Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                    // [32] UsbCdcConsole.NativeReadByte
-    Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                   // [33] UsbCdcConsole.NativeWrite
+    Library_cubley_interop_LNBH26_NativeInit___STATIC__I4,                                                  // [5] LNBH26.NativeInit
+    Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN,                                    // [6] LNBH26.NativeSetEnable
+    Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4,                                  // [7] LNBH26.NativeReadStatus
+    Library_cubley_interop_LNBH26_NativeSetVoltage___STATIC__I4__I4,                                        // [8] LNBH26.NativeSetVoltage
+    Library_cubley_interop_LNBH26_NativeSetPolarization___STATIC__I4__I4,                                   // [9] LNBH26.NativeSetPolarization
+    Library_cubley_interop_LNBH26_NativeSetTone___STATIC__I4__BOOLEAN,                                      // [10] LNBH26.NativeSetTone
+    Library_cubley_interop_LNBH26_NativeSetBand___STATIC__I4__I4,                                           // [11] LNBH26.NativeSetBand
+    Library_cubley_interop_LNBH26_NativeGetVoltage___STATIC__I4,                                            // [12] LNBH26.NativeGetVoltage
+    Library_cubley_interop_LNBH26_NativeGetTone___STATIC__BOOLEAN,                                           // [13] LNBH26.NativeGetTone
+    Library_cubley_interop_LNBH26_NativeGetPolarization___STATIC__I4,                                       // [14] LNBH26.NativeGetPolarization
+    Library_cubley_interop_LNBH26_NativeGetBand___STATIC__I4,                                               // [15] LNBH26.NativeGetBand
+    Library_cubley_interop_StatusLed_NativeInit___STATIC__VOID,                                             // [16] StatusLed.NativeInit
+    Library_cubley_interop_StatusLed_NativeSetHigh___STATIC__VOID,                                          // [17] StatusLed.NativeSetHigh
+    Library_cubley_interop_StatusLed_NativeSetLow___STATIC__VOID,                                           // [18] StatusLed.NativeSetLow
+    Library_cubley_interop_StatusLed_NativePulse___STATIC__VOID__I4__I4,                                    // [19] StatusLed.NativePulse
+    Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__BOOLEAN,                                 // [20] UsbCdcConsole.NativeIsEnabled
+    Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [21] UsbCdcConsole.NativeReadByte
+    Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [22] UsbCdcConsole.NativeWrite
 };
 
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_Cubley_Interop =
 {
     "Cubley.Interop",
-    0xC5EF91C9,  // nativeMethodsChecksum from Cubley.Interop.pe (computed by MetaDataProcessor)
+    0xB5605EC4,  // nativeMethodsChecksum from Cubley.Interop.pe (computed by MetaDataProcessor)
     method_lookup,
     { 1, 0, 0, 0 }
 };
 
-// StatusLed native implementations (PB0).
-// PB0 is the LED_STATUS pin. GPIOB clock is enabled in boardInit().
+// StatusLed native implementations.
+// Current PCB routes LED_STATUS to PB0. PA2 is used for RMII MDIO.
+
+static inline void status_led_init_pins(void)
+{
+    palSetPadMode(GPIOB, 0, PAL_MODE_OUTPUT_PUSHPULL);
+    palClearPad(GPIOB, 0);
+}
+
+static inline void status_led_set(bool on)
+{
+    if (on)
+    {
+        palSetPad(GPIOB, 0);
+    }
+    else
+    {
+        palClearPad(GPIOB, 0);
+    }
+}
 
 HRESULT Library_cubley_interop_StatusLed_NativeInit___STATIC__VOID(CLR_RT_StackFrame& stack)
 {
@@ -109,9 +105,7 @@ HRESULT Library_cubley_interop_StatusLed_NativeInit___STATIC__VOID(CLR_RT_StackF
     // Beacon: entering NativeInit
     g_cubley_diag_current_status = 0xD5ED0001u;
 
-    // Initialize PB0 as output (done in boardInit() but we reinit here for safety)
-    palSetPadMode(GPIOB, 0, PAL_MODE_OUTPUT_PUSHPULL);
-    palClearPad(GPIOB, 0);  // Start with LED OFF
+    status_led_init_pins();
     
     // Beacon: initialization complete
     g_cubley_diag_current_status = 0xD5ED0003u;
@@ -127,8 +121,7 @@ HRESULT Library_cubley_interop_StatusLed_NativeSetHigh___STATIC__VOID(CLR_RT_Sta
     // Beacon: SetHigh called
     g_cubley_diag_current_status = 0xD5EE0001u;
     
-    // Set PB0 HIGH (LED ON)
-    palSetPad(GPIOB, 0);
+    status_led_set(true);
     
     // Beacon: SetHigh completed
     g_cubley_diag_current_status = 0xD5EE0002u;
@@ -144,8 +137,7 @@ HRESULT Library_cubley_interop_StatusLed_NativeSetLow___STATIC__VOID(CLR_RT_Stac
     // Beacon: SetLow called
     g_cubley_diag_current_status = 0xD5EF0001u;
     
-    // Set PB0 LOW (LED OFF)
-    palClearPad(GPIOB, 0);
+    status_led_set(false);
     
     // Beacon: SetLow completed
     g_cubley_diag_current_status = 0xD5EF0002u;
@@ -159,15 +151,15 @@ HRESULT Library_cubley_interop_StatusLed_NativePulse___STATIC__VOID__I4__I4(CLR_
     
     int count = stack.Arg0().NumericByRef().s4;
     int pulseMs = stack.Arg1().NumericByRef().s4;
+
+    status_led_init_pins();
     
     for (int i = 0; i < count; i++)
     {
-        // LED ON
-        palSetPad(GPIOB, 0);
+        status_led_set(true);
         osalThreadSleepMilliseconds(pulseMs);
         
-        // LED OFF
-        palClearPad(GPIOB, 0);
+        status_led_set(false);
         osalThreadSleepMilliseconds(pulseMs);
     }
 
@@ -222,115 +214,6 @@ HRESULT Library_cubley_interop_DiagnosticsMailbox_NativeGetBootProbe___STATIC__U
     NANOCLR_HEADER();
 
     stack.SetResult_U4(g_cubley_diag_boot_probe_status);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-// W5500 legacy slot stubs.
-// Keep v1 interop slot compatibility while the target migrates to STM32 MAC + lwIP.
-HRESULT Library_cubley_interop_W5500Socket_NativeOpen___STATIC__I4__BYREF_I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    stack.Arg0().NumericByRef().s4 = 0;
-    stack.SetResult_I4(-5);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_W5500Socket_NativeConfigureNetwork___STATIC__I4__STRING__STRING__STRING__STRING(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    (void)stack;
-    stack.SetResult_I4(-5);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_W5500Socket_NativeConnect___STATIC__I4__I4__STRING__I4__I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    (void)stack;
-    stack.SetResult_I4(-5);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_W5500Socket_NativeSend___STATIC__I4__I4__SZARRAY_U1__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    stack.Arg4().NumericByRef().s4 = 0;
-    stack.SetResult_I4(-5);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_W5500Socket_NativeReceive___STATIC__I4__I4__SZARRAY_U1__I4__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    stack.Arg5().NumericByRef().s4 = 0;
-    stack.SetResult_I4(-5);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_W5500Socket_NativeClose___STATIC__I4__I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    (void)stack;
-    stack.SetResult_I4(-5);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_W5500Socket_NativeIsConnected___STATIC__BOOLEAN__I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    (void)stack;
-    stack.SetResult_Boolean(false);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_W5500Socket_NativeGetPhyStatus___STATIC__U4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    stack.SetResult_U4(0U);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_W5500Socket_NativeGetVersion___STATIC__U4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    stack.SetResult_U4(0U);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_W5500Socket_NativeGetVersionPhyStatus___STATIC__U4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    stack.SetResult_U4(0U);
-
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_W5500Socket_NativeSetPhyMode___STATIC__U4__I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    (void)stack;
-    stack.SetResult_U4(0U);
 
     NANOCLR_NOCLEANUP_NOLABEL();
 }

@@ -4,7 +4,7 @@ set -u -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 SERIAL_PORT="${SERIAL_PORT:-/dev/ttyUSB0}"
-BAUD="${BAUD:-115200}"
+BAUD="${BAUD:-921600}"
 NANOFF_TIMEOUT="${NANOFF_TIMEOUT:-20}"
 RAW_CAPTURE_BYTES="${RAW_CAPTURE_BYTES:-512}"
 REQUIRE_RAW_BYTES="${REQUIRE_RAW_BYTES:-0}"
@@ -18,7 +18,7 @@ Usage:
 
 Options:
   --serial <port>         Serial device to probe. Default: /dev/ttyUSB0
-  --baud <rate>           UART baud rate. Default: 115200
+  --baud <rate>           UART baud rate. Default: 921600
   --timeout <seconds>     nanoff timeout in seconds. Default: 20
   --capture-bytes <n>     Raw UART capture size. Default: 512
   --require-raw-bytes     Fail if raw UART captures are empty.

@@ -26,52 +26,6 @@ namespace Cubley.Interop
         public static extern uint NativeGetBootProbe();
     }
 
-    public static class W5500Socket
-    {
-        public enum Status
-        {
-            Ok = 0,
-            InvalidParam = 1,
-            NotInitialized = 2,
-            Busy = 3,
-            Timeout = 4,
-            NotSupported = 5,
-            IoError = 6
-        }
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeOpen(out int socketHandle);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeConfigureNetwork(string localIp, string subnetMask, string gateway, string macAddress);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeConnect(int socketHandle, string host, int port, int timeoutMs);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeSend(int socketHandle, byte[] buffer, int offset, int count, out int bytesSent);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeReceive(int socketHandle, byte[] buffer, int offset, int count, int timeoutMs, out int bytesRead);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeClose(int socketHandle);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern bool NativeIsConnected(int socketHandle);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern uint NativeGetPhyStatus();
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern uint NativeGetVersion();
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern uint NativeGetVersionPhyStatus();
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern uint NativeSetPhyMode(int modeCode);
-    }
     public static class LNBH26
     {
         public enum Voltage { V13 = 0, V18 = 1 }
@@ -106,25 +60,25 @@ namespace Cubley.Interop
     public static class StatusLed
     {
         /// <summary>
-        /// Initialize PA2 as GPIO output. Must be called before any LED operations.
+        /// Initialize PB0 as GPIO output. Must be called before any LED operations.
         /// </summary>
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void NativeInit();
 
         /// <summary>
-        /// Set PA2 HIGH (LED ON).
+        /// Set PB0 HIGH (LED ON).
         /// </summary>
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void NativeSetHigh();
 
         /// <summary>
-        /// Set PA2 LOW (LED OFF).
+        /// Set PB0 LOW (LED OFF).
         /// </summary>
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void NativeSetLow();
 
         /// <summary>
-        /// Pulse PA2 for bootup marker: count blinks of pulseMs duration each (HIGH then LOW).
+        /// Pulse PB0 for bootup marker: count blinks of pulseMs duration each (HIGH then LOW).
         /// Example: Pulse(3, 300) blinks 3x with 300ms on, 300ms off.
         /// </summary>
         [MethodImpl(MethodImplOptions.InternalCall)]

@@ -8,7 +8,7 @@ Define configuration domains and expected runtime behavior for settings manageme
 
 - `NF_FEATURE_HAS_CONFIG_BLOCK` is currently disabled in the validated build profile.
 - Treat persistence behavior as profile-dependent unless re-enabled and validated.
-- Current MVP persists config snapshots to FM24CL16B F-RAM on I2C3 (power-cycle persistent), with RAM snapshot fallback if FRAM is unavailable.
+- Current MVP persists config snapshots to FM24CL16B F-RAM on I2C1 (power-cycle persistent), with RAM snapshot fallback if FRAM is unavailable.
 
 ## Implemented MVP Interface
 
@@ -46,7 +46,7 @@ Define configuration domains and expected runtime behavior for settings manageme
 ## Persistence Backend (MVP)
 
 - Device: `FM24CL16B` (16 Kb / 2048-byte I2C F-RAM)
-- Bus: I2C3
+- Bus: I2C1
 - Format: key-value UTF-8 payload with header (`DCFG` magic, version, length, checksum)
 - Save behavior:
   - `config/save` updates RAM snapshot and attempts FRAM persist

@@ -1,9 +1,9 @@
-# Interop Contract v1 (Cubley.Interop)
+# Interop Contract (Cubley.Interop)
 
 ## Purpose
 
-Define the immutable v1 InternalCall slot map and compatibility policy for `Cubley.Interop`.
-This document is the source of truth for method slot governance in v1.x.
+Define the current InternalCall slot map and compatibility policy for `Cubley.Interop`.
+This document is the source of truth for method slot governance.
 
 ## Scope
 
@@ -15,7 +15,7 @@ This document is the source of truth for method slot governance in v1.x.
 ## Identity
 
 - Assembly name: `Cubley.Interop`
-- Native methods checksum (v1 baseline): `0xC5EF91C9`
+- Native methods checksum (current baseline): `0xB5605EC4`
 - Native assembly version tuple: `{ 1, 0, 0, 0 }`
 
 ## Normative Tier-0/Tier-1 Diagnostics Semantics (Phase C)
@@ -83,15 +83,14 @@ decoder table explicitly defines an opcode.
 - Sticky latch lifetime is one boot session; device reset/power cycle clears it
   by runtime reinitialization.
 
-## Slot Policy (v1.x)
+## Slot Policy
 
-- Slots `0..33` are immutable in v1.x.
+- Slots `0..22` are immutable in the current baseline.
 - Each slot is permanently owned by one fully-qualified API method and cannot be repurposed.
 - Existing slots cannot be reordered, deleted, or reused.
-- New APIs in v1.x are append-only and must be added at the end of `method_lookup`.
-- Any signature change that would alter metadata ordering or checksum is a breaking change and is not allowed in v1.x.
+- New APIs are append-only and must be added at the end of `method_lookup`.
 
-## Canonical Slot Map (v1)
+## Canonical Slot Map
 
 | Slot | API | Managed Signature |
 |---:|---|---|
@@ -100,35 +99,24 @@ decoder table explicitly defines an opcode.
 | 2 | `BringupStatus.NativeGetLastNativeError` | `uint NativeGetLastNativeError()` |
 | 3 | `DiagnosticsMailbox.NativeTryLatchBootProbe` | `bool NativeTryLatchBootProbe(uint statusWord)` |
 | 4 | `DiagnosticsMailbox.NativeGetBootProbe` | `uint NativeGetBootProbe()` |
-| 5 | `W5500Socket.NativeOpen` | `int NativeOpen(out int socketHandle)` |
-| 6 | `W5500Socket.NativeConfigureNetwork` | `int NativeConfigureNetwork(string localIp, string subnetMask, string gateway, string macAddress)` |
-| 7 | `W5500Socket.NativeConnect` | `int NativeConnect(int socketHandle, string host, int port, int timeoutMs)` |
-| 8 | `W5500Socket.NativeSend` | `int NativeSend(int socketHandle, byte[] buffer, int offset, int count, out int bytesSent)` |
-| 9 | `W5500Socket.NativeReceive` | `int NativeReceive(int socketHandle, byte[] buffer, int offset, int count, int timeoutMs, out int bytesRead)` |
-| 10 | `W5500Socket.NativeClose` | `int NativeClose(int socketHandle)` |
-| 11 | `W5500Socket.NativeIsConnected` | `bool NativeIsConnected(int socketHandle)` |
-| 12 | `W5500Socket.NativeGetPhyStatus` | `uint NativeGetPhyStatus()` |
-| 13 | `W5500Socket.NativeGetVersion` | `uint NativeGetVersion()` |
-| 14 | `W5500Socket.NativeGetVersionPhyStatus` | `uint NativeGetVersionPhyStatus()` |
-| 15 | `W5500Socket.NativeSetPhyMode` | `uint NativeSetPhyMode(int modeCode)` |
-| 16 | `LNBH26.NativeInit` | `int NativeInit()` |
-| 17 | `LNBH26.NativeSetEnable` | `int NativeSetEnable(bool enable)` |
-| 18 | `LNBH26.NativeReadStatus` | `int NativeReadStatus(out int statusRegister)` |
-| 19 | `LNBH26.NativeSetVoltage` | `int NativeSetVoltage(int voltage)` |
-| 20 | `LNBH26.NativeSetPolarization` | `int NativeSetPolarization(int polarization)` |
-| 21 | `LNBH26.NativeSetTone` | `int NativeSetTone(bool enable)` |
-| 22 | `LNBH26.NativeSetBand` | `int NativeSetBand(int band)` |
-| 23 | `LNBH26.NativeGetVoltage` | `int NativeGetVoltage()` |
-| 24 | `LNBH26.NativeGetTone` | `bool NativeGetTone()` |
-| 25 | `LNBH26.NativeGetPolarization` | `int NativeGetPolarization()` |
-| 26 | `LNBH26.NativeGetBand` | `int NativeGetBand()` |
-| 27 | `StatusLed.NativeInit` | `void NativeInit()` |
-| 28 | `StatusLed.NativeSetHigh` | `void NativeSetHigh()` |
-| 29 | `StatusLed.NativeSetLow` | `void NativeSetLow()` |
-| 30 | `StatusLed.NativePulse` | `void NativePulse(int count, int pulseMs)` |
-| 31 | `UsbCdcConsole.NativeIsEnabled` | `bool NativeIsEnabled()` |
-| 32 | `UsbCdcConsole.NativeReadByte` | `int NativeReadByte(int timeoutMs)` |
-| 33 | `UsbCdcConsole.NativeWrite` | `int NativeWrite(string text)` |
+| 5 | `LNBH26.NativeInit` | `int NativeInit()` |
+| 6 | `LNBH26.NativeSetEnable` | `int NativeSetEnable(bool enable)` |
+| 7 | `LNBH26.NativeReadStatus` | `int NativeReadStatus(out int statusRegister)` |
+| 8 | `LNBH26.NativeSetVoltage` | `int NativeSetVoltage(int voltage)` |
+| 9 | `LNBH26.NativeSetPolarization` | `int NativeSetPolarization(int polarization)` |
+| 10 | `LNBH26.NativeSetTone` | `int NativeSetTone(bool enable)` |
+| 11 | `LNBH26.NativeSetBand` | `int NativeSetBand(int band)` |
+| 12 | `LNBH26.NativeGetVoltage` | `int NativeGetVoltage()` |
+| 13 | `LNBH26.NativeGetTone` | `bool NativeGetTone()` |
+| 14 | `LNBH26.NativeGetPolarization` | `int NativeGetPolarization()` |
+| 15 | `LNBH26.NativeGetBand` | `int NativeGetBand()` |
+| 16 | `StatusLed.NativeInit` | `void NativeInit()` |
+| 17 | `StatusLed.NativeSetHigh` | `void NativeSetHigh()` |
+| 18 | `StatusLed.NativeSetLow` | `void NativeSetLow()` |
+| 19 | `StatusLed.NativePulse` | `void NativePulse(int count, int pulseMs)` |
+| 20 | `UsbCdcConsole.NativeIsEnabled` | `bool NativeIsEnabled()` |
+| 21 | `UsbCdcConsole.NativeReadByte` | `int NativeReadByte(int timeoutMs)` |
+| 22 | `UsbCdcConsole.NativeWrite` | `int NativeWrite(string text)` |
 
 ## Ownership Rules
 
@@ -142,7 +130,7 @@ decoder table explicitly defines an opcode.
 2. Run static slot audit: managed declaration order vs native `method_lookup` order.
 3. Recompute and verify native methods checksum from build output.
 4. Update this document only after code change is validated.
-5. For v1.x, append new rows at the end only. Do not modify rows `0..33`.
+5. Append new rows at the end only. Do not modify rows `0..22`.
 
 ## Verification Pointers
 
