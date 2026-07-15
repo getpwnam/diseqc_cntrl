@@ -14,7 +14,7 @@ namespace DiSEqC_Control
     /// </summary>
     public class Program : IMqttCommandSink, IMqttConfigSink
     {
-        private const int FramBusId = 3;
+        private const int FramBusId = 1;
         private static bool EnableFramStartupLoadIsolation = false;
 
         private static MqttClient _mqttClient;

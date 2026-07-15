@@ -1306,3 +1306,19 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: build/CubleySmokeTier2_W5500/latest.deploy.bin; /tmp/tier2_connect_probe_20260608_1940.log
 - Breakpoints: mailbox=0xD5050E01; native_error=0xE15304F0; connect_params_latch=0x00000000; post_connect_latch=0x00000000
 - Conclusion: Tier2 connect-path harness now advances into native configure step but fails at stage 0x05 with detail 0x01 before open/connect; connect latches remain unset despite VERSIONR=0x04 and PHYCFGR=0xF0 snapshot.
+
+### 2026-07-15 09:01:17 UTC [PASS] [NON-BASELINE]
+- Git rev: 1603dd3
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Set LNB_I2C_ADDRESS=0x08; ./toolchain/build-native.sh build; ./toolchain/build-native.sh flash --reset; st-flash reset + sleep 2 + ./tests/swd_read_w5500_diag.sh build/nanoCLR.elf (12 cycles); SCPI loop C1:PAVA? FREQ/PKPK/RMS/MEAN (8 cycles)
+- Artifact: build/nanoCLR.bin; build/nanoCLR.elf; docs/debug/BRINGUP_TEST_LOG.md
+- Conclusion: Debugger-free repeated validation now passes: 12/12 cycles report bringup mailbox 0xD5CF01FF with native error 0xE3C200A2 after restoring LNBH26 address 0x08 (ADDR tied GND).
+- Note: SCPI measurements across 8 reset cycles were stable at 100 kHz and 4.14 Vpk-pk on SCL; decoded variation was capture/decode-window noise, not firmware randomness.
+
+### 2026-07-15 10:50:22 UTC [PASS]
+- Git rev: 1603dd3
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Set LNB_I2C_ADDRESS=0x08; ./toolchain/build-native.sh build; ./toolchain/build-native.sh flash --reset; st-flash reset; 12x SWD read/decode of current status and last_native_error; SCPI SCL measurement loop
+- Artifact: build/nanoCLR.bin; build/nanoCLR.elf; build/CubleySmokeTier2_LNBH26/latest.deploy.bin
+- Conclusion: LNBH26 bidirectional I2C communication is confirmed at the software/protocol level: Phase-4 LNB smoke latched 0xD5CF01FF (all stages passed), which requires successful write path plus repeated NativeReadStatus register reads with deterministic, fault-free status after restoring address 0x08.
+- Note: This confirms control/status register comms only; analog voltage and 22 kHz output measurements remain separate hardware validation steps.

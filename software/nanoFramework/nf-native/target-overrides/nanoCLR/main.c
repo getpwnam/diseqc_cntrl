@@ -409,8 +409,10 @@ int main(void)
     (void)memset(&clrSettings, 0, sizeof(CLR_SETTINGS));
 
     clrSettings.MaxContextSwitches = 50;
+    // Debugger-free bring-up mode: allow managed entrypoint to run immediately
+    // after reset so repeated SWD/scope cycles reflect real runtime behavior.
     clrSettings.WaitForDebugger = false;
-    clrSettings.EnterDebuggerLoopAfterExit = true;
+    clrSettings.EnterDebuggerLoopAfterExit = false;
 
     osThreadCreate(osThread(CLRStartupThreadProbe), &clrSettings);
 

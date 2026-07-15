@@ -39,10 +39,19 @@ static void lnb_prepare_i2c_bus(I2CDriver *i2c_driver)
 {
     if (i2c_driver == &I2CD3)
     {
+        // Debugger-driven managed restarts can leave I2C3 in a stale peripheral
+        // state even when pins are high. Force a peripheral reset to guarantee
+        // a clean start without requiring a board power cycle.
+        i2cStop(i2c_driver);
+        RCC->APB1RSTR |= RCC_APB1RSTR_I2C3RST;
+        (void)RCC->APB1RSTR;
+        RCC->APB1RSTR &= ~RCC_APB1RSTR_I2C3RST;
+
         ConfigPins_I2C3();
     }
     else if (i2c_driver == &I2CD1)
     {
+        i2cStop(i2c_driver);
         ConfigPins_I2C1();
     }
 

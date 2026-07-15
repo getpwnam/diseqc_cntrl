@@ -16,13 +16,10 @@ HRESULT Library_cubley_interop_LNBH26_NativeInit___STATIC__I4(CLR_RT_StackFrame&
     // Entry marker for runtime binding verification.
     g_cubley_diag_last_error = ((uint32_t)0xE3 << 24) | ((uint32_t)0xC1 << 16) | ((uint32_t)0x00 << 8) | 0xAA;
 
-    lnb_status_t status = LNB_OK;
-
-    if (!lnb_is_initialized())
-    {
-        lnb_handle_t* hlnb = lnb_get_global_handle();
-        status = lnb_init(hlnb, &LNB_I2C_DRIVER, LNB_I2C_ADDRESS);
-    }
+    // Always re-run native init so debugger restarts re-arm I2C3 pin mux + driver
+    // without requiring a physical MCU reset.
+    lnb_handle_t* hlnb = lnb_get_global_handle();
+    lnb_status_t status = lnb_init(hlnb, &LNB_I2C_DRIVER, LNB_I2C_ADDRESS);
 
     if (status != LNB_OK)
     {

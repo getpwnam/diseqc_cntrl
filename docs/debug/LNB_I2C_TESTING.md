@@ -17,9 +17,9 @@ The LNBH26PQR is controlled over I2C (not GPIO).
 ## I2C Configuration
 
 ```
-I2C Bus: I2C1
-SCL: PB8 (I2C1_SCL) - Alternate Function AF4
-SDA: PB9 (I2C1_SDA) - Alternate Function AF4
+I2C Bus: I2C3
+SCL: PA8 (I2C3_SCL) - Alternate Function AF4
+SDA: PC9 (I2C3_SDA) - Alternate Function AF4
 Address: 0x08 (7-bit)
 Speed: 100kHz (standard mode)
 ```
@@ -66,8 +66,8 @@ void test_lnb_i2c() {
     lnb_handle_t lnb;
     
     // Initialize I2C and LNB
-    i2cStart(&I2CD1, &i2c_cfg);
-    lnb_init(&lnb, &I2CD1, 0x08);
+    i2cStart(&I2CD3, &i2c_cfg);
+    lnb_init(&lnb, &I2CD3, 0x08);
     
     // Read status register
     uint8_t status;
@@ -157,19 +157,18 @@ if (status & LNBH26_STAT_OTP) {
    
 2. **I2C not initialized** - Check mcuconf.h:
    ```c
-   #define STM32_I2C_USE_I2C1  TRUE
+    #define STM32_I2C_USE_I2C3  TRUE
    ```
 
-3. **Wrong pins** - Verify PB8/PB9 are I2C1:
+3. **Wrong pins** - Verify PA8/PC9 are I2C3:
    ```c
-   // board_cubley.h should have:
-   #define VAL_GPIOB_AFRH  (PIN_AFIO_AF(8, 4U) | PIN_AFIO_AF(9, 4U))
+    // Native bring-up should mux PA8/PC9 for AF4 open-drain I2C3.
    ```
 
 4. **Pull-up resistors** - I2C needs pull-ups (usually on board)
    - Check schematic for 4.7kΩ resistors on SCL/SDA
 
-5. **Bus conflict** - Check if anything else uses I2C1
+5. **Bus conflict** - Check if anything else uses I2C3
 
 ### Issue: Voltage doesn't change
 

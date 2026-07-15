@@ -49,7 +49,7 @@ Example:
 
   ./toolchain/bringup_log_append.sh \
     --result INFO \
-    --commands "nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 115200 --devicedetails" \
+    --commands "nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --devicedetails" \
     --artifact "none" \
     --baseline no \
     --conclusion "Experimental cubley-uart run — non-baseline, W5500 bring-up only"

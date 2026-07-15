@@ -8,7 +8,7 @@
  * - Current limiting and protection
  * 
  * I2C Address: 0x08 (7-bit address)
- * I2C Bus: I2C1 (PB6=SCL, PB7=SDA)
+ * I2C Bus: I2C3 (PA8=SCL, PC9=SDA)
  * 
  * Register Map:
  * - Register 0x00: Control register (VSEL, Tone, Enable, etc.)
@@ -65,7 +65,7 @@ typedef enum {
 
 /* LNB Configuration */
 typedef struct {
-    I2CDriver *i2c_driver;      // I2C driver (I2CD1)
+    I2CDriver *i2c_driver;      // I2C driver (I2CD3 on current hardware)
     uint8_t i2c_addr;           // I2C address (0x08)
     lnb_voltage_t voltage;      // Current voltage setting
     bool tone_enabled;          // Current tone state
@@ -88,9 +88,15 @@ typedef enum {
 bool lnb_is_initialized(void);
 
 /**
+ * @brief Get the last raw ChibiOS I2C message code observed by the LNB driver.
+ * @return Last msg_t value from I2C transaction path.
+ */
+int32_t lnb_get_last_i2c_msg(void);
+
+/**
  * @brief Initialize LNB control
  * @param hlnb LNB handle
- * @param i2c_driver I2C driver (I2CD1)
+ * @param i2c_driver I2C driver instance
  * @param i2c_addr I2C address (0x08)
  * @return LNB_OK on success
  */

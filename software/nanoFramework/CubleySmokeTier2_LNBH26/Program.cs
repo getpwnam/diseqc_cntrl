@@ -18,15 +18,9 @@ namespace CubleySmokeTier2_LNBH26
         private const byte StageStatus = 0xC4;
         private const byte StageFinal = 0xCF;
 
-        private const bool DefaultEnable = false;
-        private const int DefaultVoltage = (int)LNBH26.Voltage.V13;
-        private const int DefaultPolarization = (int)LNBH26.Polarization.Vertical;
-        private const int DefaultBand = (int)LNBH26.Band.Low;
-        private const int DefaultSamples = 8;
-        private const int DefaultArmBreakMs = 0;
         private const int StatusFaultMask = 0x03; // OCP/OTP bits
 
-        public static void Main(string[] args)
+        public static void Main()
         {
             int initRc = -1;
             int disableRc = -1;
@@ -41,17 +35,21 @@ namespace CubleySmokeTier2_LNBH26
             int initRcObserved = -1;
             int lastNativeObserved = -1;
             int preInitSetEnableRc = -1;
+            int enableWindowRc = 0;
+            int disableAfterWindowRc = 0;
 
             try
             {
-                bool enable = TryParseEnable(args, DefaultEnable);
-                int voltage = TryParseEnum(args, "--voltage", DefaultVoltage);
-                int polarization = TryParseEnum(args, "--polarization", DefaultPolarization);
-                int band = TryParseEnum(args, "--band", DefaultBand);
-                int samples = TryParseEnum(args, "--samples", DefaultSamples);
-                int expectedStatus = TryParseEnum(args, "--expected-status", -1);
-                int phase = TryParseEnum(args, "--phase", 4);
-                int armBreakMs = TryParseEnum(args, "--arm-break-ms", DefaultArmBreakMs);
+                bool enable = SmokeProfile.Enable;
+                int voltage = SmokeProfile.Voltage;
+                int polarization = SmokeProfile.Polarization;
+                int band = SmokeProfile.Band;
+                int samples = SmokeProfile.Samples;
+                int expectedStatus = -1;
+                int phase = SmokeProfile.Phase;
+                int armBreakMs = SmokeProfile.ArmBreakMs;
+                int enableWindowMs = SmokeProfile.EnableWindowMs;
+                int scopeLoopMs = SmokeProfile.ScopeLoopMs;
 
                 Debug.WriteLine("[LNB-SMOKE] startup");
 
@@ -75,6 +73,26 @@ namespace CubleySmokeTier2_LNBH26
                     armBreakMs = 15000;
                 }
 
+                if (enableWindowMs < 0)
+                {
+                    enableWindowMs = 0;
+                }
+
+                if (enableWindowMs > 10000)
+                {
+                    enableWindowMs = 10000;
+                }
+
+                if (scopeLoopMs < 0)
+                {
+                    scopeLoopMs = 0;
+                }
+
+                if (scopeLoopMs > 5000)
+                {
+                    scopeLoopMs = 5000;
+                }
+
                 // Tier-0 safety gate: this smoke keeps LNB output disabled.
                 enable = false;
 
@@ -94,14 +112,17 @@ namespace CubleySmokeTier2_LNBH26
 
                 WriteStatus(StageStart, ResultEnter, 0xA0);
 
-                Debug.WriteLine("[LNB-SMOKE] args enable=" + (enable ? "1" : "0") +
+                Debug.WriteLine("[LNB-SMOKE] profile=" + SmokeProfile.Name +
+                    " enable=" + (enable ? "1" : "0") +
                     " voltage=" + voltage.ToString() +
                     " polarization=" + polarization.ToString() +
                     " band=" + band.ToString() +
                     " samples=" + samples.ToString() +
                     " expectedStatus=" + expectedStatus.ToString() +
                     " phase=" + phase.ToString() +
-                    " armBreakMs=" + armBreakMs.ToString());
+                    " armBreakMs=" + armBreakMs.ToString() +
+                    " enableWindowMs=" + enableWindowMs.ToString() +
+                    " scopeLoopMs=" + scopeLoopMs.ToString());
 
                 if (phase >= 1 && armBreakMs > 0)
                 {
@@ -146,6 +167,44 @@ namespace CubleySmokeTier2_LNBH26
                 Debug.WriteLine("[LNB-SMOKE] stage=C1 init rc=" + initRc.ToString() +
                     " lastNative=0x" + lastNativeObserved.ToString("X8"));
 
+                if (initRc == 0 && scopeLoopMs > 0)
+                {
+                    bool tone = false;
+                    int beat = 0;
+                    Debug.WriteLine("[LNB-SMOKE] scope loop mode active ms=" + scopeLoopMs.ToString() +
+                        " (writes/reads repeat; output stays disabled)");
+
+                    while (true)
+                    {
+                        int loopDisableRc = LNBH26.NativeSetEnable(false);
+                        int loopToneRc = LNBH26.NativeSetTone(tone);
+                        int loopStatusValue;
+                        int loopStatusRc = LNBH26.NativeReadStatus(out loopStatusValue);
+
+                        byte loopDetail =
+                            loopDisableRc != 0 ? (byte)(loopDisableRc & 0xFF) :
+                            loopToneRc != 0 ? (byte)(loopToneRc & 0xFF) :
+                            loopStatusRc != 0 ? (byte)(loopStatusRc & 0xFF) :
+                            (byte)(loopStatusValue & 0xFF);
+
+                        WriteStatus(StageWrite,
+                            (loopDisableRc == 0 && loopToneRc == 0 && loopStatusRc == 0) ? ResultPass : ResultFail,
+                            loopDetail);
+
+                        Debug.WriteLine("[LNB-SMOKE] scope loop beat=" + beat.ToString() +
+                            " disableRc=" + loopDisableRc.ToString() +
+                            " tone=" + (tone ? "1" : "0") +
+                            " toneRc=" + loopToneRc.ToString() +
+                            " statusRc=" + loopStatusRc.ToString() +
+                            " status=0x" + loopStatusValue.ToString("X2") +
+                            " lastNative=0x" + BringupStatus.NativeGetLastNativeError().ToString("X8"));
+
+                        tone = !tone;
+                        beat++;
+                        Thread.Sleep(scopeLoopMs);
+                    }
+                }
+
                 if (initRc == 0 && phase >= 2)
                 {
                     WriteStatus(StageWrite, ResultEnter, 0x01);
@@ -170,14 +229,40 @@ namespace CubleySmokeTier2_LNBH26
                     Debug.WriteLine("[LNB-SMOKE] write band via NativeSetTone(" + (bandTone ? "1" : "0") + ") rc=" + setBandRc.ToString() +
                         " lastNative=0x" + BringupStatus.NativeGetLastNativeError().ToString("X8"));
 
+                    if (enableWindowMs > 0)
+                    {
+                        enableWindowRc = LNBH26.NativeSetEnable(true);
+                        Debug.WriteLine("[LNB-SMOKE] measurement window enable rc=" + enableWindowRc.ToString() +
+                            " ms=" + enableWindowMs.ToString() +
+                            " lastNative=0x" + BringupStatus.NativeGetLastNativeError().ToString("X8"));
+
+                        if (enableWindowRc == 0)
+                        {
+                            Debug.WriteLine("[LNB-SMOKE] OUTPUT WINDOW ACTIVE NOW ms=" + enableWindowMs.ToString());
+                            Thread.Sleep(enableWindowMs);
+                            Debug.WriteLine("[LNB-SMOKE] OUTPUT WINDOW ENDING NOW");
+                            disableAfterWindowRc = LNBH26.NativeSetEnable(false);
+                            Debug.WriteLine("[LNB-SMOKE] measurement window disable rc=" + disableAfterWindowRc.ToString() +
+                                " lastNative=0x" + BringupStatus.NativeGetLastNativeError().ToString("X8"));
+                        }
+                    }
+
                     // Phase 2 stops after init + disable + basic writes.
                     if (phase == 2)
                     {
-                        bool phase2Ok = disableRc == 0 && setVoltageRc == 0 && setPolarizationRc == 0 && setBandRc == 0;
+                        bool phase2Ok =
+                            disableRc == 0 &&
+                            setVoltageRc == 0 &&
+                            setPolarizationRc == 0 &&
+                            setBandRc == 0 &&
+                            enableWindowRc == 0 &&
+                            disableAfterWindowRc == 0;
                         WriteStatus(StageFinal, phase2Ok ? ResultPass : ResultFail,
                             (byte)((disableRc != 0 ? disableRc :
                                    setVoltageRc != 0 ? setVoltageRc :
-                                   setPolarizationRc != 0 ? setPolarizationRc : setBandRc) & 0xFF));
+                                   setPolarizationRc != 0 ? setPolarizationRc :
+                                   setBandRc != 0 ? setBandRc :
+                                   enableWindowRc != 0 ? enableWindowRc : disableAfterWindowRc) & 0xFF));
                         Debug.WriteLine("[LNB-SMOKE] phase2 complete ok=" + (phase2Ok ? "1" : "0"));
                         while (true)
                         {
@@ -189,10 +274,13 @@ namespace CubleySmokeTier2_LNBH26
                     if (phase >= 4)
                     {
                         bool writesOk = disableRc == 0 && setVoltageRc == 0 && setPolarizationRc == 0 && setBandRc == 0;
+                        writesOk = writesOk && enableWindowRc == 0 && disableAfterWindowRc == 0;
                         WriteStatus(StageWrite, writesOk ? ResultPass : ResultFail,
                             (byte)((disableRc != 0 ? disableRc :
                                    setVoltageRc != 0 ? setVoltageRc :
-                                   setPolarizationRc != 0 ? setPolarizationRc : setBandRc) & 0xFF));
+                                   setPolarizationRc != 0 ? setPolarizationRc :
+                                   setBandRc != 0 ? setBandRc :
+                                   enableWindowRc != 0 ? enableWindowRc : disableAfterWindowRc) & 0xFF));
 
                         WriteStatus(StageReadback, ResultEnter, 0x01);
                         int gotVoltage = LNBH26.NativeGetVoltage();
@@ -294,14 +382,18 @@ namespace CubleySmokeTier2_LNBH26
                         disableRc == 0 &&
                         setVoltageRc == 0 &&
                         setPolarizationRc == 0 &&
-                        setBandRc == 0;
+                        setBandRc == 0 &&
+                        enableWindowRc == 0 &&
+                        disableAfterWindowRc == 0;
 
                     failDetail =
                         initRc != 0 ? StageInit :
                         disableRc != 0 ? StageWrite :
                         setVoltageRc != 0 ? StageWrite :
                         setPolarizationRc != 0 ? StageWrite :
-                        (setBandRc != 0 ? StageWrite : (byte)0x02);
+                        setBandRc != 0 ? StageWrite :
+                        enableWindowRc != 0 ? StageWrite :
+                        (disableAfterWindowRc != 0 ? StageWrite : (byte)0x02);
                 }
                 else if (phase == 3)
                 {
@@ -311,6 +403,8 @@ namespace CubleySmokeTier2_LNBH26
                         setVoltageRc == 0 &&
                         setPolarizationRc == 0 &&
                         setBandRc == 0 &&
+                        enableWindowRc == 0 &&
+                        disableAfterWindowRc == 0 &&
                         statusReadRc == 0 &&
                         statusDeterministic &&
                         statusDefaultOk;
@@ -321,6 +415,8 @@ namespace CubleySmokeTier2_LNBH26
                         setVoltageRc != 0 ? StageWrite :
                         setPolarizationRc != 0 ? StageWrite :
                         setBandRc != 0 ? StageWrite :
+                        enableWindowRc != 0 ? StageWrite :
+                        disableAfterWindowRc != 0 ? StageWrite :
                         !statusDeterministic ? StageStatus :
                         !statusDefaultOk ? StageStatus :
                         (statusReadRc != 0 ? StageStatus : (byte)0x03);
@@ -333,6 +429,8 @@ namespace CubleySmokeTier2_LNBH26
                         setVoltageRc == 0 &&
                         setPolarizationRc == 0 &&
                         setBandRc == 0 &&
+                        enableWindowRc == 0 &&
+                        disableAfterWindowRc == 0 &&
                         readbackOk == 1 &&
                         statusReadRc == 0 &&
                         statusDeterministic &&
@@ -344,6 +442,8 @@ namespace CubleySmokeTier2_LNBH26
                         setVoltageRc != 0 ? StageWrite :
                         setPolarizationRc != 0 ? StageWrite :
                         setBandRc != 0 ? StageWrite :
+                        enableWindowRc != 0 ? StageWrite :
+                        disableAfterWindowRc != 0 ? StageWrite :
                         readbackOk != 1 ? StageReadback :
                         !statusDeterministic ? StageStatus :
                         !statusDefaultOk ? StageStatus :
@@ -366,104 +466,6 @@ namespace CubleySmokeTier2_LNBH26
             {
                 Thread.Sleep(1000);
             }
-        }
-
-        private static bool TryParseEnable(string[] args, bool fallback)
-        {
-            if (args == null)
-            {
-                return fallback;
-            }
-
-            for (int i = 0; i < args.Length; i++)
-            {
-                string arg = args[i];
-                if (arg == null)
-                {
-                    continue;
-                }
-
-                if (arg == "--enable" && i + 1 < args.Length)
-                {
-                    return ParseBoolToken(args[i + 1], fallback);
-                }
-
-                if (arg.StartsWith("--enable="))
-                {
-                    return ParseBoolToken(arg.Substring(9), fallback);
-                }
-            }
-
-            return fallback;
-        }
-
-        private static int TryParseEnum(string[] args, string key, int fallback)
-        {
-            if (args == null)
-            {
-                return fallback;
-            }
-
-            string keyPrefix = key + "=";
-            for (int i = 0; i < args.Length; i++)
-            {
-                string arg = args[i];
-                if (arg == null)
-                {
-                    continue;
-                }
-
-                if (arg == key && i + 1 < args.Length)
-                {
-                    return ParseIntToken(args[i + 1], fallback);
-                }
-
-                if (arg.StartsWith(keyPrefix))
-                {
-                    return ParseIntToken(arg.Substring(keyPrefix.Length), fallback);
-                }
-            }
-
-            return fallback;
-        }
-
-        private static bool ParseBoolToken(string token, bool fallback)
-        {
-            if (token == null)
-            {
-                return fallback;
-            }
-
-            string normalized = token.Trim().ToLower();
-            if (normalized == "1" || normalized == "true" || normalized == "on" || normalized == "yes")
-            {
-                return true;
-            }
-
-            if (normalized == "0" || normalized == "false" || normalized == "off" || normalized == "no")
-            {
-                return false;
-            }
-
-            return fallback;
-        }
-
-        private static int ParseIntToken(string token, int fallback)
-        {
-            if (token == null)
-            {
-                return fallback;
-            }
-
-            string normalized = token.Trim();
-            if (normalized.Length == 0)
-            {
-                return fallback;
-            }
-
-            int value = fallback;
-            bool ok = int.TryParse(normalized, out value);
-            return ok ? value : fallback;
         }
 
         private static void WriteStatus(byte stage, byte result, byte detail)

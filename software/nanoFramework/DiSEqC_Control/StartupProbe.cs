@@ -10,10 +10,10 @@ namespace DiSEqC_Control
     public static class StartupProbe
     {
         private const int LedPin = 2;
-        private const int LnbBusId = 1;
+        private const int LnbBusId = 3;
         private const int LnbAddress = 0x08;
         private const int LnbSentinelEmptyAddress = 0x7A;
-        private const int FramBusId = 3;
+        private const int FramBusId = 1;
         private const int FramAddress = 0x50;
         private static bool ProbeW5500OnStartup = true;
         private static bool ProbeFramOnStartup = true;
