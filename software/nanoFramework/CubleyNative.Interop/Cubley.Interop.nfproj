@@ -14,7 +14,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Cubley.Interop</RootNamespace>
-    <AssemblyName>Cubley.Interop</AssemblyName>
+    <AssemblyName>CubleyNative</AssemblyName>
     <TargetFrameworkVersion>v1.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

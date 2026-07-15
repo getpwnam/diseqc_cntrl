@@ -35,7 +35,7 @@ Current mailbox words are implemented as global volatile `uint32_t` symbols in:
 
 Interop declarations are in:
 
-- `Cubley.Interop/CubleyInteropNative.cs`
+- `CubleyNative.Interop/CubleyInteropNative.cs`
 
 ### Existing API (transient)
 

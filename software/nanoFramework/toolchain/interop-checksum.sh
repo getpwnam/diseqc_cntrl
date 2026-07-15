@@ -6,13 +6,13 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PE_SLOT_GUARD_SCRIPT="$ROOT_DIR/toolchain/interop-pe-slot-guard.sh"
 
 MODE="check"
-ASSEMBLY_NAME="Cubley.Interop"
+ASSEMBLY_NAME="CubleyNative"
 PE_PATH=""
 
-CUBLEY_ASSEMBLY_INFO_PATH="$ROOT_DIR/Cubley.Interop/Properties/AssemblyInfo.cs"
+CUBLEY_ASSEMBLY_INFO_PATH="$ROOT_DIR/CubleyNative.Interop/Properties/AssemblyInfo.cs"
 CUBLEY_NATIVE_INTEROP_PATH="$ROOT_DIR/nf-native/cubley_interop.cpp"
-CUBLEY_NATIVE_SYMBOL="g_CLR_AssemblyNative_Cubley_Interop"
-CUBLEY_DEFAULT_PE_PATH="$ROOT_DIR/build/DiSEqC_Control/Cubley.Interop.pe"
+CUBLEY_NATIVE_SYMBOL="g_CLR_AssemblyNative_CubleyNative"
+CUBLEY_DEFAULT_PE_PATH="$ROOT_DIR/build/DiSEqC_Control/CubleyNative.pe"
 LEGACY_SMOKE_ASSEMBLY_INFO_PATH="$ROOT_DIR/SmokeW5500.Interop/Properties/AssemblyInfo.cs"
 
 ASSEMBLY_INFO_PATH=""
@@ -30,7 +30,7 @@ Modes:
   --fix      Read checksum from PE and update managed + native source values.
 
 Assemblies:
-  Cubley.Interop
+  CubleyNative
 
 Notes:
   - PE checksum is read from CLR_RECORD_ASSEMBLY.nativeMethodsChecksum (offset 20).
@@ -40,7 +40,7 @@ EOF
 
 set_targets() {
   case "$ASSEMBLY_NAME" in
-    Cubley.Interop)
+    CubleyNative)
       ASSEMBLY_INFO_PATH="$CUBLEY_ASSEMBLY_INFO_PATH"
       NATIVE_INTEROP_PATH="$CUBLEY_NATIVE_INTEROP_PATH"
       NATIVE_SYMBOL="$CUBLEY_NATIVE_SYMBOL"
@@ -48,7 +48,7 @@ set_targets() {
       ;;
     *)
       echo "Unsupported assembly '$ASSEMBLY_NAME'." >&2
-      echo "Supported: Cubley.Interop" >&2
+      echo "Supported: CubleyNative" >&2
       exit 2
       ;;
   esac

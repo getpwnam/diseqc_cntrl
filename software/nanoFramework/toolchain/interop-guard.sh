@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-CS_PATH="$ROOT_DIR/Cubley.Interop/CubleyInteropNative.cs"
+CS_PATH="$ROOT_DIR/CubleyNative.Interop/CubleyInteropNative.cs"
 NATIVE_PATH="$ROOT_DIR/nf-native/cubley_interop.cpp"
 
 usage() {
@@ -13,7 +13,7 @@ Usage:
     ./toolchain/interop-guard.sh [--cs /path/to/CubleyInteropNative.cs] [--native /path/to/cubley_interop.cpp]
 
 Defaults:
-    --cs      software/nanoFramework/Cubley.Interop/CubleyInteropNative.cs
+    --cs      software/nanoFramework/CubleyNative.Interop/CubleyInteropNative.cs
     --native  software/nanoFramework/nf-native/cubley_interop.cpp
 EOF
 }
@@ -120,7 +120,7 @@ for line in cs_text.splitlines():
     pending_internal = False
 
 if non_extern_methods:
-    print("ERROR: Cubley.Interop must be native-only; managed method bodies found:")
+    print("ERROR: CubleyNative interop surface must be native-only; managed method bodies found:")
     for name in non_extern_methods:
         print(f"  - {name}")
     sys.exit(1)
@@ -197,7 +197,7 @@ if internalcall_methods != lookup_methods:
 
 appended = len(lookup_methods) - len(V1_BASELINE)
 print(
-    "Interop guard PASS: native-only Cubley.Interop, aligned method order, "
+    "Interop guard PASS: native-only CubleyNative interop surface, aligned method order, "
     f"and immutable baseline preserved (appended slots: {appended})."
 )
 PYEOF

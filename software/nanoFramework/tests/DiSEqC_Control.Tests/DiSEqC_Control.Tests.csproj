@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="../../Cubley.Interop/CubleyInteropNative.cs" Link="Production/Cubley/CubleyInteropNative.cs" />
+    <Compile Include="../../CubleyNative.Interop/CubleyInteropNative.cs" Link="Production/Cubley/CubleyInteropNative.cs" />
     <Compile Include="../../DiSEqC_Control/RuntimeConfiguration.cs" Link="Production/RuntimeConfiguration.cs" />
     <Compile Include="../../DiSEqC_Control/ParityHelper.cs" Link="Production/ParityHelper.cs" />
     <Compile Include="../../DiSEqC_Control/DiagnosticsStatusWord.cs" Link="Production/DiagnosticsStatusWord.cs" />

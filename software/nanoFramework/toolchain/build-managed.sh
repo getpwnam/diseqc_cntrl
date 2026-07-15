@@ -186,7 +186,7 @@ restore_packages_from_config() {
 
 bootstrap_packages() {
   echo "[stage] Ensuring nanoFramework package cache is present..."
-  restore_packages_from_config "$ROOT_DIR/Cubley.Interop/packages.config"
+  restore_packages_from_config "$ROOT_DIR/CubleyNative.Interop/packages.config"
   restore_packages_from_config "$ROOT_DIR/DiSEqC_Control/packages.config"
 
   if command -v dotnet >/dev/null 2>&1; then

@@ -33,6 +33,74 @@ namespace Cubley.Interop
         public enum Band { Low = 0, High = 1 }
         public enum Status { Ok = 0, InvalidParam = 1, NotInitialized = 2, IoError = 3 }
 
+        public enum Register
+        {
+            Status1 = 0,
+            Status2 = 1,
+            Data1 = 2,
+            Data2 = 3,
+            Data3 = 4,
+            Data4 = 5,
+        }
+
+        [System.Flags]
+        public enum Status1Flags
+        {
+            OlfA = 1 << 0,
+            OlfB = 1 << 1,
+            VmonA = 1 << 2,
+            VmonB = 1 << 3,
+            PdoA = 1 << 4,
+            PdoB = 1 << 5,
+            Otf = 1 << 6,
+            Png = 1 << 7,
+        }
+
+        [System.Flags]
+        public enum Status2Flags
+        {
+            TdetA = 1 << 0,
+            TdetB = 1 << 1,
+            TmonA = 1 << 2,
+            TmonB = 1 << 3,
+            ImonA = 1 << 4,
+            ImonB = 1 << 5,
+        }
+
+        [System.Flags]
+        public enum Data2Flags
+        {
+            TenA = 1 << 0,
+            LpmA = 1 << 1,
+            ExtmA = 1 << 2,
+            TenB = 1 << 4,
+            LpmB = 1 << 5,
+            ExtmB = 1 << 6,
+        }
+
+        [System.Flags]
+        public enum Data3Flags
+        {
+            IsetA = 1 << 0,
+            IswA = 1 << 1,
+            PclA = 1 << 2,
+            TimerA = 1 << 3,
+            IsetB = 1 << 4,
+            IswB = 1 << 5,
+            PclB = 1 << 6,
+            TimerB = 1 << 7,
+        }
+
+        [System.Flags]
+        public enum Data4Flags
+        {
+            EnImonA = 1 << 0,
+            Olr = 1 << 3,
+            EnImonB = 1 << 4,
+            Therm = 1 << 6,
+            Comp = 1 << 7,
+        }
+
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeInit();
         [MethodImpl(MethodImplOptions.InternalCall)]
@@ -87,5 +155,25 @@ namespace Cubley.Interop
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeWrite(string text);
+    }
+
+    public static class LNBH26Registers
+    {
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeReadRegister(int registerAddress, out int registerValue);
+    }
+
+    public static class Fram24C128
+    {
+        public enum Status { Ok = 0, InvalidParam = 1, NotInitialized = 2, IoError = 3 }
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeInit();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeWrite(int address, byte[] buffer, int offset, int count);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeRead(int address, byte[] buffer, int offset, int count);
     }
 }

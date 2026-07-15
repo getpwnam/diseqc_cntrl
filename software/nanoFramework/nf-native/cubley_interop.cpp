@@ -2,6 +2,7 @@
 #include <nanoCLR_Runtime.h>
 #include <nanoCLR_Checks.h>
 #include <string.h>
+#include "fram_native.h"
 
 #if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
 #include <hal.h>
@@ -28,6 +29,10 @@ HRESULT Library_cubley_interop_StatusLed_NativePulse___STATIC__VOID__I4__I4(CLR_
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__BOOLEAN(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26Registers_NativeReadRegister___STATIC__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_Fram24C128_NativeInit___STATIC__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_Fram24C128_NativeWrite___STATIC__I4__I4__SZARRAY_U1__I4__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_Fram24C128_NativeRead___STATIC__I4__I4__SZARRAY_U1__I4__I4(CLR_RT_StackFrame& stack);
 
 // Diagnostics mailboxes. Keep the transient current status in .bss so the linker
 // places it after g_CLR_InteropAssembliesNativeData in .data, which the CLR may
@@ -58,12 +63,16 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__BOOLEAN,                                 // [16] UsbCdcConsole.NativeIsEnabled
     Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [17] UsbCdcConsole.NativeReadByte
     Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [18] UsbCdcConsole.NativeWrite
+    Library_cubley_interop_LNBH26Registers_NativeReadRegister___STATIC__I4__I4__BYREF_I4,                   // [19] LNBH26Registers.NativeReadRegister
+    Library_cubley_interop_Fram24C128_NativeInit___STATIC__I4,                                              // [20] Fram24C128.NativeInit
+    Library_cubley_interop_Fram24C128_NativeWrite___STATIC__I4__I4__SZARRAY_U1__I4__I4,                    // [21] Fram24C128.NativeWrite
+    Library_cubley_interop_Fram24C128_NativeRead___STATIC__I4__I4__SZARRAY_U1__I4__I4,                     // [22] Fram24C128.NativeRead
 };
 
-extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_Cubley_Interop =
+extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_CubleyNative =
 {
-    "Cubley.Interop",
-    0x753888D9,  // nativeMethodsChecksum from Cubley.Interop.pe (computed by MetaDataProcessor)
+    "CubleyNative",
+    0x615A93C4,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
     method_lookup,
     { 1, 0, 0, 0 }
 };
@@ -289,5 +298,80 @@ HRESULT Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING(CL
     stack.SetResult_I4(-1);
 #endif
 
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_Fram24C128_NativeInit___STATIC__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    fram_handle_t* hfram = fram_get_global_handle();
+    fram_status_t status = fram_init(hfram, &I2CD1, 0x50);
+
+    if (status != FRAM_OK)
+    {
+        const uint8_t rawDetail = (uint8_t)(fram_get_last_i2c_msg() & 0xFF);
+        g_cubley_diag_last_error = ((uint32_t)0xE4 << 24) | ((uint32_t)0xD1 << 16) | ((uint32_t)status << 8) | rawDetail;
+    }
+
+    stack.SetResult_I4((int32_t)status);
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_Fram24C128_NativeWrite___STATIC__I4__I4__SZARRAY_U1__I4__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    int32_t address = stack.Arg0().NumericByRef().s4;
+    CLR_RT_HeapBlock_Array* buffer = stack.Arg1().DereferenceArray();
+    int32_t offset = stack.Arg2().NumericByRef().s4;
+    int32_t count = stack.Arg3().NumericByRef().s4;
+
+    if (buffer == NULL || address < 0 || address > 0xFFFF || offset < 0 || count <= 0 || (offset + count) > (int32_t)buffer->m_numOfElements)
+    {
+        stack.SetResult_I4((int32_t)FRAM_ERROR_INVALID_PARAM);
+        NANOCLR_NOCLEANUP_NOLABEL();
+    }
+
+    fram_handle_t* hfram = fram_get_global_handle();
+    uint8_t* src = buffer->GetElement((CLR_UINT32)offset);
+    fram_status_t status = fram_write(hfram, (uint16_t)address, src, (uint16_t)count);
+
+    if (status != FRAM_OK)
+    {
+        const uint8_t rawDetail = (uint8_t)(fram_get_last_i2c_msg() & 0xFF);
+        g_cubley_diag_last_error = ((uint32_t)0xE4 << 24) | ((uint32_t)0xD2 << 16) | ((uint32_t)status << 8) | rawDetail;
+    }
+
+    stack.SetResult_I4((int32_t)status);
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_Fram24C128_NativeRead___STATIC__I4__I4__SZARRAY_U1__I4__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    int32_t address = stack.Arg0().NumericByRef().s4;
+    CLR_RT_HeapBlock_Array* buffer = stack.Arg1().DereferenceArray();
+    int32_t offset = stack.Arg2().NumericByRef().s4;
+    int32_t count = stack.Arg3().NumericByRef().s4;
+
+    if (buffer == NULL || address < 0 || address > 0xFFFF || offset < 0 || count <= 0 || (offset + count) > (int32_t)buffer->m_numOfElements)
+    {
+        stack.SetResult_I4((int32_t)FRAM_ERROR_INVALID_PARAM);
+        NANOCLR_NOCLEANUP_NOLABEL();
+    }
+
+    fram_handle_t* hfram = fram_get_global_handle();
+    uint8_t* dst = buffer->GetElement((CLR_UINT32)offset);
+    fram_status_t status = fram_read(hfram, (uint16_t)address, dst, (uint16_t)count);
+
+    if (status != FRAM_OK)
+    {
+        const uint8_t rawDetail = (uint8_t)(fram_get_last_i2c_msg() & 0xFF);
+        g_cubley_diag_last_error = ((uint32_t)0xE4 << 24) | ((uint32_t)0xD3 << 16) | ((uint32_t)status << 8) | rawDetail;
+    }
+
+    stack.SetResult_I4((int32_t)status);
     NANOCLR_NOCLEANUP_NOLABEL();
 }

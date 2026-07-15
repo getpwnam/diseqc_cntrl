@@ -1,21 +1,21 @@
-# Interop Contract (Cubley.Interop)
+# Interop Contract (CubleyNative)
 
 ## Purpose
 
-Define the current InternalCall slot map and compatibility policy for `Cubley.Interop`.
+Define the current InternalCall slot map and compatibility policy for `CubleyNative`.
 This document is the source of truth for method slot governance.
 
 ## Scope
 
-- Managed assembly: `Cubley.Interop`
-- Managed declarations: `software/nanoFramework/Cubley.Interop/CubleyInteropNative.cs`
+- Managed assembly: `CubleyNative`
+- Managed declarations: `software/nanoFramework/CubleyNative.Interop/CubleyInteropNative.cs`
 - Native table: `software/nanoFramework/nf-native/cubley_interop.cpp` (`method_lookup`)
-- Runtime export: `g_CLR_AssemblyNative_Cubley_Interop`
+- Runtime export: `g_CLR_AssemblyNative_CubleyNative`
 
 ## Identity
 
-- Assembly name: `Cubley.Interop`
-- Native methods checksum (current baseline): `0xB5605EC4`
+- Assembly name: `CubleyNative`
+- Native methods checksum (current baseline): `0x283AE301`
 - Native assembly version tuple: `{ 1, 0, 0, 0 }`
 
 ## Normative Tier-0/Tier-1 Diagnostics Semantics (Phase C)
@@ -120,7 +120,7 @@ decoder table explicitly defines an opcode.
 
 ## Ownership Rules
 
-- `Cubley.Interop` maintainers own managed declaration order and signature stability.
+- `CubleyNative` maintainers own managed declaration order and signature stability.
 - `nf-native` maintainers own native symbol implementation and one-to-one table alignment.
 - Any change touching `CubleyInteropNative.cs` or `method_lookup` requires explicit interop review and contract check.
 
@@ -134,6 +134,6 @@ decoder table explicitly defines an opcode.
 
 ## Verification Pointers
 
-- Validate managed declarations in `software/nanoFramework/Cubley.Interop/CubleyInteropNative.cs`.
+- Validate managed declarations in `software/nanoFramework/CubleyNative.Interop/CubleyInteropNative.cs`.
 - Validate native table order in `software/nanoFramework/nf-native/cubley_interop.cpp`.
-- Validate runtime export checksum/version in `g_CLR_AssemblyNative_Cubley_Interop`.
+- Validate runtime export checksum/version in `g_CLR_AssemblyNative_CubleyNative`.

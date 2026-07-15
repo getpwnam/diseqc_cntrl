@@ -12,7 +12,7 @@ Usage:
   ./toolchain/interop-pe-slot-guard.sh /path/to/<assembly>.pe
 
 Notes:
-  - For Cubley.Interop.pe, this enforces managed/native slot-order invariants
+  - For CubleyNative.pe, this enforces managed/native slot-order invariants
     by invoking interop-guard.sh.
   - For other PE names, this script exits successfully (no-op) to avoid
     blocking unrelated workflows.
@@ -44,7 +44,7 @@ PYEOF
 
 base_name="$(basename "$PE_PATH")"
 case "$base_name" in
-  Cubley.Interop.pe)
+  CubleyNative.pe)
     if [[ ! -x "$INTEROP_GUARD_TOOL" ]]; then
       echo "Missing or non-executable guard tool: $INTEROP_GUARD_TOOL" >&2
       exit 1
