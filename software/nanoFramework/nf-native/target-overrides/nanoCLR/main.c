@@ -27,21 +27,18 @@ static void BusyDelay(volatile uint32_t cycles)
     }
 }
 
-static void PulseStatusLedBeforeManaged(void)
+static void PulseStatusLedAfterSerialSetup(void)
 {
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
-    (void)RCC->AHB1ENR;
-
+    // Short marker only: avoid multi-second attach blocking during boot.
     palSetPadMode(GPIOB, 0, PAL_MODE_OUTPUT_PUSHPULL);
     palClearPad(GPIOB, 0);
 
-    // Early boot visibility marker: blink PB0 for ~5 seconds total.
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 2; i++)
     {
         palSetPad(GPIOB, 0);
-        BusyDelay(14000000U);
+        BusyDelay(2200000U);
         palClearPad(GPIOB, 0);
-        BusyDelay(14000000U);
+        BusyDelay(2200000U);
     }
 }
 
@@ -360,7 +357,6 @@ int main(void)
     SetStartupTrace(0xC1, 0x10);
     SetStartupDiag(0xC1, 1, 0x10); // halInit entering.
     halInit();
-    PulseStatusLedBeforeManaged();
     SetStartupTrace(0xC1, 0x11);
     SetStartupDiag(0xC1, 1, 0x11); // halInit returned.
 
@@ -396,6 +392,7 @@ int main(void)
     ForceUsart3PinsOnPd8Pd9();
 
     sdStart(&SD3, &usart3_cfg);
+    PulseStatusLedAfterSerialSetup();
 #endif
 
     SetStartupDiag(0xC4, 0, 1);

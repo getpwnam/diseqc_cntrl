@@ -9,20 +9,31 @@
 #include <nanoCLR_Application.h>
 #include <nanoHAL_v2.h>
 
-static void ForceUsart3PinsOnPb10Pb11(void)
+static void BusyDelay(volatile uint32_t cycles)
+{
+    while (cycles-- > 0)
+    {
+        __asm("nop");
+    }
+}
+
+static void PulseStatusLedBeforeManaged(void)
 {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
     (void)RCC->AHB1ENR;
 
-    GPIOB->MODER &= ~((3u << (10u * 2u)) | (3u << (11u * 2u)));
-    GPIOB->MODER |=  ((2u << (10u * 2u)) | (2u << (11u * 2u)));
+    palSetPadMode(GPIOB, 0, PAL_MODE_OUTPUT_PUSHPULL);
+    palClearPad(GPIOB, 0);
 
-    GPIOB->OTYPER &= ~((1u << 10u) | (1u << 11u));
-    GPIOB->OSPEEDR |= ((3u << (10u * 2u)) | (3u << (11u * 2u)));
-    GPIOB->PUPDR &= ~((3u << (10u * 2u)) | (3u << (11u * 2u)));
-
-    GPIOB->AFRH &= ~((0xFu << ((10u - 8u) * 4u)) | (0xFu << ((11u - 8u) * 4u)));
-    GPIOB->AFRH |=  ((7u  << ((10u - 8u) * 4u)) | (7u  << ((11u - 8u) * 4u)));
+    // Early boot visibility: blink PB0 for ~5 seconds total.
+    // Calibrated for this build/toolchain.
+    for (int i = 0; i < 10; i++)
+    {
+        palSetPad(GPIOB, 0);
+        BusyDelay(14000000U);
+        palClearPad(GPIOB, 0);
+        BusyDelay(14000000U);
+    }
 }
 
 osThreadDef(ReceiverThread, osPriorityHigh, 4096, "ReceiverThread");
@@ -31,16 +42,15 @@ osThreadDef(CLRStartupThread, osPriorityNormal, 4096, "CLRStartupThread");
 int main(void)
 {
     halInit();
+    PulseStatusLedBeforeManaged();
     InitBootClipboard();
     osKernelInitialize();
 
     RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
     (void)RCC->APB1ENR;
 
-    ForceUsart3PinsOnPb10Pb11();
-
     static const SerialConfig usart3_cfg = {
-        115200,
+        921600,
         0,
         USART_CR2_STOP1_BITS,
         0

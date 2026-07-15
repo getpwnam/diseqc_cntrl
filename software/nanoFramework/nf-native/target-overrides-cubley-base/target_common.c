@@ -12,13 +12,15 @@
 #define ConvertCOM_DebugHandle(port) (port)
 #endif
 
-// Wire protocol debug channel is COM3 (USART3 on PB10/PB11).
+// Wire protocol debugger and debug text share COM3 (USART3 on PB10/PB11)
+// during bring-up so managed Debug.Print()/HAL debug text can be observed on
+// the serial monitor while stdio remains disabled.
 HAL_SYSTEM_CONFIG HalSystemConfig = {
     {true},
 
     ConvertCOM_DebugHandle(3),
-    0,
-    115200,
+    ConvertCOM_DebugHandle(3),
+    921600,
     0,
 
     {RAM1_MEMORY_StartAddress, RAM1_MEMORY_Size},
