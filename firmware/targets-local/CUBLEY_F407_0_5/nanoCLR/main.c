@@ -21,6 +21,9 @@
 #include <string.h>
 
 #include <serialcfg.h>
+#if (HAL_USE_SERIAL_USB == TRUE)
+#include "../common/usbcfg.h"
+#endif
 #include <CLR_Startup_Thread.h>
 #include <WireProtocol_ReceiverThread.h>
 #include <nanoCLR_Application.h>
@@ -35,6 +38,25 @@ osThreadDef(ReceiverThread,     osPriorityHigh,   2048, "ReceiverThread");
 osThreadDef(CLRStartupThread,   osPriorityNormal, 4096, "CLRStartupThread");
 osThreadDef(FramSelfTestThread, osPriorityBelowNormal, 1024, "FramSelfTestThread");
 osThreadDef(LnbSelfTestThread,  osPriorityBelowNormal, 1024, "LnbSelfTestThread");
+
+#if (HAL_USE_SERIAL_USB == TRUE)
+static THD_WORKING_AREA(waUsbCdcInitThread, 768);
+static THD_FUNCTION(UsbCdcInitThread, arg)
+{
+    (void)arg;
+    chRegSetThreadName("USB_CDC_Init");
+
+    sduObjectInit(&SDU1);
+    sduStart(&SDU1, &serusbcfg);
+
+    usbDisconnectBus(serusbcfg.usbp);
+    chThdSleepMilliseconds(100);
+    usbStart(serusbcfg.usbp, &usbcfg);
+    usbConnectBus(serusbcfg.usbp);
+
+    chThdExit(MSG_OK);
+}
+#endif
 
 volatile uint32_t g_fram_native_selftest_thread_marker = 0;
 volatile uint32_t g_fram_native_selftest_status = 0;
@@ -212,6 +234,16 @@ int main(void)
     palSetLineMode(PAL_LINE(GPIOD, 8U), PAL_MODE_ALTERNATE(7));
     palSetLineMode(PAL_LINE(GPIOD, 9U), PAL_MODE_ALTERNATE(7));
     sdStart(&SERIAL_DRIVER, &cubley_wp_serial_cfg);
+
+#if (HAL_USE_SERIAL_USB == TRUE)
+    // Bring up USB CDC as an independent console channel.
+    chThdCreateStatic(
+        waUsbCdcInitThread,
+        sizeof(waUsbCdcInitThread),
+        NORMALPRIO + 2,
+        UsbCdcInitThread,
+        NULL);
+#endif
 
     // Kick off wire-protocol receiver and CLR startup.
     osThreadCreate(osThread(ReceiverThread), NULL);

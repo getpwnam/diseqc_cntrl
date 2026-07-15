@@ -34,6 +34,13 @@
 #define BOARD_NAME                  "Cubley v0.5 (STM32F407VG)"
 
 /*
+ * USB OTG_FS VBUS sense workaround.
+ * Board wiring presents VBUS on PA9 through high impedance, so force OTG FS
+ * into no-VBUS-sense mode to avoid missed connect detection.
+ */
+#define BOARD_OTG_NOVBUSSENS
+
+/*
  * Board oscillators-related settings.
  * NOTE: LSE not fitted on Cubley v0.5.
  */

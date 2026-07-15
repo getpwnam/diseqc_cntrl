@@ -7,7 +7,7 @@
 #if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
 #include <hal.h>
 #include <ch.h>
-#include <usbcfg.h>
+#include "../common/usbcfg.h"
 #endif
 
 HRESULT Library_cubley_interop_BringupStatus_NativeSet___STATIC__VOID__U4(CLR_RT_StackFrame& stack);
