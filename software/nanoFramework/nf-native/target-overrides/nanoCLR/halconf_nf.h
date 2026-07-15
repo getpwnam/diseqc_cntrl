@@ -11,4 +11,9 @@
 #define HAL_NF_USE_STM32_FLASH         TRUE
 #endif
 
+// enables the STM32 hardware RNG path required by targetRandom.cpp
+#if !defined(HAL_NF_USE_RNG)
+#define HAL_NF_USE_RNG                 TRUE
+#endif
+
 #endif // HALCONF_NF_H

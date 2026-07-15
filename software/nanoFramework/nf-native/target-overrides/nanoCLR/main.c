@@ -1,4 +1,6 @@
-// Minimal nanoCLR entry point for M0DMF_CUBLEY_F407.
+// nanoCLR entry point for M0DMF_CUBLEY_F407.
+// Grounded in the target-overrides-cubley-base working pattern.
+// USART3 on PD8/PD9 at 921600 baud for wire protocol.
 
 #include <ch.h>
 #include <hal.h>
@@ -19,29 +21,17 @@
 #define SWO_OUTPUT 0
 #endif
 
-static void BusyDelay(volatile uint32_t cycles)
-{
-    while (cycles-- > 0)
-    {
-        __asm("nop");
-    }
-}
+#if !defined(CUBLEY_WIRE_PROTOCOL_USB)
+#define CUBLEY_WIRE_PROTOCOL_USB HAL_USE_SERIAL_USB
+#endif
 
-static void PulseStatusLedAfterSerialSetup(void)
-{
-    // Short marker only: avoid multi-second attach blocking during boot.
-    palSetPadMode(GPIOB, 0, PAL_MODE_OUTPUT_PUSHPULL);
-    palClearPad(GPIOB, 0);
+#if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
+#define CUBLEY_USB_CDC_ACTIVE TRUE
+#else
+#define CUBLEY_USB_CDC_ACTIVE FALSE
+#endif
 
-    for (int i = 0; i < 2; i++)
-    {
-        palSetPad(GPIOB, 0);
-        BusyDelay(2200000U);
-        palClearPad(GPIOB, 0);
-        BusyDelay(2200000U);
-    }
-}
-
+/* ─── SWD mailbox diagnostics ───────────────────────────────────────────── */
 extern volatile uint32_t g_cubley_diag_current_status;
 extern volatile uint32_t g_cubley_diag_last_error;
 extern volatile uint32_t g_cubley_diag_clr_status;
@@ -53,316 +43,100 @@ volatile uint32_t g_cubley_diag_mac_probe3;
 volatile uint32_t g_cubley_diag_mac_probe4;
 volatile uint32_t g_cubley_diag_mac_probe5;
 
-#if !defined(CUBLEY_WIRE_PROTOCOL_USB)
-#define CUBLEY_WIRE_PROTOCOL_USB HAL_USE_SERIAL_USB
-#endif
-
-#if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
-#define CUBLEY_USB_CDC_ACTIVE TRUE
-#else
-#define CUBLEY_USB_CDC_ACTIVE FALSE
-#endif
-
 static inline void SetStartupDiag(uint8_t stage, uint8_t result, uint8_t detail)
 {
-    // 0xD5SSRRDD => signature(0xD5), stage, result, detail.
-    // Stages used here: C0..C6 (main path), D0 (receiver thread), D1 (CLR thread), CF (unexpected post-osKernelStart path).
-    const uint32_t word = ((uint32_t)0xD5 << 24) | ((uint32_t)stage << 16) | ((uint32_t)result << 8) | (uint32_t)detail;
+    const uint32_t word = ((uint32_t)0xD5 << 24) | ((uint32_t)stage << 16)
+                        | ((uint32_t)result << 8) | (uint32_t)detail;
     g_cubley_diag_current_status = word;
-    g_cubley_diag_clr_status = word;
+    g_cubley_diag_clr_status     = word;
 }
 
 static inline void SetStartupErr(uint8_t op, uint8_t code, uint8_t detail)
 {
-    // 0xE2 marks CLR startup diagnostics.
-    g_cubley_diag_last_error = ((uint32_t)0xE2 << 24) | ((uint32_t)op << 16) | ((uint32_t)code << 8) | (uint32_t)detail;
+    g_cubley_diag_last_error = ((uint32_t)0xE2 << 24) | ((uint32_t)op << 16)
+                             | ((uint32_t)code << 8)  | (uint32_t)detail;
 }
 
 static inline void SetStartupTrace(uint8_t stage, uint8_t detail)
 {
-    // Independent startup breadcrumb: 0xA7SS00DD.
     g_startup_trace = ((uint32_t)0xA7 << 24) | ((uint32_t)stage << 16) | (uint32_t)detail;
 }
 
-static uint8_t HaltReasonCode(const char *reason)
-{
-    if (reason == NULL)
-    {
-        return 0x7F;
-    }
-
-    // ChibiOS MACv2 reports PHY autodetect timeout as "MAC failure".
-    if ((reason[0] == 'M') && (reason[1] == 'A') && (reason[2] == 'C') && (reason[3] == ' '))
-    {
-        return 0x31;
-    }
-
-    if ((reason[0] == 'D') && (reason[1] == 'M') && (reason[2] == 'A') && (reason[3] == ' '))
-    {
-        return 0x21;
-    }
-
-    return 0x7E;
-}
-
-static void CaptureMacFailureContext(void)
-{
-#if defined(HAL_USE_MAC) && (HAL_USE_MAC == TRUE)
-    enum
-    {
-        kPhyId1Reg = 2,
-        kPhyId2Reg = 3
-    };
-
-    // probe0: [31:24]=0xB1 tag, [23:16]=decoded PHY address, [15:0]=last MII data low bits.
-    // probe1: raw MII control register at failure (helps identify busy/op/address state).
-    uint8_t phyAddr = 0xFF;
-    uint32_t miiControl = 0;
-    uint32_t miiData = 0;
-    uint8_t firstAddr = 0xFF;
-    uint16_t firstId1 = 0;
-    uint16_t firstId2 = 0;
-    uint8_t firstAllZeroAddr = 0xFF;
-    uint8_t firstAllFFFFAddr = 0xFF;
-    uint8_t allZeroCount = 0;
-    uint8_t allFFFFCount = 0;
-
-#if defined(ETH_MACMDIOAR_MB)
-    extern MACDriver ETHD1;
-    phyAddr = (uint8_t)((ETHD1.phyaddr >> ETH_MACMDIOAR_PA_Pos) & 0x1Fu);
-    miiControl = ETH->MACMDIOAR;
-    miiData = ETH->MACMDIODR;
-
-    for (uint8_t i = 0; i <= 31u; i++)
-    {
-        uint32_t id1;
-        uint32_t id2;
-
-        ETHD1.phyaddr = ((uint32_t)i << ETH_MACMDIOAR_PA_Pos);
-        id1 = mii_read(&ETHD1, kPhyId1Reg);
-        id2 = mii_read(&ETHD1, kPhyId2Reg);
-
-        if (((id1 & 0xFFFFu) == 0u) && ((id2 & 0xFFFFu) == 0u))
-        {
-            if (firstAllZeroAddr == 0xFFu)
-            {
-                firstAllZeroAddr = i;
-            }
-            if (allZeroCount < 0xFFu)
-            {
-                allZeroCount++;
-            }
-        }
-
-        if (((id1 & 0xFFFFu) == 0xFFFFu) && ((id2 & 0xFFFFu) == 0xFFFFu))
-        {
-            if (firstAllFFFFAddr == 0xFFu)
-            {
-                firstAllFFFFAddr = i;
-            }
-            if (allFFFFCount < 0xFFu)
-            {
-                allFFFFCount++;
-            }
-        }
-
-        if (((id1 & 0xFFFFu) != 0u && (id1 & 0xFFFFu) != 0xFFFFu) ||
-            ((id2 & 0xFFFFu) != 0u && (id2 & 0xFFFFu) != 0xFFFFu))
-        {
-            firstAddr = i;
-            firstId1 = (uint16_t)(id1 & 0xFFFFu);
-            firstId2 = (uint16_t)(id2 & 0xFFFFu);
-            break;
-        }
-    }
-#elif defined(ETH_MACMIIAR_MB)
-    extern MACDriver ETHD1;
-    phyAddr = (uint8_t)((ETHD1.phyaddr >> 11u) & 0x1Fu);
-    miiControl = ETH->MACMIIAR;
-    miiData = ETH->MACMIIDR;
-
-    for (uint8_t i = 0; i <= 31u; i++)
-    {
-        uint32_t id1;
-        uint32_t id2;
-
-        ETHD1.phyaddr = ((uint32_t)i << 11u);
-        id1 = mii_read(&ETHD1, kPhyId1Reg);
-        id2 = mii_read(&ETHD1, kPhyId2Reg);
-
-        if (((id1 & 0xFFFFu) == 0u) && ((id2 & 0xFFFFu) == 0u))
-        {
-            if (firstAllZeroAddr == 0xFFu)
-            {
-                firstAllZeroAddr = i;
-            }
-            if (allZeroCount < 0xFFu)
-            {
-                allZeroCount++;
-            }
-        }
-
-        if (((id1 & 0xFFFFu) == 0xFFFFu) && ((id2 & 0xFFFFu) == 0xFFFFu))
-        {
-            if (firstAllFFFFAddr == 0xFFu)
-            {
-                firstAllFFFFAddr = i;
-            }
-            if (allFFFFCount < 0xFFu)
-            {
-                allFFFFCount++;
-            }
-        }
-
-        if (((id1 & 0xFFFFu) != 0u && (id1 & 0xFFFFu) != 0xFFFFu) ||
-            ((id2 & 0xFFFFu) != 0u && (id2 & 0xFFFFu) != 0xFFFFu))
-        {
-            firstAddr = i;
-            firstId1 = (uint16_t)(id1 & 0xFFFFu);
-            firstId2 = (uint16_t)(id2 & 0xFFFFu);
-            break;
-        }
-    }
-#endif
-
-    g_cubley_diag_mac_probe0 = ((uint32_t)0xB1 << 24) | ((uint32_t)phyAddr << 16) | (miiData & 0xFFFFu);
-    g_cubley_diag_mac_probe1 = miiControl;
-    g_cubley_diag_mac_probe2 = ((uint32_t)0xB2 << 24) | ((uint32_t)firstAddr << 16) | (uint32_t)firstId1;
-    g_cubley_diag_mac_probe3 = ((uint32_t)0xB3 << 24) | ((uint32_t)firstAddr << 16) | (uint32_t)firstId2;
-    g_cubley_diag_mac_probe4 = ((uint32_t)0xB4 << 24) | ((uint32_t)firstAllZeroAddr << 16) |
-                               ((uint32_t)allZeroCount << 8) | (uint32_t)allFFFFCount;
-    g_cubley_diag_mac_probe5 = ((uint32_t)0xB5 << 24) | ((uint32_t)firstAllFFFFAddr << 16);
-#else
-    g_cubley_diag_mac_probe0 = ((uint32_t)0xB1 << 24) | 0x00000001u;
-    g_cubley_diag_mac_probe1 = 0;
-    g_cubley_diag_mac_probe2 = 0;
-    g_cubley_diag_mac_probe3 = 0;
-    g_cubley_diag_mac_probe4 = 0;
-    g_cubley_diag_mac_probe5 = 0;
-#endif
-}
-
+/* Called by the ChibiOS system halt path. */
 void CubleySystemHaltHook(const char *reason)
 {
-    const uint8_t reasonCode = HaltReasonCode(reason);
-
-    if (reasonCode == 0x31)
-    {
-        CaptureMacFailureContext();
-    }
-
-    // 0xE0 stage marks fatal pre-scheduler halts (for example MAC/PHY bring-up).
-    SetStartupTrace(0xE0, reasonCode);
-    SetStartupDiag(0xE0, 0xEE, reasonCode);
-    SetStartupErr(0xE0, 0xEE, reasonCode);
+    (void)reason;
+    SetStartupDiag(0xE0, 0xEE, 0xFF);
+    SetStartupErr(0xE0, 0xEE, 0xFF);
 }
 
+/* ─── LED pulse ──────────────────────────────────────────────────────────── */
+static void BusyDelay(volatile uint32_t cycles)
+{
+    while (cycles-- > 0)
+        __asm("nop");
+}
+
+static void __attribute__((unused)) PulseStatusLed(int count)
+{
+    palSetPadMode(GPIOB, 0, PAL_MODE_OUTPUT_PUSHPULL);
+    palClearPad(GPIOB, 0);
+    for (int i = 0; i < count; i++)
+    {
+        palSetPad(GPIOB, 0);
+        BusyDelay(2200000U);
+        palClearPad(GPIOB, 0);
+        BusyDelay(2200000U);
+    }
+}
+
+/* ─── Thread stubs (with mailbox markers, same 4 KB stack as cubley-base) ─ */
 static void ReceiverThreadProbe(void const *arg)
 {
     SetStartupDiag(0xD0, 0, 1);
-    SetStartupErr(0xD0, 0, 1);
-
     ReceiverThread(arg);
-
-    // Receiver thread should never return in a healthy runtime.
     SetStartupDiag(0xD0, 14, 0xFE);
-    SetStartupErr(0xD0, 0xFE, 0);
-    while (true)
-    {
-        osDelay(100);
-    }
+    while (true) osDelay(100);
 }
 
 static void CLRStartupThreadProbe(void const *arg)
 {
     SetStartupDiag(0xD1, 0, 1);
-    SetStartupErr(0xD1, 0, 1);
-
     CLRStartupThread(arg);
-
-    // CLR startup thread should not return during normal operation.
     SetStartupDiag(0xD1, 14, 0xFD);
-    SetStartupErr(0xD1, 0xFD, 0);
-    while (true)
-    {
-        osDelay(100);
-    }
+    while (true) osDelay(100);
 }
 
-osThreadDef(ReceiverThreadProbe, osPriorityHigh, 2048, "ReceiverThread");
+osThreadDef(ReceiverThreadProbe,  osPriorityHigh,   4096, "ReceiverThread");
 osThreadDef(CLRStartupThreadProbe, osPriorityNormal, 4096, "CLRStartupThread");
 
+/* ─── USB-CDC init thread (only if USB CDC is active) ───────────────────── */
 #if (CUBLEY_USB_CDC_ACTIVE == TRUE)
 static THD_WORKING_AREA(waUsbCdcInitThread, 768);
 static THD_FUNCTION(UsbCdcInitThread, arg)
 {
     (void)arg;
     chRegSetThreadName("USB_CDC_Init");
-
-    SetStartupTrace(0xC3, 1);
-    SetStartupDiag(0xC3, 1, 1);  // USB init starting
     sduObjectInit(&SDU1);
     sduStart(&SDU1, &serusbcfg);
-    SetStartupTrace(0xC3, 2);
-    SetStartupDiag(0xC3, 1, 2);  // sduStart completed
-
     usbDisconnectBus(serusbcfg.usbp);
-    SetStartupTrace(0xC3, 3);
-    SetStartupDiag(0xC3, 1, 3);  // usbDisconnectBus completed
     chThdSleepMilliseconds(100);
     usbStart(serusbcfg.usbp, &usbcfg);
-    SetStartupTrace(0xC3, 4);
-    SetStartupDiag(0xC3, 1, 4);  // usbStart completed
     usbConnectBus(serusbcfg.usbp);
-    SetStartupTrace(0xC3, 5);
-    SetStartupDiag(0xC3, 1, 5);  // usbConnectBus completed
-
     chThdExit(MSG_OK);
 }
 #endif
 
-#if (CUBLEY_WIRE_PROTOCOL_USB != TRUE)
-static void ForceUsart3PinsOnPd8Pd9(void)
-{
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
-    (void)RCC->AHB1ENR;
-
-    GPIOD->MODER &= ~((3u << (8u * 2u)) | (3u << (9u * 2u)));
-    GPIOD->MODER |= ((2u << (8u * 2u)) | (2u << (9u * 2u)));
-
-    GPIOD->OTYPER &= ~((1u << 8u) | (1u << 9u));
-    GPIOD->OSPEEDR |= ((3u << (8u * 2u)) | (3u << (9u * 2u)));
-    GPIOD->PUPDR &= ~((3u << (8u * 2u)) | (3u << (9u * 2u)));
-
-    GPIOD->AFRH &= ~((0xFu << ((8u - 8u) * 4u)) | (0xFu << ((9u - 8u) * 4u)));
-    GPIOD->AFRH |= ((7u << ((8u - 8u) * 4u)) | (7u << ((9u - 8u) * 4u)));
-}
-#endif
-
+/* ─── main ───────────────────────────────────────────────────────────────── */
 int main(void)
 {
-    SetStartupTrace(0xC0, 1);
     SetStartupDiag(0xC0, 0, 1);
-    SetStartupErr(0xC0, 0, 1);
-    SetStartupDiag(0xC0, 2, (CUBLEY_USB_CDC_ACTIVE ? 1 : 0));  // Diagnostic: is USB_CDC active?
 
-#if (HAL_USE_MAC == TRUE)
-    SetStartupTrace(0xC0, 0xA1);
-    SetStartupDiag(0xC0, 2, 0xA1); // MAC path enabled in this image.
-#else
-    SetStartupTrace(0xC0, 0xA0);
-    SetStartupDiag(0xC0, 2, 0xA0); // MAC path disabled in this image.
-#endif
-
-    SetStartupTrace(0xC1, 0x10);
-    SetStartupDiag(0xC1, 1, 0x10); // halInit entering.
+    SetStartupDiag(0xC1, 0, 0x10);
     halInit();
-    SetStartupTrace(0xC1, 0x11);
-    SetStartupDiag(0xC1, 1, 0x11); // halInit returned.
+    SetStartupDiag(0xC1, 0, 0x11);
 
     InitBootClipboard();
-    SetStartupDiag(0xC1, 0, 1);
-    SetStartupErr(0xC1, 0, 1);
 
 #if (SWO_OUTPUT == TRUE)
     SwoInit();
@@ -370,64 +144,61 @@ int main(void)
 
     osKernelInitialize();
     SetStartupDiag(0xC2, 0, 1);
-    SetStartupErr(0xC2, 0, 1);
 
 #if (HAL_NF_USE_STM32_CRC == TRUE)
     crcStart(NULL);
-    SetStartupTrace(0xC3, 0);
     SetStartupDiag(0xC3, 0, 1);
-    SetStartupErr(0xC3, 0, 1);
 #endif
 
 #if (CUBLEY_WIRE_PROTOCOL_USB != TRUE)
-    static const SerialConfig usart3_cfg = {
-        921600,
-        0,
-        USART_CR2_STOP1_BITS,
-        0
-    };
+    // Enable USART3 peripheral clock then start the ChibiOS serial driver.
+    // Both palSetLineMode and direct AFRH writes are needed: palSetLineMode
+    // updates the ChibiOS PAL state; the raw GPIO write ensures the AF is set
+    // even if halInit touched the registers.
+    RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
+    (void)RCC->APB1ENR;
 
     palSetLineMode(PAL_LINE(GPIOD, 8U), PAL_MODE_ALTERNATE(7));
     palSetLineMode(PAL_LINE(GPIOD, 9U), PAL_MODE_ALTERNATE(7));
-    ForceUsart3PinsOnPd8Pd9();
 
+    // Belt-and-suspenders: write GPIOD AFRH directly for PD8 and PD9 (AF7).
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+    (void)RCC->AHB1ENR;
+    GPIOD->AFRH = (GPIOD->AFRH
+                  & ~((0xFu << ((8u - 8u) * 4u)) | (0xFu << ((9u - 8u) * 4u))))
+                  |  ((7u   << ((8u - 8u) * 4u)) | (7u   << ((9u - 8u) * 4u)));
+
+    static const SerialConfig usart3_cfg = {
+        921600, 0, USART_CR2_STOP1_BITS, 0
+    };
+    SetStartupDiag(0xC3, 0, 0x20);
     sdStart(&SD3, &usart3_cfg);
-    PulseStatusLedAfterSerialSetup();
+    SetStartupDiag(0xC3, 0, 0x22);
+    // No LED pulse here: the busy-delay blocks osKernelStart for seconds.
+    // Boot visibility is already provided by SWD mailbox markers.
 #endif
 
+    SetStartupTrace(0xC4, 1);
     SetStartupDiag(0xC4, 0, 1);
-    SetStartupErr(0xC4, 0, 1);
 
 #if (CUBLEY_USB_CDC_ACTIVE == TRUE)
     chThdCreateStatic(waUsbCdcInitThread, sizeof(waUsbCdcInitThread),
                       NORMALPRIO + 2, UsbCdcInitThread, NULL);
 #endif
 
-    osThreadCreate(osThread(ReceiverThreadProbe), NULL);
+    osThreadCreate(osThread(ReceiverThreadProbe),  NULL);
 
     CLR_SETTINGS clrSettings;
     (void)memset(&clrSettings, 0, sizeof(CLR_SETTINGS));
-
-    clrSettings.MaxContextSwitches = 50;
-    // Debugger-free bring-up mode: allow managed entrypoint to run immediately
-    // after reset so repeated SWD/scope cycles reflect real runtime behavior.
-    clrSettings.WaitForDebugger = false;
+    clrSettings.MaxContextSwitches         = 50;
+    clrSettings.WaitForDebugger            = false;
     clrSettings.EnterDebuggerLoopAfterExit = false;
-
     osThreadCreate(osThread(CLRStartupThreadProbe), &clrSettings);
 
     SetStartupDiag(0xC5, 0, 1);
-    SetStartupErr(0xC5, 0, 1);
-
-    SetStartupDiag(0xC6, 0, 1);
-    SetStartupErr(0xC6, 0, 1);
     osKernelStart();
 
+    // Never reached.
     SetStartupDiag(0xCF, 14, 0xFF);
-    SetStartupErr(0xCF, 0xFF, 0);
-
-    while (true)
-    {
-        osDelay(100);
-    }
+    while (true) osDelay(100);
 }
