@@ -1,3 +1,7 @@
 [submodule "hardware/kicad-project/nonfree"]
 	path = hardware/kicad-project/nonfree
 	url = git@github.com:getpwnam/m0dmf_kicad_nonfree.git
+[submodule "firmware/nf-interpreter"]
+	path = firmware/nf-interpreter
+	url = https://github.com/nanoframework/nf-interpreter.git
+	branch = main

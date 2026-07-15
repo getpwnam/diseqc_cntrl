@@ -1,0 +1,30 @@
+{
+    "version": 4,
+    "include": [
+        "../../nf-interpreter/CMake/arm-gcc.json",
+        "../../nf-interpreter/config/user-tools-repos.json",
+        "../../nf-interpreter/config/user-prefs.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "CUBLEY_F407_0_5",
+            "inherits": [
+                "arm-gcc-cortex-preset",
+                "user-tools-repos",
+                "user-prefs"
+            ],
+            "hidden": false,
+            "cacheVariables": {
+                "NF_TARGET_DEFCONFIG": "targets-community/ChibiOS/CUBLEY_F407_0_5/defconfig"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "inherits": "base-user",
+            "name": "CUBLEY_F407_0_5",
+            "displayName": "CUBLEY_F407_0_5",
+            "configurePreset": "CUBLEY_F407_0_5"
+        }
+    ]
+}
