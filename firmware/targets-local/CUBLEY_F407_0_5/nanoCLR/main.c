@@ -26,16 +26,24 @@
 #include <nanoCLR_Application.h>
 #include <nanoHAL_v2.h>
 #include "fram_native.h"
+#include "lnbh26_native.h"
 
 static void FramSelfTestThread(void const *argument);
+static void LnbSelfTestThread(void const *argument);
 
 osThreadDef(ReceiverThread,     osPriorityHigh,   2048, "ReceiverThread");
 osThreadDef(CLRStartupThread,   osPriorityNormal, 4096, "CLRStartupThread");
 osThreadDef(FramSelfTestThread, osPriorityBelowNormal, 1024, "FramSelfTestThread");
+osThreadDef(LnbSelfTestThread,  osPriorityBelowNormal, 1024, "LnbSelfTestThread");
 
 volatile uint32_t g_fram_native_selftest_thread_marker = 0;
 volatile uint32_t g_fram_native_selftest_status = 0;
 volatile uint32_t g_fram_native_selftest_i2c = 0;
+
+volatile uint32_t g_lnb_native_selftest_thread_marker = 0;
+volatile uint32_t g_lnb_native_selftest_status = 0;
+volatile uint32_t g_lnb_native_selftest_i2c = 0;
+volatile uint32_t g_lnb_native_selftest_status1 = 0;
 
 static void RunFramNativeSelfTest(void)
 {
@@ -99,6 +107,88 @@ static void FramSelfTestThread(void const *argument)
     }
 }
 
+static void RunLnbNativeSelfTest(void)
+{
+    int32_t statusReg = 0;
+
+    // Format: 0xB2SSCCDD
+    g_lnb_native_selftest_status = 0xB2000001u;
+
+    int32_t initStatus = lnb_native_init();
+    g_lnb_native_selftest_i2c = (uint32_t)(lnb_get_last_i2c_msg() & 0xFFFF);
+    if (initStatus != (int32_t)LNB_OK)
+    {
+        g_lnb_native_selftest_status = 0xB2010000u | ((uint32_t)initStatus & 0xFFu);
+        return;
+    }
+
+    int32_t polarizationStatus = lnb_native_set_polarization((int32_t)LNB_NATIVE_POLARIZATION_VERTICAL);
+    g_lnb_native_selftest_i2c = (uint32_t)(lnb_get_last_i2c_msg() & 0xFFFF);
+    if (polarizationStatus != (int32_t)LNB_OK)
+    {
+        g_lnb_native_selftest_status = 0xB2020000u | ((uint32_t)polarizationStatus & 0xFFu);
+        return;
+    }
+
+    int32_t bandStatus = lnb_native_set_band((int32_t)LNB_NATIVE_BAND_LOW);
+    g_lnb_native_selftest_i2c = (uint32_t)(lnb_get_last_i2c_msg() & 0xFFFF);
+    if (bandStatus != (int32_t)LNB_OK)
+    {
+        g_lnb_native_selftest_status = 0xB2030000u | ((uint32_t)bandStatus & 0xFFu);
+        return;
+    }
+
+    int32_t enableStatus = lnb_native_set_enable(1);
+    g_lnb_native_selftest_i2c = (uint32_t)(lnb_get_last_i2c_msg() & 0xFFFF);
+    if (enableStatus != (int32_t)LNB_OK)
+    {
+        g_lnb_native_selftest_status = 0xB2040000u | ((uint32_t)enableStatus & 0xFFu);
+        return;
+    }
+
+    int32_t readStatus = lnb_native_read_status(&statusReg);
+    g_lnb_native_selftest_i2c = (uint32_t)(lnb_get_last_i2c_msg() & 0xFFFF);
+    g_lnb_native_selftest_status1 = (uint32_t)statusReg;
+    if (readStatus != (int32_t)LNB_OK)
+    {
+        g_lnb_native_selftest_status = 0xB2050000u | ((uint32_t)readStatus & 0xFFu);
+        return;
+    }
+
+    if (lnb_native_get_polarization() != (int32_t)LNB_POL_VERTICAL)
+    {
+        g_lnb_native_selftest_status = 0xB2060001u;
+        return;
+    }
+
+    if (lnb_native_get_band() != (int32_t)LNB_BAND_LOW)
+    {
+        g_lnb_native_selftest_status = 0xB2060002u;
+        return;
+    }
+
+    (void)lnb_native_set_enable(0);
+    g_lnb_native_selftest_i2c = (uint32_t)(lnb_get_last_i2c_msg() & 0xFFFF);
+    g_lnb_native_selftest_status = 0xB2FF0001u;
+}
+
+static void LnbSelfTestThread(void const *argument)
+{
+    (void)argument;
+    g_lnb_native_selftest_thread_marker = 0xB2AA0001u;
+
+    chThdSleepMilliseconds(3500);
+    g_lnb_native_selftest_thread_marker = 0xB2AA0002u;
+
+    RunLnbNativeSelfTest();
+    g_lnb_native_selftest_thread_marker = 0xB2AA00FFu;
+
+    while (true)
+    {
+        osDelay(1000);
+    }
+}
+
 // USART3 (SD3) wire-protocol configuration.
 // CR2 STOP1 bits, no CR1 or CR3 overrides.
 static const SerialConfig cubley_wp_serial_cfg = {
@@ -132,6 +222,15 @@ int main(void)
     else
     {
         g_fram_native_selftest_thread_marker = 0xF4AA00EEu;
+    }
+
+    if (osThreadCreate(osThread(LnbSelfTestThread), NULL) != NULL)
+    {
+        g_lnb_native_selftest_thread_marker = 0xB2AA0011u;
+    }
+    else
+    {
+        g_lnb_native_selftest_thread_marker = 0xB2AA00EEu;
     }
 
     CLR_SETTINGS clrSettings;

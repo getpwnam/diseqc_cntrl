@@ -11,3 +11,10 @@
 
 // Cubley v0.5 FRAM bus on PB6/PB7.
 I2C_CONFIG_PINS(1, GPIOB, GPIOB, 6, 7, 4)
+
+//////////
+// I2C3 //
+//////////
+
+// Cubley v0.5 LNBH26 bus on PA8/PC9.
+I2C_CONFIG_PINS(3, GPIOA, GPIOC, 8, 9, 4)
