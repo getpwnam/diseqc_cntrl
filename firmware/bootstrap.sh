@@ -33,9 +33,13 @@ if [[ ! -d "${TARGET_SRC}" ]]; then
 fi
 
 if [[ ! -e "${SCRIPT_DIR}/nf-interpreter/.git" ]]; then
-    echo "ERROR: nf-interpreter submodule not initialized at ${SCRIPT_DIR}/nf-interpreter" >&2
-    echo "Run: git submodule update --init firmware/nf-interpreter" >&2
-    exit 1
+    REPO_ROOT="${SCRIPT_DIR}/.."
+    echo "INFO: nf-interpreter submodule not initialized; attempting auto-init..."
+    if ! git -C "${REPO_ROOT}" submodule update --init firmware/nf-interpreter; then
+        echo "ERROR: failed to initialize nf-interpreter submodule at ${SCRIPT_DIR}/nf-interpreter" >&2
+        echo "Try manually: git -C ${REPO_ROOT} submodule update --init firmware/nf-interpreter" >&2
+        exit 1
+    fi
 fi
 
 mkdir -p "${LINK_DIR}"
