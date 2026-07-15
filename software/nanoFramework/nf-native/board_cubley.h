@@ -88,7 +88,7 @@
  * LNB Control Configuration (LNBH26PQR via I2C)
  * 
  * LNBH26PQR is controlled via I2C interface:
- * - I2C1: PB6 (SCL), PB7 (SDA)
+ * - I2C3: PA8 (SCL), PC9 (SDA)
  * - I2C Address: 0x08 (7-bit)
  * 
  * The LNBH26PQR controls:
@@ -97,7 +97,7 @@
  * - DiSEqC mode - Register bit DISEQC
  * - Current limiting and protection
  */
-#define LNB_I2C_DRIVER             I2CD1    // I2C1 bus
+#define LNB_I2C_DRIVER             I2CD3    // I2C3 bus
 #define LNB_I2C_ADDRESS            0x08     // LNBH26PQR I2C address (7-bit)
 
 /*
@@ -141,7 +141,7 @@
 #define GPIOA_PIN5                  5U
 #define GPIOA_PIN6                  6U
 #define GPIOA_PIN7                  7U
-#define GPIOA_PIN8                  8U  // I2C3_SCL (FRAM)
+#define GPIOA_PIN8                  8U  // I2C3_SCL (LNBH26)
 #define GPIOA_PIN9                  9U
 #define GPIOA_PIN10                 10U
 #define GPIOA_PIN11                 11U // USB_DM (if used)
@@ -175,7 +175,7 @@
 #define GPIOC_PIN6                  6U
 #define GPIOC_PIN7                  7U
 #define GPIOC_PIN8                  8U  // LNB_FLT
-#define GPIOC_PIN9                  9U  // I2C3_SDA (FRAM)
+#define GPIOC_PIN9                  9U  // I2C3_SDA (LNBH26)
 #define GPIOC_PIN10                 10U
 #define GPIOC_PIN11                 11U
 #define GPIOC_PIN12                 12U

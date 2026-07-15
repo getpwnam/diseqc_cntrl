@@ -294,7 +294,7 @@
  *
  * PA0  - BUTTON                    (input floating).
  * PA1  - PIN1                      (input pullup).
- * PA2  - LED_STATUS                (output pushpull).
+ * PA2  - MDIO                      (alternate 11).
  * PA3  - PIN3                      (input pullup).
  * PA4  - LRCK                      (alternate 6).
  * PA5  - SPC                       (alternate 5).
@@ -311,7 +311,7 @@
  */
 #define VAL_GPIOA_MODER             (PIN_MODE_INPUT(GPIOA_BUTTON) |         \
                                      PIN_MODE_INPUT(GPIOA_PIN1) |           \
-                                     PIN_MODE_OUTPUT(GPIOA_PIN2) |          \
+                                     PIN_MODE_ALTERNATE(GPIOA_PIN2) |       \
                                      PIN_MODE_INPUT(GPIOA_PIN3) |           \
                                      PIN_MODE_ALTERNATE(GPIOA_LRCK) |       \
                                      PIN_MODE_ALTERNATE(GPIOA_SPC) |        \
@@ -391,7 +391,7 @@
                                      PIN_ODR_HIGH(GPIOA_PIN15))
 #define VAL_GPIOA_AFRL              (PIN_AFIO_AF(GPIOA_BUTTON, 0U) |        \
                                      PIN_AFIO_AF(GPIOA_PIN1, 0U) |          \
-                                     PIN_AFIO_AF(GPIOA_PIN2, 0U) |          \
+                                     PIN_AFIO_AF(GPIOA_PIN2, 11U) |         \
                                      PIN_AFIO_AF(GPIOA_PIN3, 0U) |          \
                                      PIN_AFIO_AF(GPIOA_LRCK, 6U) |          \
                                      PIN_AFIO_AF(GPIOA_SPC, 5U) |           \
@@ -409,7 +409,7 @@
 /*
  * GPIOB setup:
  *
- * PB0  - PIN0                      (input pullup).
+ * PB0  - LED_STATUS                (output pushpull).
  * PB1  - PIN1                      (input pullup).
  * PB2  - PIN2                      (input pullup).
  * PB3  - SWO                       (alternate 0).
@@ -426,7 +426,7 @@
  * PB14 - PIN14                     (input pullup).
  * PB15 - PIN15                     (input pullup).
  */
-#define VAL_GPIOB_MODER             (PIN_MODE_INPUT(GPIOB_PIN0) |           \
+#define VAL_GPIOB_MODER             (PIN_MODE_OUTPUT(GPIOB_PIN0) |          \
                                      PIN_MODE_INPUT(GPIOB_PIN1) |           \
                                      PIN_MODE_INPUT(GPIOB_PIN2) |           \
                                      PIN_MODE_ALTERNATE(GPIOB_SWO) |        \
@@ -474,7 +474,7 @@
                                      PIN_OSPEED_HIGH(GPIOB_PIN13) |         \
                                      PIN_OSPEED_HIGH(GPIOB_PIN14) |         \
                                      PIN_OSPEED_HIGH(GPIOB_PIN15))
-#define VAL_GPIOB_PUPDR             (PIN_PUPDR_PULLUP(GPIOB_PIN0) |         \
+#define VAL_GPIOB_PUPDR             (PIN_PUPDR_FLOATING(GPIOB_PIN0) |       \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN1) |         \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN2) |         \
                                      PIN_PUPDR_FLOATING(GPIOB_SWO) |        \
@@ -490,7 +490,7 @@
                                      PIN_PUPDR_PULLUP(GPIOB_PIN13) |        \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN14) |        \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN15))
-#define VAL_GPIOB_ODR               (PIN_ODR_HIGH(GPIOB_PIN0) |             \
+#define VAL_GPIOB_ODR               (PIN_ODR_LOW(GPIOB_PIN0) |              \
                                      PIN_ODR_HIGH(GPIOB_PIN1) |             \
                                      PIN_ODR_HIGH(GPIOB_PIN2) |             \
                                      PIN_ODR_HIGH(GPIOB_SWO) |              \

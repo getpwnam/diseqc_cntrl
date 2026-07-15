@@ -18,6 +18,16 @@ void boardInit(void)
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;  // USART3 + TIM4 channels
 	(void)RCC->AHB1ENR;
 
+	// Configure PD8/PD9 for USART3 (wire protocol): AF7, push-pull, high speed.
+	GPIOD->MODER   = (GPIOD->MODER & ~((3u << (8u * 2u)) | (3u << (9u * 2u))))
+	               | ((2u << (8u * 2u)) | (2u << (9u * 2u)));
+	GPIOD->OTYPER &= ~((1u << 8u) | (1u << 9u));
+	GPIOD->OSPEEDR = (GPIOD->OSPEEDR & ~((3u << (8u * 2u)) | (3u << (9u * 2u))))
+	               | ((3u << (8u * 2u)) | (3u << (9u * 2u)));
+	GPIOD->PUPDR  &= ~((3u << (8u * 2u)) | (3u << (9u * 2u)));
+	GPIOD->AFRH    = (GPIOD->AFRH & ~((0xFu << ((8u - 8u) * 4u)) | (0xFu << ((9u - 8u) * 4u))))
+	               | ((7u << ((8u - 8u) * 4u)) | (7u << ((9u - 8u) * 4u)));
+
 	// Configure PA11 and PA12 for USB OTG_FS:
 	//   MODER:  AF mode (10b)
 	//   OTYPER: push-pull (0)
