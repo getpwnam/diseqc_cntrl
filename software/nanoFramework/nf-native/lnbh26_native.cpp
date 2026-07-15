@@ -5,18 +5,58 @@
 
 #include "lnbh26_native.h"
 #include "board_cubley.h"
+#include <sys_dev_i2c_native_target.h>
 #include <string.h>
+
+extern volatile uint32_t g_cubley_diag_current_status;
+extern volatile uint32_t g_cubley_diag_last_error;
+
+// Managed I2C target config provides ConfigPins_I2C1(); the LNB path reuses
+// the existing I2C3 pin mux helper from the DiSEqC native surface.
+extern void ConfigPins_I2C3(void);
 
 /* Global LNB handle */
 static lnb_handle_t g_lnb;
 static bool g_lnb_initialized = false;
+static int32_t g_lnb_last_i2c_msg = 0;
+
+// DMA on STM32F4 cannot access CCM stack (0x1000xxxx). Keep I2C transfer
+// buffers in static SRAM-backed storage to avoid DMA failure hard halts.
+static uint8_t g_lnb_i2c_tx_buf[2];
+static uint8_t g_lnb_i2c_reg_addr;
+static uint8_t g_lnb_i2c_rx_byte;
 
 /* I2C timeout */
 #define I2C_TIMEOUT_MS              100
 
+static const I2CConfig g_lnb_i2c_config = {
+    OPMODE_I2C,
+    100000,
+    STD_DUTY_CYCLE
+};
+
+static void lnb_prepare_i2c_bus(I2CDriver *i2c_driver)
+{
+    if (i2c_driver == &I2CD3)
+    {
+        ConfigPins_I2C3();
+    }
+    else if (i2c_driver == &I2CD1)
+    {
+        ConfigPins_I2C1();
+    }
+
+    i2cStart(i2c_driver, &g_lnb_i2c_config);
+}
+
 bool lnb_is_initialized(void)
 {
     return g_lnb_initialized;
+}
+
+int32_t lnb_get_last_i2c_msg(void)
+{
+    return g_lnb_last_i2c_msg;
 }
 
 /**
@@ -24,20 +64,20 @@ bool lnb_is_initialized(void)
  */
 static lnb_status_t lnb_write_control(lnb_handle_t *hlnb)
 {
-    uint8_t tx_buf[2];
-
-    tx_buf[0] = LNBH26_REG_CONTROL;
-    tx_buf[1] = hlnb->control_reg;
+    g_lnb_i2c_tx_buf[0] = LNBH26_REG_CONTROL;
+    g_lnb_i2c_tx_buf[1] = hlnb->control_reg;
 
     msg_t status = i2cMasterTransmitTimeout(
         hlnb->i2c_driver,
         hlnb->i2c_addr,
-        tx_buf,
+        g_lnb_i2c_tx_buf,
         2,
         NULL,
         0,
         TIME_MS2I(I2C_TIMEOUT_MS)
     );
+
+    g_lnb_last_i2c_msg = (int32_t)status;
 
     if (status != MSG_OK) {
         return LNB_ERROR_I2C;
@@ -51,12 +91,14 @@ static lnb_status_t lnb_write_control(lnb_handle_t *hlnb)
  */
 static lnb_status_t lnb_read_register(lnb_handle_t *hlnb, uint8_t reg, uint8_t *value)
 {
+    g_lnb_i2c_reg_addr = reg;
+
     msg_t status = i2cMasterTransmitTimeout(
         hlnb->i2c_driver,
         hlnb->i2c_addr,
-        &reg,
+        &g_lnb_i2c_reg_addr,
         1,
-        value,
+        &g_lnb_i2c_rx_byte,
         1,
         TIME_MS2I(I2C_TIMEOUT_MS)
     );
@@ -64,6 +106,8 @@ static lnb_status_t lnb_read_register(lnb_handle_t *hlnb, uint8_t reg, uint8_t *
     if (status != MSG_OK) {
         return LNB_ERROR_I2C;
     }
+
+    *value = g_lnb_i2c_rx_byte;
 
     return LNB_OK;
 }
@@ -76,6 +120,7 @@ lnb_status_t lnb_init(lnb_handle_t *hlnb,
                       uint8_t i2c_addr)
 {
     if (hlnb == NULL || i2c_driver == NULL) {
+        g_lnb_last_i2c_msg = -127;
         return LNB_ERROR_INVALID_PARAM;
     }
 
@@ -83,6 +128,8 @@ lnb_status_t lnb_init(lnb_handle_t *hlnb,
 
     hlnb->i2c_driver = i2c_driver;
     hlnb->i2c_addr = i2c_addr;
+
+    lnb_prepare_i2c_bus(i2c_driver);
 
     // Initialize to default: 13V (vertical), no tone (low band), enabled
     hlnb->voltage = LNB_VOLTAGE_13V;
@@ -96,6 +143,12 @@ lnb_status_t lnb_init(lnb_handle_t *hlnb,
     // Write initial configuration to LNBH26
     lnb_status_t status = lnb_write_control(hlnb);
     if (status != LNB_OK) {
+        // Record detailed init failure telemetry for SWD mailbox reads.
+        // current_status: 0xD5 C1 0E XX (LNB_INIT, FAIL, raw I2C msg low byte)
+        // last_error:     0xE3 C1 SS XX (LNB native, LNB_INIT, status enum, raw I2C msg low byte)
+        const uint8_t rawDetail = (uint8_t)(g_lnb_last_i2c_msg & 0xFF);
+        g_cubley_diag_current_status = ((uint32_t)0xD5 << 24) | ((uint32_t)0xC1 << 16) | ((uint32_t)0x0E << 8) | rawDetail;
+        g_cubley_diag_last_error = ((uint32_t)0xE3 << 24) | ((uint32_t)0xC1 << 16) | ((uint32_t)status << 8) | rawDetail;
         return status;
     }
 
