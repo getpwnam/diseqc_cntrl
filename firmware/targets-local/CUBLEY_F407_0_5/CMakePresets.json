@@ -15,7 +15,8 @@
             ],
             "hidden": false,
             "cacheVariables": {
-                "NF_TARGET_DEFCONFIG": "targets-community/ChibiOS/CUBLEY_F407_0_5/defconfig"
+                "NF_TARGET_DEFCONFIG": "targets-community/ChibiOS/CUBLEY_F407_0_5/defconfig",
+                "NF_INTEROP_ASSEMBLIES": "CubleyNative"
             }
         }
     ],

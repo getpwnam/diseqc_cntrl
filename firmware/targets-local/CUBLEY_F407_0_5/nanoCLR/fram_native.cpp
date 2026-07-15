@@ -30,7 +30,7 @@ static void fram_set_last_error(int32_t status, int32_t detail)
 
 static bool fram_range_is_valid(uint16_t address, uint16_t count)
 {
-    // 16 kbit FRAM -> 2048-byte address space [0x0000..0x07FF].
+    // FM24CL16B is 16 kbit -> 2048-byte address space [0x0000..0x07FF].
     if (count == 0u)
     {
         return false;
@@ -61,6 +61,17 @@ static void fram_prepare_i2c_bus(I2CDriver *i2c_driver)
     i2cStart(i2c_driver, &g_fram_i2c_config);
 }
 
+static uint8_t fram_bank_addr(uint16_t absoluteAddress)
+{
+    // 24C16-style device-select paging: A2..A0 are address bits [10:8].
+    return (uint8_t)(FRAM_DEFAULT_I2C_ADDR | ((absoluteAddress >> 8) & 0x07u));
+}
+
+static uint8_t fram_word_addr(uint16_t absoluteAddress)
+{
+    return (uint8_t)(absoluteAddress & 0xFFu);
+}
+
 fram_status_t fram_init(fram_handle_t *hfram, I2CDriver *i2c_driver, uint8_t i2c_addr)
 {
     if (hfram == NULL || i2c_driver == NULL)
@@ -84,15 +95,14 @@ fram_status_t fram_init(fram_handle_t *hfram, I2CDriver *i2c_driver, uint8_t i2c
 
     fram_prepare_i2c_bus(i2c_driver);
 
-    // Probe by reading one byte from address 0x0000.
+    // Probe by reading one byte from absolute address 0x0000.
     g_fram_tx_buf[0] = 0x00;
-    g_fram_tx_buf[1] = 0x00;
 
     msg_t status = i2cMasterTransmitTimeout(
         hfram->i2c_driver,
-        hfram->i2c_addr,
+        fram_bank_addr(0x0000),
         g_fram_tx_buf,
-        2,
+        1,
         g_fram_rx_buf,
         1,
         TIME_MS2I(FRAM_I2C_TIMEOUT_MS));
@@ -140,16 +150,20 @@ fram_status_t fram_write(fram_handle_t *hfram, uint16_t address, const uint8_t *
     while (remaining > 0)
     {
         uint16_t chunk = (remaining > FRAM_MAX_TRANSFER_BYTES) ? FRAM_MAX_TRANSFER_BYTES : remaining;
+        const uint16_t bankRemaining = (uint16_t)(0x100u - (uint16_t)(current & 0xFFu));
+        if (chunk > bankRemaining)
+        {
+            chunk = bankRemaining;
+        }
 
-        g_fram_tx_buf[0] = (uint8_t)((current >> 8) & 0xFF);
-        g_fram_tx_buf[1] = (uint8_t)(current & 0xFF);
-        memcpy(&g_fram_tx_buf[2], cursor, chunk);
+        g_fram_tx_buf[0] = fram_word_addr(current);
+        memcpy(&g_fram_tx_buf[1], cursor, chunk);
 
         msg_t status = i2cMasterTransmitTimeout(
             hfram->i2c_driver,
-            hfram->i2c_addr,
+            fram_bank_addr(current),
             g_fram_tx_buf,
-            (size_t)chunk + 2,
+            (size_t)chunk + 1,
             NULL,
             0,
             TIME_MS2I(FRAM_I2C_TIMEOUT_MS));
@@ -198,15 +212,19 @@ fram_status_t fram_read(fram_handle_t *hfram, uint16_t address, uint8_t *data, u
     while (remaining > 0)
     {
         uint16_t chunk = (remaining > FRAM_MAX_TRANSFER_BYTES) ? FRAM_MAX_TRANSFER_BYTES : remaining;
+        const uint16_t bankRemaining = (uint16_t)(0x100u - (uint16_t)(current & 0xFFu));
+        if (chunk > bankRemaining)
+        {
+            chunk = bankRemaining;
+        }
 
-        g_fram_tx_buf[0] = (uint8_t)((current >> 8) & 0xFF);
-        g_fram_tx_buf[1] = (uint8_t)(current & 0xFF);
+        g_fram_tx_buf[0] = fram_word_addr(current);
 
         msg_t status = i2cMasterTransmitTimeout(
             hfram->i2c_driver,
-            hfram->i2c_addr,
+            fram_bank_addr(current),
             g_fram_tx_buf,
-            2,
+            1,
             g_fram_rx_buf,
             chunk,
             TIME_MS2I(FRAM_I2C_TIMEOUT_MS));

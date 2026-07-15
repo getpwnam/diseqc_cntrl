@@ -49,24 +49,24 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_BringupStatus_NativeGetLastNativeError___STATIC__U4, // [2] BringupStatus.NativeGetLastNativeError
     Library_cubley_interop_DiagnosticsMailbox_NativeTryLatchBootProbe___STATIC__BOOLEAN__U4, // [3] DiagnosticsMailbox.NativeTryLatchBootProbe
     Library_cubley_interop_DiagnosticsMailbox_NativeGetBootProbe___STATIC__U4, // [4] DiagnosticsMailbox.NativeGetBootProbe
-    Library_cubley_interop_LNBH26_NativeInit___STATIC__I4,                                                  // [5] LNBH26.NativeInit
-    Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN,                                    // [6] LNBH26.NativeSetEnable
-    Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4,                                  // [7] LNBH26.NativeReadStatus
-    Library_cubley_interop_LNBH26_NativeSetVoltage___STATIC__I4__I4,                                        // [8] LNBH26.NativeSetVoltage
-    Library_cubley_interop_LNBH26_NativeSetTone___STATIC__I4__BOOLEAN,                                      // [9] LNBH26.NativeSetTone
-    Library_cubley_interop_LNBH26_NativeGetVoltage___STATIC__I4,                                            // [10] LNBH26.NativeGetVoltage
-    Library_cubley_interop_LNBH26_NativeGetTone___STATIC__BOOLEAN,                                           // [11] LNBH26.NativeGetTone
-    Library_cubley_interop_StatusLed_NativeInit___STATIC__VOID,                                             // [12] StatusLed.NativeInit
-    Library_cubley_interop_StatusLed_NativeSetHigh___STATIC__VOID,                                          // [13] StatusLed.NativeSetHigh
-    Library_cubley_interop_StatusLed_NativeSetLow___STATIC__VOID,                                           // [14] StatusLed.NativeSetLow
-    Library_cubley_interop_StatusLed_NativePulse___STATIC__VOID__I4__I4,                                    // [15] StatusLed.NativePulse
-    Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__BOOLEAN,                                 // [16] UsbCdcConsole.NativeIsEnabled
-    Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [17] UsbCdcConsole.NativeReadByte
-    Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [18] UsbCdcConsole.NativeWrite
-    Library_cubley_interop_LNBH26Registers_NativeReadRegister___STATIC__I4__I4__BYREF_I4,                   // [19] LNBH26Registers.NativeReadRegister
-    Library_cubley_interop_Fram24C128_NativeInit___STATIC__I4,                                              // [20] Fram24C128.NativeInit
-    Library_cubley_interop_Fram24C128_NativeWrite___STATIC__I4__I4__SZARRAY_U1__I4__I4,                    // [21] Fram24C128.NativeWrite
-    Library_cubley_interop_Fram24C128_NativeRead___STATIC__I4__I4__SZARRAY_U1__I4__I4,                     // [22] Fram24C128.NativeRead
+    Library_cubley_interop_Fram24C128_NativeInit___STATIC__I4,                                              // [5] Fram24C128.NativeInit
+    Library_cubley_interop_Fram24C128_NativeWrite___STATIC__I4__I4__SZARRAY_U1__I4__I4,                    // [6] Fram24C128.NativeWrite
+    Library_cubley_interop_Fram24C128_NativeRead___STATIC__I4__I4__SZARRAY_U1__I4__I4,                     // [7] Fram24C128.NativeRead
+    Library_cubley_interop_LNBH26_NativeInit___STATIC__I4,                                                  // [8] LNBH26.NativeInit
+    Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN,                                    // [9] LNBH26.NativeSetEnable
+    Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4,                                  // [10] LNBH26.NativeReadStatus
+    Library_cubley_interop_LNBH26_NativeSetVoltage___STATIC__I4__I4,                                        // [11] LNBH26.NativeSetVoltage
+    Library_cubley_interop_LNBH26_NativeSetTone___STATIC__I4__BOOLEAN,                                      // [12] LNBH26.NativeSetTone
+    Library_cubley_interop_LNBH26_NativeGetVoltage___STATIC__I4,                                            // [13] LNBH26.NativeGetVoltage
+    Library_cubley_interop_LNBH26_NativeGetTone___STATIC__BOOLEAN,                                          // [14] LNBH26.NativeGetTone
+    Library_cubley_interop_LNBH26Registers_NativeReadRegister___STATIC__I4__I4__BYREF_I4,                  // [15] LNBH26Registers.NativeReadRegister
+    Library_cubley_interop_StatusLed_NativeInit___STATIC__VOID,                                             // [16] StatusLed.NativeInit
+    Library_cubley_interop_StatusLed_NativeSetHigh___STATIC__VOID,                                          // [17] StatusLed.NativeSetHigh
+    Library_cubley_interop_StatusLed_NativeSetLow___STATIC__VOID,                                           // [18] StatusLed.NativeSetLow
+    Library_cubley_interop_StatusLed_NativePulse___STATIC__VOID__I4__I4,                                    // [19] StatusLed.NativePulse
+    Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__BOOLEAN,                                 // [20] UsbCdcConsole.NativeIsEnabled
+    Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [21] UsbCdcConsole.NativeReadByte
+    Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [22] UsbCdcConsole.NativeWrite
 };
 
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_CubleyNative =
@@ -334,10 +334,16 @@ HRESULT Library_cubley_interop_Fram24C128_NativeWrite___STATIC__I4__I4__SZARRAY_
     }
 
     fram_handle_t* hfram = fram_get_global_handle();
-    uint8_t* src = buffer->GetElement((CLR_UINT32)offset);
+    uint8_t* src = (uint8_t*)buffer->GetFirstElement();
+    src += offset;
     fram_status_t status = fram_write(hfram, (uint16_t)address, src, (uint16_t)count);
 
-    if (status != FRAM_OK)
+    if (status == FRAM_OK)
+    {
+        // 0xE4 D2 00 XX: FRAM write success, first payload byte observed by native wrapper.
+        g_cubley_diag_last_error = ((uint32_t)0xE4 << 24) | ((uint32_t)0xD2 << 16) | ((uint32_t)0x00 << 8) | (uint32_t)src[0];
+    }
+    else
     {
         const uint8_t rawDetail = (uint8_t)(fram_get_last_i2c_msg() & 0xFF);
         g_cubley_diag_last_error = ((uint32_t)0xE4 << 24) | ((uint32_t)0xD2 << 16) | ((uint32_t)status << 8) | rawDetail;
@@ -363,10 +369,16 @@ HRESULT Library_cubley_interop_Fram24C128_NativeRead___STATIC__I4__I4__SZARRAY_U
     }
 
     fram_handle_t* hfram = fram_get_global_handle();
-    uint8_t* dst = buffer->GetElement((CLR_UINT32)offset);
+    uint8_t* dst = (uint8_t*)buffer->GetFirstElement();
+    dst += offset;
     fram_status_t status = fram_read(hfram, (uint16_t)address, dst, (uint16_t)count);
 
-    if (status != FRAM_OK)
+    if (status == FRAM_OK)
+    {
+        // 0xE4 D3 00 XX: FRAM read success, first payload byte returned by native driver.
+        g_cubley_diag_last_error = ((uint32_t)0xE4 << 24) | ((uint32_t)0xD3 << 16) | ((uint32_t)0x00 << 8) | (uint32_t)dst[0];
+    }
+    else
     {
         const uint8_t rawDetail = (uint8_t)(fram_get_last_i2c_msg() & 0xFF);
         g_cubley_diag_last_error = ((uint32_t)0xE4 << 24) | ((uint32_t)0xD3 << 16) | ((uint32_t)status << 8) | rawDetail;
