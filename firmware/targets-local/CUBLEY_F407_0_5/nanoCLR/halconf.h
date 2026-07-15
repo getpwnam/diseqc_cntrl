@@ -88,9 +88,9 @@
  * @brief   Enables the I2C subsystem.
  */
 // this option is set at target_platform.h (from config file)
-//#if !defined(HAL_USE_I2C) || defined(__DOXYGEN__)
-//#define HAL_USE_I2C                           TRUE
-//#endif
+#if !defined(HAL_USE_I2C) || defined(__DOXYGEN__)
+#define HAL_USE_I2C                           TRUE
+#endif
 
 /**
  * @brief   Enables the I2S subsystem.
@@ -196,6 +196,10 @@
 #if !defined(HAL_USE_USB) || defined(__DOXYGEN__)
 #define HAL_USE_USB                         FALSE
 #endif
+
+// Native FRAM Phase-3 bring-up requires I2C1 regardless of managed API selection.
+#undef HAL_USE_I2C
+#define HAL_USE_I2C                         TRUE
 
 /**
  * @brief   Enables the WDG subsystem.

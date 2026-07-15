@@ -18,15 +18,86 @@
 #include <ch.h>
 #include <hal.h>
 #include <cmsis_os.h>
+#include <string.h>
 
 #include <serialcfg.h>
 #include <CLR_Startup_Thread.h>
 #include <WireProtocol_ReceiverThread.h>
 #include <nanoCLR_Application.h>
 #include <nanoHAL_v2.h>
+#include "fram_native.h"
+
+static void FramSelfTestThread(void const *argument);
 
 osThreadDef(ReceiverThread,     osPriorityHigh,   2048, "ReceiverThread");
 osThreadDef(CLRStartupThread,   osPriorityNormal, 4096, "CLRStartupThread");
+osThreadDef(FramSelfTestThread, osPriorityBelowNormal, 1024, "FramSelfTestThread");
+
+volatile uint32_t g_fram_native_selftest_thread_marker = 0;
+volatile uint32_t g_fram_native_selftest_status = 0;
+volatile uint32_t g_fram_native_selftest_i2c = 0;
+
+static void RunFramNativeSelfTest(void)
+{
+    fram_handle_t *hfram = fram_get_global_handle();
+    static const uint8_t pattern[] = {0x46, 0x52, 0x41, 0x4D, 0x4E, 0x41, 0x54, 0x01};
+    uint8_t readBack[sizeof(pattern)] = {0};
+
+    // Format: 0xF4SSCCDD
+    g_fram_native_selftest_status = 0xF4000001u;
+
+    fram_status_t initStatus = fram_init(hfram, &I2CD1, 0x50);
+    g_fram_native_selftest_i2c = (uint32_t)(fram_get_last_i2c_msg() & 0xFFFF);
+    if (initStatus != FRAM_OK)
+    {
+        g_fram_native_selftest_status = 0xF4010000u | ((uint32_t)initStatus & 0xFFu);
+        return;
+    }
+
+    fram_status_t writeStatus = fram_write(hfram, 0x0100, pattern, (uint16_t)sizeof(pattern));
+    g_fram_native_selftest_i2c = (uint32_t)(fram_get_last_i2c_msg() & 0xFFFF);
+    if (writeStatus != FRAM_OK)
+    {
+        g_fram_native_selftest_status = 0xF4020000u | ((uint32_t)writeStatus & 0xFFu);
+        return;
+    }
+
+    fram_status_t readStatus = fram_read(hfram, 0x0100, readBack, (uint16_t)sizeof(readBack));
+    g_fram_native_selftest_i2c = (uint32_t)(fram_get_last_i2c_msg() & 0xFFFF);
+    if (readStatus != FRAM_OK)
+    {
+        g_fram_native_selftest_status = 0xF4030000u | ((uint32_t)readStatus & 0xFFu);
+        return;
+    }
+
+    if (memcmp(pattern, readBack, sizeof(pattern)) != 0)
+    {
+        g_fram_native_selftest_status = 0xF4040001u;
+        return;
+    }
+
+    static const uint8_t clearBuf[sizeof(pattern)] = {0};
+    (void)fram_write(hfram, 0x0100, clearBuf, (uint16_t)sizeof(clearBuf));
+    g_fram_native_selftest_i2c = (uint32_t)(fram_get_last_i2c_msg() & 0xFFFF);
+    g_fram_native_selftest_status = 0xF4FF0001u;
+}
+
+static void FramSelfTestThread(void const *argument)
+{
+    (void)argument;
+    g_fram_native_selftest_thread_marker = 0xF4AA0001u;
+
+    chThdSleepMilliseconds(3000);
+    g_fram_native_selftest_thread_marker = 0xF4AA0002u;
+
+    RunFramNativeSelfTest();
+    g_fram_native_selftest_thread_marker = 0xF4AA00FFu;
+
+    while (true)
+    {
+        osDelay(1000);
+    }
+}
 
 // USART3 (SD3) wire-protocol configuration.
 // CR2 STOP1 bits, no CR1 or CR3 overrides.
@@ -54,6 +125,14 @@ int main(void)
 
     // Kick off wire-protocol receiver and CLR startup.
     osThreadCreate(osThread(ReceiverThread), NULL);
+    if (osThreadCreate(osThread(FramSelfTestThread), NULL) != NULL)
+    {
+        g_fram_native_selftest_thread_marker = 0xF4AA0011u;
+    }
+    else
+    {
+        g_fram_native_selftest_thread_marker = 0xF4AA00EEu;
+    }
 
     CLR_SETTINGS clrSettings;
     (void)memset(&clrSettings, 0, sizeof(CLR_SETTINGS));
