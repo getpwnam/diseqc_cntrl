@@ -1,4 +1,5 @@
 using Cubley.Interop;
+using Cubley.Lnbh26;
 using System.Diagnostics;
 
 namespace CubleyControl
@@ -32,33 +33,52 @@ namespace CubleyControl
             {
                 int enabled = UsbCdcConsole.NativeIsEnabled();
                 SafeUsbWrite("system serial=up cdc_enabled=" + enabled.ToString() + "\r\n");
-                EmitLnbShowLine(LnbChannelA);
+                EmitLnbShowSummaryLine(LnbChannelA);
                 SafeUsbWrite("diseqc state=unavailable note=placeholder\r\n");
                 return;
             }
 
             if (tokens[1] == "lnb")
             {
-                if (tokens.Length == 2)
-                {
-                    EmitLnbShowLine(LnbChannelA);
-                    return;
-                }
+                int channel = LnbChannelA;
+                bool detail = false;
+                bool channelSet = false;
 
-                if (tokens.Length == 3)
+                for (int i = 2; i < tokens.Length; i++)
                 {
-                    int channel;
-                    if (!TryParseLnbChannelToken(tokens[2], out channel))
+                    if (tokens[i] == "detail")
                     {
-                        WriteCommandResult(reqId, false, "validation_error", "show lnb channel invalid", "channel=" + tokens[2]);
-                        return;
+                        detail = true;
+                        continue;
                     }
 
-                    EmitLnbShowLine(channel);
+                    if (!channelSet)
+                    {
+                        int parsedChannel;
+                        if (!TryParseLnbChannelToken(tokens[i], out parsedChannel))
+                        {
+                            WriteCommandResult(reqId, false, "validation_error", "show lnb token invalid", "token=" + tokens[i]);
+                            return;
+                        }
+
+                        channel = parsedChannel;
+                        channelSet = true;
+                        continue;
+                    }
+
+                    WriteCommandResult(reqId, false, "validation_error", "show lnb usage", "usage=show lnb [a|b] [detail]");
                     return;
                 }
 
-                WriteCommandResult(reqId, false, "validation_error", "show lnb usage", "usage=show lnb [a]");
+                if (detail)
+                {
+                    EmitLnbShowDetailJson(channel);
+                }
+                else
+                {
+                    EmitLnbShowSummaryLine(channel);
+                }
+
                 return;
             }
 
@@ -372,39 +392,202 @@ namespace CubleyControl
             WriteCommandResult(reqId, false, "validation_error", "unknown lnb action", "action=" + action);
         }
 
-        private static void EmitLnbShowLine(int channel)
+        private static void EmitLnbShowSummaryLine(int channel)
         {
             if (!EnsureLnbInitialized())
             {
-                SafeUsbWrite("lnb.a state=init_failed rc=" + _lnbInitStatus.ToString() + "\r\n");
+                SafeUsbWrite("lnb." + LnbChannelToSchemaName(channel) + " state=init_failed rc=" + _lnbInitStatus.ToString() + "\r\n");
                 return;
             }
 
-            string channelName = LnbChannelToName(channel);
             int pol = LNBH26.NativeGetPolarizationForChannel(channel);
             int band = LNBH26.NativeGetBandForChannel(channel);
+
             int s1;
             int s2;
             int rc = ReadLnbStatusPairSafe(out s1, out s2);
-            if (rc == 0)
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                SafeUsbWrite("lnb." + LnbChannelToSchemaName(channel) + " status=read_failed rc=" + rc.ToString() + "\r\n");
+                return;
+            }
+
+            int d1;
+            int d2;
+            int d3;
+            int d4;
+            rc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                SafeUsbWrite("lnb." + LnbChannelToSchemaName(channel) + " config=read_failed rc=" + rc.ToString() + "\r\n");
+                return;
+            }
+
+            SafeUsbWrite(
+                "lnb." + LnbChannelToSchemaName(channel) +
+                " pol=" + PolarizationToText(pol) +
+                " band=" + BandToText(band) +
+                " voltage=" + VoltageSelectForChannelToText(channel, d1) +
+                " tone=" + (IsToneEnabledForChannel(channel, d2) ? "on" : "off") +
+                " lpm=" + (IsLowPowerEnabledForChannel(channel, d2) ? "on" : "off") +
+                " extm=" + (IsExtmEnabledForChannel(channel, d2) ? "on" : "off") +
+                " status=" + (HasFaultStatus(s1) ? "fault" : "ok") +
+                " s1=" + ToHexU8(s1) +
+                " s2=" + ToHexU8(s2) +
+                "\r\n");
+        }
+
+        private static void EmitLnbShowDetailJson(int channel)
+        {
+            if (!EnsureLnbInitialized())
+            {
+                SafeUsbWrite("{\"schema\":\"cubley/v1/lnbh26\",\"channel\":\"" + LnbChannelToSchemaName(channel) + "\",\"error\":\"init_failed\",\"rc\":" + _lnbInitStatus.ToString() + "}\r\n");
+                return;
+            }
+
+            int s1;
+            int s2;
+            int rc = ReadLnbStatusPairSafe(out s1, out s2);
+            if (rc != (int)LNBH26.Status.Ok)
             {
                 SafeUsbWrite(
-                    "lnb." + channelName +
-                    " pol=" + PolarizationToText(pol) +
-                    " band=" + BandToText(band) +
-                    " status1=0x" + (s1 & 0xFF).ToString("X2") +
-                    " status2=0x" + (s2 & 0xFF).ToString("X2") +
-                    "\r\n");
+                    "{\"schema\":\"cubley/v1/lnbh26\",\"channel\":\"" + LnbChannelToSchemaName(channel) +
+                    "\",\"error\":\"status_read_failed\",\"rc\":" + rc.ToString() + "}\r\n");
+                return;
             }
-            else
+
+            int d1;
+            int d2;
+            int d3;
+            int d4;
+            rc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
+            if (rc != (int)LNBH26.Status.Ok)
             {
                 SafeUsbWrite(
-                    "lnb." + channelName +
-                    " pol=" + PolarizationToText(pol) +
-                    " band=" + BandToText(band) +
-                    " status=read_failed rc=" + rc.ToString() +
-                    "\r\n");
+                    "{\"schema\":\"cubley/v1/lnbh26\",\"channel\":\"" + LnbChannelToSchemaName(channel) +
+                    "\",\"error\":\"data_read_failed\",\"rc\":" + rc.ToString() + "}\r\n");
+                return;
             }
+
+            SafeUsbWrite(BuildLnbRegisterJson(channel, s1, s2, d1, d2, d3, d4) + "\r\n");
+        }
+
+        private static bool HasFaultStatus(int status1)
+        {
+            int faultMask =
+                (int)LNBH26.Status1Flags.OlfA |
+                (int)LNBH26.Status1Flags.OlfB |
+                (int)LNBH26.Status1Flags.PdoA |
+                (int)LNBH26.Status1Flags.PdoB |
+                (int)LNBH26.Status1Flags.Otf |
+                (int)LNBH26.Status1Flags.Png;
+
+            return (status1 & faultMask) != 0;
+        }
+
+        private static bool IsToneEnabledForChannel(int channel, int data2)
+        {
+            return channel == LnbChannelA
+                ? (data2 & (int)LNBH26.Data2Flags.TenA) != 0
+                : (data2 & (int)LNBH26.Data2Flags.TenB) != 0;
+        }
+
+        private static bool IsLowPowerEnabledForChannel(int channel, int data2)
+        {
+            return channel == LnbChannelA
+                ? (data2 & (int)LNBH26.Data2Flags.LpmA) != 0
+                : (data2 & (int)LNBH26.Data2Flags.LpmB) != 0;
+        }
+
+        private static bool IsExtmEnabledForChannel(int channel, int data2)
+        {
+            return channel == LnbChannelA
+                ? (data2 & (int)LNBH26.Data2Flags.ExtmA) != 0
+                : (data2 & (int)LNBH26.Data2Flags.ExtmB) != 0;
+        }
+
+        private static string VoltageSelectForChannelToText(int channel, int data1)
+        {
+            int nibble = channel == LnbChannelA ? (data1 & 0x0F) : ((data1 >> 4) & 0x0F);
+            if (nibble == 0x00)
+            {
+                return "disabled";
+            }
+
+            if (nibble == 0x01)
+            {
+                return "13V";
+            }
+
+            if (nibble == 0x08)
+            {
+                return "18V";
+            }
+
+            return "unknown(" + ToHexU8(nibble) + ")";
+        }
+
+        private static string ToHexU8(int value)
+        {
+            return "0x" + (value & 0xFF).ToString("X2");
+        }
+
+        private static int ReadLnbDataRegistersSafe(out int d1, out int d2, out int d3, out int d4)
+        {
+            int rc;
+
+            d1 = 0;
+            d2 = 0;
+            d3 = 0;
+            d4 = 0;
+
+            rc = ReadLnbRegisterSafe(LNBH26.Register.Data1, out d1);
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                return rc;
+            }
+
+            rc = ReadLnbRegisterSafe(LNBH26.Register.Data2, out d2);
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                return rc;
+            }
+
+            rc = ReadLnbRegisterSafe(LNBH26.Register.Data3, out d3);
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                return rc;
+            }
+
+            rc = ReadLnbRegisterSafe(LNBH26.Register.Data4, out d4);
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                return rc;
+            }
+
+            return (int)LNBH26.Status.Ok;
+        }
+
+        private static int ReadLnbRegisterSafe(LNBH26.Register register, out int value)
+        {
+            int rc = LNBH26Registers.NativeReadRegister((int)register, out value);
+
+            if (rc == (int)LNBH26.Status.IoError || rc == (int)LNBH26.Status.NotInitialized)
+            {
+                _lnbInitAttempted = false;
+                if (EnsureLnbInitialized())
+                {
+                    rc = LNBH26Registers.NativeReadRegister((int)register, out value);
+                }
+            }
+
+            return rc;
+        }
+
+        private static string BuildLnbRegisterJson(int channel, int s1, int s2, int d1, int d2, int d3, int d4)
+        {
+            Lnbh26ParsedPayload parsed = LNBH26RegisterParser.Parse(LnbChannelToSchemaName(channel), s1, s2, d1, d2, d3, d4);
+            return LNBH26JsonRenderer.Render(parsed);
         }
 
         private static bool EnsureLnbInitialized()
@@ -477,11 +660,32 @@ namespace CubleyControl
             return channel == LnbChannelA ? "a" : channel.ToString();
         }
 
+        private static string LnbChannelToSchemaName(int channel)
+        {
+            if (channel == LnbChannelA)
+            {
+                return "a";
+            }
+
+            if (channel == 1)
+            {
+                return "b";
+            }
+
+            return channel.ToString();
+        }
+
         private static bool TryParseLnbChannelToken(string token, out int channel)
         {
             if (token == "a" || token == "0")
             {
                 channel = LnbChannelA;
+                return true;
+            }
+
+            if (token == "b" || token == "1")
+            {
+                channel = 1;
                 return true;
             }
 

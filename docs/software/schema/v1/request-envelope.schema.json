@@ -1,0 +1,411 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://getpwnam.github.io/diseqc_cntrl/schema/v1/request-envelope.schema.json",
+  "title": "Cubley Command Request Envelope v1",
+  "type": "object",
+  "required": [
+    "command",
+    "domain",
+    "args"
+  ],
+  "properties": {
+    "command": {
+      "$ref": "common.schema.json#/$defs/commandId"
+    },
+    "domain": {
+      "$ref": "common.schema.json#/$defs/domain"
+    },
+    "req_id": {
+      "$ref": "common.schema.json#/$defs/reqId"
+    },
+    "ts": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "args": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "diseqc.rotor.goto_angle"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "diseqc"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/diseqc.rotor.goto_angle"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "diseqc.rotor.goto_satellite"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "diseqc"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/diseqc.rotor.goto_satellite"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "diseqc.rotor.halt"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "diseqc"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/diseqc.rotor.halt"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "diseqc.rotor.step_east"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "diseqc"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/diseqc.rotor.step_east"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "diseqc.rotor.step_west"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "diseqc"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/diseqc.rotor.step_west"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "diseqc.rotor.drive_east"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "diseqc"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/diseqc.rotor.drive_east"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "diseqc.rotor.drive_west"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "diseqc"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/diseqc.rotor.drive_west"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "diseqc.lnb.set_voltage"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "diseqc"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/diseqc.lnb.set_voltage"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "diseqc.lnb.set_polarization"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "diseqc"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/diseqc.lnb.set_polarization"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "diseqc.lnb.set_tone"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "diseqc"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/diseqc.lnb.set_tone"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "diseqc.lnb.set_band"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "diseqc"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/diseqc.lnb.set_band"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "diseqc.calibration.set_reference"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "diseqc"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/diseqc.calibration.set_reference"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "system.config.get"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "system"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/system.config.get"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "system.config.set"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "system"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/system.config.set"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "system.config.save"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "system"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/system.config.save"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "system.config.reset"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "system"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/system.config.reset"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "system.config.reload"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "system"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/system.config.reload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "system.config.fram_clear"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "system"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/system.config.fram_clear"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "system.capabilities.get"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "system"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/system.capabilities.get"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "system.version.get"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "domain": {
+            "const": "system"
+          },
+          "args": {
+            "$ref": "command-args.schema.json#/$defs/system.version.get"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://getpwnam.github.io/diseqc_cntrl/schema/v1/lnbh26.schema.json",
+  "title": "Cubley LNBH26 Register Decode v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "channel",
+    "registers"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "cubley/v1/lnbh26"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "a",
+        "b"
+      ]
+    },
+    "registers": {
+      "type": "object",
+      "required": [
+        "status1",
+        "status2",
+        "data1",
+        "data2",
+        "data3",
+        "data4"
+      ],
+      "properties": {
+        "status1": {
+          "$ref": "#/$defs/registerDecode"
+        },
+        "status2": {
+          "$ref": "#/$defs/registerDecode"
+        },
+        "data1": {
+          "$ref": "#/$defs/registerDecode"
+        },
+        "data2": {
+          "$ref": "#/$defs/registerDecode"
+        },
+        "data3": {
+          "$ref": "#/$defs/registerDecode"
+        },
+        "data4": {
+          "$ref": "#/$defs/registerDecode"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "registerDecode": {
+      "type": "object",
+      "required": [
+        "raw_u8",
+        "raw_hex",
+        "bits"
+      ],
+      "properties": {
+        "raw_u8": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "raw_hex": {
+          "type": "string",
+          "pattern": "^0x[0-9A-F]{2}$"
+        },
+        "bits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/bitDecode"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "bitDecode": {
+      "type": "object",
+      "required": [
+        "name",
+        "value",
+        "description"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "value": {
+          "type": [
+            "boolean",
+            "integer",
+            "string"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "bit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7
+        },
+        "mask_hex": {
+          "type": "string",
+          "pattern": "^0x[0-9A-F]{2}$"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

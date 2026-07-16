@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://getpwnam.github.io/diseqc_cntrl/schema/v1/version.schema.json",
+  "title": "Cubley Version Payload v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "fw",
+    "managed_app",
+    "interop_checksum"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "cubley/v1/version"
+    },
+    "fw": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "managed_app": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "interop_checksum": {
+      "type": "string",
+      "pattern": "^0x[0-9A-Fa-f]{8}$"
+    },
+    "build_profile": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    }
+  },
+  "additionalProperties": true
+}

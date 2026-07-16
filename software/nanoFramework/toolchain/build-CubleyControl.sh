@@ -572,6 +572,7 @@ else
   fi
   PRIMARY_PE="$OUTPUT_DIR/$ASSEMBLY_NAME.pe"
   CUBLEY_INTEROP_PE="$OUTPUT_DIR/CubleyNative.pe"
+  CUBLEY_LNBH26_MANAGED_PE="$OUTPUT_DIR/CubleyLnbh26Managed.pe"
   RUNTIME_EVENTS_PE=""
 
   if [[ "$SKIP_INTEROP_VALIDATION" != "true" && -x "$CHECKSUM_TOOL" ]]; then
@@ -605,6 +606,10 @@ else
 
     if [[ -f "$CUBLEY_INTEROP_PE" ]]; then
       pack_args+=("$CUBLEY_INTEROP_PE")
+    fi
+
+    if [[ -f "$CUBLEY_LNBH26_MANAGED_PE" ]]; then
+      pack_args+=("$CUBLEY_LNBH26_MANAGED_PE")
     fi
 
     if [[ -f "$OUTPUT_DIR/System.Device.Gpio.pe" ]]; then

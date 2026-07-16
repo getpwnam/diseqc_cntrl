@@ -49,6 +49,10 @@
       <Project>{E65B3A56-704A-4E42-88E3-9E3A2E35B641}</Project>
       <Name>CubleyNative</Name>
     </ProjectReference>
+    <ProjectReference Include="..\CubleyLnbh26.Managed\CubleyLnbh26.Managed.nfproj">
+      <Project>{32F4C8B6-E861-4133-9A8B-4D47C87EECC5}</Project>
+      <Name>CubleyLnbh26Managed</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

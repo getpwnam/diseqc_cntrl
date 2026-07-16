@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://getpwnam.github.io/diseqc_cntrl/schema/v1/common.schema.json",
+  "title": "Cubley Common Schema v1",
+  "type": "object",
+  "$defs": {
+    "domain": {
+      "type": "string",
+      "enum": [
+        "system",
+        "diseqc",
+        "azel"
+      ]
+    },
+    "resultCode": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "validation_error",
+        "unsupported",
+        "busy",
+        "hw_fault",
+        "timeout",
+        "internal_error"
+      ]
+    },
+    "commandId": {
+      "type": "string",
+      "pattern": "^(system|diseqc|azel)\\.[a-z0-9_]+(\\.[a-z0-9_]+)+$"
+    },
+    "timestamp": {
+      "type": "string",
+      "description": "UTC timestamp string. v1 baseline uses RFC3339/ISO-8601 text.",
+      "format": "date-time"
+    },
+    "reqId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "availability": {
+      "type": "string",
+      "enum": [
+        "online",
+        "offline",
+        "degraded"
+      ]
+    },
+    "rotorState": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "moving",
+        "error"
+      ]
+    },
+    "voltage": {
+      "type": "integer",
+      "enum": [
+        13,
+        18
+      ]
+    },
+    "polarization": {
+      "type": "string",
+      "enum": [
+        "vertical",
+        "horizontal"
+      ]
+    },
+    "tone": {
+      "type": "string",
+      "enum": [
+        "on",
+        "off"
+      ]
+    },
+    "band": {
+      "type": "string",
+      "enum": [
+        "low",
+        "high"
+      ]
+    }
+  }
+}
