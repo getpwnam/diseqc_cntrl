@@ -591,6 +591,7 @@ int32_t lnb_native_read_status_pair(int32_t *status1Register, int32_t *status2Re
     uint8_t status1 = 0;
     uint8_t status2 = 0;
     lnb_status_t status = lnb_read_status_pair(lnb_get_global_handle(), &status1, &status2);
+
     *status1Register = (int32_t)status1;
     *status2Register = (int32_t)status2;
     return (int32_t)status;

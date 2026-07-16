@@ -6,17 +6,18 @@ using Cubley.Interop;
 
 namespace CubleyControl
 {
-    public static class Program
+    public static partial class Program
     {
         private const int HeartbeatIntervalMs = 10_000;
         private const int MainLoopSleepMs = 1000;
         private const int LedPulseMs = 100;
         private const int UsbConsoleReadTimeoutMs = 50;
         private const int UsbConsoleIdleSleepMs = 100;
-        private const int UsbConsoleBannerIntervalMs = 3000;
+        private const int UsbConsoleStatusIntervalMs = 1000;
         private const int UsbConsoleHealthLogIntervalLoops = 50;
         private const int UsbConsoleLineMaxLength = 64;
         private const int UsbWriteLogEveryNEvents = 20;
+        private const int LnbChannelA = 0;
 
         // Candidate encodings for PB0 across providers/schemes.
         private static readonly int[] LedPinCandidates = { 16, 0 };
@@ -29,12 +30,17 @@ namespace CubleyControl
         private static int _usbWritePartialCount;
         private static int _usbWriteExceptionCount;
         private static int _cdcPreEnabledCount;
-        private static int _cdcPostSetCount;
         private static int _cdcPostEnabledCount;
+        private static int _requestId;
+        private static int _responseTick;
+        private static string _activeCommand = string.Empty;
+        private static bool _watchEnabled;
+        private static int _watchElapsedMs;
 
         public static void Main()
         {
             _ledReady = TryInitializeStatusLed();
+            InitializeLnbSafeDefaults();
 
             var heartbeatThread = new Thread(HeartbeatLoop);
             heartbeatThread.Start();
@@ -52,12 +58,9 @@ namespace CubleyControl
             while (true)
             {
                 Debug.WriteLine("alive");
-                uint mailbox = DiagMailbox.NativeGet();
                 Debug.WriteLine(
                     "[CDC-MON] pre=" + _cdcPreEnabledCount.ToString() +
-                    " postSet=" + _cdcPostSetCount.ToString() +
                     " post=" + _cdcPostEnabledCount.ToString() +
-                    " mb=0x" + mailbox.ToString("X8") +
                     " fail=" + _usbWriteFailureCount.ToString() +
                     " partial=" + _usbWritePartialCount.ToString() +
                     " ex=" + _usbWriteExceptionCount.ToString());
@@ -96,21 +99,13 @@ namespace CubleyControl
         private static void UsbConsoleLoopBody()
         {
             bool wasEnabled = false;
-            int bannerElapsedMs = 0;
             int healthLoop = 0;
 
             while (true)
             {
                 healthLoop++;
                 _cdcPreEnabledCount++;
-
-                // Managed-side breadcrumbs around NativeIsEnabled dispatch.
-                // 0xA1000001 -> about to call NativeIsEnabled
-                // 0xA1000002 -> NativeIsEnabled returned
-                DiagMailbox.NativeSet(0xA1000001u);
-                _cdcPostSetCount++;
                 int enabled = UsbCdcConsole.NativeIsEnabled();
-                DiagMailbox.NativeSet(0xA1000002u);
                 _cdcPostEnabledCount++;
 
                 if ((healthLoop % UsbConsoleHealthLogIntervalLoops) == 0)
@@ -125,7 +120,7 @@ namespace CubleyControl
                 if (enabled == 0)
                 {
                     wasEnabled = false;
-                    bannerElapsedMs = 0;
+                    _watchElapsedMs = 0;
                     _consoleLine = string.Empty;
                     Thread.Sleep(UsbConsoleIdleSleepMs);
                     continue;
@@ -134,7 +129,7 @@ namespace CubleyControl
                 if (!wasEnabled)
                 {
                     wasEnabled = true;
-                    bannerElapsedMs = 0;
+                    _watchElapsedMs = 0;
                     _consoleLine = string.Empty;
                     int rc = SafeUsbWrite("\r\nCubley USB CDC console ready. Type 'help'.\r\n> ");
                     Debug.WriteLine("[CDC] connected, banner rc=" + rc.ToString());
@@ -143,22 +138,18 @@ namespace CubleyControl
                 int value = UsbCdcConsole.NativeReadByte(UsbConsoleReadTimeoutMs);
                 if (value < 0)
                 {
-                    bannerElapsedMs += UsbConsoleReadTimeoutMs + UsbConsoleIdleSleepMs;
-                    if (bannerElapsedMs >= UsbConsoleBannerIntervalMs)
+                    _watchElapsedMs += UsbConsoleReadTimeoutMs + UsbConsoleIdleSleepMs;
+                    if (_watchEnabled && _watchElapsedMs >= UsbConsoleStatusIntervalMs)
                     {
-                        bannerElapsedMs = 0;
-                        int rc = SafeUsbWrite("\r\nCubley USB CDC console ready. Type 'help'.\r\n> ");
-                        if (rc < 0)
-                        {
-                            Debug.WriteLine("[CDC] periodic banner failed rc=" + rc.ToString());
-                        }
+                        _watchElapsedMs = 0;
+                        EmitStatusBar(enabled);
                     }
 
                     Thread.Sleep(UsbConsoleIdleSleepMs);
                     continue;
                 }
 
-                bannerElapsedMs = 0;
+                _watchElapsedMs = 0;
 
                 char c = (char)value;
 
@@ -192,74 +183,6 @@ namespace CubleyControl
                     SafeUsbWrite(c.ToString());
                 }
             }
-        }
-
-        private static void HandleConsoleCommand(string command)
-        {
-            string trimmed = command == null ? string.Empty : command.Trim();
-            string lower = trimmed.ToLower();
-
-            if (lower.Length == 0)
-            {
-                return;
-            }
-
-            if (lower == "help")
-            {
-                SafeUsbWrite("Commands: help, status, led on, led off, pulse\r\n");
-                return;
-            }
-
-            if (lower == "status")
-            {
-                SafeUsbWrite("LED: ");
-                SafeUsbWrite(_ledReady ? "ready" : "not-ready");
-                SafeUsbWrite("\r\n");
-                return;
-            }
-
-            if (lower == "led on")
-            {
-                if (TrySetLed(PinValue.High))
-                {
-                    SafeUsbWrite("LED set high\r\n");
-                }
-                else
-                {
-                    SafeUsbWrite("LED unavailable\r\n");
-                }
-                return;
-            }
-
-            if (lower == "led off")
-            {
-                if (TrySetLed(PinValue.Low))
-                {
-                    SafeUsbWrite("LED set low\r\n");
-                }
-                else
-                {
-                    SafeUsbWrite("LED unavailable\r\n");
-                }
-                return;
-            }
-
-            if (lower == "pulse")
-            {
-                if (TrySetLed(PinValue.High))
-                {
-                    Thread.Sleep(LedPulseMs);
-                    TrySetLed(PinValue.Low);
-                    SafeUsbWrite("Pulse complete\r\n");
-                }
-                else
-                {
-                    SafeUsbWrite("LED unavailable\r\n");
-                }
-                return;
-            }
-
-            SafeUsbWrite("Unknown command. Type 'help'.\r\n");
         }
 
         private static bool TrySetLed(PinValue value)
@@ -298,6 +221,11 @@ namespace CubleyControl
                     return written;
                 }
 
+                if (written == 0)
+                {
+                    return written;
+                }
+
                 if (written < 0)
                 {
                     _usbWriteFailureCount++;
@@ -322,7 +250,6 @@ namespace CubleyControl
             }
             catch (Exception ex)
             {
-                // Keep app alive if USB console writes fail transiently.
                 _usbWriteExceptionCount++;
 
                 if (_usbWriteExceptionCount == 1 || (_usbWriteExceptionCount % UsbWriteLogEveryNEvents) == 0)

@@ -1322,3 +1322,10 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: build/nanoCLR.bin; build/nanoCLR.elf; build/CubleySmokeTier2_LNBH26/latest.deploy.bin
 - Conclusion: LNBH26 bidirectional I2C communication is confirmed at the software/protocol level: Phase-4 LNB smoke latched 0xD5CF01FF (all stages passed), which requires successful write path plus repeated NativeReadStatus register reads with deterministic, fault-free status after restoring address 0x08.
 - Note: This confirms control/status register comms only; analog voltage and 22 kHz output measurements remain separate hardware validation steps.
+
+### 2026-07-16 19:40:53 UTC [INFO]
+- Git rev: bedf5e0
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): build CubleyControl Debug with strict interop guard/checksum; serial CLI hardening in CubleyControl/Program.cs; nanoff --nanodevice --serialport=/dev/ttyUSB0 --devicedetails
+- Artifact: software/nanoFramework/build/CubleyControl/CubleyControl.bin
+- Conclusion: Known-good baseline locked: strict interop guard PASS, checksum 0x88B2008D, and CDC serial CLI upgraded with hybrid responses, long+alias commands, and watch/status output.
