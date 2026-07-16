@@ -339,7 +339,7 @@ namespace DiSEqC_Control.Mqtt
             try
             {
                 uint word = ((uint)0xD5 << 24) | ((uint)stage << 16) | detail;
-                Cubley.Interop.BringupStatus.NativeSet(word);
+                Cubley.Interop.DiagMailbox.NativeSet(word);
             }
             catch
             {

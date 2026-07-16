@@ -41,7 +41,7 @@ namespace DiSEqC_Control
             try
             {
                 uint word = ((uint)0xD5 << 24) | ((uint)stage << 16) | detail;
-                Cubley.Interop.BringupStatus.NativeSet(word);
+                Cubley.Interop.DiagMailbox.NativeSet(word);
             }
             catch
             {
@@ -53,11 +53,11 @@ namespace DiSEqC_Control
             _hardwareCapabilities = hardwareCapabilities ?? HardwareCapabilities.None;
 
             // Hard marker before Beacon path to prove Main entry even if helper calls fail.
-            Cubley.Interop.BringupStatus.NativeSet(0xD5E00101u);
+            Cubley.Interop.DiagMailbox.NativeSet(0xD5E00101u);
 
             Beacon(0xA0, 0x01);
             // Marker after first Beacon to confirm helper execution path.
-            Cubley.Interop.BringupStatus.NativeSet(0xD5E00201u);
+            Cubley.Interop.DiagMailbox.NativeSet(0xD5E00201u);
             Debug.WriteLine("==============================================");
             Debug.WriteLine("DiSEqC Controller (MQTT-first build)");
             Debug.WriteLine("STM32F407VGT6 + W5500 + nanoFramework");
@@ -163,30 +163,30 @@ namespace DiSEqC_Control
 
         private static void RunFramStartupLoadIsolation()
         {
-            Cubley.Interop.BringupStatus.NativeSet(0xD5F10001u);
+            Cubley.Interop.DiagMailbox.NativeSet(0xD5F10001u);
 
             if (!HasFram)
             {
-                Cubley.Interop.BringupStatus.NativeSet(0xD5F10000u);
+                Cubley.Interop.DiagMailbox.NativeSet(0xD5F10000u);
                 return;
             }
 
             FramConfigurationStorage storage = null;
 
-            Cubley.Interop.BringupStatus.NativeSet(0xD5F10101u);
+            Cubley.Interop.DiagMailbox.NativeSet(0xD5F10101u);
             try
             {
                 storage = new FramConfigurationStorage(FramBusId);
-                Cubley.Interop.BringupStatus.NativeSet(0xD5F10201u);
+                Cubley.Interop.DiagMailbox.NativeSet(0xD5F10201u);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("[FRAM-ISO] ctor exception: " + ex.Message);
-                Cubley.Interop.BringupStatus.NativeSet(0xD5F1E101u);
+                Cubley.Interop.DiagMailbox.NativeSet(0xD5F1E101u);
                 return;
             }
 
-            Cubley.Interop.BringupStatus.NativeSet(0xD5F10301u);
+            Cubley.Interop.DiagMailbox.NativeSet(0xD5F10301u);
             try
             {
                 RuntimeConfiguration loadedConfig;
@@ -195,18 +195,18 @@ namespace DiSEqC_Control
 
                 if (loaded)
                 {
-                    Cubley.Interop.BringupStatus.NativeSet(0xD5F10401u);
+                    Cubley.Interop.DiagMailbox.NativeSet(0xD5F10401u);
                 }
                 else
                 {
                     Debug.WriteLine("[FRAM-ISO] TryLoad returned false: " + loadError);
-                    Cubley.Interop.BringupStatus.NativeSet(0xD5F10400u);
+                    Cubley.Interop.DiagMailbox.NativeSet(0xD5F10400u);
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("[FRAM-ISO] TryLoad exception: " + ex.Message);
-                Cubley.Interop.BringupStatus.NativeSet(0xD5F1E201u);
+                Cubley.Interop.DiagMailbox.NativeSet(0xD5F1E201u);
             }
         }
 

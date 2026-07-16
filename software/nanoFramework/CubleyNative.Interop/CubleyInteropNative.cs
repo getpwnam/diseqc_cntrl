@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace Cubley.Interop
 {
-    public static class BringupStatus
+    public static class DiagMailbox
     {
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void NativeSet(uint statusWord);

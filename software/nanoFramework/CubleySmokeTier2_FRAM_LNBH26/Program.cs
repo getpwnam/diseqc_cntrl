@@ -63,7 +63,7 @@ namespace CubleySmokeTier2_FRAM_LNBH26
 
             WriteStatus(StageFramWrite, ResultEnter, (byte)payload.Length);
             int writeRc = Fram24C128.NativeWrite(FramProbeAddress, payload, 0, payload.Length);
-            uint writeNativeTrace = BringupStatus.NativeGetLastNativeError();
+            uint writeNativeTrace = DiagMailbox.NativeGetLastNativeError();
             Debug.WriteLine("[SMOKE] FRAM native write trace=0x" + writeNativeTrace.ToString("X8"));
             if (writeRc != (int)Fram24C128.Status.Ok)
             {
@@ -82,7 +82,7 @@ namespace CubleySmokeTier2_FRAM_LNBH26
             {
                 Thread.Sleep(FramReadbackRetryDelayMs);
                 readRc = Fram24C128.NativeRead(FramProbeAddress, readBack, 0, readBack.Length);
-                uint readNativeTrace = BringupStatus.NativeGetLastNativeError();
+                uint readNativeTrace = DiagMailbox.NativeGetLastNativeError();
                 Debug.WriteLine("[SMOKE] FRAM native read trace=0x" + readNativeTrace.ToString("X8") +
                                 " attempt=" + attempt.ToString());
 
@@ -266,7 +266,7 @@ namespace CubleySmokeTier2_FRAM_LNBH26
         {
             int value;
             int rc = LNBH26Registers.NativeReadRegister((int)register, out value);
-            uint trace = BringupStatus.NativeGetLastNativeError();
+            uint trace = DiagMailbox.NativeGetLastNativeError();
             Debug.WriteLine("[SMOKE] LNB native trace read-reg " + ((int)register).ToString() +
                             " rc=" + rc.ToString() +
                             " value=0x" + (value & 0xFF).ToString("X2") +
@@ -386,7 +386,7 @@ namespace CubleySmokeTier2_FRAM_LNBH26
 
         private static void LogLnbNativeTrace(string label)
         {
-            uint trace = BringupStatus.NativeGetLastNativeError();
+            uint trace = DiagMailbox.NativeGetLastNativeError();
             Debug.WriteLine("[SMOKE] LNB native trace " + label + "=0x" + trace.ToString("X8"));
         }
 
@@ -455,7 +455,7 @@ namespace CubleySmokeTier2_FRAM_LNBH26
             try
             {
                 uint word = ((uint)0xD5 << 24) | ((uint)stage << 16) | ((uint)result << 8) | detail;
-                BringupStatus.NativeSet(word);
+                DiagMailbox.NativeSet(word);
             }
             catch
             {

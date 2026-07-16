@@ -161,6 +161,82 @@ require_cmd() {
   fi
 }
 
+resolve_path() {
+  local path_in="$1"
+  local resolved=""
+
+  if command -v readlink >/dev/null 2>&1; then
+    resolved="$(readlink -f "$path_in" 2>/dev/null || true)"
+    if [[ -n "$resolved" ]]; then
+      echo "$resolved"
+      return
+    fi
+  fi
+
+  if [[ "$path_in" == /* ]]; then
+    echo "$path_in"
+  else
+    echo "$WORK_DIR/$path_in"
+  fi
+}
+
+print_completion_summary() {
+  local booter_path clr_path
+  booter_path="$(resolve_path "$BOOTER_BIN")"
+  clr_path="$(resolve_path "$CLR_BIN")"
+
+  echo
+  echo "Summary:"
+  echo "  preset:        $PRESET"
+  echo "  booter binary: $booter_path"
+  echo "  clr binary:    $clr_path"
+  echo "  booter addr:   $BOOT_ADDR"
+  echo "  clr addr:      $CLR_ADDR"
+  echo "  deploy addr:   $DEPLOY_ADDR"
+  echo "  deploy size:   $DEPLOY_SIZE"
+
+  echo
+  echo "st-flash commands (current layout):"
+  if [[ "$ERASE_DEPLOY" == "true" ]]; then
+    echo "  st-flash erase $DEPLOY_ADDR $DEPLOY_SIZE"
+  fi
+  if [[ "$FLASH_BOOTER" == "true" ]]; then
+    echo "  st-flash write \"$booter_path\" $BOOT_ADDR"
+  else
+    echo "  # booter write skipped (--no-booter)"
+  fi
+  echo "  st-flash write \"$clr_path\" $CLR_ADDR"
+  if [[ "$DO_RESET" == "true" ]]; then
+    echo "  st-flash reset"
+  fi
+}
+
+clean_build_space_preserve_downloads() {
+  local build_dir="$WORK_DIR/build"
+  local cmake_files_dir="$build_dir/CMakeFiles"
+
+  if [[ ! -d "$build_dir" ]]; then
+    return
+  fi
+
+  echo "[build] Clean build directory (preserve downloads/cache): $build_dir"
+
+  # Keep _deps so nf-interpreter/chibios fetch artifacts are reused.
+  # Keep CMakeFiles/fc-stamp and CMakeFiles/fc-tmp so FetchContent does not
+  # re-populate dependencies on every configure.
+  find "$build_dir" -mindepth 1 -maxdepth 1 \
+    ! -name "_deps" \
+    ! -name "CMakeFiles" \
+    -exec rm -rf {} +
+
+  if [[ -d "$cmake_files_dir" ]]; then
+    find "$cmake_files_dir" -mindepth 1 -maxdepth 1 \
+      ! -name "fc-stamp" \
+      ! -name "fc-tmp" \
+      -exec rm -rf {} +
+  fi
+}
+
 prepare_cubley_f407_overlay() {
   local local_target_dir="$WORK_DIR/../targets-local/CUBLEY_F407_0_5"
   local community_target_path="$WORK_DIR/targets-community/ChibiOS/CUBLEY_F407_0_5"
@@ -202,6 +278,7 @@ EOF
 
 do_build() {
   require_cmd cmake
+  clean_build_space_preserve_downloads
   if [[ "$PRESET" == "CUBLEY_F407_0_5" ]]; then
     echo "[build] Prepare CUBLEY_F407_0_5 local target + interop module"
     prepare_cubley_f407_overlay
@@ -254,5 +331,7 @@ case "$MODE" in
     do_flash
     ;;
 esac
+
+print_completion_summary
 
 echo "Done."

@@ -5,8 +5,44 @@
 
 hardware/kicad-project/production/
 
+software/.debug/
+software/nanoFramework/build/
 software/nanoFramework/.vs/
+software/packages/
 
+# Docker volumes
+.docker/
+
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.DotSettings
+bin/
+obj/
+packages/
+
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+build.log
+
+# Runtime/debug probe outputs
+.debug/
+
+**/.nuget/
+**/nuget.exe
 
 # Windows ADS artifacts copied into WSL paths
 *.Zone.Identifier

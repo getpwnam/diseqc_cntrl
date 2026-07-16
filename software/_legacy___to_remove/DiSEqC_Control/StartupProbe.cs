@@ -114,7 +114,7 @@ namespace DiSEqC_Control
 
         private static void WriteProbeMarker(byte stage, byte result, byte detail)
         {
-            Cubley.Interop.BringupStatus.NativeSet(DiagnosticsStatusWord.Compose(stage, result, detail));
+            Cubley.Interop.DiagMailbox.NativeSet(DiagnosticsStatusWord.Compose(stage, result, detail));
 
             // Keep each marker visible long enough for SWD polling during bring-up.
             Thread.Sleep(75);

@@ -19,6 +19,11 @@ static uint8_t lnb_try_read_reg_or_detail(int32_t reg, uint8_t fallback)
     return fallback;
 }
 
+static void lnb_set_out_i4(CLR_RT_HeapBlock& argument, int32_t value)
+{
+    argument.Dereference()->SetInteger((CLR_INT32)value);
+}
+
 // All LNB interop functions previously in cubley_interop.cpp
 
 HRESULT Library_cubley_interop_LNBH26_NativeInit___STATIC__I4(CLR_RT_StackFrame& stack)
@@ -72,40 +77,39 @@ HRESULT Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4(CL
     lnb_status_t status = (lnb_status_t)lnb_native_read_status(&statusReg);
 
     CLR_RT_HeapBlock& statusOut = stack.Arg0();
-    statusOut.Dereference()->SetInteger((CLR_INT32)statusReg);
+    lnb_set_out_i4(statusOut, statusReg);
 
     stack.SetResult_I4((int32_t)status);
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
-HRESULT Library_cubley_interop_LNBH26_NativeSetVoltage___STATIC__I4__I4(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_LNBH26_NativeReadStatusPair___STATIC__I4__BYREF_I4__BYREF_I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    int32_t status1Reg = 0;
+    int32_t status2Reg = 0;
+    lnb_status_t status = (lnb_status_t)lnb_native_read_status_pair(&status1Reg, &status2Reg);
+
+    CLR_RT_HeapBlock& status1Out = stack.Arg0();
+    CLR_RT_HeapBlock& status2Out = stack.Arg1();
+    lnb_set_out_i4(status1Out, status1Reg);
+    lnb_set_out_i4(status2Out, status2Reg);
+
+    stack.SetResult_I4((int32_t)status);
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26_NativeSetPolarization___STATIC__I4__I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 
     g_cubley_diag_last_error = ((uint32_t)0xE3 << 24) | ((uint32_t)0xC3 << 16) | ((uint32_t)0x00 << 8) | 0xA1;
 
-    // Map legacy voltage API onto the constants-only polarization API.
-    int32_t voltage = stack.Arg0().NumericByRef().s4;
-    int32_t polarizationConstant;
+    int32_t polarization = stack.Arg0().NumericByRef().s4;
+    lnb_status_t status = (lnb_status_t)lnb_native_set_polarization(polarization);
 
-    if (voltage == 0)
-    {
-        polarizationConstant = (int32_t)LNB_NATIVE_POLARIZATION_VERTICAL;
-    }
-    else if (voltage == 1)
-    {
-        polarizationConstant = (int32_t)LNB_NATIVE_POLARIZATION_HORIZONTAL;
-    }
-    else
-    {
-        g_cubley_diag_last_error = ((uint32_t)0xE3 << 24) | ((uint32_t)0xC3 << 16) | ((uint32_t)LNB_ERROR_INVALID_PARAM << 8) | 0xEF;
-        stack.SetResult_I4((int32_t)LNB_ERROR_INVALID_PARAM);
-        NANOCLR_NOCLEANUP_NOLABEL();
-    }
-
-    lnb_status_t status = (lnb_status_t)lnb_native_set_polarization(polarizationConstant);
-
-    // 0xE3 C3 SS DD: LNB set-voltage result, DD=DATA1 readback on success or low I2C detail on failure.
+    // 0xE3 C3 SS DD: LNB set-polarization result, DD=DATA1 readback on success or low I2C detail on failure.
     uint8_t detail = (uint8_t)(lnb_get_last_i2c_msg() & 0xFF);
     if (status == LNB_OK)
     {
@@ -117,18 +121,16 @@ HRESULT Library_cubley_interop_LNBH26_NativeSetVoltage___STATIC__I4__I4(CLR_RT_S
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
-HRESULT Library_cubley_interop_LNBH26_NativeSetTone___STATIC__I4__BOOLEAN(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_LNBH26_NativeSetBand___STATIC__I4__I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 
     g_cubley_diag_last_error = ((uint32_t)0xE3 << 24) | ((uint32_t)0xC4 << 16) | ((uint32_t)0x00 << 8) | 0xA1;
 
-    // Map legacy tone API onto the constants-only band API.
-    bool enable = stack.Arg0().NumericByRef().u1 != 0;
-    const int32_t bandConstant = enable ? (int32_t)LNB_NATIVE_BAND_HIGH : (int32_t)LNB_NATIVE_BAND_LOW;
-    lnb_status_t status = (lnb_status_t)lnb_native_set_band(bandConstant);
+    int32_t band = stack.Arg0().NumericByRef().s4;
+    lnb_status_t status = (lnb_status_t)lnb_native_set_band(band);
 
-    // 0xE3 C4 SS DD: LNB set-tone result, DD=DATA2 readback on success or low I2C detail on failure.
+    // 0xE3 C4 SS DD: LNB set-band result, DD=DATA2 readback on success or low I2C detail on failure.
     uint8_t detail = (uint8_t)(lnb_get_last_i2c_msg() & 0xFF);
     if (status == LNB_OK)
     {
@@ -140,22 +142,101 @@ HRESULT Library_cubley_interop_LNBH26_NativeSetTone___STATIC__I4__BOOLEAN(CLR_RT
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
-HRESULT Library_cubley_interop_LNBH26_NativeGetVoltage___STATIC__I4(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_LNBH26_NativeGetPolarization___STATIC__I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 
-    int32_t polarization = lnb_native_get_polarization();
-    int32_t voltage = (polarization == (int32_t)LNB_POL_HORIZONTAL) ? 1 : 0;
-    stack.SetResult_I4((int32_t)voltage);
+    stack.SetResult_I4(lnb_native_get_polarization());
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
-HRESULT Library_cubley_interop_LNBH26_NativeGetTone___STATIC__BOOLEAN(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_LNBH26_NativeGetBand___STATIC__I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 
-    int32_t band = lnb_native_get_band();
-    stack.SetResult_Boolean(band == (int32_t)LNB_BAND_HIGH);
+    stack.SetResult_I4(lnb_native_get_band());
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26_NativeSetPolarizationForChannel___STATIC__I4__I4__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    const int32_t channel = stack.Arg0().NumericByRef().s4;
+    const int32_t polarization = stack.Arg1().NumericByRef().s4;
+    const int32_t status = lnb_native_set_polarization_for_channel(channel, polarization);
+
+    stack.SetResult_I4(status);
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26_NativeSetBandForChannel___STATIC__I4__I4__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    const int32_t channel = stack.Arg0().NumericByRef().s4;
+    const int32_t band = stack.Arg1().NumericByRef().s4;
+    const int32_t status = lnb_native_set_band_for_channel(channel, band);
+
+    stack.SetResult_I4(status);
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26_NativeSetLowPowerForChannel___STATIC__I4__I4__BOOLEAN(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    const int32_t channel = stack.Arg0().NumericByRef().s4;
+    const int32_t enable = stack.Arg1().NumericByRef().u1 != 0;
+    const int32_t status = lnb_native_set_low_power_for_channel(channel, enable);
+
+    stack.SetResult_I4(status);
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26_NativeSetDiseqcInputModeForChannel___STATIC__I4__I4__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    const int32_t channel = stack.Arg0().NumericByRef().s4;
+    const int32_t mode = stack.Arg1().NumericByRef().s4;
+    const int32_t status = lnb_native_set_diseqc_input_mode_for_channel(channel, mode);
+
+    stack.SetResult_I4(status);
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26_NativeGetPolarizationForChannel___STATIC__I4__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    const int32_t channel = stack.Arg0().NumericByRef().s4;
+    stack.SetResult_I4(lnb_native_get_polarization_for_channel(channel));
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26_NativeGetBandForChannel___STATIC__I4__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    const int32_t channel = stack.Arg0().NumericByRef().s4;
+    stack.SetResult_I4(lnb_native_get_band_for_channel(channel));
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26_NativeGetLastError___STATIC__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    stack.SetResult_I4(lnb_native_get_last_error());
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26_NativeGetLastErrorDetail___STATIC__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    stack.SetResult_I4(lnb_native_get_last_error_detail());
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
@@ -179,7 +260,7 @@ HRESULT Library_cubley_interop_LNBH26Registers_NativeReadRegister___STATIC__I4__
     g_cubley_diag_last_error = ((uint32_t)0xE3 << 24) | ((uint32_t)0xC5 << 16) | ((uint32_t)status << 8) | detail;
 
     CLR_RT_HeapBlock& registerOut = stack.Arg1();
-    registerOut.Dereference()->SetInteger((CLR_INT32)registerValue);
+    lnb_set_out_i4(registerOut, registerValue);
 
     stack.SetResult_I4((int32_t)status);
 
