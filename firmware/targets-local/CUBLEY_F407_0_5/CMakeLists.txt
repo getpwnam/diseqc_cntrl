@@ -6,6 +6,13 @@
 include(binutils.common)
 include(binutils.ChibiOS)
 
+# Ensure nanoCLR build units resolve target_board.h from the nanoCLR-generated
+# include directory instead of the nanoBooter one.
+set(_cubley_boards_inc_clr "${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}/nanoCLR")
+set(_cubley_boards_inc_booter "${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}/nanoBooter")
+list(REMOVE_ITEM CHIBIOS_INCLUDE_DIRS "${_cubley_boards_inc_booter}" "${_cubley_boards_inc_clr}")
+list(APPEND CHIBIOS_INCLUDE_DIRS "${_cubley_boards_inc_clr}" "${_cubley_boards_inc_booter}")
+
 nf_setup_target_build(
     HAS_NANOBOOTER
 
