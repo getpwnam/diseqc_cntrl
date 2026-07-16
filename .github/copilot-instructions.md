@@ -12,6 +12,12 @@ These are hard rules for this repository. Apply them unless a user explicitly ov
 - When the interop surface changes, the change must be clearly documented and time stamped in the commit message. The commit message must also include a brief rationale for the change.
 - The interop guard script must validate any changes.
 
+## Deployment
+- The developer uses the VSCode nanoFramework extension to deploy managed apps to the target device. 
+- This also deploys assemblies. You can see the configuration in `.vscode/launch.json` and the `preLaunchTask` setting.
+- There is also a manual deployment script in `toolchain/build-CubleyControl.sh` that can be used to deploy the firmware and managed assemblies. This MAY produce a different result than the VSCode extension, so it is not recommended to mix deployment methods. Use one or the other.
+
+
 
 ## Firmware Source of Truth
 
