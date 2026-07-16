@@ -13,10 +13,6 @@
 
 #include <target_common.h>
 
-#if defined(I_AM_NANOCLR)
-#define OEMSYSTEMINFOSTRING "nanoCLR running @ @TARGET_NAME@"
-#else
 #define OEMSYSTEMINFOSTRING "nanoBooter running @ @TARGET_NAME@"
-#endif
 
 #endif // TARGET_BOARD_NANOBOOTER_H
