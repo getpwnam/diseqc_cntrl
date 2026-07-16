@@ -13,8 +13,8 @@ This skill is optimized for this repository's Cubley interop surfaces.
 
 ## Primary Targets
 
-- software/nanoFramework/Cubley.Interop/CubleyInteropNative.cs
-- software/nanoFramework/Cubley.Interop/Properties/AssemblyInfo.cs
+- software/nanoFramework/CubleyNative.Interop/CubleyInteropNative.cs
+- software/nanoFramework/CubleyNative.Interop/Properties/AssemblyInfo.cs
 - software/nanoFramework/nf-native/cubley_interop.cpp
 - software/nanoFramework/nf-native/w5500_interop.cpp
 

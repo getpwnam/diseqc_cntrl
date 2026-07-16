@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 GUARD_TOOL="$SCRIPT_DIR/interop-guard.sh"
-SOURCE_CS="$ROOT_DIR/Cubley.Interop/CubleyInteropNative.cs"
+SOURCE_CS="$ROOT_DIR/CubleyNative.Interop/CubleyInteropNative.cs"
 SOURCE_NATIVE="$ROOT_DIR/nf-native/cubley_interop.cpp"
 
 if [[ ! -x "$GUARD_TOOL" ]]; then
