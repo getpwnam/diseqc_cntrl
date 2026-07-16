@@ -1,6 +1,7 @@
 hardware/kicad-project/production/backups
 software/nanoFramework/.vs/
 .vscode/
+.debug/
 
 # Windows ADS artifacts copied into WSL paths
 *.Zone.Identifier
