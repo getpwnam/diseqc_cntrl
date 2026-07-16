@@ -111,24 +111,6 @@ namespace Cubley.Interop
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeReadStatus(out int statusRegister);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeSetPolarization(int polarization);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeSetBand(int band);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeGetPolarization();
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeGetBand();
-
-        // Legacy declarations kept for compile compatibility; not part of current InternalCall slot map.
-        public static extern int NativeSetVoltage(int voltage);
-        public static extern int NativeSetTone(bool enable);
-        public static extern int NativeGetVoltage();
-        public static extern bool NativeGetTone();
     }
 
     public static class LNBH26Registers
@@ -169,29 +151,17 @@ namespace Cubley.Interop
 
     public static class UsbCdcConsole
     {
+        // Returns 1 if USB CDC is active and ready, 0 otherwise.
+        // Declared as int (not bool) to avoid nanoFramework MetaDataProcessor
+        // max-stack=0 bug for BOOLEAN return type on InternalCall methods,
+        // which causes SetResult_Boolean to assert in the CLR eval stack.
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern bool NativeIsEnabled();
+        public static extern int NativeIsEnabled();
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeReadByte(int timeoutMs);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeWrite(string text);
-    }
-
-    // Legacy declarations kept for compatibility with older managed apps.
-    public static class DiagnosticsMailbox
-    {
-        public static extern bool NativeTryLatchBootProbe(uint statusWord);
-        public static extern uint NativeGetBootProbe();
-    }
-
-    // Legacy declarations kept for compatibility with older managed apps.
-    public static class StatusLed
-    {
-        public static extern void NativeInit();
-        public static extern void NativeSetHigh();
-        public static extern void NativeSetLow();
-        public static extern void NativePulse(int count, int pulseMs);
     }
 }

@@ -91,7 +91,7 @@ pending_internal = False
 internalcall_methods = []
 non_extern_methods = []
 
-# Current baseline slots are immutable. New methods may only append.
+# Frozen baseline slots are immutable. New methods may only append.
 V1_BASELINE = [
     "DiagMailbox.NativeSet",
     "DiagMailbox.NativeGet",
@@ -102,10 +102,6 @@ V1_BASELINE = [
     "LNBH26.NativeInit",
     "LNBH26.NativeSetEnable",
     "LNBH26.NativeReadStatus",
-    "LNBH26.NativeSetPolarization",
-    "LNBH26.NativeSetBand",
-    "LNBH26.NativeGetPolarization",
-    "LNBH26.NativeGetBand",
     "LNBH26Registers.NativeReadRegister",
     "LNBH26.NativeReadStatusPair",
     "LNBH26.NativeSetPolarizationForChannel",
@@ -165,7 +161,7 @@ if not lookup_match:
 
 lookup_body = lookup_match.group("body")
 if re.search(r"^\s*NULL\s*,", lookup_body, flags=re.M):
-    print("ERROR: method_lookup[] contains NULL entries; Cubley.Interop should map only native methods.")
+    print("ERROR: method_lookup[] contains NULL entries; frozen baseline maps native methods only.")
     sys.exit(1)
 
 lookup_entries = []

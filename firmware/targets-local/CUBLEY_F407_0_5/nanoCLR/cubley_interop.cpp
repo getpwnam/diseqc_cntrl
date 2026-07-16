@@ -17,10 +17,6 @@ HRESULT Library_cubley_interop_LNBH26_NativeInit___STATIC__I4(CLR_RT_StackFrame&
 HRESULT Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeReadStatusPair___STATIC__I4__BYREF_I4__BYREF_I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_LNBH26_NativeSetPolarization___STATIC__I4__I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_LNBH26_NativeSetBand___STATIC__I4__I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_LNBH26_NativeGetPolarization___STATIC__I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_LNBH26_NativeGetBand___STATIC__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeSetPolarizationForChannel___STATIC__I4__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeSetBandForChannel___STATIC__I4__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeSetLowPowerForChannel___STATIC__I4__I4__BOOLEAN(CLR_RT_StackFrame& stack);
@@ -29,7 +25,7 @@ HRESULT Library_cubley_interop_LNBH26_NativeGetPolarizationForChannel___STATIC__
 HRESULT Library_cubley_interop_LNBH26_NativeGetBandForChannel___STATIC__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeGetLastError___STATIC__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeGetLastErrorDetail___STATIC__I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__BOOLEAN(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26Registers_NativeReadRegister___STATIC__I4__I4__BYREF_I4(CLR_RT_StackFrame& stack);
@@ -53,6 +49,18 @@ HRESULT Library_cubley_interop_Fram24C128_NativeRead___STATIC__I4__I4__SZARRAY_U
 volatile uint32_t g_cubley_diag_current_status;
 volatile uint32_t g_cubley_diag_last_error;
 
+#if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
+static bool CubleyUsbCdcReady()
+{
+    if (SDU1.state != SDU_READY || SDU1.config == nullptr || SDU1.config->usbp == nullptr)
+    {
+        return false;
+    }
+
+    return (SDU1.config->usbp->state == USB_ACTIVE);
+}
+#endif
+
 static const CLR_RT_MethodHandler method_lookup[] =
 {
     Library_cubley_interop_DiagMailbox_NativeSet___STATIC__VOID__U4,       // [0] DiagMailbox.NativeSet
@@ -64,29 +72,25 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_LNBH26_NativeInit___STATIC__I4,                                                  // [6] LNBH26.NativeInit
     Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN,                                    // [7] LNBH26.NativeSetEnable
     Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4,                                  // [8] LNBH26.NativeReadStatus
-    Library_cubley_interop_LNBH26_NativeSetPolarization___STATIC__I4__I4,                                   // [9] LNBH26.NativeSetPolarization
-    Library_cubley_interop_LNBH26_NativeSetBand___STATIC__I4__I4,                                           // [10] LNBH26.NativeSetBand
-    Library_cubley_interop_LNBH26_NativeGetPolarization___STATIC__I4,                                       // [11] LNBH26.NativeGetPolarization
-    Library_cubley_interop_LNBH26_NativeGetBand___STATIC__I4,                                               // [12] LNBH26.NativeGetBand
-    Library_cubley_interop_LNBH26Registers_NativeReadRegister___STATIC__I4__I4__BYREF_I4,                  // [13] LNBH26Registers.NativeReadRegister
-    Library_cubley_interop_LNBH26_NativeReadStatusPair___STATIC__I4__BYREF_I4__BYREF_I4,                   // [14] LNBH26.NativeReadStatusPair
-    Library_cubley_interop_LNBH26_NativeSetPolarizationForChannel___STATIC__I4__I4__I4,                    // [15] LNBH26.NativeSetPolarizationForChannel
-    Library_cubley_interop_LNBH26_NativeSetBandForChannel___STATIC__I4__I4__I4,                            // [16] LNBH26.NativeSetBandForChannel
-    Library_cubley_interop_LNBH26_NativeSetLowPowerForChannel___STATIC__I4__I4__BOOLEAN,                   // [17] LNBH26.NativeSetLowPowerForChannel
-    Library_cubley_interop_LNBH26_NativeSetDiseqcInputModeForChannel___STATIC__I4__I4__I4,                 // [18] LNBH26.NativeSetDiseqcInputModeForChannel
-    Library_cubley_interop_LNBH26_NativeGetPolarizationForChannel___STATIC__I4__I4,                        // [19] LNBH26.NativeGetPolarizationForChannel
-    Library_cubley_interop_LNBH26_NativeGetBandForChannel___STATIC__I4__I4,                                // [20] LNBH26.NativeGetBandForChannel
-    Library_cubley_interop_LNBH26_NativeGetLastError___STATIC__I4,                                          // [21] LNBH26.NativeGetLastError
-    Library_cubley_interop_LNBH26_NativeGetLastErrorDetail___STATIC__I4,                                    // [22] LNBH26.NativeGetLastErrorDetail
-    Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__BOOLEAN,                                 // [23] UsbCdcConsole.NativeIsEnabled
-    Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [24] UsbCdcConsole.NativeReadByte
-    Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [25] UsbCdcConsole.NativeWrite
+    Library_cubley_interop_LNBH26Registers_NativeReadRegister___STATIC__I4__I4__BYREF_I4,                  // [9] LNBH26Registers.NativeReadRegister
+    Library_cubley_interop_LNBH26_NativeReadStatusPair___STATIC__I4__BYREF_I4__BYREF_I4,                   // [10] LNBH26.NativeReadStatusPair
+    Library_cubley_interop_LNBH26_NativeSetPolarizationForChannel___STATIC__I4__I4__I4,                    // [11] LNBH26.NativeSetPolarizationForChannel
+    Library_cubley_interop_LNBH26_NativeSetBandForChannel___STATIC__I4__I4__I4,                            // [12] LNBH26.NativeSetBandForChannel
+    Library_cubley_interop_LNBH26_NativeSetLowPowerForChannel___STATIC__I4__I4__BOOLEAN,                   // [13] LNBH26.NativeSetLowPowerForChannel
+    Library_cubley_interop_LNBH26_NativeSetDiseqcInputModeForChannel___STATIC__I4__I4__I4,                 // [14] LNBH26.NativeSetDiseqcInputModeForChannel
+    Library_cubley_interop_LNBH26_NativeGetPolarizationForChannel___STATIC__I4__I4,                        // [15] LNBH26.NativeGetPolarizationForChannel
+    Library_cubley_interop_LNBH26_NativeGetBandForChannel___STATIC__I4__I4,                                // [16] LNBH26.NativeGetBandForChannel
+    Library_cubley_interop_LNBH26_NativeGetLastError___STATIC__I4,                                          // [17] LNBH26.NativeGetLastError
+    Library_cubley_interop_LNBH26_NativeGetLastErrorDetail___STATIC__I4,                                    // [18] LNBH26.NativeGetLastErrorDetail
+    Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__I4,                                      // [19] UsbCdcConsole.NativeIsEnabled
+    Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [20] UsbCdcConsole.NativeReadByte
+    Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [21] UsbCdcConsole.NativeWrite
 };
 
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_CubleyNative =
 {
     "CubleyNative",
-    0xA3EB0B8B,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
+    0x88B2008D,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
     method_lookup,
     { 1, 0, 0, 0 }
 };
@@ -118,24 +122,49 @@ HRESULT Library_cubley_interop_DiagMailbox_NativeGetLastNativeError___STATIC__U4
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
-HRESULT Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__BOOLEAN(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__I4(CLR_RT_StackFrame& stack)
 {
-    NANOCLR_HEADER();
+    // Breadcrumbs for bring-up triage:
+    // 0xCD010001 -> entered NativeIsEnabled
+    // 0xCD010002 -> readiness evaluated
+    // 0xCD010003 -> SetResult_I4 completed
+    g_cubley_diag_current_status = 0xCD010001u;
 
+    // Use SetResult_I4 (not SetResult_Boolean) to avoid the nanoFramework CLR
+    // assert: SetResult_Boolean calls PushValue() which checks eval-stack
+    // bounds, but extern InternalCall methods have max-stack=0 in the PE.
+    // SetResult_I4 writes to slot 0 directly and is safe here.
 #if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
-    stack.SetResult_Boolean(true);
+    bool ready = CubleyUsbCdcReady();
+    g_cubley_diag_current_status = 0xCD010002u | (ready ? 1u : 0u);
+    stack.SetResult_I4(ready ? 1 : 0);
 #else
-    stack.SetResult_Boolean(false);
+    g_cubley_diag_current_status = 0xCD010002u;
+    stack.SetResult_I4(0);
 #endif
 
-    NANOCLR_NOCLEANUP_NOLABEL();
+    g_cubley_diag_current_status = 0xCD010003u;
+
+    return S_OK;
 }
 
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 
+    // Breadcrumbs for dispatch tracing:
+    // 0xCD020001 -> entered NativeReadByte
+    // 0xCD020002 -> about to call chnGetTimeout
+    // 0xCD020003 -> chnGetTimeout returned
+    g_cubley_diag_current_status = 0xCD020001u;
+
 #if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
+    if (!CubleyUsbCdcReady())
+    {
+        stack.SetResult_I4(-1);
+        NANOCLR_NOCLEANUP_NOLABEL();
+    }
+
     int32_t timeoutMs = stack.Arg0().NumericByRef().s4;
     if (timeoutMs < 0)
     {
@@ -143,7 +172,9 @@ HRESULT Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4(CLR
     }
 
     systime_t timeout = (timeoutMs == 0) ? TIME_IMMEDIATE : TIME_MS2I((uint32_t)timeoutMs);
+    g_cubley_diag_current_status = 0xCD020002u;
     msg_t result = chnGetTimeout((BaseChannel *)&SDU1, timeout);
+    g_cubley_diag_current_status = 0xCD020003u;
 
     if (result < MSG_OK)
     {
@@ -165,7 +196,17 @@ HRESULT Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING(CL
 {
     NANOCLR_HEADER();
 
+    // Breadcrumbs for dispatch tracing:
+    // 0xCD030001 -> entered NativeWrite
+    g_cubley_diag_current_status = 0xCD030001u;
+
 #if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
+    if (!CubleyUsbCdcReady())
+    {
+        stack.SetResult_I4(-1);
+        NANOCLR_NOCLEANUP_NOLABEL();
+    }
+
     CLR_RT_HeapBlock_String *text = stack.Arg0().DereferenceString();
     const char *buffer;
     size_t length = 0;
@@ -190,7 +231,26 @@ HRESULT Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING(CL
         NANOCLR_NOCLEANUP_NOLABEL();
     }
 
-    written = chnWriteTimeout((BaseChannel *)&SDU1, (const uint8_t *)buffer, length, TIME_MS2I(50));
+    const uint8_t* cursor = (const uint8_t*)buffer;
+    size_t remaining = length;
+    uint8_t noProgressAttempts = 0;
+
+    while (remaining > 0 && noProgressAttempts < 8)
+    {
+        size_t step = chnWriteTimeout((BaseChannel *)&SDU1, cursor, remaining, TIME_MS2I(25));
+
+        if (step == 0)
+        {
+            noProgressAttempts++;
+            continue;
+        }
+
+        cursor += step;
+        remaining -= step;
+        noProgressAttempts = 0;
+    }
+
+    written = length - remaining;
     stack.SetResult_I4((int32_t)written);
 #else
     (void)stack;

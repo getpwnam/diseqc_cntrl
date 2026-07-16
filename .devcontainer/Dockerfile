@@ -122,6 +122,7 @@ RUN groupadd --gid ${USER_GID} ${USERNAME} \
     && chmod 0440 /etc/sudoers.d/${USERNAME}
 
 RUN gpasswd -a ${USERNAME} plugdev
+RUN gpasswd -a ${USERNAME} dialout
 
 # ---- Copy toolchains from downloader ----
 RUN mkdir -p /usr/local/gcc /opt/cmake
