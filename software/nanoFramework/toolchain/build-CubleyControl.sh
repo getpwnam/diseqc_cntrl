@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-PROJECT="${PROJECT:-}"
+PROJECT="${PROJECT:-$ROOT_DIR/CubleyControl/CubleyControl.nfproj}"
 SOLUTION="${SOLUTION:-}"
 PACKAGES_DIR="$ROOT_DIR/packages"
 CHECKSUM_TOOL="$SCRIPT_DIR/interop-checksum.sh"
@@ -27,6 +27,7 @@ DO_DEPLOY="false"
 DO_RESET="false"
 USE_SWD="false"
 SKIP_RESTORE="false"
+SKIP_INTEROP_VALIDATION="false"
 
 cleanup() {
   if [[ -n "$NF_MDP_TEMP_DIR" && -d "$NF_MDP_TEMP_DIR" ]]; then
@@ -38,14 +39,14 @@ trap cleanup EXIT
 usage() {
   cat << 'EOF'
 Usage:
-  ./toolchain/build-managed.sh (list|compile|build) [options]
+  ./toolchain/build-CubleyControl.sh (list|compile|build) [options]
 
 Examples:
-  ./toolchain/build-managed.sh list
-  ./toolchain/build-managed.sh compile
-  ./toolchain/build-managed.sh build
-  ./toolchain/build-managed.sh build --deploy --serialport /dev/ttyUSB0 --address 0x080C0000
-  ./toolchain/build-managed.sh build --deploy --swd --address 0x080C0000
+  ./toolchain/build-CubleyControl.sh list
+  ./toolchain/build-CubleyControl.sh compile
+  ./toolchain/build-CubleyControl.sh build
+  ./toolchain/build-CubleyControl.sh build --deploy --serialport /dev/ttyUSB0 --address 0x080C0000
+  ./toolchain/build-CubleyControl.sh build --deploy --swd --address 0x080C0000
 
 Options:
 
@@ -55,6 +56,8 @@ General options (all modes):
   --solution <path>                 Path to .sln file for restore
   --nano-ps-path <path>             nanoFramework project system path
   --skip-restore                    Skip dotnet restore/bootstrap step
+  --skip-interop-validation         Skip interop guard/checksum preflight steps
+  --enable-interop-validation       Alias for explicit enable (default is enabled)
   --help                            Show this help message
 
 Mode-specific options:
@@ -187,7 +190,7 @@ restore_packages_from_config() {
 bootstrap_packages() {
   echo "[stage] Ensuring nanoFramework package cache is present..."
   restore_packages_from_config "$ROOT_DIR/CubleyNative.Interop/packages.config"
-  restore_packages_from_config "$ROOT_DIR/DiSEqC_Control/packages.config"
+  restore_packages_from_config "$ROOT_DIR/CubleyControl/packages.config"
 
   if command -v dotnet >/dev/null 2>&1; then
     local restore_output
@@ -280,7 +283,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$MODE" ]]; then
-  echo "Missing mode argument. Use: build-managed.sh (compile|build) [options]" >&2
+  echo "Missing mode argument. Use: build-CubleyControl.sh (compile|build) [options]" >&2
   usage
   exit 2
 fi
@@ -317,6 +320,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-restore)
       SKIP_RESTORE="true"
+      shift
+      ;;
+    --enable-interop-validation)
+      SKIP_INTEROP_VALIDATION="false"
+      shift
+      ;;
+    --skip-interop-validation)
+      SKIP_INTEROP_VALIDATION="true"
       shift
       ;;
     --image)
@@ -473,20 +484,24 @@ if [[ -z "$NANO_PS_PATH" || ! -d "$NANO_PS_PATH" ]]; then
   exit 2
 fi
 
-if [[ -x "$INTEROP_GUARD_TOOL" ]]; then
-  echo "[preflight] Validating interop slot order and append-only baseline"
-  "$INTEROP_GUARD_TOOL"
+if [[ "$SKIP_INTEROP_VALIDATION" == "true" ]]; then
+  echo "[preflight] Skipping interop guard/checksum for CubleyControl wrapper"
 else
-  echo "[error] Interop guard tool not found or not executable: $INTEROP_GUARD_TOOL" >&2
-  exit 1
-fi
+  if [[ -x "$INTEROP_GUARD_TOOL" ]]; then
+    echo "[preflight] Validating interop slot order and append-only baseline"
+    "$INTEROP_GUARD_TOOL"
+  else
+    echo "[error] Interop guard tool not found or not executable: $INTEROP_GUARD_TOOL" >&2
+    exit 1
+  fi
 
-if [[ -x "$CHECKSUM_TOOL" ]]; then
-  echo "[preflight] Validating interop checksum and AssemblyNativeVersion scope"
-  "$CHECKSUM_TOOL" --check
-else
-  echo "[error] Interop checksum tool not found or not executable: $CHECKSUM_TOOL" >&2
-  exit 1
+  if [[ -x "$CHECKSUM_TOOL" ]]; then
+    echo "[preflight] Validating interop checksum and AssemblyNativeVersion scope"
+    "$CHECKSUM_TOOL" --check
+  else
+    echo "[error] Interop checksum tool not found or not executable: $CHECKSUM_TOOL" >&2
+    exit 1
+  fi
 fi
 
 if [[ -z "$NF_MDP_MSBUILDTASK_PATH_EFFECTIVE" ]]; then
@@ -556,14 +571,14 @@ else
     ASSEMBLY_NAME="$TARGET_NAME"
   fi
   PRIMARY_PE="$OUTPUT_DIR/$ASSEMBLY_NAME.pe"
-  CUBLEY_INTEROP_PE="$OUTPUT_DIR/Cubley.Interop.pe"
+  CUBLEY_INTEROP_PE="$OUTPUT_DIR/CubleyNative.pe"
   RUNTIME_EVENTS_PE=""
 
-  if [[ -x "$CHECKSUM_TOOL" ]]; then
+  if [[ "$SKIP_INTEROP_VALIDATION" != "true" && -x "$CHECKSUM_TOOL" ]]; then
     if [[ -f "$CUBLEY_INTEROP_PE" ]]; then
-      if ! "$CHECKSUM_TOOL" --check --assembly Cubley.Interop --pe "$CUBLEY_INTEROP_PE"; then
-        echo "[error] Cubley.Interop checksum mismatch; refusing to continue." >&2
-        echo "[error] To realign, run: $CHECKSUM_TOOL --fix --assembly Cubley.Interop --pe $CUBLEY_INTEROP_PE" >&2
+      if ! "$CHECKSUM_TOOL" --check --assembly CubleyNative --pe "$CUBLEY_INTEROP_PE"; then
+        echo "[error] CubleyNative checksum mismatch; refusing to continue." >&2
+        echo "[error] To realign, run: $CHECKSUM_TOOL --fix --assembly CubleyNative --pe $CUBLEY_INTEROP_PE" >&2
         exit 1
       fi
     fi

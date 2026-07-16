@@ -86,7 +86,7 @@ static const CLR_RT_MethodHandler method_lookup[] =
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_CubleyNative =
 {
     "CubleyNative",
-    0x615A93C4,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
+    0xA3EB0B8B,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
     method_lookup,
     { 1, 0, 0, 0 }
 };

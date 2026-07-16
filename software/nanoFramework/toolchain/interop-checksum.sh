@@ -10,15 +10,32 @@ ASSEMBLY_NAME="CubleyNative"
 PE_PATH=""
 
 CUBLEY_ASSEMBLY_INFO_PATH="$ROOT_DIR/CubleyNative.Interop/Properties/AssemblyInfo.cs"
-CUBLEY_NATIVE_INTEROP_PATH="$ROOT_DIR/nf-native/cubley_interop.cpp"
 CUBLEY_NATIVE_SYMBOL="g_CLR_AssemblyNative_CubleyNative"
-CUBLEY_DEFAULT_PE_PATH="$ROOT_DIR/build/DiSEqC_Control/CubleyNative.pe"
+CUBLEY_DEFAULT_PE_PATH="$ROOT_DIR/build/CubleyControl/CubleyNative.pe"
 LEGACY_SMOKE_ASSEMBLY_INFO_PATH="$ROOT_DIR/SmokeW5500.Interop/Properties/AssemblyInfo.cs"
 
 ASSEMBLY_INFO_PATH=""
 NATIVE_INTEROP_PATH=""
 NATIVE_SYMBOL=""
 DEFAULT_PE_PATH=""
+
+resolve_cubley_native_interop_path() {
+  local candidates=(
+    "$ROOT_DIR/nf-native/cubley_interop.cpp"
+    "$ROOT_DIR/../../firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/cubley_interop.cpp"
+    "$ROOT_DIR/../../firmware/nf-interpreter/targets-community/ChibiOS/CUBLEY_F407_0_5/nanoCLR/cubley_interop.cpp"
+  )
+
+  local c
+  for c in "${candidates[@]}"; do
+    if [[ -f "$c" ]]; then
+      printf '%s\n' "$c"
+      return 0
+    fi
+  done
+
+  return 1
+}
 
 usage() {
   cat <<'EOF'
@@ -42,7 +59,7 @@ set_targets() {
   case "$ASSEMBLY_NAME" in
     CubleyNative)
       ASSEMBLY_INFO_PATH="$CUBLEY_ASSEMBLY_INFO_PATH"
-      NATIVE_INTEROP_PATH="$CUBLEY_NATIVE_INTEROP_PATH"
+      NATIVE_INTEROP_PATH="$(resolve_cubley_native_interop_path || true)"
       NATIVE_SYMBOL="$CUBLEY_NATIVE_SYMBOL"
       DEFAULT_PE_PATH="$CUBLEY_DEFAULT_PE_PATH"
       ;;

@@ -1,8 +1,5 @@
 using System.Runtime.CompilerServices;
 
-    
-
-
 namespace Cubley.Interop
 {
     public static class DiagMailbox
@@ -17,16 +14,21 @@ namespace Cubley.Interop
         public static extern uint NativeGetLastNativeError();
     }
 
-    public static class DiagnosticsMailbox
+    public static class Fram24C128
     {
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern bool NativeTryLatchBootProbe(uint statusWord);
+        public enum Status { Ok = 0, InvalidParam = 1, NotInitialized = 2, IoError = 3 }
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern uint NativeGetBootProbe();
+        public static extern int NativeInit();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeWrite(int address, byte[] buffer, int offset, int count);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeRead(int address, byte[] buffer, int offset, int count);
     }
 
-    public static class LNBH26
+    public static partial class LNBH26
     {
         public enum Voltage { V13 = 0, V18 = 1 }
         public enum Polarization { Vertical = 0, Horizontal = 1 }
@@ -103,46 +105,66 @@ namespace Cubley.Interop
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeInit();
+
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeSetEnable(bool enable);
+
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeReadStatus(out int statusRegister);
+
         [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeSetPolarization(int polarization);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeSetBand(int band);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeGetPolarization();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeGetBand();
+
+        // Legacy declarations kept for compile compatibility; not part of current InternalCall slot map.
         public static extern int NativeSetVoltage(int voltage);
-        [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeSetTone(bool enable);
-        [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeGetVoltage();
-        [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern bool NativeGetTone();
     }
 
-    public static class StatusLed
+    public static class LNBH26Registers
     {
-        /// <summary>
-        /// Initialize PB0 as GPIO output. Must be called before any LED operations.
-        /// </summary>
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void NativeInit();
+        public static extern int NativeReadRegister(int registerAddress, out int registerValue);
+    }
 
-        /// <summary>
-        /// Set PB0 HIGH (LED ON).
-        /// </summary>
+    public static partial class LNBH26
+    {
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void NativeSetHigh();
+        public static extern int NativeReadStatusPair(out int status1, out int status2);
 
-        /// <summary>
-        /// Set PB0 LOW (LED OFF).
-        /// </summary>
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void NativeSetLow();
+        public static extern int NativeSetPolarizationForChannel(int channel, int polarization);
 
-        /// <summary>
-        /// Pulse PB0 for bootup marker: count blinks of pulseMs duration each (HIGH then LOW).
-        /// Example: Pulse(3, 300) blinks 3x with 300ms on, 300ms off.
-        /// </summary>
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void NativePulse(int count, int pulseMs);
+        public static extern int NativeSetBandForChannel(int channel, int band);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeSetLowPowerForChannel(int channel, bool lowPower);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeSetDiseqcInputModeForChannel(int channel, int mode);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeGetPolarizationForChannel(int channel);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeGetBandForChannel(int channel);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeGetLastError();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeGetLastErrorDetail();
     }
 
     public static class UsbCdcConsole
@@ -157,23 +179,19 @@ namespace Cubley.Interop
         public static extern int NativeWrite(string text);
     }
 
-    public static class LNBH26Registers
+    // Legacy declarations kept for compatibility with older managed apps.
+    public static class DiagnosticsMailbox
     {
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeReadRegister(int registerAddress, out int registerValue);
+        public static extern bool NativeTryLatchBootProbe(uint statusWord);
+        public static extern uint NativeGetBootProbe();
     }
 
-    public static class Fram24C128
+    // Legacy declarations kept for compatibility with older managed apps.
+    public static class StatusLed
     {
-        public enum Status { Ok = 0, InvalidParam = 1, NotInitialized = 2, IoError = 3 }
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeInit();
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeWrite(int address, byte[] buffer, int offset, int count);
-
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeRead(int address, byte[] buffer, int offset, int count);
+        public static extern void NativeInit();
+        public static extern void NativeSetHigh();
+        public static extern void NativeSetLow();
+        public static extern void NativePulse(int count, int pulseMs);
     }
 }

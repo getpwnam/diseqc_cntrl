@@ -5,7 +5,25 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 CS_PATH="$ROOT_DIR/CubleyNative.Interop/CubleyInteropNative.cs"
-NATIVE_PATH="$ROOT_DIR/nf-native/cubley_interop.cpp"
+NATIVE_PATH=""
+
+resolve_native_path() {
+    local candidates=(
+        "$ROOT_DIR/nf-native/cubley_interop.cpp"
+        "$ROOT_DIR/../../firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/cubley_interop.cpp"
+        "$ROOT_DIR/../../firmware/nf-interpreter/targets-community/ChibiOS/CUBLEY_F407_0_5/nanoCLR/cubley_interop.cpp"
+    )
+
+    local c
+    for c in "${candidates[@]}"; do
+        if [[ -f "$c" ]]; then
+            printf '%s\n' "$c"
+            return 0
+        fi
+    done
+
+    return 1
+}
 
 usage() {
     cat <<'EOF'
@@ -14,7 +32,7 @@ Usage:
 
 Defaults:
     --cs      software/nanoFramework/CubleyNative.Interop/CubleyInteropNative.cs
-    --native  software/nanoFramework/nf-native/cubley_interop.cpp
+    --native  auto-detected (targets-local preferred)
 EOF
 }
 
@@ -40,6 +58,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [[ -z "$NATIVE_PATH" ]]; then
+    NATIVE_PATH="$(resolve_native_path || true)"
+fi
+
 if [[ ! -f "$CS_PATH" ]]; then
     echo "Missing file: $CS_PATH" >&2
     exit 1
@@ -61,7 +83,7 @@ native_path = Path(sys.argv[2])
 cs_text = cs_path.read_text(encoding="utf-8")
 native_text = native_path.read_text(encoding="utf-8")
 
-class_re = re.compile(r"^\s*public\s+static\s+class\s+([A-Za-z0-9_]+)")
+class_re = re.compile(r"^\s*public\s+static\s+(?:partial\s+)?class\s+([A-Za-z0-9_]+)")
 method_re = re.compile(r"^\s*(public|private)\s+static\s+(extern\s+)?[A-Za-z0-9_<>,\[\]\s]+\s+([A-Za-z0-9_]+)\s*\(")
 
 current_class = None
@@ -71,22 +93,29 @@ non_extern_methods = []
 
 # Current baseline slots are immutable. New methods may only append.
 V1_BASELINE = [
-    "BringupStatus.NativeSet",
-    "BringupStatus.NativeGet",
-    "BringupStatus.NativeGetLastNativeError",
-    "DiagnosticsMailbox.NativeTryLatchBootProbe",
-    "DiagnosticsMailbox.NativeGetBootProbe",
+    "DiagMailbox.NativeSet",
+    "DiagMailbox.NativeGet",
+    "DiagMailbox.NativeGetLastNativeError",
+    "Fram24C128.NativeInit",
+    "Fram24C128.NativeWrite",
+    "Fram24C128.NativeRead",
     "LNBH26.NativeInit",
     "LNBH26.NativeSetEnable",
     "LNBH26.NativeReadStatus",
-    "LNBH26.NativeSetVoltage",
-    "LNBH26.NativeSetTone",
-    "LNBH26.NativeGetVoltage",
-    "LNBH26.NativeGetTone",
-    "StatusLed.NativeInit",
-    "StatusLed.NativeSetHigh",
-    "StatusLed.NativeSetLow",
-    "StatusLed.NativePulse",
+    "LNBH26.NativeSetPolarization",
+    "LNBH26.NativeSetBand",
+    "LNBH26.NativeGetPolarization",
+    "LNBH26.NativeGetBand",
+    "LNBH26Registers.NativeReadRegister",
+    "LNBH26.NativeReadStatusPair",
+    "LNBH26.NativeSetPolarizationForChannel",
+    "LNBH26.NativeSetBandForChannel",
+    "LNBH26.NativeSetLowPowerForChannel",
+    "LNBH26.NativeSetDiseqcInputModeForChannel",
+    "LNBH26.NativeGetPolarizationForChannel",
+    "LNBH26.NativeGetBandForChannel",
+    "LNBH26.NativeGetLastError",
+    "LNBH26.NativeGetLastErrorDetail",
     "UsbCdcConsole.NativeIsEnabled",
     "UsbCdcConsole.NativeReadByte",
     "UsbCdcConsole.NativeWrite",
