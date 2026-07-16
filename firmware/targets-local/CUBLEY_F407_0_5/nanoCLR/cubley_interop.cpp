@@ -1,11 +1,11 @@
 #include <nanoCLR_Interop.h>
 #include <nanoCLR_Runtime.h>
 #include <nanoCLR_Checks.h>
+#include <hal.h>
 #include <string.h>
 #include "fram_native.h"
 
 #if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
-#include <hal.h>
 #include <ch.h>
 #include "../common/usbcfg.h"
 #endif
@@ -48,6 +48,70 @@ HRESULT Library_cubley_interop_Fram24C128_NativeRead___STATIC__I4__I4__SZARRAY_U
 // - 'volatile' prevents compiler elision/reordering for external observers
 volatile uint32_t g_cubley_diag_current_status;
 volatile uint32_t g_cubley_diag_last_error;
+static bool g_cubley_boot_reset_cause_pending = true;
+
+static uint32_t CubleyReadResetCauseWord()
+{
+    uint32_t flags = 0;
+    uint32_t csr = 0;
+
+#if defined(RCC)
+    csr = RCC->CSR;
+#endif
+
+#if defined(RCC_CSR_BORRSTF)
+    if ((csr & RCC_CSR_BORRSTF) != 0)
+    {
+        flags |= 0x01u;
+    }
+#endif
+
+#if defined(RCC_CSR_PINRSTF)
+    if ((csr & RCC_CSR_PINRSTF) != 0)
+    {
+        flags |= 0x02u;
+    }
+#endif
+
+#if defined(RCC_CSR_PORRSTF)
+    if ((csr & RCC_CSR_PORRSTF) != 0)
+    {
+        flags |= 0x04u;
+    }
+#endif
+
+#if defined(RCC_CSR_SFTRSTF)
+    if ((csr & RCC_CSR_SFTRSTF) != 0)
+    {
+        flags |= 0x08u;
+    }
+#endif
+
+#if defined(RCC_CSR_IWDGRSTF)
+    if ((csr & RCC_CSR_IWDGRSTF) != 0)
+    {
+        flags |= 0x10u;
+    }
+#endif
+
+#if defined(RCC_CSR_WWDGRSTF)
+    if ((csr & RCC_CSR_WWDGRSTF) != 0)
+    {
+        flags |= 0x20u;
+    }
+#endif
+
+#if defined(RCC_CSR_LPWRRSTF)
+    if ((csr & RCC_CSR_LPWRRSTF) != 0)
+    {
+        flags |= 0x40u;
+    }
+#endif
+
+    // 0xCB in the top byte marks this word as boot reset-cause payload.
+    // Bits [23:16] carry compact flags; bits [15:0] carry raw CSR low word.
+    return 0xCB000000u | ((flags & 0xFFu) << 16) | (csr & 0xFFFFu);
+}
 
 #if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
 static bool CubleyUsbCdcReady()
@@ -107,6 +171,13 @@ HRESULT Library_cubley_interop_DiagMailbox_NativeSet___STATIC__VOID__U4(CLR_RT_S
 HRESULT Library_cubley_interop_DiagMailbox_NativeGet___STATIC__U4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
+
+    if (g_cubley_boot_reset_cause_pending)
+    {
+        g_cubley_boot_reset_cause_pending = false;
+        stack.SetResult_U4(CubleyReadResetCauseWord());
+        NANOCLR_NOCLEANUP_NOLABEL();
+    }
 
     stack.SetResult_U4(g_cubley_diag_current_status);
 

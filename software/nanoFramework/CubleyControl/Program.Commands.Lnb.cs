@@ -532,6 +532,79 @@ namespace CubleyControl
             return "0x" + (value & 0xFF).ToString("X2");
         }
 
+        private static void EmitLnbFaultSnapshot(string source, int sequence)
+        {
+            if (!EnsureLnbInitialized())
+            {
+                Debug.WriteLine(
+                    "[LNB-FAULT] seq=" + sequence.ToString() +
+                    " src=" + source +
+                    " init_failed rc=" + _lnbInitStatus.ToString());
+                return;
+            }
+
+            int s1;
+            int s2;
+            int statusRc = ReadLnbStatusPairSafe(out s1, out s2);
+            if (statusRc != (int)LNBH26.Status.Ok)
+            {
+                int statusLastError = LNBH26.NativeGetLastError();
+                int statusLastDetail = LNBH26.NativeGetLastErrorDetail();
+                Debug.WriteLine(
+                    "[LNB-FAULT] seq=" + sequence.ToString() +
+                    " src=" + source +
+                    " status_read_failed rc=" + statusRc.ToString() +
+                    " last=" + statusLastError.ToString() +
+                    " detail=" + statusLastDetail.ToString());
+                return;
+            }
+
+            int d1;
+            int d2;
+            int d3;
+            int d4;
+            int dataRc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
+            if (dataRc != (int)LNBH26.Status.Ok)
+            {
+                int dataLastError = LNBH26.NativeGetLastError();
+                int dataLastDetail = LNBH26.NativeGetLastErrorDetail();
+                Debug.WriteLine(
+                    "[LNB-FAULT] seq=" + sequence.ToString() +
+                    " src=" + source +
+                    " data_read_failed rc=" + dataRc.ToString() +
+                    " s1=" + ToHexU8(s1) +
+                    " s2=" + ToHexU8(s2) +
+                    " last=" + dataLastError.ToString() +
+                    " detail=" + dataLastDetail.ToString());
+                return;
+            }
+
+            int pol = LNBH26.NativeGetPolarizationForChannel(LnbChannelA);
+            int band = LNBH26.NativeGetBandForChannel(LnbChannelA);
+            int lastError = LNBH26.NativeGetLastError();
+            int lastDetail = LNBH26.NativeGetLastErrorDetail();
+
+            Debug.WriteLine(
+                "[LNB-FAULT] seq=" + sequence.ToString() +
+                " src=" + source +
+                " ch=a" +
+                " pol=" + PolarizationToText(pol) +
+                " band=" + BandToText(band) +
+                " voltage=" + VoltageSelectForChannelToText(LnbChannelA, d1) +
+                " tone=" + (IsToneEnabledForChannel(LnbChannelA, d2) ? "on" : "off") +
+                " lpm=" + (IsLowPowerEnabledForChannel(LnbChannelA, d2) ? "on" : "off") +
+                " extm=" + (IsExtmEnabledForChannel(LnbChannelA, d2) ? "on" : "off") +
+                " status=" + (HasFaultStatus(s1) ? "fault" : "ok") +
+                " s1=" + ToHexU8(s1) +
+                " s2=" + ToHexU8(s2) +
+                " d1=" + ToHexU8(d1) +
+                " d2=" + ToHexU8(d2) +
+                " d3=" + ToHexU8(d3) +
+                " d4=" + ToHexU8(d4) +
+                " last=" + lastError.ToString() +
+                " detail=" + lastDetail.ToString());
+        }
+
         private static int ReadLnbDataRegistersSafe(out int d1, out int d2, out int d3, out int d4)
         {
             int rc;

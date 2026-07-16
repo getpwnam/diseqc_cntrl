@@ -89,10 +89,10 @@ namespace Cubley.Lnbh26
                 BuildFlag("OLF_B", IsFlagSet(raw, Status1OlfB), "Overload fault flag for channel B output.", 1, 0x02),
                 BuildFlag("VMON_A", IsFlagSet(raw, Status1VmonA), "Voltage monitor status for channel A.", 2, 0x04),
                 BuildFlag("VMON_B", IsFlagSet(raw, Status1VmonB), "Voltage monitor status for channel B.", 3, 0x08),
-                BuildFlag("PDO_A", IsFlagSet(raw, Status1PdoA), "Power-disable output condition on channel A.", 4, 0x10),
-                BuildFlag("PDO_B", IsFlagSet(raw, Status1PdoB), "Power-disable output condition on channel B.", 5, 0x20),
-                BuildFlag("OTF", IsFlagSet(raw, Status1Otf), "Over-temperature fault indicator.", 6, 0x40),
-                BuildFlag("PNG", IsFlagSet(raw, Status1Png), "Power-not-good indicator.", 7, 0x80),
+                BuildFlag("PDO_A", IsFlagSet(raw, Status1PdoA), "Overcurrent detected on output pull-down stage for channel A.", 4, 0x10),
+                BuildFlag("PDO_B", IsFlagSet(raw, Status1PdoB), "Overcurrent detected on output pull-down stage for channel B.", 5, 0x20),
+                BuildFlag("OTF", IsFlagSet(raw, Status1Otf), "Junction overtemperature detected.", 6, 0x40),
+                BuildFlag("PNG", IsFlagSet(raw, Status1Png), "Input supply at VCC is below the LPD threshold.", 7, 0x80),
             });
         }
 
@@ -102,10 +102,10 @@ namespace Cubley.Lnbh26
             {
                 BuildFlag("TDET_A", IsFlagSet(raw, Status2TdetA), "22kHz tone detect status on channel A path.", 0, 0x01),
                 BuildFlag("TDET_B", IsFlagSet(raw, Status2TdetB), "22kHz tone detect status on channel B path.", 1, 0x02),
-                BuildFlag("TMON_A", IsFlagSet(raw, Status2TmonA), "Thermal monitor status for channel A.", 2, 0x04),
-                BuildFlag("TMON_B", IsFlagSet(raw, Status2TmonB), "Thermal monitor status for channel B.", 3, 0x08),
-                BuildFlag("IMON_A", IsFlagSet(raw, Status2ImonA), "Current monitor status for channel A.", 4, 0x10),
-                BuildFlag("IMON_B", IsFlagSet(raw, Status2ImonB), "Current monitor status for channel B.", 5, 0x20),
+                BuildFlag("TMON_A", IsFlagSet(raw, Status2TmonA), "Tone monitor out-of-threshold flag for channel A (frequency or amplitude).", 2, 0x04),
+                BuildFlag("TMON_B", IsFlagSet(raw, Status2TmonB), "Tone monitor out-of-threshold flag for channel B (frequency or amplitude).", 3, 0x08),
+                BuildFlag("IMON_A", IsFlagSet(raw, Status2ImonA), "Output current monitor flag for channel A (1 = current below IMON threshold).", 4, 0x10),
+                BuildFlag("IMON_B", IsFlagSet(raw, Status2ImonB), "Output current monitor flag for channel B (1 = current below IMON threshold).", 5, 0x20),
             });
         }
 
@@ -138,14 +138,14 @@ namespace Cubley.Lnbh26
         {
             return BuildRegister(raw, new Lnbh26BitField[]
             {
-                BuildFlag("ISET_A", IsFlagSet(raw, Data3IsetA), "Current-limit setting bit for channel A.", 0, 0x01),
-                BuildFlag("ISW_A", IsFlagSet(raw, Data3IswA), "Switch-current mode bit for channel A.", 1, 0x02),
-                BuildFlag("PCL_A", IsFlagSet(raw, Data3PclA), "Cable loss compensation enable for channel A.", 2, 0x04),
-                BuildFlag("TIMER_A", IsFlagSet(raw, Data3TimerA), "Timing profile select bit for channel A.", 3, 0x08),
-                BuildFlag("ISET_B", IsFlagSet(raw, Data3IsetB), "Current-limit setting bit for channel B.", 4, 0x10),
-                BuildFlag("ISW_B", IsFlagSet(raw, Data3IswB), "Switch-current mode bit for channel B.", 5, 0x20),
-                BuildFlag("PCL_B", IsFlagSet(raw, Data3PclB), "Cable loss compensation enable for channel B.", 6, 0x40),
-                BuildFlag("TIMER_B", IsFlagSet(raw, Data3TimerB), "Timing profile select bit for channel B.", 7, 0x80),
+                BuildFlag("ISET_A", IsFlagSet(raw, Data3IsetA), "Channel A output current-limit range select (0 = default, 1 = lower range).", 0, 0x01),
+                BuildFlag("ISW_A", IsFlagSet(raw, Data3IswA), "Channel A inductor switching current limit (0 = 4A typ, 1 = 2.5A typ).", 1, 0x02),
+                BuildFlag("PCL_A", IsFlagSet(raw, Data3PclA), "Channel A pulsed dynamic current limiting control (0 = active, 1 = deactivated).", 2, 0x04),
+                BuildFlag("TIMER_A", IsFlagSet(raw, Data3TimerA), "Channel A dynamic current-limit TON select (0 = 90ms typ, 1 = 180ms typ).", 3, 0x08),
+                BuildFlag("ISET_B", IsFlagSet(raw, Data3IsetB), "Channel B output current-limit range select (0 = default, 1 = lower range).", 4, 0x10),
+                BuildFlag("ISW_B", IsFlagSet(raw, Data3IswB), "Channel B inductor switching current limit (0 = 4A typ, 1 = 2.5A typ).", 5, 0x20),
+                BuildFlag("PCL_B", IsFlagSet(raw, Data3PclB), "Channel B pulsed dynamic current limiting control (0 = active, 1 = deactivated).", 6, 0x40),
+                BuildFlag("TIMER_B", IsFlagSet(raw, Data3TimerB), "Channel B dynamic current-limit TON select (0 = 90ms typ, 1 = 180ms typ).", 7, 0x80),
             });
         }
 
@@ -153,11 +153,11 @@ namespace Cubley.Lnbh26
         {
             return BuildRegister(raw, new Lnbh26BitField[]
             {
-                BuildFlag("EN_IMON_A", IsFlagSet(raw, Data4EnImonA), "Enable current monitor output for channel A.", 0, 0x01),
-                BuildFlag("OLR", IsFlagSet(raw, Data4Olr), "Overload recovery behavior selection.", 3, 0x08),
-                BuildFlag("EN_IMON_B", IsFlagSet(raw, Data4EnImonB), "Enable current monitor output for channel B.", 4, 0x10),
-                BuildFlag("THERM", IsFlagSet(raw, Data4Therm), "Thermal shutdown threshold behavior select.", 6, 0x40),
-                BuildFlag("COMP", IsFlagSet(raw, Data4Comp), "Compensation feature select.", 7, 0x80),
+                BuildFlag("EN_IMON_A", IsFlagSet(raw, Data4EnImonA), "Enable IMON diagnostic mode for channel A (VOUT forced to ~21V typ).", 0, 0x01),
+                BuildFlag("OLR", IsFlagSet(raw, Data4Olr), "Overload recovery mode (0 = auto-retry, 1 = keep output off until reprogrammed).", 3, 0x08),
+                BuildFlag("EN_IMON_B", IsFlagSet(raw, Data4EnImonB), "Enable IMON diagnostic mode for channel B (VOUT forced to ~21V typ).", 4, 0x10),
+                BuildFlag("THERM", IsFlagSet(raw, Data4Therm), "Thermal recovery mode (0 = auto-retry, 1 = keep outputs off until reprogrammed).", 6, 0x40),
+                BuildFlag("COMP", IsFlagSet(raw, Data4Comp), "DC-DC compensation selection (0 = low ESR output caps, 1 = high ESR output caps).", 7, 0x80),
             });
         }
 

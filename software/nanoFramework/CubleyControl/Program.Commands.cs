@@ -10,8 +10,8 @@ namespace CubleyControl
     {
         private static void HandleConsoleCommand(string command)
         {
-            string trimmed = command == null ? string.Empty : command.Trim();
-            string lower = trimmed.ToLower();
+            string normalized = NormalizeCommandInput(command);
+            string lower = normalized.ToLower();
             int reqId = NextRequestId();
 
             if (lower.Length == 0)
@@ -19,7 +19,7 @@ namespace CubleyControl
                 return;
             }
 
-            _activeCommand = trimmed;
+            _activeCommand = normalized;
             Debug.WriteLine("[CDC-CMD] cmd=" + _activeCommand);
 
             string[] tokens = SplitTokens(lower);
@@ -377,6 +377,59 @@ namespace CubleyControl
             }
 
             return new string(chars);
+        }
+
+        private static string NormalizeCommandInput(string text)
+        {
+            if (text == null || text.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            char[] chars = new char[text.Length];
+            int outIndex = 0;
+            bool previousWasSpace = true;
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                char c = text[i];
+                bool isSpace = c == ' ' || c == '\t' || c == '\r' || c == '\n';
+
+                // Allow only printable 7-bit ASCII bytes in command text.
+                bool isPrintableAscii = c >= ' ' && c <= '~';
+
+                if (!isPrintableAscii)
+                {
+                    if (isSpace && !previousWasSpace)
+                    {
+                        chars[outIndex++] = ' ';
+                        previousWasSpace = true;
+                    }
+
+                    continue;
+                }
+
+                if (c == ' ')
+                {
+                    if (!previousWasSpace)
+                    {
+                        chars[outIndex++] = ' ';
+                        previousWasSpace = true;
+                    }
+
+                    continue;
+                }
+
+                chars[outIndex++] = c;
+                previousWasSpace = false;
+            }
+
+            while (outIndex > 0 && chars[outIndex - 1] == ' ')
+            {
+                outIndex--;
+            }
+
+            return outIndex == 0 ? string.Empty : new string(chars, 0, outIndex);
         }
 
         private static bool TryParseOnOff(string value, out bool result)

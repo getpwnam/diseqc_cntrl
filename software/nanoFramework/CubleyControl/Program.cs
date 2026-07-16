@@ -17,14 +17,31 @@ namespace CubleyControl
         private const int UsbConsoleHealthLogIntervalLoops = 50;
         private const int UsbConsoleLineMaxLength = 64;
         private const int UsbWriteLogEveryNEvents = 20;
+        private const int LnbFaultPollIntervalMs = 25;
         private const int LnbChannelA = 0;
+        private const uint ResetCauseMarkerMask = 0xFF000000;
+        private const uint ResetCauseMarkerValue = 0xCB000000;
+        private const int ResetFlagBor = 1 << 0;
+        private const int ResetFlagPin = 1 << 1;
+        private const int ResetFlagPor = 1 << 2;
+        private const int ResetFlagSft = 1 << 3;
+        private const int ResetFlagIwdg = 1 << 4;
+        private const int ResetFlagWwdg = 1 << 5;
+        private const int ResetFlagLpwr = 1 << 6;
 
         // Candidate encodings for PB0 across providers/schemes.
         private static readonly int[] LedPinCandidates = { 16, 0 };
+        // Candidate encodings for PC8 across providers/schemes.
+        private static readonly int[] LnbFaultPinCandidates = { 40, 8 };
 
         private static GpioController _gpio;
         private static int _ledPin = -1;
         private static bool _ledReady;
+        private static int _lnbFaultPin = -1;
+        private static bool _lnbFaultReady;
+        private static bool _lnbFaultInterruptEnabled;
+        private static bool _lnbFaultAsserted;
+        private static int _lnbFaultSequence;
         private static string _consoleLine = string.Empty;
         private static int _usbWriteFailureCount;
         private static int _usbWritePartialCount;
@@ -39,11 +56,19 @@ namespace CubleyControl
 
         public static void Main()
         {
+            EmitBootResetCauseLog();
             _ledReady = TryInitializeStatusLed();
             InitializeLnbSafeDefaults();
+            InitializeLnbFaultMonitor();
 
             var heartbeatThread = new Thread(HeartbeatLoop);
             heartbeatThread.Start();
+
+            if (_lnbFaultReady && !_lnbFaultInterruptEnabled)
+            {
+                var lnbFaultPollThread = new Thread(LnbFaultPollLoop);
+                lnbFaultPollThread.Start();
+            }
 
             var usbConsoleThread = new Thread(UsbConsoleLoop);
             usbConsoleThread.Start();
@@ -79,8 +104,77 @@ namespace CubleyControl
                     }
                 }
 
+                if (_lnbFaultReady)
+                {
+                    TryProcessLnbFaultPin("heartbeat");
+                }
+
                 Thread.Sleep(HeartbeatIntervalMs);
             }
+        }
+
+        private static void LnbFaultPollLoop()
+        {
+            Debug.WriteLine("[LNB-FAULT] poll loop started pin=" + _lnbFaultPin.ToString());
+
+            while (true)
+            {
+                TryProcessLnbFaultPin("poll");
+                Thread.Sleep(LnbFaultPollIntervalMs);
+            }
+        }
+
+        private static void EmitBootResetCauseLog()
+        {
+            uint diagWord = DiagMailbox.NativeGet();
+
+            if ((diagWord & ResetCauseMarkerMask) != ResetCauseMarkerValue)
+            {
+                Debug.WriteLine("[BOOT] reset cause unavailable diag=0x" + diagWord.ToString("X8"));
+                return;
+            }
+
+            int flags = (int)((diagWord >> 16) & 0xFFu);
+            int csrLow = (int)(diagWord & 0xFFFFu);
+
+            Debug.WriteLine(
+                "[BOOT] reset flags=" + ResetFlagsToText(flags) +
+                " csr_low=0x" + csrLow.ToString("X4"));
+        }
+
+        private static string ResetFlagsToText(int flags)
+        {
+            string text = string.Empty;
+
+            AppendResetFlagIfSet(ref text, flags, ResetFlagBor, "BOR");
+            AppendResetFlagIfSet(ref text, flags, ResetFlagPin, "PIN");
+            AppendResetFlagIfSet(ref text, flags, ResetFlagPor, "POR");
+            AppendResetFlagIfSet(ref text, flags, ResetFlagSft, "SFT");
+            AppendResetFlagIfSet(ref text, flags, ResetFlagIwdg, "IWDG");
+            AppendResetFlagIfSet(ref text, flags, ResetFlagWwdg, "WWDG");
+            AppendResetFlagIfSet(ref text, flags, ResetFlagLpwr, "LPWR");
+
+            if (text.Length == 0)
+            {
+                return "none";
+            }
+
+            return text;
+        }
+
+        private static void AppendResetFlagIfSet(ref string text, int flags, int mask, string label)
+        {
+            if ((flags & mask) == 0)
+            {
+                return;
+            }
+
+            if (text.Length > 0)
+            {
+                text += ",";
+            }
+
+            text += label;
         }
 
         private static void UsbConsoleLoop()
@@ -265,7 +359,10 @@ namespace CubleyControl
         {
             try
             {
-                _gpio = new GpioController();
+                if (_gpio == null)
+                {
+                    _gpio = new GpioController();
+                }
 
                 for (int i = 0; i < LedPinCandidates.Length; i++)
                 {
@@ -307,6 +404,128 @@ namespace CubleyControl
             }
 
             return false;
+        }
+
+        private static void InitializeLnbFaultMonitor()
+        {
+            try
+            {
+                if (_gpio == null)
+                {
+                    _gpio = new GpioController();
+                }
+
+                for (int i = 0; i < LnbFaultPinCandidates.Length; i++)
+                {
+                    int pin = LnbFaultPinCandidates[i];
+
+                    try
+                    {
+                        if (_gpio.IsPinOpen(pin))
+                        {
+                            _gpio.ClosePin(pin);
+                        }
+
+                        if (_gpio.IsPinModeSupported(pin, PinMode.InputPullUp))
+                        {
+                            _gpio.OpenPin(pin, PinMode.InputPullUp);
+                        }
+                        else if (_gpio.IsPinModeSupported(pin, PinMode.Input))
+                        {
+                            _gpio.OpenPin(pin, PinMode.Input);
+                        }
+                        else
+                        {
+                            continue;
+                        }
+
+                        _lnbFaultPin = pin;
+                        _lnbFaultReady = true;
+                        break;
+                    }
+                    catch
+                    {
+                        // Try next candidate pin.
+                    }
+                }
+
+                if (!_lnbFaultReady)
+                {
+                    Debug.WriteLine("[LNB-FAULT] monitor disabled; unable to open PC8 candidate pins");
+                    return;
+                }
+
+                try
+                {
+                    _gpio.RegisterCallbackForPinValueChangedEvent(_lnbFaultPin, PinEventTypes.Falling, LnbFaultPinChanged);
+                    _lnbFaultInterruptEnabled = true;
+                }
+                catch
+                {
+                    _lnbFaultInterruptEnabled = false;
+                }
+
+                Debug.WriteLine(
+                    "[LNB-FAULT] monitor ready pin=" + _lnbFaultPin.ToString() +
+                    " mode=" + (_lnbFaultInterruptEnabled ? "interrupt" : "poll"));
+
+                // Capture startup asserted state if fault is already active.
+                TryProcessLnbFaultPin("startup");
+            }
+            catch
+            {
+                _lnbFaultReady = false;
+                _lnbFaultInterruptEnabled = false;
+                Debug.WriteLine("[LNB-FAULT] monitor initialization failed");
+            }
+        }
+
+        private static void LnbFaultPinChanged(object sender, PinValueChangedEventArgs args)
+        {
+            if (!_lnbFaultReady)
+            {
+                return;
+            }
+
+            if (args.ChangeType != PinEventTypes.Falling)
+            {
+                return;
+            }
+
+            TryProcessLnbFaultPin("irq");
+        }
+
+        private static void TryProcessLnbFaultPin(string source)
+        {
+            if (!_lnbFaultReady)
+            {
+                return;
+            }
+
+            PinValue value;
+            try
+            {
+                value = _gpio.Read(_lnbFaultPin);
+            }
+            catch
+            {
+                return;
+            }
+
+            bool asserted = value == PinValue.Low;
+            if (asserted)
+            {
+                if (!_lnbFaultAsserted)
+                {
+                    _lnbFaultAsserted = true;
+                    _lnbFaultSequence++;
+                    EmitLnbFaultSnapshot(source, _lnbFaultSequence);
+                }
+
+                return;
+            }
+
+            _lnbFaultAsserted = false;
         }
     }
 }
