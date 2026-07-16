@@ -72,16 +72,16 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_LNBH26_NativeInit___STATIC__I4,                                                  // [6] LNBH26.NativeInit
     Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN,                                    // [7] LNBH26.NativeSetEnable
     Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4,                                  // [8] LNBH26.NativeReadStatus
-    Library_cubley_interop_LNBH26Registers_NativeReadRegister___STATIC__I4__I4__BYREF_I4,                  // [9] LNBH26Registers.NativeReadRegister
-    Library_cubley_interop_LNBH26_NativeReadStatusPair___STATIC__I4__BYREF_I4__BYREF_I4,                   // [10] LNBH26.NativeReadStatusPair
-    Library_cubley_interop_LNBH26_NativeSetPolarizationForChannel___STATIC__I4__I4__I4,                    // [11] LNBH26.NativeSetPolarizationForChannel
-    Library_cubley_interop_LNBH26_NativeSetBandForChannel___STATIC__I4__I4__I4,                            // [12] LNBH26.NativeSetBandForChannel
-    Library_cubley_interop_LNBH26_NativeSetLowPowerForChannel___STATIC__I4__I4__BOOLEAN,                   // [13] LNBH26.NativeSetLowPowerForChannel
-    Library_cubley_interop_LNBH26_NativeSetDiseqcInputModeForChannel___STATIC__I4__I4__I4,                 // [14] LNBH26.NativeSetDiseqcInputModeForChannel
-    Library_cubley_interop_LNBH26_NativeGetPolarizationForChannel___STATIC__I4__I4,                        // [15] LNBH26.NativeGetPolarizationForChannel
-    Library_cubley_interop_LNBH26_NativeGetBandForChannel___STATIC__I4__I4,                                // [16] LNBH26.NativeGetBandForChannel
-    Library_cubley_interop_LNBH26_NativeGetLastError___STATIC__I4,                                          // [17] LNBH26.NativeGetLastError
-    Library_cubley_interop_LNBH26_NativeGetLastErrorDetail___STATIC__I4,                                    // [18] LNBH26.NativeGetLastErrorDetail
+    Library_cubley_interop_LNBH26_NativeReadStatusPair___STATIC__I4__BYREF_I4__BYREF_I4,                   // [9] LNBH26.NativeReadStatusPair
+    Library_cubley_interop_LNBH26_NativeSetPolarizationForChannel___STATIC__I4__I4__I4,                    // [10] LNBH26.NativeSetPolarizationForChannel
+    Library_cubley_interop_LNBH26_NativeSetBandForChannel___STATIC__I4__I4__I4,                            // [11] LNBH26.NativeSetBandForChannel
+    Library_cubley_interop_LNBH26_NativeSetLowPowerForChannel___STATIC__I4__I4__BOOLEAN,                   // [12] LNBH26.NativeSetLowPowerForChannel
+    Library_cubley_interop_LNBH26_NativeSetDiseqcInputModeForChannel___STATIC__I4__I4__I4,                 // [13] LNBH26.NativeSetDiseqcInputModeForChannel
+    Library_cubley_interop_LNBH26_NativeGetPolarizationForChannel___STATIC__I4__I4,                        // [14] LNBH26.NativeGetPolarizationForChannel
+    Library_cubley_interop_LNBH26_NativeGetBandForChannel___STATIC__I4__I4,                                // [15] LNBH26.NativeGetBandForChannel
+    Library_cubley_interop_LNBH26_NativeGetLastError___STATIC__I4,                                          // [16] LNBH26.NativeGetLastError
+    Library_cubley_interop_LNBH26_NativeGetLastErrorDetail___STATIC__I4,                                    // [17] LNBH26.NativeGetLastErrorDetail
+    Library_cubley_interop_LNBH26Registers_NativeReadRegister___STATIC__I4__I4__BYREF_I4,                  // [18] LNBH26Registers.NativeReadRegister
     Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__I4,                                      // [19] UsbCdcConsole.NativeIsEnabled
     Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [20] UsbCdcConsole.NativeReadByte
     Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [21] UsbCdcConsole.NativeWrite

@@ -113,12 +113,6 @@ namespace Cubley.Interop
         public static extern int NativeReadStatus(out int statusRegister);
     }
 
-    public static class LNBH26Registers
-    {
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeReadRegister(int registerAddress, out int registerValue);
-    }
-
     public static partial class LNBH26
     {
         [MethodImpl(MethodImplOptions.InternalCall)]
@@ -147,6 +141,12 @@ namespace Cubley.Interop
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeGetLastErrorDetail();
+    }
+
+    public static class LNBH26Registers
+    {
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeReadRegister(int registerAddress, out int registerValue);
     }
 
     public static class UsbCdcConsole

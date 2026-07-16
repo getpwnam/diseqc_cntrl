@@ -588,9 +588,46 @@ int32_t lnb_native_read_status_pair(int32_t *status1Register, int32_t *status2Re
         return (int32_t)LNB_ERROR_INVALID_PARAM;
     }
 
+    if (!g_lnb_initialized)
+    {
+        lnb_status_t initStatus = lnb_init(lnb_get_global_handle(), &I2CD3, LNBH26_I2C_ADDR);
+        if (initStatus != LNB_OK)
+        {
+            return (int32_t)initStatus;
+        }
+    }
+
     uint8_t status1 = 0;
     uint8_t status2 = 0;
-    lnb_status_t status = lnb_read_status_pair(lnb_get_global_handle(), &status1, &status2);
+    lnb_handle_t *handle = lnb_get_global_handle();
+    if (handle == NULL)
+    {
+        lnb_set_last_error(LNB_ERROR_NOT_INITIALIZED, -118);
+        return (int32_t)LNB_ERROR_NOT_INITIALIZED;
+    }
+
+    lnb_status_t status = lnb_read_register_byte(handle, (uint8_t)LNBH26_REGISTER_STATUS1, &status1);
+    if (status == LNB_OK)
+    {
+        status = lnb_read_register_byte(handle, (uint8_t)LNBH26_REGISTER_STATUS2, &status2);
+    }
+
+    // If we still observe an unexpected invalid-parameter result, retry through
+    // the register wrapper path used by NativeReadRegister.
+    if (status == LNB_ERROR_INVALID_PARAM)
+    {
+        int32_t fallbackStatus1 = 0;
+        int32_t fallbackStatus2 = 0;
+        int32_t rc1 = lnb_native_read_register((int32_t)LNBH26_REGISTER_STATUS1, &fallbackStatus1);
+        int32_t rc2 = lnb_native_read_register((int32_t)LNBH26_REGISTER_STATUS2, &fallbackStatus2);
+
+        if (rc1 == (int32_t)LNB_OK && rc2 == (int32_t)LNB_OK)
+        {
+            status1 = (uint8_t)(fallbackStatus1 & 0xFF);
+            status2 = (uint8_t)(fallbackStatus2 & 0xFF);
+            status = LNB_OK;
+        }
+    }
 
     *status1Register = (int32_t)status1;
     *status2Register = (int32_t)status2;

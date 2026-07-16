@@ -89,7 +89,21 @@ HRESULT Library_cubley_interop_LNBH26_NativeReadStatusPair___STATIC__I4__BYREF_I
 
     int32_t status1Reg = 0;
     int32_t status2Reg = 0;
-    lnb_status_t status = (lnb_status_t)lnb_native_read_status_pair(&status1Reg, &status2Reg);
+    int32_t rc1 = lnb_native_read_register((int32_t)LNBH26_REGISTER_STATUS1, &status1Reg);
+    int32_t rc2 = LNB_OK;
+    if (rc1 == (int32_t)LNB_OK)
+    {
+        rc2 = lnb_native_read_register((int32_t)LNBH26_REGISTER_STATUS2, &status2Reg);
+    }
+
+    lnb_status_t status = (lnb_status_t)((rc1 != (int32_t)LNB_OK) ? rc1 : rc2);
+
+    // 0xE3 C6 SS DD: LNB read-status-pair result (DD=last native detail low byte).
+    g_cubley_diag_last_error =
+        ((uint32_t)0xE3 << 24) |
+        ((uint32_t)0xC6 << 16) |
+        ((uint32_t)((uint8_t)status) << 8) |
+        (uint32_t)((uint8_t)(lnb_native_get_last_error_detail() & 0xFF));
 
     CLR_RT_HeapBlock& status1Out = stack.Arg0();
     CLR_RT_HeapBlock& status2Out = stack.Arg1();

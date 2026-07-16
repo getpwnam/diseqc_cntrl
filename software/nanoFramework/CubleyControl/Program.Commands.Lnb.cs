@@ -432,6 +432,17 @@ namespace CubleyControl
             s2 = 0;
 
             int rc = LNBH26.NativeReadStatusPair(out s1, out s2);
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                int lastError = LNBH26.NativeGetLastError();
+                int lastDetail = LNBH26.NativeGetLastErrorDetail();
+                Debug.WriteLine(
+                    "[CDC-LNB] status_pair rc=" + rc.ToString() +
+                    " s1=0x" + (s1 & 0xFF).ToString("X2") +
+                    " s2=0x" + (s2 & 0xFF).ToString("X2") +
+                    " last=" + lastError.ToString() +
+                    " detail=" + lastDetail.ToString());
+            }
 
             if (rc == (int)LNBH26.Status.IoError || rc == (int)LNBH26.Status.NotInitialized)
             {
@@ -439,6 +450,17 @@ namespace CubleyControl
                 if (EnsureLnbInitialized())
                 {
                     rc = LNBH26.NativeReadStatusPair(out s1, out s2);
+                    if (rc != (int)LNBH26.Status.Ok)
+                    {
+                        int retryLastError = LNBH26.NativeGetLastError();
+                        int retryLastDetail = LNBH26.NativeGetLastErrorDetail();
+                        Debug.WriteLine(
+                            "[CDC-LNB] status_pair retry rc=" + rc.ToString() +
+                            " s1=0x" + (s1 & 0xFF).ToString("X2") +
+                            " s2=0x" + (s2 & 0xFF).ToString("X2") +
+                            " last=" + retryLastError.ToString() +
+                            " detail=" + retryLastDetail.ToString());
+                    }
                 }
             }
 
