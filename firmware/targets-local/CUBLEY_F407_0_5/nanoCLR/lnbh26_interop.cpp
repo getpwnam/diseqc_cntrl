@@ -208,6 +208,48 @@ HRESULT Library_cubley_interop_LNBH26_NativeSetLowPowerForChannel___STATIC__I4__
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
+HRESULT Library_cubley_interop_LNBH26Tweaks_NativeSetIsetLowForChannel___STATIC__I4__I4__BOOLEAN(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    const int32_t channel = stack.Arg0().NumericByRef().s4;
+    const int32_t lowRange = stack.Arg1().NumericByRef().u1 != 0;
+    const int32_t status = lnb_native_set_iset_low_for_channel(channel, lowRange);
+
+    stack.SetResult_I4(status);
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26Tweaks_NativeSetIswLowForChannel___STATIC__I4__I4__BOOLEAN(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    const int32_t channel = stack.Arg0().NumericByRef().s4;
+    const int32_t lowLimit = stack.Arg1().NumericByRef().u1 != 0;
+    const int32_t status = lnb_native_set_isw_low_for_channel(channel, lowLimit);
+
+    stack.SetResult_I4(status);
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26Tweaks_NativeGetIsetLowForChannel___STATIC__I4__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    const int32_t channel = stack.Arg0().NumericByRef().s4;
+    stack.SetResult_I4(lnb_native_get_iset_low_for_channel(channel));
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_LNBH26Tweaks_NativeGetIswLowForChannel___STATIC__I4__I4(CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    const int32_t channel = stack.Arg0().NumericByRef().s4;
+    stack.SetResult_I4(lnb_native_get_isw_low_for_channel(channel));
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
 HRESULT Library_cubley_interop_LNBH26_NativeSetDiseqcInputModeForChannel___STATIC__I4__I4__I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();

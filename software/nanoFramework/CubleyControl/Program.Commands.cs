@@ -46,11 +46,11 @@ namespace CubleyControl
                     string topic = tokens[1];
                     if (topic == "lnb" || topic == "l")
                     {
-                        WriteCommandResult(reqId, true, "ok", "help lnb", "usage=lnb get <pol|band|status>, l g <p|b|s>, lnb set <enable|pol|band> <value>, l s <e|p|b> <value>");
+                        WriteCommandResult(reqId, true, "ok", "help lnb", "usage=lnb get <pol|band|status>, l g <p|b|s>, set lnb.a.<band|polarization|enabled|iset|isw> <value>, get lnb.a.<band|polarization|status|enabled|iset|isw>, l s <e|p|b> <value>");
                     }
                     else if (topic == "show" || topic == "get" || topic == "set" || topic == "diseqc")
                     {
-                        WriteCommandResult(reqId, true, "ok", "help cli", "show=show lnb [a|b] [detail]|show diseqc get=get lnb.a.<band|polarization|status|enabled> set=set lnb.a.<band|polarization|enabled> <value> diseqc=diseqc goto|step|drive|stop (placeholder)");
+                        WriteCommandResult(reqId, true, "ok", "help cli", "show=show lnb [a|b] [detail]|show diseqc get=get lnb.a.<band|polarization|status|enabled|iset|isw> set=set lnb.a.<band|polarization|enabled|iset|isw> <value> diseqc=diseqc goto|step|drive|stop (placeholder)");
                     }
                     else
                     {

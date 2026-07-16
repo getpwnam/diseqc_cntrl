@@ -458,6 +458,74 @@ lnb_status_t lnb_set_diseqc_input_mode_for_channel(lnb_handle_t *hlnb, lnb_chann
     return LNB_OK;
 }
 
+static lnb_status_t lnb_update_data3_bit_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, uint8_t maskA, uint8_t maskB, bool setBit)
+{
+    if (hlnb == NULL || !g_lnb_initialized)
+    {
+        lnb_set_last_error(LNB_ERROR_NOT_INITIALIZED, 0);
+        return LNB_ERROR_NOT_INITIALIZED;
+    }
+
+    if (!lnb_try_validate_channel(channel))
+    {
+        return LNB_ERROR_INVALID_PARAM;
+    }
+
+    uint8_t bitMask = (channel == LNB_CHANNEL_A) ? maskA : maskB;
+    lnb_handle_t previous = *hlnb;
+
+    if (setBit)
+    {
+        hlnb->data3_reg |= bitMask;
+    }
+    else
+    {
+        hlnb->data3_reg &= (uint8_t)~bitMask;
+    }
+
+    lnb_status_t status = lnb_write_data_registers(hlnb);
+    if (status != LNB_OK)
+    {
+        *hlnb = previous;
+        return status;
+    }
+
+    g_lnb = *hlnb;
+    return LNB_OK;
+}
+
+lnb_status_t lnb_set_iset_low_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, bool lowRange)
+{
+    return lnb_update_data3_bit_for_channel(hlnb, channel, LNBH26_DATA3_ISET_A, LNBH26_DATA3_ISET_B, lowRange);
+}
+
+lnb_status_t lnb_set_isw_low_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, bool lowLimit)
+{
+    return lnb_update_data3_bit_for_channel(hlnb, channel, LNBH26_DATA3_ISW_A, LNBH26_DATA3_ISW_B, lowLimit);
+}
+
+int32_t lnb_get_iset_low_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel)
+{
+    if (hlnb == NULL || !g_lnb_initialized || !lnb_is_valid_channel(channel))
+    {
+        return 0;
+    }
+
+    uint8_t bitMask = (channel == LNB_CHANNEL_A) ? LNBH26_DATA3_ISET_A : LNBH26_DATA3_ISET_B;
+    return ((hlnb->data3_reg & bitMask) != 0) ? 1 : 0;
+}
+
+int32_t lnb_get_isw_low_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel)
+{
+    if (hlnb == NULL || !g_lnb_initialized || !lnb_is_valid_channel(channel))
+    {
+        return 0;
+    }
+
+    uint8_t bitMask = (channel == LNB_CHANNEL_A) ? LNBH26_DATA3_ISW_A : LNBH26_DATA3_ISW_B;
+    return ((hlnb->data3_reg & bitMask) != 0) ? 1 : 0;
+}
+
 lnb_polarization_t lnb_get_polarization_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel)
 {
     int index;
@@ -725,6 +793,30 @@ int32_t lnb_native_set_diseqc_input_mode_for_channel(int32_t channelConstant, in
     return (int32_t)LNB_ERROR_INVALID_PARAM;
 }
 
+int32_t lnb_native_set_iset_low_for_channel(int32_t channelConstant, int32_t lowRange)
+{
+    lnb_channel_t channel;
+    lnb_status_t status = lnb_native_parse_channel(channelConstant, &channel);
+    if (status != LNB_OK)
+    {
+        return (int32_t)status;
+    }
+
+    return (int32_t)lnb_set_iset_low_for_channel(lnb_get_global_handle(), channel, lowRange != 0);
+}
+
+int32_t lnb_native_set_isw_low_for_channel(int32_t channelConstant, int32_t lowLimit)
+{
+    lnb_channel_t channel;
+    lnb_status_t status = lnb_native_parse_channel(channelConstant, &channel);
+    if (status != LNB_OK)
+    {
+        return (int32_t)status;
+    }
+
+    return (int32_t)lnb_set_isw_low_for_channel(lnb_get_global_handle(), channel, lowLimit != 0);
+}
+
 int32_t lnb_native_get_polarization_for_channel(int32_t channelConstant)
 {
     lnb_channel_t channel;
@@ -757,6 +849,30 @@ int32_t lnb_native_get_band_for_channel(int32_t channelConstant)
 int32_t lnb_native_get_band(void)
 {
     return lnb_native_get_band_for_channel(LNB_NATIVE_CHANNEL_A);
+}
+
+int32_t lnb_native_get_iset_low_for_channel(int32_t channelConstant)
+{
+    lnb_channel_t channel;
+    lnb_status_t status = lnb_native_parse_channel(channelConstant, &channel);
+    if (status != LNB_OK)
+    {
+        return 0;
+    }
+
+    return lnb_get_iset_low_for_channel(lnb_get_global_handle(), channel);
+}
+
+int32_t lnb_native_get_isw_low_for_channel(int32_t channelConstant)
+{
+    lnb_channel_t channel;
+    lnb_status_t status = lnb_native_parse_channel(channelConstant, &channel);
+    if (status != LNB_OK)
+    {
+        return 0;
+    }
+
+    return lnb_get_isw_low_for_channel(lnb_get_global_handle(), channel);
 }
 
 int32_t lnb_native_read_register(int32_t registerAddress, int32_t *registerValue)

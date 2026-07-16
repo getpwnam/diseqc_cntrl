@@ -157,6 +157,20 @@ namespace CubleyControl
                 return;
             }
 
+            if (field == "iset")
+            {
+                int isetLow = LNBH26Tweaks.NativeGetIsetLowForChannel(channel);
+                WriteCommandResult(reqId, true, "ok", "get", "key=" + BuildLnbKey(channel, "iset") + " value=" + IsetToText(isetLow));
+                return;
+            }
+
+            if (field == "isw")
+            {
+                int iswLow = LNBH26Tweaks.NativeGetIswLowForChannel(channel);
+                WriteCommandResult(reqId, true, "ok", "get", "key=" + BuildLnbKey(channel, "isw") + " value=" + IswToText(iswLow));
+                return;
+            }
+
             WriteCommandResult(reqId, false, "validation_error", "get field invalid", "field=" + field);
         }
 
@@ -251,6 +265,50 @@ namespace CubleyControl
                 else
                 {
                     WriteCommandResult(reqId, false, "hw_fault", "set", "key=" + BuildLnbKey(channel, "enabled") + " rc=" + rc.ToString());
+                }
+
+                return;
+            }
+
+            if (field == "iset")
+            {
+                bool lowRange;
+                if (!TryParseIset(value, out lowRange))
+                {
+                    WriteCommandResult(reqId, false, "validation_error", "set", "key=" + BuildLnbKey(channel, "iset") + " value=" + value);
+                    return;
+                }
+
+                int rc = LNBH26Tweaks.NativeSetIsetLowForChannel(channel, lowRange);
+                if (rc == 0)
+                {
+                    WriteCommandResult(reqId, true, "ok", "set", "key=" + BuildLnbKey(channel, "iset") + " value=" + IsetToText(lowRange ? 1 : 0));
+                }
+                else
+                {
+                    WriteCommandResult(reqId, false, "hw_fault", "set", "key=" + BuildLnbKey(channel, "iset") + " rc=" + rc.ToString());
+                }
+
+                return;
+            }
+
+            if (field == "isw")
+            {
+                bool lowLimit;
+                if (!TryParseIsw(value, out lowLimit))
+                {
+                    WriteCommandResult(reqId, false, "validation_error", "set", "key=" + BuildLnbKey(channel, "isw") + " value=" + value);
+                    return;
+                }
+
+                int rc = LNBH26Tweaks.NativeSetIswLowForChannel(channel, lowLimit);
+                if (rc == 0)
+                {
+                    WriteCommandResult(reqId, true, "ok", "set", "key=" + BuildLnbKey(channel, "isw") + " value=" + IswToText(lowLimit ? 1 : 0));
+                }
+                else
+                {
+                    WriteCommandResult(reqId, false, "hw_fault", "set", "key=" + BuildLnbKey(channel, "isw") + " rc=" + rc.ToString());
                 }
 
                 return;
@@ -726,6 +784,52 @@ namespace CubleyControl
         private static string BuildLnbKey(int channel, string field)
         {
             return "lnb." + LnbChannelToName(channel) + "." + field;
+        }
+
+        private static string IsetToText(int isetLow)
+        {
+            return isetLow != 0 ? "low" : "default";
+        }
+
+        private static string IswToText(int iswLow)
+        {
+            return iswLow != 0 ? "2.5a" : "4a";
+        }
+
+        private static bool TryParseIset(string value, out bool lowRange)
+        {
+            if (value == "default" || value == "normal" || value == "high" || value == "0")
+            {
+                lowRange = false;
+                return true;
+            }
+
+            if (value == "low" || value == "reduced" || value == "1")
+            {
+                lowRange = true;
+                return true;
+            }
+
+            lowRange = false;
+            return false;
+        }
+
+        private static bool TryParseIsw(string value, out bool lowLimit)
+        {
+            if (value == "4a" || value == "4" || value == "default" || value == "high" || value == "0")
+            {
+                lowLimit = false;
+                return true;
+            }
+
+            if (value == "2.5a" || value == "2p5a" || value == "2_5a" || value == "low" || value == "reduced" || value == "1")
+            {
+                lowLimit = true;
+                return true;
+            }
+
+            lowLimit = false;
+            return false;
         }
 
         private static string LnbChannelToName(int channel)

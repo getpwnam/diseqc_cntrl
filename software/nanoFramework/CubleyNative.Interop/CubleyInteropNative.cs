@@ -164,4 +164,19 @@ namespace Cubley.Interop
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeWrite(string text);
     }
+
+    public static class LNBH26Tweaks
+    {
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeSetIsetLowForChannel(int channel, bool lowRange);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeSetIswLowForChannel(int channel, bool lowLimit);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeGetIsetLowForChannel(int channel);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeGetIswLowForChannel(int channel);
+    }
 }

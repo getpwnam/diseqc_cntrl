@@ -25,6 +25,10 @@ HRESULT Library_cubley_interop_LNBH26_NativeGetPolarizationForChannel___STATIC__
 HRESULT Library_cubley_interop_LNBH26_NativeGetBandForChannel___STATIC__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeGetLastError___STATIC__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeGetLastErrorDetail___STATIC__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26Tweaks_NativeSetIsetLowForChannel___STATIC__I4__I4__BOOLEAN(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26Tweaks_NativeSetIswLowForChannel___STATIC__I4__I4__BOOLEAN(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26Tweaks_NativeGetIsetLowForChannel___STATIC__I4__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26Tweaks_NativeGetIswLowForChannel___STATIC__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING(CLR_RT_StackFrame& stack);
@@ -149,12 +153,16 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__I4,                                      // [19] UsbCdcConsole.NativeIsEnabled
     Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [20] UsbCdcConsole.NativeReadByte
     Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [21] UsbCdcConsole.NativeWrite
+    Library_cubley_interop_LNBH26Tweaks_NativeSetIsetLowForChannel___STATIC__I4__I4__BOOLEAN,              // [22] LNBH26Tweaks.NativeSetIsetLowForChannel
+    Library_cubley_interop_LNBH26Tweaks_NativeSetIswLowForChannel___STATIC__I4__I4__BOOLEAN,               // [23] LNBH26Tweaks.NativeSetIswLowForChannel
+    Library_cubley_interop_LNBH26Tweaks_NativeGetIsetLowForChannel___STATIC__I4__I4,                        // [24] LNBH26Tweaks.NativeGetIsetLowForChannel
+    Library_cubley_interop_LNBH26Tweaks_NativeGetIswLowForChannel___STATIC__I4__I4,                         // [25] LNBH26Tweaks.NativeGetIswLowForChannel
 };
 
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_CubleyNative =
 {
     "CubleyNative",
-    0x88B2008D,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
+    0x55A991DA,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
     method_lookup,
     { 1, 0, 0, 0 }
 };
