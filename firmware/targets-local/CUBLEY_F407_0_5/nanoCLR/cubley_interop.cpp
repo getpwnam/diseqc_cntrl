@@ -150,13 +150,18 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_LNBH26_NativeGetLastError___STATIC__I4,                                          // [16] LNBH26.NativeGetLastError
     Library_cubley_interop_LNBH26_NativeGetLastErrorDetail___STATIC__I4,                                    // [17] LNBH26.NativeGetLastErrorDetail
     Library_cubley_interop_LNBH26Registers_NativeReadRegister___STATIC__I4__I4__BYREF_I4,                  // [18] LNBH26Registers.NativeReadRegister
-    Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__I4,                                      // [19] UsbCdcConsole.NativeIsEnabled
-    Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [20] UsbCdcConsole.NativeReadByte
-    Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [21] UsbCdcConsole.NativeWrite
-    Library_cubley_interop_LNBH26Tweaks_NativeSetIsetLowForChannel___STATIC__I4__I4__BOOLEAN,              // [22] LNBH26Tweaks.NativeSetIsetLowForChannel
-    Library_cubley_interop_LNBH26Tweaks_NativeSetIswLowForChannel___STATIC__I4__I4__BOOLEAN,               // [23] LNBH26Tweaks.NativeSetIswLowForChannel
-    Library_cubley_interop_LNBH26Tweaks_NativeGetIsetLowForChannel___STATIC__I4__I4,                        // [24] LNBH26Tweaks.NativeGetIsetLowForChannel
-    Library_cubley_interop_LNBH26Tweaks_NativeGetIswLowForChannel___STATIC__I4__I4,                         // [25] LNBH26Tweaks.NativeGetIswLowForChannel
+    // NOTE: The nanoFramework MetadataProcessor orders PE MethodDef entries by
+    // ALPHABETICAL type name (then declaration order within a type). The runtime
+    // InternalCall dispatch index is the PE MethodDef index, so this native table
+    // MUST follow that alphabetical order, NOT managed source/append order.
+    // Type order: DiagMailbox, Fram24C128, LNBH26, LNBH26Registers, LNBH26Tweaks, UsbCdcConsole.
+    Library_cubley_interop_LNBH26Tweaks_NativeSetIsetLowForChannel___STATIC__I4__I4__BOOLEAN,              // [19] LNBH26Tweaks.NativeSetIsetLowForChannel
+    Library_cubley_interop_LNBH26Tweaks_NativeSetIswLowForChannel___STATIC__I4__I4__BOOLEAN,               // [20] LNBH26Tweaks.NativeSetIswLowForChannel
+    Library_cubley_interop_LNBH26Tweaks_NativeGetIsetLowForChannel___STATIC__I4__I4,                        // [21] LNBH26Tweaks.NativeGetIsetLowForChannel
+    Library_cubley_interop_LNBH26Tweaks_NativeGetIswLowForChannel___STATIC__I4__I4,                         // [22] LNBH26Tweaks.NativeGetIswLowForChannel
+    Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__I4,                                      // [23] UsbCdcConsole.NativeIsEnabled
+    Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [24] UsbCdcConsole.NativeReadByte
+    Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [25] UsbCdcConsole.NativeWrite
 };
 
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_CubleyNative =
@@ -203,26 +208,16 @@ HRESULT Library_cubley_interop_DiagMailbox_NativeGetLastNativeError___STATIC__U4
 
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__I4(CLR_RT_StackFrame& stack)
 {
-    // Breadcrumbs for bring-up triage:
-    // 0xCD010001 -> entered NativeIsEnabled
-    // 0xCD010002 -> readiness evaluated
-    // 0xCD010003 -> SetResult_I4 completed
-    g_cubley_diag_current_status = 0xCD010001u;
-
     // Use SetResult_I4 (not SetResult_Boolean) to avoid the nanoFramework CLR
     // assert: SetResult_Boolean calls PushValue() which checks eval-stack
     // bounds, but extern InternalCall methods have max-stack=0 in the PE.
     // SetResult_I4 writes to slot 0 directly and is safe here.
 #if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
     bool ready = CubleyUsbCdcReady();
-    g_cubley_diag_current_status = 0xCD010002u | (ready ? 1u : 0u);
     stack.SetResult_I4(ready ? 1 : 0);
 #else
-    g_cubley_diag_current_status = 0xCD010002u;
     stack.SetResult_I4(0);
 #endif
-
-    g_cubley_diag_current_status = 0xCD010003u;
 
     return S_OK;
 }
@@ -230,12 +225,6 @@ HRESULT Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__I4(CLR_RT
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
-
-    // Breadcrumbs for dispatch tracing:
-    // 0xCD020001 -> entered NativeReadByte
-    // 0xCD020002 -> about to call chnGetTimeout
-    // 0xCD020003 -> chnGetTimeout returned
-    g_cubley_diag_current_status = 0xCD020001u;
 
 #if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
     if (!CubleyUsbCdcReady())
@@ -251,9 +240,7 @@ HRESULT Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4(CLR
     }
 
     systime_t timeout = (timeoutMs == 0) ? TIME_IMMEDIATE : TIME_MS2I((uint32_t)timeoutMs);
-    g_cubley_diag_current_status = 0xCD020002u;
     msg_t result = chnGetTimeout((BaseChannel *)&SDU1, timeout);
-    g_cubley_diag_current_status = 0xCD020003u;
 
     if (result < MSG_OK)
     {
@@ -274,10 +261,6 @@ HRESULT Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4(CLR
 HRESULT Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
-
-    // Breadcrumbs for dispatch tracing:
-    // 0xCD030001 -> entered NativeWrite
-    g_cubley_diag_current_status = 0xCD030001u;
 
 #if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
     if (!CubleyUsbCdcReady())
@@ -330,6 +313,7 @@ HRESULT Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING(CL
     }
 
     written = length - remaining;
+
     stack.SetResult_I4((int32_t)written);
 #else
     (void)stack;

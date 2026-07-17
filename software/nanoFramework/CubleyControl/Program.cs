@@ -222,11 +222,28 @@ namespace CubleyControl
 
                 if (!wasEnabled)
                 {
+                    // Do NOT consume the enable transition until the banner has
+                    // actually been written. On a fresh USB connection the output
+                    // queue may not be draining yet, so a single write can return 0
+                    // and the banner/prompt would be lost forever. Retry each loop
+                    // iteration until the write succeeds.
+                    string banner = "\r\nCubley USB CDC console ready. Type 'help'.\r\n> ";
+                    int rc = SafeUsbWrite(banner);
+                    uint diag = DiagMailbox.NativeGet();
+                    Debug.WriteLine("[CDC] connected, banner rc=" + rc.ToString() +
+                        " diag=0x" + diag.ToString("X8"));
+
+                    if (rc < banner.Length)
+                    {
+                        // Banner not fully written yet; keep wasEnabled false so we
+                        // retry on the next iteration once the queue can drain.
+                        Thread.Sleep(UsbConsoleIdleSleepMs);
+                        continue;
+                    }
+
                     wasEnabled = true;
                     _watchElapsedMs = 0;
                     _consoleLine = string.Empty;
-                    int rc = SafeUsbWrite("\r\nCubley USB CDC console ready. Type 'help'.\r\n> ");
-                    Debug.WriteLine("[CDC] connected, banner rc=" + rc.ToString());
                 }
 
                 int value = UsbCdcConsole.NativeReadByte(UsbConsoleReadTimeoutMs);

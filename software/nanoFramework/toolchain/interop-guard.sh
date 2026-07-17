@@ -91,7 +91,13 @@ pending_internal = False
 internalcall_methods = []
 non_extern_methods = []
 
-# Frozen baseline slots are immutable. New methods may only append.
+# Frozen baseline slots reflect the ACTUAL PE MethodDef dispatch order.
+# The nanoFramework MetadataProcessor emits PE MethodDef entries ordered by
+# ALPHABETICAL type name (ordinal), then declaration order within each type.
+# The runtime InternalCall dispatch index IS the PE MethodDef index, so the
+# native method_lookup[] must follow this alphabetical-by-type order, NOT the
+# managed source/declaration order. This baseline and the comparison below are
+# derived from that alphabetical order.
 V1_BASELINE = [
     "DiagMailbox.NativeSet",
     "DiagMailbox.NativeGet",
@@ -112,6 +118,10 @@ V1_BASELINE = [
     "LNBH26.NativeGetLastError",
     "LNBH26.NativeGetLastErrorDetail",
     "LNBH26Registers.NativeReadRegister",
+    "LNBH26Tweaks.NativeSetIsetLowForChannel",
+    "LNBH26Tweaks.NativeSetIswLowForChannel",
+    "LNBH26Tweaks.NativeGetIsetLowForChannel",
+    "LNBH26Tweaks.NativeGetIswLowForChannel",
     "UsbCdcConsole.NativeIsEnabled",
     "UsbCdcConsole.NativeReadByte",
     "UsbCdcConsole.NativeWrite",
@@ -200,26 +210,30 @@ for i, expected in enumerate(V1_BASELINE):
         prefix_drift.append((i, expected, actual))
 
 if prefix_drift:
-    print("ERROR: Non-append slot drift detected in immutable baseline.")
+    print("ERROR: Baseline slot drift detected against the frozen PE-order snapshot.")
     for idx, expected, actual in prefix_drift:
         print(f"  [{idx:02d}] expected={expected} | actual={actual}")
-    last_baseline_slot = len(V1_BASELINE) - 1
     print(
-        "Only append-only additions are allowed after "
-        f"slot {last_baseline_slot}."
+        "native method_lookup[] must match the alphabetical-by-type PE MethodDef order."
     )
     sys.exit(1)
 
-if internalcall_methods != lookup_methods:
-    print("ERROR: InternalCall method order drift between CubleyInteropNative.cs and native method_lookup[].")
-    max_len = max(len(internalcall_methods), len(lookup_methods))
-    for i in range(max_len):
-        managed = internalcall_methods[i] if i < len(internalcall_methods) else "<missing>"
-        native = lookup_methods[i] if i < len(lookup_methods) else "<missing>"
-        marker = "OK" if managed == native else "DIFF"
-        print(f"  [{i:02d}] managed={managed} | native={native}  <-- {marker}")
-    sys.exit(1)
+# Model the nanoFramework MetadataProcessor: PE MethodDef entries are ordered by
+# ALPHABETICAL type name (ordinal), stable within a type (declaration order).
+# The runtime dispatch index == PE MethodDef index, so the expected native order
+# is the managed InternalCall list stable-sorted by declaring class name.
+expected_pe_order = sorted(internalcall_methods, key=lambda fq: fq.split(".", 1)[0])
 
+if expected_pe_order != lookup_methods:
+    print("ERROR: native method_lookup[] does not match the PE MethodDef dispatch order.")
+    print("       (PE order = managed InternalCall methods sorted alphabetically by declaring type.)")
+    max_len = max(len(expected_pe_order), len(lookup_methods))
+    for i in range(max_len):
+        expected = expected_pe_order[i] if i < len(expected_pe_order) else "<missing>"
+        native = lookup_methods[i] if i < len(lookup_methods) else "<missing>"
+        marker = "OK" if expected == native else "DIFF"
+        print(f"  [{i:02d}] expected(PE)={expected} | native={native}  <-- {marker}")
+    sys.exit(1)
 appended = len(lookup_methods) - len(V1_BASELINE)
 print(
     "Interop guard PASS: native-only CubleyNative interop surface, aligned method order, "
