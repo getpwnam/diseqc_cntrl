@@ -227,15 +227,15 @@ namespace CubleyControl
 
             if (ok)
             {
-                SafeUsbWrite("OK\r\n");
+                _activeOutputSink("OK\r\n");
                 if (payload.Length > 0)
                 {
-                    SafeUsbWrite("kv " + payload + "\r\n");
+                    _activeOutputSink("kv " + payload + "\r\n");
                 }
             }
             else
             {
-                SafeUsbWrite("Fail: " + HumanizeFailure(code, msg) + "\r\n");
+                _activeOutputSink("Fail: " + HumanizeFailure(code, msg) + "\r\n");
             }
         }
 

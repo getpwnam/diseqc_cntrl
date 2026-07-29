@@ -32,9 +32,9 @@ namespace CubleyControl
             if (tokens.Length == 1)
             {
                 int enabled = UsbCdcConsole.NativeIsEnabled();
-                SafeUsbWrite("system serial=up cdc_enabled=" + enabled.ToString() + "\r\n");
+                _activeOutputSink("system serial=up cdc_enabled=" + enabled.ToString() + "\r\n");
                 EmitLnbShowSummaryLine(LnbChannelA);
-                SafeUsbWrite("diseqc state=unavailable note=placeholder\r\n");
+                _activeOutputSink("diseqc state=unavailable note=placeholder\r\n");
                 return;
             }
 
@@ -84,7 +84,7 @@ namespace CubleyControl
 
             if (tokens[1] == "diseqc")
             {
-                SafeUsbWrite("diseqc state=unavailable note=placeholder\r\n");
+                _activeOutputSink("diseqc state=unavailable note=placeholder\r\n");
                 return;
             }
 
@@ -454,7 +454,7 @@ namespace CubleyControl
         {
             if (!EnsureLnbInitialized())
             {
-                SafeUsbWrite("lnb." + LnbChannelToSchemaName(channel) + " state=init_failed rc=" + _lnbInitStatus.ToString() + "\r\n");
+                _activeOutputSink("lnb." + LnbChannelToSchemaName(channel) + " state=init_failed rc=" + _lnbInitStatus.ToString() + "\r\n");
                 return;
             }
 
@@ -466,7 +466,7 @@ namespace CubleyControl
             int rc = ReadLnbStatusPairSafe(out s1, out s2);
             if (rc != (int)LNBH26.Status.Ok)
             {
-                SafeUsbWrite("lnb." + LnbChannelToSchemaName(channel) + " status=read_failed rc=" + rc.ToString() + "\r\n");
+                _activeOutputSink("lnb." + LnbChannelToSchemaName(channel) + " status=read_failed rc=" + rc.ToString() + "\r\n");
                 return;
             }
 
@@ -477,11 +477,11 @@ namespace CubleyControl
             rc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
             if (rc != (int)LNBH26.Status.Ok)
             {
-                SafeUsbWrite("lnb." + LnbChannelToSchemaName(channel) + " config=read_failed rc=" + rc.ToString() + "\r\n");
+                _activeOutputSink("lnb." + LnbChannelToSchemaName(channel) + " config=read_failed rc=" + rc.ToString() + "\r\n");
                 return;
             }
 
-            SafeUsbWrite(
+            _activeOutputSink(
                 "lnb." + LnbChannelToSchemaName(channel) +
                 " pol=" + PolarizationToText(pol) +
                 " band=" + BandToText(band) +
@@ -499,7 +499,7 @@ namespace CubleyControl
         {
             if (!EnsureLnbInitialized())
             {
-                SafeUsbWrite("{\"schema\":\"cubley/v1/lnbh26\",\"channel\":\"" + LnbChannelToSchemaName(channel) + "\",\"error\":\"init_failed\",\"rc\":" + _lnbInitStatus.ToString() + "}\r\n");
+                _activeOutputSink("{\"schema\":\"cubley/v1/lnbh26\",\"channel\":\"" + LnbChannelToSchemaName(channel) + "\",\"error\":\"init_failed\",\"rc\":" + _lnbInitStatus.ToString() + "}\r\n");
                 return;
             }
 
@@ -508,7 +508,7 @@ namespace CubleyControl
             int rc = ReadLnbStatusPairSafe(out s1, out s2);
             if (rc != (int)LNBH26.Status.Ok)
             {
-                SafeUsbWrite(
+                _activeOutputSink(
                     "{\"schema\":\"cubley/v1/lnbh26\",\"channel\":\"" + LnbChannelToSchemaName(channel) +
                     "\",\"error\":\"status_read_failed\",\"rc\":" + rc.ToString() + "}\r\n");
                 return;
@@ -521,13 +521,13 @@ namespace CubleyControl
             rc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
             if (rc != (int)LNBH26.Status.Ok)
             {
-                SafeUsbWrite(
+                _activeOutputSink(
                     "{\"schema\":\"cubley/v1/lnbh26\",\"channel\":\"" + LnbChannelToSchemaName(channel) +
                     "\",\"error\":\"data_read_failed\",\"rc\":" + rc.ToString() + "}\r\n");
                 return;
             }
 
-            SafeUsbWrite(BuildLnbRegisterJson(channel, s1, s2, d1, d2, d3, d4) + "\r\n");
+            _activeOutputSink(BuildLnbRegisterJson(channel, s1, s2, d1, d2, d3, d4) + "\r\n");
         }
 
         private static bool HasFaultStatus(int status1)

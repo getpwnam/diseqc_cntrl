@@ -42,6 +42,33 @@ namespace CubleyControl
         private static bool _lnbFaultInterruptEnabled;
         private static bool _lnbFaultAsserted;
         private static int _lnbFaultSequence;
+        // Shared command execution across transports (serial + MQTT). All
+        // commands funnel through ExecuteCommand -> HandleConsoleCommand ->
+        // WriteCommandResult, which writes through whichever OutputSink is
+        // active for the calling transport. The lock serializes command
+        // execution across transports since Program's command-handling state
+        // (LNB init status, DiSEqC TX-busy flag, etc.) is static and not
+        // designed for concurrent access from two transport threads at once.
+        public delegate void OutputSink(string line);
+        private static readonly object _commandLock = new object();
+        private static OutputSink _activeOutputSink;
+
+        private static void ExecuteCommand(string command, OutputSink outputSink)
+        {
+            lock (_commandLock)
+            {
+                _activeOutputSink = outputSink;
+                try
+                {
+                    HandleConsoleCommand(command);
+                }
+                finally
+                {
+                    _activeOutputSink = null;
+                }
+            }
+        }
+
         private static string _consoleLine = string.Empty;
         private static int _usbWriteFailureCount;
         private static int _usbWritePartialCount;
@@ -72,6 +99,10 @@ namespace CubleyControl
 
             var usbConsoleThread = new Thread(UsbConsoleLoop);
             usbConsoleThread.Start();
+
+            var mqttThread = new Thread(MqttLoop);
+            mqttThread.Start();
+
             while (true)
             {
                 Thread.Sleep(MainLoopSleepMs);
@@ -267,7 +298,7 @@ namespace CubleyControl
                 if (c == '\r' || c == '\n')
                 {
                     SafeUsbWrite("\r\n");
-                    HandleConsoleCommand(_consoleLine);
+                    ExecuteCommand(_consoleLine, WriteSerialLine);
                     _consoleLine = string.Empty;
                     SafeUsbWrite("> ");
                     continue;
@@ -313,6 +344,11 @@ namespace CubleyControl
                 _ledReady = false;
                 return false;
             }
+        }
+
+        private static void WriteSerialLine(string line)
+        {
+            SafeUsbWrite(line);
         }
 
         private static int SafeUsbWrite(string text)

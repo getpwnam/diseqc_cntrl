@@ -26,6 +26,7 @@
     <Compile Include="Program.Commands.Canonical.cs" />
     <Compile Include="Program.Commands.Diseqc.cs" />
     <Compile Include="Program.Commands.Lnb.cs" />
+    <Compile Include="Program.Commands.Mqtt.cs" />
     <Compile Include="Program.Commands.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -45,6 +46,21 @@
     </Reference>
     <Reference Include="System.Threading">
       <HintPath>..\packages\nanoFramework.System.Threading.1.1.52\lib\System.Threading.dll</HintPath>
+    </Reference>
+    <Reference Include="nanoFramework.M2Mqtt">
+      <HintPath>..\packages\nanoFramework.M2Mqtt.5.1.206\lib\nanoFramework.M2Mqtt.dll</HintPath>
+    </Reference>
+    <Reference Include="nanoFramework.M2Mqtt.Core">
+      <HintPath>..\packages\nanoFramework.M2Mqtt.5.1.206\lib\nanoFramework.M2Mqtt.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="nanoFramework.Runtime.Native">
+      <HintPath>..\packages\nanoFramework.Runtime.Native.1.7.11\lib\nanoFramework.Runtime.Native.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Collections">
+      <HintPath>..\packages\nanoFramework.System.Collections.1.5.67\lib\nanoFramework.System.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net">
+      <HintPath>..\packages\nanoFramework.System.Net.1.11.47\lib\System.Net.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
