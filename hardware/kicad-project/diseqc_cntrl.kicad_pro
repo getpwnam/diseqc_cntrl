@@ -1076,7 +1076,7 @@
         "uuid": "82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
       }
     ],
-    "used_designators": "TP4,TP16-19,TP23,#FLG4,#FLG8-12,J9,IC7-8,R4-6,R38-40,L2,L5,#PWR6-7,#PWR10-12,#PWR45,#PWR49,#PWR52,#PWR71,#PWR74,#PWR76-78,C3-5,C38-46",
+    "used_designators": "TP1-24,R1-40,#FLG1-12,J1-9,IC1-8,L1-5,#PWR1-72,#PWR74,#PWR76-78,C1-46,D1-7,F1,FB1-2,JP1-2,NT1-3,SW1,U1,Y1-2",
     "variants": []
   },
   "sheets": [
