@@ -40,8 +40,8 @@
         "other_text_upright": false,
         "pads": {
           "drill": 0.0,
-          "height": 2.45,
-          "width": 2.45
+          "height": 3.1,
+          "width": 2.4
         },
         "silk_line_width": 0.1,
         "silk_text_italic": false,
@@ -303,6 +303,14 @@
         ""
       ],
       [
+        "footprint_link_issues|914400|1397000|0b8ed909-a577-46e4-9255-d72e9d4d9ec2|00000000-0000-0000-0000-000000000000|||",
+        ""
+      ],
+      [
+        "footprint_link_issues|914400|927100|54446d5f-7fa7-4137-99d5-2d0f3126c90a|00000000-0000-0000-0000-000000000000|||",
+        ""
+      ],
+      [
         "footprint_link_issues|977900|736600|467c12e0-1f1f-47ff-9a88-c6a66b2a3ea5|00000000-0000-0000-0000-000000000000|||",
         ""
       ],
@@ -331,6 +339,14 @@
         "Intentionally moved pins for clarity"
       ],
       [
+        "lib_symbol_mismatch|431800|1308100|e795c5ec-6570-420b-9e59-cb115c84dcfe|00000000-0000-0000-0000-000000000000|||",
+        ""
+      ],
+      [
+        "lib_symbol_mismatch|431800|838200|dd225bad-eb06-49d2-aeb6-6b7a70501f79|00000000-0000-0000-0000-000000000000|||",
+        ""
+      ],
+      [
         "lib_symbol_mismatch|622300|889000|a6160844-e1ef-4506-b45e-66398c4b90a9|00000000-0000-0000-0000-000000000000|||",
         ""
       ],
@@ -349,6 +365,10 @@
       [
         "power_pin_not_driven|520700|546100|c92c1630-7816-44a7-b408-e52e2e278abc|00000000-0000-0000-0000-000000000000|/82a905d8-f1d7-4995-9c16-94cf3cdcaad9|/82a905d8-f1d7-4995-9c16-94cf3cdcaad9|",
         ""
+      ],
+      [
+        "power_pin_not_driven|520700|596900|c92c1630-7816-44a7-b408-e52e2e278abc|00000000-0000-0000-0000-000000000000|/82a905d8-f1d7-4995-9c16-94cf3cdcaad9|/82a905d8-f1d7-4995-9c16-94cf3cdcaad9|",
+        "Just GND"
       ]
     ],
     "meta": {
@@ -1039,7 +1059,7 @@
         "uuid": "82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
       }
     ],
-    "used_designators": "TP4,TP16-19,TP23,J9,IC7,R38-39",
+    "used_designators": "TP4,TP16-19,TP23,#FLG4,#FLG8-12,J9,IC7-8,R4-6,R38-40,L2,L5,#PWR6-7,#PWR10-12,#PWR45,#PWR49,#PWR52,#PWR71,#PWR74,#PWR76-78,C3-5,C38-46",
     "variants": []
   },
   "sheets": [

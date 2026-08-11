@@ -6643,7 +6643,7 @@
 			(on_board yes)
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "TP15"
+			(property "Reference" "TP"
 				(at 0 5.08 90)
 				(show_name no)
 				(do_not_autoplace no)
@@ -6654,7 +6654,7 @@
 					(justify left)
 				)
 			)
-			(property "Value" "~"
+			(property "Value" ""
 				(at 0 10.668 90)
 				(show_name no)
 				(do_not_autoplace no)
