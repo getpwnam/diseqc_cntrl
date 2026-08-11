@@ -175,6 +175,430 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "#InvenTree:LED_Green_0603"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "LED"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "LED_Green_0603"
+				(at 0 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "LED_SMD:LED_0603_1608Metric"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "LED"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Sim.Pins" "1=K 2=A"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "InvenTree" "99"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Part URL" "https://inventree.ebnx.net/web/part/99/"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "LED_SMD:LED_0603_1608Metric"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "LED_Green_0603_0_1"
+				(polyline
+					(pts
+						(xy -3.048 -0.762) (xy -4.572 -2.286) (xy -3.81 -2.286) (xy -4.572 -2.286) (xy -4.572 -1.524)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.778 -0.762) (xy -3.302 -2.286) (xy -2.54 -2.286) (xy -3.302 -2.286) (xy -3.302 -1.524)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 0) (xy 1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 -1.27) (xy -1.27 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -1.27) (xy 1.27 1.27) (xy -1.27 0) (xy 1.27 -1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "LED_Green_0603_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "K"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "#InvenTree:LED_Red_0603"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "LED"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "LED_Red_0603"
+				(at 0 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "LED_SMD:LED_0603_1608Metric"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Red LED"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Sim.Pins" "1=K 2=A"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "InvenTree" "268"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Part URL" "https://inventree.ebnx.net/web/part/268/"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "LED_SMD:LED_0603_1608Metric"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "LED_Red_0603_0_1"
+				(polyline
+					(pts
+						(xy -3.048 -0.762) (xy -4.572 -2.286) (xy -3.81 -2.286) (xy -4.572 -2.286) (xy -4.572 -1.524)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.778 -0.762) (xy -3.302 -2.286) (xy -2.54 -2.286) (xy -3.302 -2.286) (xy -3.302 -1.524)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 0) (xy 1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 -1.27) (xy -1.27 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -1.27) (xy 1.27 1.27) (xy -1.27 0) (xy 1.27 -1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "LED_Red_0603_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "K"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "#InvenTree:R_10k_0603"
 			(pin_numbers
 				(hide yes)
@@ -207,7 +631,7 @@
 					)
 				)
 			)
-			(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 				(at -1.778 0 90)
 				(show_name no)
 				(do_not_autoplace no)
@@ -262,7 +686,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -358,7 +782,7 @@
 					)
 				)
 			)
-			(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 				(at -1.778 0 90)
 				(show_name no)
 				(do_not_autoplace no)
@@ -413,7 +837,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -509,7 +933,7 @@
 					)
 				)
 			)
-			(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 				(at -1.778 0 90)
 				(show_name no)
 				(do_not_autoplace no)
@@ -575,7 +999,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -3243,209 +3667,6 @@
 						)
 					)
 					(number "8"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
-		(symbol "diseqc_cntrl:LED_Small"
-			(pin_numbers
-				(hide yes)
-			)
-			(pin_names
-				(offset 0.254)
-				(hide yes)
-			)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(in_pos_files yes)
-			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "D"
-				(at -1.27 3.175 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify left)
-				)
-			)
-			(property "Value" "LED_Small"
-				(at -4.445 -2.54 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify left)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 90)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 0 90)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Description" "Light emitting diode, small symbol"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Sim.Pins" "1=K 2=A"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_keywords" "LED diode light-emitting-diode"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "LED* LED_SMD:* LED_THT:*"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(symbol "LED_Small_0_1"
-				(polyline
-					(pts
-						(xy -0.762 -1.016) (xy -0.762 1.016)
-					)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0 0.762) (xy -0.508 1.27) (xy -0.254 1.27) (xy -0.508 1.27) (xy -0.508 1.016)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0.508 1.27) (xy 0 1.778) (xy 0.254 1.778) (xy 0 1.778) (xy 0 1.524)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0.762 -1.016) (xy -0.762 0) (xy 0.762 1.016) (xy 0.762 -1.016)
-					)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 1.016 0) (xy -0.762 0)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "LED_Small_1_1"
-				(pin passive line
-					(at -2.54 0 0)
-					(length 1.778)
-					(name "K"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 2.54 0 180)
-					(length 1.778)
-					(name "A"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -7933,6 +8154,12 @@
 		(uuid "cc6c96bf-1705-48da-87c1-8f732bd4a6cc")
 	)
 	(junction
+		(at 219.71 93.98)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "cd024e68-b872-4b41-aca3-1ab9d33ee2bd")
+	)
+	(junction
 		(at 157.48 114.3)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -8323,13 +8550,13 @@
 	)
 	(wire
 		(pts
-			(xy 153.67 83.82) (xy 189.23 83.82)
+			(xy 189.23 83.82) (xy 153.67 83.82)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "0249d346-5d56-40cb-ad3b-1fbdc1b9af8d")
+		(uuid "00746430-ebe5-471f-8bd0-1c0c9375c751")
 	)
 	(wire
 		(pts
@@ -8473,16 +8700,6 @@
 	)
 	(wire
 		(pts
-			(xy 189.23 93.98) (xy 226.06 93.98)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "0fc968a7-87d9-4061-9807-c5f02c0b0a3e")
-	)
-	(wire
-		(pts
 			(xy 147.32 166.37) (xy 142.24 166.37)
 		)
 		(stroke
@@ -8490,6 +8707,16 @@
 			(type default)
 		)
 		(uuid "103b65be-d395-4f37-b2bb-d587dac10a6d")
+	)
+	(wire
+		(pts
+			(xy 215.9 101.6) (xy 219.71 101.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "10937288-44cb-458d-97f1-0275552a3145")
 	)
 	(wire
 		(pts
@@ -8613,6 +8840,16 @@
 	)
 	(wire
 		(pts
+			(xy 53.34 114.3) (xy 53.34 115.57)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1b45070d-4530-4c1e-b1e4-9d8be7d00da0")
+	)
+	(wire
+		(pts
 			(xy 265.43 146.05) (xy 265.43 148.59)
 		)
 		(stroke
@@ -8653,13 +8890,13 @@
 	)
 	(wire
 		(pts
-			(xy 189.23 83.82) (xy 189.23 93.98)
+			(xy 196.85 101.6) (xy 193.04 101.6)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "230f4fcc-c466-4d71-bdfd-54b6aba9562b")
+		(uuid "23aa1997-3535-43c4-8495-e021a754536a")
 	)
 	(wire
 		(pts
@@ -8973,16 +9210,6 @@
 	)
 	(wire
 		(pts
-			(xy 53.34 123.19) (xy 53.34 127)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "628c40b8-c516-45ce-b042-e518c9960862")
-	)
-	(wire
-		(pts
 			(xy 78.74 152.4) (xy 78.74 147.32)
 		)
 		(stroke
@@ -9040,6 +9267,16 @@
 			(type default)
 		)
 		(uuid "659cb22b-eee4-4c8e-b8b0-f1c5cbb5d236")
+	)
+	(wire
+		(pts
+			(xy 219.71 93.98) (xy 226.06 93.98)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "65e7a9ed-4abb-47b4-a540-e12062ccf52d")
 	)
 	(wire
 		(pts
@@ -9330,16 +9567,6 @@
 			(type default)
 		)
 		(uuid "8d4c7940-ef3f-4bc7-a613-34b19e7f34d1")
-	)
-	(wire
-		(pts
-			(xy 53.34 114.3) (xy 53.34 118.11)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "8e692907-3800-40d4-80f0-c1b9eed6e380")
 	)
 	(wire
 		(pts
@@ -9813,6 +10040,16 @@
 	)
 	(wire
 		(pts
+			(xy 208.28 93.98) (xy 189.23 93.98)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c4172bd4-7ad8-44bf-bab4-cf560c27663b")
+	)
+	(wire
+		(pts
 			(xy 185.42 68.58) (xy 185.42 69.85)
 		)
 		(stroke
@@ -9973,6 +10210,16 @@
 	)
 	(wire
 		(pts
+			(xy 215.9 93.98) (xy 219.71 93.98)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cf1f9870-eb65-4931-ab87-bcccaeebc598")
+	)
+	(wire
+		(pts
 			(xy 54.61 80.01) (xy 54.61 74.93)
 		)
 		(stroke
@@ -10083,6 +10330,16 @@
 	)
 	(wire
 		(pts
+			(xy 204.47 101.6) (xy 208.28 101.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dd7e0f19-edcf-470d-bc47-8f247907005d")
+	)
+	(wire
+		(pts
 			(xy 91.44 152.4) (xy 91.44 147.32)
 		)
 		(stroke
@@ -10123,6 +10380,16 @@
 	)
 	(wire
 		(pts
+			(xy 219.71 101.6) (xy 219.71 93.98)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e509f6bf-5f5a-4ad5-9317-1a5a58109914")
+	)
+	(wire
+		(pts
 			(xy 234.95 143.51) (xy 228.6 143.51)
 		)
 		(stroke
@@ -10140,6 +10407,16 @@
 			(type default)
 		)
 		(uuid "e8140b11-8f25-43d5-876f-c5602dad0ce4")
+	)
+	(wire
+		(pts
+			(xy 189.23 93.98) (xy 189.23 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "eb738ec1-5f7a-422e-a142-3d832003941e")
 	)
 	(wire
 		(pts
@@ -10273,6 +10550,16 @@
 	)
 	(wire
 		(pts
+			(xy 193.04 101.6) (xy 193.04 102.87)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f55b2ca8-dc35-4401-812f-91ecee71f088")
+	)
+	(wire
+		(pts
 			(xy 157.48 109.22) (xy 157.48 111.76)
 		)
 		(stroke
@@ -10310,6 +10597,16 @@
 			(type default)
 		)
 		(uuid "f74a68e5-9191-40ea-9793-4909e481f706")
+	)
+	(wire
+		(pts
+			(xy 53.34 123.19) (xy 53.34 127)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f92ae9b4-13d7-48de-bad2-cc057e9e460b")
 	)
 	(wire
 		(pts
@@ -10571,6 +10868,16 @@
 		)
 		(uuid "693e3173-922e-441a-a693-69fbde3aea47")
 	)
+	(label "SIG_LNB_FLT"
+		(at 266.7 49.53 180)
+		(effects
+			(font
+				(size 0.762 0.762)
+			)
+			(justify right bottom)
+		)
+		(uuid "6b6f1c79-4b6c-4f22-85b7-253142b9cbf7")
+	)
 	(label "BOOT0"
 		(at 191.77 36.83 180)
 		(effects
@@ -10681,7 +10988,7 @@
 		)
 		(uuid "8ab29f48-e558-4373-b0cf-71334595c5ef")
 	)
-	(label "LNB_FLT"
+	(label "SIG_LNB_FLT"
 		(at 153.67 83.82 0)
 		(effects
 			(font
@@ -14555,6 +14862,109 @@
 		)
 	)
 	(symbol
+		(lib_id "#InvenTree:R_1k5_0603")
+		(at 200.66 101.6 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "546fc435-8951-4ef4-b374-f38f8c4f6b0b")
+		(property "Reference" "R40"
+			(at 199.898 103.886 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1k5"
+			(at 204.724 103.886 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 200.66 103.378 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 200.66 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "1k5 Resistor"
+			(at 200.66 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "107"
+			(at 200.66 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Part URL" "https://inventree.ebnx.net/web/part/107/"
+			(at 200.66 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "80ee9757-b643-4e19-b8db-e041bd982b85")
+		)
+		(pin "2"
+			(uuid "cbf70fe1-785c-4dc2-92d6-a42caaf82994")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
+					(reference "R40")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "diseqc_cntrl:VBUS")
 		(at 218.44 143.51 0)
 		(unit 1)
@@ -16079,8 +16489,8 @@
 		)
 	)
 	(symbol
-		(lib_id "diseqc_cntrl:LED_Small")
-		(at 53.34 120.65 90)
+		(lib_id "#InvenTree:LED_Green_0603")
+		(at 53.34 119.38 90)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -16090,8 +16500,8 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "7bf88d6a-dc2d-4f46-aa50-d89dac6f9d19")
-		(property "Reference" "D3"
-			(at 55.88 119.3164 90)
+		(property "Reference" "LED2"
+			(at 57.15 119.6974 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -16102,7 +16512,7 @@
 			)
 		)
 		(property "Value" "Green"
-			(at 55.88 121.8564 90)
+			(at 57.15 122.2374 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -16112,8 +16522,8 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "LED_SMD:LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder"
-			(at 53.34 120.65 90)
+		(property "Footprint" "LED_SMD:LED_0603_1608Metric"
+			(at 53.34 119.38 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16124,7 +16534,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.mouser.co.uk/datasheet/3/308/1/APG1608ZGC.pdf"
-			(at 53.34 120.65 90)
+			(at 53.34 119.38 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16134,8 +16544,8 @@
 				)
 			)
 		)
-		(property "Description" "Light emitting diode, small symbol"
-			(at 53.34 120.65 0)
+		(property "Description" "LED"
+			(at 53.34 119.38 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16146,7 +16556,7 @@
 			)
 		)
 		(property "Sim.Pin" "1=K 2=A"
-			(at 53.34 120.65 0)
+			(at 53.34 119.38 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16157,7 +16567,7 @@
 			)
 		)
 		(property "Sim.Pins" "1=K 2=A"
-			(at 53.34 120.65 0)
+			(at 53.34 119.38 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16168,7 +16578,7 @@
 			)
 		)
 		(property "Maufacturer_Part_Number" ""
-			(at 53.34 120.65 90)
+			(at 53.34 119.38 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16179,7 +16589,7 @@
 			)
 		)
 		(property "Manufacturer_Part_Code" ""
-			(at 53.34 120.65 90)
+			(at 53.34 119.38 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16190,7 +16600,7 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 53.34 120.65 90)
+			(at 53.34 119.38 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16201,7 +16611,7 @@
 			)
 		)
 		(property "Mouser Part Number" "604-APG1608ZGC"
-			(at 53.34 120.65 90)
+			(at 53.34 119.38 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16212,7 +16622,7 @@
 			)
 		)
 		(property "InvenTree Part" "LED_Green_0603"
-			(at 53.34 120.65 90)
+			(at 53.34 119.38 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16223,7 +16633,7 @@
 			)
 		)
 		(property "KLC_S4.2_3V3OUT" ""
-			(at 53.34 120.65 90)
+			(at 53.34 119.38 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16234,7 +16644,7 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
-			(at 53.34 120.65 90)
+			(at 53.34 119.38 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16245,7 +16655,7 @@
 			)
 		)
 		(property "Tolerance" ""
-			(at 53.34 120.65 90)
+			(at 53.34 119.38 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16256,7 +16666,18 @@
 			)
 		)
 		(property "InvenTree" "99"
-			(at 53.34 120.65 90)
+			(at 53.34 119.38 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Part URL" "https://inventree.ebnx.net/web/part/99/"
+			(at 53.34 119.38 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16275,7 +16696,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
-					(reference "D3")
+					(reference "LED2")
 					(unit 1)
 				)
 			)
@@ -17913,6 +18334,128 @@
 		)
 	)
 	(symbol
+		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
+		(at 266.7 49.53 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "bc5a667d-1225-4956-9523-1993809d602f")
+		(property "Reference" "TP12"
+			(at 272.034 48.768 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "LNB_FAULT"
+			(at 272.034 51.308 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
+			(at 266.7 54.61 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 266.7 54.61 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "test point"
+			(at 266.7 49.53 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree Part" ""
+			(at 266.7 49.53 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "KLC_S4.2_3V3OUT" ""
+			(at 266.7 49.53 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "KLC_S4.2_VCC" ""
+			(at 266.7 49.53 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" ""
+			(at 266.7 49.53 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "578aa894-bb66-4650-bdbc-3065ba95622f")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
+					(reference "TP12")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "diseqc_cntrl:+3V3")
 		(at 191.77 24.13 0)
 		(unit 1)
@@ -18318,6 +18861,84 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
 					(reference "R14")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 193.04 102.87 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "c96b1a08-5c29-4f29-b377-b12537d9617a")
+		(property "Reference" "#PWR074"
+			(at 193.04 109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 191.008 106.68 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 193.04 102.87 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 193.04 102.87 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 193.04 102.87 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "40121acb-c1fa-44d5-b5b1-7b286efc80e5")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
+					(reference "#PWR074")
 					(unit 1)
 				)
 			)
@@ -19687,6 +20308,109 @@
 		)
 	)
 	(symbol
+		(lib_id "#InvenTree:R_10k_0603")
+		(at 212.09 93.98 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "dbe3faa8-305b-4264-b5a7-293738a90d17")
+		(property "Reference" "R39"
+			(at 211.582 96.266 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "10k"
+			(at 216.408 96.266 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 212.09 95.758 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 212.09 93.98 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "10k Resistor"
+			(at 212.09 93.98 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "106"
+			(at 212.09 93.98 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Part URL" "https://inventree.ebnx.net/web/part/106/"
+			(at 212.09 93.98 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "ec8a7afd-43ea-4e3f-a573-1aa871eccb87")
+		)
+		(pin "1"
+			(uuid "f0c9e049-c62c-42ea-adc5-985c9d4df484")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
+					(reference "R39")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "diseqc_cntrl:Conn_01x04_Pin")
 		(at 157.48 187.96 0)
 		(unit 1)
@@ -20046,6 +20770,118 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
 					(reference "R11")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "#InvenTree:LED_Red_0603")
+		(at 212.09 101.6 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "e8f52a7d-03d0-436c-9be8-376eec423b51")
+		(property "Reference" "LED1"
+			(at 212.09 104.648 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "Red"
+			(at 212.09 106.426 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "LED_SMD:LED_0603_1608Metric"
+			(at 212.09 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 212.09 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Red LED"
+			(at 212.09 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" "1=K 2=A"
+			(at 212.09 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "268"
+			(at 212.09 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Part URL" "https://inventree.ebnx.net/web/part/268/"
+			(at 212.09 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "c53c58b1-d931-4a80-9675-40dbd90e01d5")
+		)
+		(pin "1"
+			(uuid "362dce02-ead4-4f43-b4a2-3430a0792e46")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
+					(reference "LED1")
 					(unit 1)
 				)
 			)
@@ -20884,7 +21720,7 @@
 				(justify right)
 			)
 		)
-		(pin "LNB_FLT" input
+		(pin "LNB_FLT" output
 			(at 226.06 93.98 180)
 			(uuid "f41b46e1-2daf-4ee8-8e40-298273e3a4cd")
 			(effects

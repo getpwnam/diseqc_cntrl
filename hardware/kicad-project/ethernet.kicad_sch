@@ -1486,7 +1486,7 @@
 					)
 				)
 			)
-			(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 				(at -1.778 0 90)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1541,7 +1541,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1637,7 +1637,7 @@
 					)
 				)
 			)
-			(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 				(at -1.778 0 90)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1692,7 +1692,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1788,7 +1788,7 @@
 					)
 				)
 			)
-			(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 				(at -1.778 0 90)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1843,7 +1843,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1939,7 +1939,7 @@
 					)
 				)
 			)
-			(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 				(at -1.778 0 90)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1994,7 +1994,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2090,7 +2090,7 @@
 					)
 				)
 			)
-			(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 				(at -1.778 0 90)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2156,7 +2156,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -3914,6 +3914,12 @@
 		(uuid "3adb59d8-7893-452d-a047-991787ca2875")
 	)
 	(junction
+		(at 129.54 139.7)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "4423f2e3-1ed4-4f6a-b191-98984210f6f5")
+	)
+	(junction
 		(at 158.75 57.15)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -5178,6 +5184,16 @@
 	)
 	(wire
 		(pts
+			(xy 129.54 139.7) (xy 127 139.7)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8a97893f-238e-4231-a0b1-eb5a42997d36")
+	)
+	(wire
+		(pts
 			(xy 17.78 29.21) (xy 24.13 29.21)
 		)
 		(stroke
@@ -5518,7 +5534,7 @@
 	)
 	(wire
 		(pts
-			(xy 139.7 139.7) (xy 127 139.7)
+			(xy 139.7 139.7) (xy 129.54 139.7)
 		)
 		(stroke
 			(width 0)
@@ -10597,7 +10613,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 127 139.7 0)
+		(at 129.54 139.7 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -10608,7 +10624,7 @@
 		(fields_autoplaced yes)
 		(uuid "bd09630d-8a98-48b2-a6fd-043cd9b1fa66")
 		(property "Reference" "#PWR066"
-			(at 127 146.05 0)
+			(at 129.54 146.05 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10619,7 +10635,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 127 144.78 0)
+			(at 129.54 144.78 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -10629,7 +10645,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 127 139.7 0)
+			(at 129.54 139.7 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10640,7 +10656,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 127 139.7 0)
+			(at 129.54 139.7 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10651,7 +10667,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 127 139.7 0)
+			(at 129.54 139.7 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)

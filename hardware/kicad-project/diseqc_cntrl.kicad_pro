@@ -39,9 +39,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 0.0,
-          "height": 3.1,
-          "width": 2.4
+          "drill": 0.5,
+          "height": 1.0,
+          "width": 1.0
         },
         "silk_line_width": 0.1,
         "silk_text_italic": false,
@@ -365,6 +365,14 @@
       ],
       [
         "lib_symbol_mismatch|622300|889000|a6160844-e1ef-4506-b45e-66398c4b90a9|00000000-0000-0000-0000-000000000000|||",
+        ""
+      ],
+      [
+        "lib_symbol_mismatch|647700|1308100|e795c5ec-6570-420b-9e59-cb115c84dcfe|00000000-0000-0000-0000-000000000000|||",
+        ""
+      ],
+      [
+        "lib_symbol_mismatch|647700|838200|dd225bad-eb06-49d2-aeb6-6b7a70501f79|00000000-0000-0000-0000-000000000000|||",
         ""
       ],
       [
@@ -1076,7 +1084,7 @@
         "uuid": "82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
       }
     ],
-    "used_designators": "TP1-24,R1-40,#FLG1-12,J1-9,IC1-8,L1-5,#PWR1-74,#PWR76-78,C1-46,D1-7,F1,FB1-2,JP1-2,NT1-3,SW1,U1,Y1-2",
+    "used_designators": "TP1-24,R1-40,#FLG1-12,J1-9,1,IC1-8,L1-5,#PWR1-74,#PWR76-78,C1-46,D1-8,F1,FB1-2,JP1-2,NT1-3,SW1,U1,Y1-2",
     "variants": []
   },
   "sheets": [

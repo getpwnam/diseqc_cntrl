@@ -41,7 +41,7 @@
 					)
 				)
 			)
-			(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 				(at -1.778 0 90)
 				(show_name no)
 				(do_not_autoplace no)
@@ -107,7 +107,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
+			(property "ki_fp_filters" "Resistor_SMD:R_0603_1608Metric"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -4264,7 +4264,7 @@
 		(uuid "f6d988d2-4ca4-4e03-8ad1-c54f4bd46de8")
 	)
 	(hierarchical_label "LNB_FLT"
-		(shape input)
+		(shape output)
 		(at 120.65 85.09 180)
 		(effects
 			(font
@@ -4295,17 +4295,6 @@
 			(justify left)
 		)
 		(uuid "8881ee28-4a5f-46b6-bb18-427053226927")
-	)
-	(hierarchical_label "LNB_FLT"
-		(shape input)
-		(at 222.25 151.13 180)
-		(effects
-			(font
-				(size 0.762 0.762)
-			)
-			(justify right)
-		)
-		(uuid "91694145-419a-49d0-bad6-46aecdbd4ff5")
 	)
 	(hierarchical_label "{I2C3_LNB}"
 		(shape input)
@@ -9093,128 +9082,6 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
 					(reference "L3")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
-		(at 222.25 151.13 270)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "fceea79c-7c15-449c-ae09-92049a2f003d")
-		(property "Reference" "TP12"
-			(at 227.584 150.368 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "LNB_FAULT"
-			(at 227.584 152.908 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
-			(at 222.25 156.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 222.25 156.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 222.25 151.13 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree Part" ""
-			(at 222.25 151.13 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_3V3OUT" ""
-			(at 222.25 151.13 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_VCC" ""
-			(at 222.25 151.13 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Tolerance" ""
-			(at 222.25 151.13 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "55cb3a27-5b27-4f18-b103-1912dc832d0b")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "TP12")
 					(unit 1)
 				)
 			)
