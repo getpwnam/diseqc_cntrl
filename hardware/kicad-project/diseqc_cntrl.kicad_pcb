@@ -239,6 +239,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "95a24628-0e46-44e1-a830-412f3e99196d")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Resistor_SMD:R_0603_1608Metric")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/178c7853-59ca-47ca-bb2c-cc41142cd7a8")
 		(sheetname "/MCU/Ethernet/")
@@ -469,6 +482,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a265df57-5d9b-44a3-8af7-ee14a0de4ac3")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "7f2b9ee5-003a-404e-95de-7004a9faae18")
 			(effects
 				(font
 					(size 1 1)
@@ -745,6 +771,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "49204b4f-3b0f-4624-a7dc-a75ea9f1dfe2")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0e674da3-23da-4ab7-b2f6-b1c6a527ba8d")
 			(effects
 				(font
 					(size 1 1)
@@ -1072,6 +1111,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "c607a03a-4b83-4af7-8feb-3ef21b5e0be9")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/60751ef3-6d60-430b-be22-c877b01390b3")
 		(sheetname "/MCU/LNBH26PQR/")
 		(sheetfile "diseqc_cntrl_lnbh26pqr.kicad_sch")
@@ -1342,6 +1394,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "181f9a79-7f91-4369-a501-afd31a258377")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/9e6c10cc-3f71-4098-8f07-191b7d730e3c")
 		(sheetname "/MCU/")
@@ -1482,6 +1547,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "db26d69e-e3da-4c5f-a760-ba6290a78a01")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "71bfd555-8805-4567-822f-6ad8494000c3")
 			(effects
 				(font
 					(size 1 1)
@@ -1719,6 +1797,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "41de1c4a-720b-4dc6-97e9-85186bb4494c")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "15b2dfd9-4115-4031-bec6-cbdf37e3524d")
 			(effects
 				(font
 					(size 1 1)
@@ -2573,6 +2664,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1cdbc59a-2389-4c34-ae91-8559f5ec5b3b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/07338538-5ae1-4113-b8a8-7f8cb4b9ab43")
 		(sheetname "/MCU/")
@@ -2798,6 +2902,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f317927e-4111-4473-bba9-01e452ac57af")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/9cbc92b8-9ada-4d9c-9552-e7aedcfe51d3")
 		(sheetname "/MCU/LNBH26PQR/")
@@ -2963,6 +3080,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f2b17417-fb4c-4e4e-8ce2-4fa2f6fae58b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "fa1cef66-0123-4f19-829e-de917e4c25e6")
 			(effects
 				(font
 					(size 1 1)
@@ -3214,6 +3344,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "31c441dd-22f5-4d53-bbe5-3e1df2476213")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4be536fa-2389-4b73-a2a6-83b82f5bd372")
 			(effects
 				(font
 					(size 1 1)
@@ -3709,6 +3852,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4cd9ae11-7a7e-44b6-a278-16d6cc25817d")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/70bba528-4bd9-42f7-b2a9-215cd8bfb5d7")
 		(sheetname "/MCU/")
@@ -3972,6 +4128,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "7b03de5c-88d3-4b57-b064-9c1142dd1a42")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/d66606f2-6149-4eb3-934a-bd0a8698bd53")
 		(sheetname "/MCU/")
@@ -4176,6 +4345,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d82f991d-e07a-487f-b0b6-88845a8b7de5")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/2c07b51f-2664-40da-ab40-5d907073a748")
 		(sheetname "/")
@@ -4285,6 +4467,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0e99198a-126e-493a-9608-be3d6de97f00")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -4717,6 +4912,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "2eaed5a8-9b4f-4ad7-9668-15ca2629d463")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/08f30162-36c0-41b6-9828-3e767f4bfa48")
 		(sheetname "/")
 		(sheetfile "diseqc_cntrl.kicad_sch")
@@ -5060,6 +5268,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "763ec3b3-9608-4303-b3d5-e09849677f0f")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Resistor_SMD:R_0603_1608Metric")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/568e0cdd-5b08-4438-9c9a-24b97426078b")
 		(sheetname "/MCU/Ethernet/")
@@ -5336,6 +5557,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1cfc37a3-7b90-4f40-ad21-067febeb5e61")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/6c5aa312-ddfe-40f8-9785-26708f6da8e3")
 		(sheetname "/")
@@ -5599,6 +5833,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "86ad8865-7dcf-4865-8b4b-39b725df395f")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/c618e225-2b07-4a33-a712-f539213553cc")
 		(sheetname "/MCU/")
@@ -5764,6 +6011,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f8592d53-e584-44b4-b6aa-19ec08f59222")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "06d1f9fc-76f0-4189-a504-d94c5dbeba71")
 			(effects
 				(font
 					(size 1 1)
@@ -6031,6 +6291,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9efc8c7c-866f-4d8f-ad5a-bcded8a9170b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "a66fcf1c-c10e-46ce-be41-16acbedd56cd")
 			(effects
 				(font
 					(size 1 1)
@@ -6593,6 +6866,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "7d057353-e563-4be9-b28f-7fdc4f4e47f4")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "D*DO?35*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/4f210675-a2d6-4fef-a8e3-1683965dbb13")
 		(sheetname "/MCU/LNBH26PQR/")
@@ -6865,6 +7151,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "74e2d007-bef8-40f1-a27a-7de4cf9bdc6d")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/0532ff6b-c758-468c-8f6a-9f5f8292507c")
 		(sheetname "/MCU/Ethernet/")
@@ -6975,6 +7274,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "981c6861-d6be-4330-9a7d-71f4cdc4afc9")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -7253,6 +7565,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "b8f0ceb3-d82f-4071-b32c-a22f31affe15")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9c37994b-8c3b-45d0-96f6-e8cfdf0dd6f1")
 			(effects
 				(font
 					(size 1 1)
@@ -7551,6 +7876,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "52643fe6-b3bb-4d0a-956c-17a4fd88c537")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/fbddb9f6-57d6-4e79-a5f9-b0e17ae98897")
 		(sheetname "/MCU/")
@@ -7748,6 +8086,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "15acf0f0-83f1-4a76-b97a-68e75ea95b16")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "fd650447-edfd-43ad-854f-e8eac3e9da78")
 			(effects
 				(font
 					(size 1 1)
@@ -7980,6 +8331,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "a2474e40-adc1-42b2-bab2-e352cc046366")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/707c185d-2ffd-4d39-bf41-54f9c7cd549e")
 		(sheetname "/MCU/")
@@ -8158,6 +8522,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9de32fc5-157e-4498-8602-a887ff75d3ad")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ad459ac2-dae5-463a-ba9b-421135d15c35")
 			(effects
 				(font
 					(size 1 1)
@@ -8428,6 +8805,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ca09d30e-ccf3-414f-b835-d524ce96c5b6")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/46a8482b-d0b0-4dc1-b8d3-df9e2d7eea68")
 		(sheetname "/MCU/LNBH26PQR/")
@@ -8658,6 +9048,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "2c1a2516-7bda-4936-a6a8-84f28fea2a99")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "7de6df2c-c758-4bd5-827e-3400a127995b")
 			(effects
 				(font
 					(size 1 1)
@@ -8980,6 +9383,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "de69795a-7a12-4d0c-8d31-cc521fd00e84")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "dc1d43ff-7a3a-472e-8c0f-49107ef24830")
 			(effects
 				(font
 					(size 1 1)
@@ -9419,6 +9835,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8f36beb9-ae3a-4888-9e74-75dddbe497a1")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/ffa7ddfc-1c60-4b63-bc5c-2caed036dd7e")
 		(sheetname "/MCU/")
@@ -9682,6 +10111,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1752abab-5926-4397-82ee-2a8e8ef093f1")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/e5108393-1145-4ace-bd05-28ed9bbcb2b1/dcc41486-8cdf-4e74-a0d0-eb35e3506a9a")
 		(sheetname "/MCU/USB-UART/")
@@ -9886,6 +10328,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9473b839-58f9-4c25-a3a1-02e2e46fd0dc")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/c70aa7b4-60c6-4b7d-a9dc-e3eb8e9c3dba")
 		(sheetname "/MCU/Ethernet/")
@@ -9996,6 +10451,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6c974446-2dc2-483b-a15c-744836801d07")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -10190,6 +10658,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "447ead83-b9e9-47fb-bcd9-535b356cf91c")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Resistor_SMD:R_0603_1608Metric")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/678d63d4-8ada-4c74-b8b9-4f3eedb71c6b")
 		(sheetname "/MCU/Ethernet/")
@@ -10362,6 +10843,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "bbd5d180-5fae-4268-a568-415ad9a1d87e")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Capacitor_SMD:C_0603_1608Metric")
 		(path "/5f20793f-6433-4133-b89d-5d75db5aa308")
 		(sheetname "/")
@@ -10527,6 +11021,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "724b0f28-218a-40b4-a71a-b8ecc734d24f")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0e5ec438-69c6-42ef-aa7e-5f6e71a0741c")
 			(effects
 				(font
 					(size 1 1)
@@ -10810,6 +11317,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "dd6b6a79-0b4b-434b-95e8-33df0fcd0ee0")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/d32d997d-5b32-4c27-942a-805a3e1d60fe")
 		(sheetname "/MCU/")
@@ -11086,6 +11606,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "93af9b6e-6ff8-4724-8331-80b4b5f5fb16")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/afc8848e-bba4-4163-8cef-2154a70104c8")
 		(sheetname "/")
@@ -11290,6 +11823,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "88e9bf1e-3c7e-4292-9007-5c32ed61fe6a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/bc5a667d-1225-4956-9523-1993809d602f")
 		(sheetname "/MCU/")
@@ -11417,6 +11963,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "d07ff815-4cef-4925-9c46-70dbcbd81cfa")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "c68f71cf-b31d-40f9-9b0d-858b7bf719eb")
 			(effects
 				(font
 					(size 1 1)
@@ -11687,6 +12246,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e3f3ab18-d2ca-4880-802e-99c3480aa481")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/624c69fe-155f-4fff-9103-9eec4d4c56dc")
 		(sheetname "/MCU/LNBH26PQR/")
@@ -11865,6 +12437,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "b068e95e-3876-4186-a1c1-43bcc2bd613a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4d29951e-3975-407f-91e6-7c3ae646143e")
 			(effects
 				(font
 					(size 1 1)
@@ -12148,6 +12733,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f9ec5902-3afc-43af-8f6e-152ecb88ccc8")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e0b4a96e-ed20-4549-bbcc-52fc6420f79a")
 			(effects
 				(font
 					(size 1 1)
@@ -12473,6 +13071,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "da3432ec-1f3e-478e-8767-f14415ce71b5")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/3fa7de2c-0dd9-46b9-aeb7-7a458f3c8aeb")
 		(sheetname "/MCU/LNBH26PQR/")
 		(sheetfile "diseqc_cntrl_lnbh26pqr.kicad_sch")
@@ -12757,6 +13368,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0aae8a99-2e96-4834-9d95-28fefd71f395")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Capacitor_SMD:C_0603_1608Metric")
 		(path "/fe3a6044-f78c-41b9-a150-f87c4f0bc77b")
 		(sheetname "/")
@@ -12961,6 +13585,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "57c2ed34-b059-498e-9c8f-a625505e630b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/84649ca9-8105-41ab-b158-001960972843")
 		(sheetname "/MCU/LNBH26PQR/")
@@ -13088,6 +13725,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "8a6eed78-e572-4074-9250-a6b5cda04dc7")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "13fe8a2d-98d3-4699-9c6f-4c1875e9522f")
 			(effects
 				(font
 					(size 1 1)
@@ -13406,6 +14056,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "b8b606f0-c262-43c7-8dc5-d0bae4457212")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0c37c192-9be6-4f08-a7c0-e3c51792ec37")
 			(effects
 				(font
 					(size 1 1)
@@ -13752,6 +14415,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "826337cb-4795-4ba2-86dc-5c63908e9ddf")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9dcdeffc-dcca-4f39-ae90-57d31546d51a")
 			(effects
 				(font
 					(size 1 1)
@@ -14500,6 +15176,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d9e864b0-c6f6-4d9e-a8c0-d9541b32d708")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/e5108393-1145-4ace-bd05-28ed9bbcb2b1/8023e306-1822-42e5-8413-5b1612fac082")
 		(sheetname "/MCU/USB-UART/")
@@ -14818,6 +15507,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0031294f-4904-4800-bc88-ce6d09f09d60")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/d9efcb50-02db-4f94-a2f0-2fc62861bebb")
 		(sheetname "/MCU/")
 		(sheetfile "diseqc_cntrl_mcu.kicad_sch")
@@ -15029,6 +15731,124 @@
 			)
 		)
 	)
+	(footprint "Fiducial:Fiducial_1mm_Mask2mm"
+		(layer "F.Cu")
+		(uuid "4eb2c0d3-6a7f-4db9-894a-977a05d9aef9")
+		(at 59.2 58.5)
+		(descr "Fiducial, circular marking, 1mm bare copper, 2mm soldermask opening (Level A)")
+		(tags "fiducial")
+		(property "Reference" "FID1"
+			(at 0 -1.95 0)
+			(layer "F.SilkS")
+			(uuid "4d36fc00-6c4e-4630-aa38-beb7222a60bc")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Value" "Fiducial"
+			(at 0 1.95 0)
+			(layer "F.Fab")
+			(uuid "a7cd06dc-0734-432b-883e-22405917b1db")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "da632393-c54c-419b-a6dc-67c5f2bdadbb")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Fiducial Marker"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "81249a7e-0e0e-43c7-b354-fa9e90072d90")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "55a26676-d5fb-4f4d-a695-481b77c37a6e")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property ki_fp_filters "Fiducial*")
+		(path "/f6efd59b-1c03-4724-980a-71676c41893c")
+		(sheetname "/")
+		(sheetfile "diseqc_cntrl.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins)
+			)
+		)
+		(attr smd exclude_from_bom)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_circle
+			(center 0 0)
+			(end 1.25 0)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.CrtYd")
+			(uuid "6929b4f8-3da2-4ce0-beb2-e394bdd862c1")
+		)
+		(fp_circle
+			(center 0 0)
+			(end 1 0)
+			(stroke
+				(width 0.1)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.Fab")
+			(uuid "b7cc7ece-d98b-4044-a05b-4d3d80802cf2")
+		)
+		(fp_text user "${REFERENCE}"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(uuid "99e0b031-861d-4548-a25d-2d0d2ef28242")
+			(effects
+				(font
+					(size 0.5 0.5)
+					(thickness 0.08)
+				)
+			)
+		)
+		(pad "" smd circle
+			(at 0 0)
+			(size 1 1)
+			(layers "F.Cu" "F.Mask")
+			(solder_mask_margin 0.5)
+			(clearance 0.6)
+			(uuid "1f669130-6f31-4e23-8caf-d4c69c38446e")
+		)
+		(embedded_fonts no)
+	)
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "4f9d571a-57f8-48d5-91d3-e6fac8ea30cd")
@@ -15098,6 +15918,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "59a4814b-3d85-486b-a636-4e5382ef9607")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e42c5ed3-887f-46b4-af8b-9b88d5f487b6")
 			(effects
 				(font
 					(size 1 1)
@@ -15296,6 +16129,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "ba6a3c30-f026-4679-bd5b-15d3744ed512")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f9a7682b-5382-48b5-b0ef-d58a9385abab")
 			(effects
 				(font
 					(size 1 1)
@@ -15614,6 +16460,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "48bc71f2-9dd5-4415-8ad2-33f26675a2a5")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f3b957c1-12ef-4daa-a3d9-26006f216da5")
 			(effects
 				(font
 					(size 1 1)
@@ -16146,6 +17005,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e26df8b4-f7dc-429f-877d-9d558785c790")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/1c6ec9e7-70a5-4326-8ffe-d79f060887a8")
 		(sheetname "/MCU/Ethernet/")
@@ -16422,6 +17294,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "68b43127-0e66-44fd-af96-216ec54f0795")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/435d72bf-7e7c-42b4-a849-e38c9eba71cb")
 		(sheetname "/")
@@ -16518,6 +17403,124 @@
 			)
 		)
 	)
+	(footprint "Fiducial:Fiducial_1mm_Mask2mm"
+		(layer "F.Cu")
+		(uuid "5576c40a-2085-4b70-8154-dc3510e3032f")
+		(at 135 61)
+		(descr "Fiducial, circular marking, 1mm bare copper, 2mm soldermask opening (Level A)")
+		(tags "fiducial")
+		(property "Reference" "FID2"
+			(at 0 -1.95 0)
+			(layer "F.SilkS")
+			(uuid "e2dfdd76-0cdc-43ad-b925-8ee4fbc43626")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Value" "Fiducial"
+			(at 0 1.95 0)
+			(layer "F.Fab")
+			(uuid "88b7e314-12a5-4ce5-8192-9d4f52eadde7")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "3cb73fb2-be4e-4d43-8827-83a61e579020")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Fiducial Marker"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "974ec733-ccff-41ff-bb96-62b4914a2ad3")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "7120ecf7-0dd7-4b78-b8b3-961ce1471c16")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property ki_fp_filters "Fiducial*")
+		(path "/5add9198-dd10-4283-8f33-75d828ed31fd")
+		(sheetname "/")
+		(sheetfile "diseqc_cntrl.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins)
+			)
+		)
+		(attr smd exclude_from_bom)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_circle
+			(center 0 0)
+			(end 1.25 0)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.CrtYd")
+			(uuid "8faa426e-8de4-433d-ac51-06e4be89f7fd")
+		)
+		(fp_circle
+			(center 0 0)
+			(end 1 0)
+			(stroke
+				(width 0.1)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.Fab")
+			(uuid "6cbd5d72-ac41-4e69-a684-ad701835873f")
+		)
+		(fp_text user "${REFERENCE}"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(uuid "65b5fbc2-f9f6-4618-a605-8c40579da973")
+			(effects
+				(font
+					(size 0.5 0.5)
+					(thickness 0.08)
+				)
+			)
+		)
+		(pad "" smd circle
+			(at 0 0)
+			(size 1 1)
+			(layers "F.Cu" "F.Mask")
+			(solder_mask_margin 0.5)
+			(clearance 0.6)
+			(uuid "7caa3db1-a201-4519-bb92-1114d5dd1aab")
+		)
+		(embedded_fonts no)
+	)
 	(footprint "Resistor_SMD:R_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "5680f705-2b92-4435-aaa1-3b86cd9ff649")
@@ -16587,6 +17590,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "bb803d93-4395-4418-abb4-1ad433067d88")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b2cd8e3c-741f-4908-91ee-bd2e9d10427a")
 			(effects
 				(font
 					(size 1 1)
@@ -16759,6 +17775,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "d1286865-42a5-4404-9ad7-74f3ea9f981f")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "79fbdf0d-baf7-4ce8-8503-aabe9b17ccc0")
 			(effects
 				(font
 					(size 1 1)
@@ -17025,6 +18054,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "c1b359f6-f248-4960-98db-417c593871e5")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b627a626-61eb-4734-8b4c-240594ba9ebb")
 			(effects
 				(font
 					(size 1 1)
@@ -17312,6 +18354,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "7283f83b-f024-4104-9a8e-a9fa639fb668")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/aeac69ac-9d41-49df-9823-b4bcacdc1a9c")
 		(sheetname "/")
@@ -17439,6 +18494,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "78be2e53-9fc6-4d83-a54f-5d221d71c60d")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "23425c2a-f867-4d1f-ba67-c2363b068d6e")
 			(effects
 				(font
 					(size 1 1)
@@ -17631,6 +18699,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8352d940-43dc-4a10-8d12-c4a20c0ff125")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Capacitor_SMD:C_0603_1608Metric")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/cf538f93-5eb8-4bfb-8249-afdd26df23cd")
 		(sheetname "/MCU/Ethernet/")
@@ -17809,6 +18890,32 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "cb1fcebc-f81a-4f02-af88-55ecfd0078bd")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "InvenTree Part" "LED_Red_0603"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "44c15e4b-f7a3-4cc7-9511-b568cc2638a9")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d8a36008-c421-4797-a172-f05a5138e9e0")
 			(effects
 				(font
 					(size 1 1)
@@ -18071,6 +19178,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "457ece89-192c-4409-9dd7-290328699ed8")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/2616bf8e-0286-41b8-a3a8-3db8ae0a3472")
 		(sheetname "/MCU/LNBH26PQR/")
@@ -18211,6 +19331,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "ea92a80b-3ec8-436a-af61-2d64fdfb1e56")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "a7e9b422-7488-419b-84cc-e5f7bf704c0a")
 			(effects
 				(font
 					(size 1 1)
@@ -18383,6 +19516,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "d3cc140c-1b1a-492c-b0ae-ea66615d4b60")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "510e4441-8cff-480f-a1e1-00a88f15ed06")
 			(effects
 				(font
 					(size 1 1)
@@ -18727,6 +19873,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "8ed908cc-c061-42d8-930f-22e2d839ad20")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "990c6ece-2666-4346-8f72-c669c4fe2685")
 			(effects
 				(font
 					(size 1 1)
@@ -19173,6 +20332,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0e421bd9-8f33-410f-8c73-4a9f5c58c016")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Resistor_SMD:R_0603_1608Metric")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/b5586ac1-2c26-4ddf-9b21-2f3acfc203d6")
 		(sheetname "/MCU/Ethernet/")
@@ -19436,6 +20608,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6556cb8a-6551-4559-a238-0340fc80a1c5")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/d8b9545a-39f4-4aa9-bab3-dc40a2422402")
 		(sheetname "/MCU/")
@@ -19588,6 +20773,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "c1c8850c-336b-4ca8-bc0e-40abd10b727b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Net*Tie*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/5e2801f5-03b0-4b59-a12e-cb690379c095")
 		(sheetname "/MCU/Ethernet/")
@@ -19702,6 +20900,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9749bb58-e84d-4db3-a71d-6bbe28990573")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "753b4d7d-ee6b-46be-9cd3-296a293e4264")
 			(effects
 				(font
 					(size 1 1)
@@ -21343,6 +22554,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "fa9858f7-462b-4aa7-b199-c16a4ec8b65a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Resistor_SMD:R_0603_1608Metric")
 		(path "/99cfc75a-d230-4249-bfa0-ac245af915f3")
 		(sheetname "/")
@@ -21508,6 +22732,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "8c9bc525-7a27-4f10-ac32-d55d525bbde0")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f34a37a6-08ee-45d3-838d-9c90dac155ec")
 			(effects
 				(font
 					(size 1 1)
@@ -21817,6 +23054,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "52b6784d-1c6c-4078-9704-d013b6bcd911")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/de292dfb-2bd2-4951-8a01-cb0dd9c9181c")
 		(sheetname "/MCU/LNBH26PQR/")
@@ -21944,6 +23194,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "3f02cda7-e54f-4afa-8a19-1f4d10281ef7")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "2c6c446f-201a-4fdd-8003-7759b4cc68a1")
 			(effects
 				(font
 					(size 1 1)
@@ -22116,6 +23379,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "aa66db51-870d-4cc5-af0d-765b2e7d5a3b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "24a00fb9-f460-4ee4-8807-7142ec96fa1b")
 			(effects
 				(font
 					(size 1 1)
@@ -22327,6 +23603,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "56faf454-683d-4890-ba46-41887354a424")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/27977ffa-a8cd-4089-8855-d412dbd78eb2")
 		(sheetname "/MCU/Ethernet/")
@@ -22467,6 +23756,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a73cdab4-59c8-44d1-bad4-06a9692323ec")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "19f09000-d457-40c9-81b4-0834619e12d0")
 			(effects
 				(font
 					(size 1 1)
@@ -22652,6 +23954,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "dbabeec2-14e8-46fc-ace0-37d5a09cb895")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "3481ab56-2b11-47d6-b875-34e947c7ba30")
 			(effects
 				(font
 					(size 1 1)
@@ -22915,6 +24230,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "474323df-fcc2-4b80-9d4d-d6de36a0be42")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8a7558f3-9491-472d-bcbe-b3ede2280567")
 			(effects
 				(font
 					(size 1 1)
@@ -23556,6 +24884,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0d9cf646-13d0-44cd-a3ea-ae81891974ed")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Resistor_SMD:R_0603_1608Metric")
 		(path "/d66315e4-b243-4df7-b335-4de57cd62326")
 		(sheetname "/")
@@ -23760,6 +25101,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0d2c7727-cd28-498a-8f98-86674212e57c")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/a14e7ec1-c5f3-42fb-aa85-73b8790a5aec")
 		(sheetname "/MCU/Ethernet/")
@@ -23888,6 +25242,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "77665c32-9dc9-4709-81da-45c447970169")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "219311f5-57fa-46ee-bbcd-4925e6a1829b")
 			(effects
 				(font
 					(size 1 1)
@@ -24228,6 +25595,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5de8c93d-bdbf-4255-b7b5-cde1adc19804")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/00000000-0000-0000-0000-00005f746b42")
 		(sheetname "/MCU/")
@@ -24413,6 +25793,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b89e850e-5174-4433-b61b-ac0ec966e87f")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/862e0b1c-e246-4bad-b427-69af7090dbcd")
 		(sheetname "/MCU/Ethernet/")
@@ -24578,6 +25971,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "357a6f8a-d24e-4eb0-855e-1f84c085f16c")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b39d16e1-ee83-429a-a759-6d8dcb7beb70")
 			(effects
 				(font
 					(size 1 1)
@@ -24903,6 +26309,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "87274892-d717-449a-86a8-fa9edd694d0f")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/a02d34c8-5916-447e-9199-e29b707f5ce6")
 		(sheetname "/MCU/")
 		(sheetfile "diseqc_cntrl_mcu.kicad_sch")
@@ -25056,6 +26475,124 @@
 			)
 		)
 	)
+	(footprint "Fiducial:Fiducial_1mm_Mask2mm"
+		(layer "F.Cu")
+		(uuid "98619905-6678-467f-be5d-fc86b18a67a2")
+		(at 128.1 145.2)
+		(descr "Fiducial, circular marking, 1mm bare copper, 2mm soldermask opening (Level A)")
+		(tags "fiducial")
+		(property "Reference" "FID3"
+			(at 0 -1.95 0)
+			(layer "F.SilkS")
+			(uuid "03661f02-b12a-4512-87ba-e00f89b0ccbe")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Value" "Fiducial"
+			(at 0 1.95 0)
+			(layer "F.Fab")
+			(uuid "42a6effb-1cf5-48dc-8142-932eb6e43a4c")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "22df2b33-861c-40c8-ab90-a623c03f013c")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Fiducial Marker"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4770fe0c-fe17-4b9d-8cc1-fdba254d0e88")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "3d0e3b8c-5d01-4b48-a224-6e450979b553")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property ki_fp_filters "Fiducial*")
+		(path "/de18fa57-3fbb-49c2-9f3b-b8e8c45f1442")
+		(sheetname "/")
+		(sheetfile "diseqc_cntrl.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins)
+			)
+		)
+		(attr smd exclude_from_bom)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_circle
+			(center 0 0)
+			(end 1.25 0)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.CrtYd")
+			(uuid "4cf03091-4fc5-4ca9-995a-1ee4eef4666a")
+		)
+		(fp_circle
+			(center 0 0)
+			(end 1 0)
+			(stroke
+				(width 0.1)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.Fab")
+			(uuid "e1b58d5d-b3e5-4694-82da-9acfb46adcef")
+		)
+		(fp_text user "${REFERENCE}"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(uuid "a034e1ff-7d79-4043-ad08-781c99acf694")
+			(effects
+				(font
+					(size 0.5 0.5)
+					(thickness 0.08)
+				)
+			)
+		)
+		(pad "" smd circle
+			(at 0 0)
+			(size 1 1)
+			(layers "F.Cu" "F.Mask")
+			(solder_mask_margin 0.5)
+			(clearance 0.6)
+			(uuid "7f2b81d9-6a5a-4201-8efd-53aec3ce93b7")
+		)
+		(embedded_fonts no)
+	)
 	(footprint "Capacitor_SMD:C_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "99c1dbb0-f05f-4d05-8647-c47acbca5b59")
@@ -25125,6 +26662,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "2dfb3b2c-2c3f-4b44-ac14-72f394f090dd")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "c9767fbc-c879-4010-8c13-d50642eb6f9d")
 			(effects
 				(font
 					(size 1 1)
@@ -25297,6 +26847,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "5763d00c-0e4a-49ba-ad48-5155d07dc8eb")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "43b5e6ec-6200-4520-a4e4-24602fa85c46")
 			(effects
 				(font
 					(size 1 1)
@@ -25489,6 +27052,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "fecafac0-01a5-49d1-950b-cd0dedc5f6bc")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Capacitor_SMD:C_0603_1608Metric")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/523d2474-f5f5-4d6e-90e5-cfff461eb8d3")
 		(sheetname "/MCU/Ethernet/")
@@ -25654,6 +27230,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "1e3d05bb-b19d-470b-aead-c2c166a582c7")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5451b105-7301-4fad-a088-da3e8a5ec86e")
 			(effects
 				(font
 					(size 1 1)
@@ -25917,6 +27506,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "e29ae24b-a31b-4c2b-9b76-6769bcc5c881")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f713773f-a774-49b0-b7d9-f0622cf2afde")
 			(effects
 				(font
 					(size 1 1)
@@ -26190,6 +27792,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "a6fa417e-ef8d-4168-ba11-8da6fcc59b28")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "CP_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/c58d5142-e39b-4e1f-8386-7c186d80f345")
 		(sheetname "/MCU/LNBH26PQR/")
@@ -26438,6 +28053,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d7c86568-37a8-44cf-bc9f-ca45638715fc")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Resistor_SMD:R_0603_1608Metric")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/dbe3faa8-305b-4264-b5a7-293738a90d17")
 		(sheetname "/MCU/")
@@ -26635,6 +28263,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "6c98a8b4-1cb8-4206-adef-51fc9d548a5a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ff069cff-93f9-46c3-8b5b-ea6d9e65463b")
 			(effects
 				(font
 					(size 1 1)
@@ -26876,6 +28517,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f58c1324-1e15-4b9d-ad53-c241c2754234")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e9d10cb8-fd15-4a63-bca2-e834a4d4e0ad")
 			(effects
 				(font
 					(size 1 1)
@@ -27457,56 +29111,53 @@
 			)
 		)
 	)
-	(footprint "diseqc_cntrl:CAPC1608X90N"
+	(footprint "Capacitor_SMD:C_0603_1608Metric"
 		(layer "F.Cu")
 		(uuid "b4a203f9-c6bd-4b3a-86b8-09d6ab5feb87")
 		(at 128.3 114.7 180)
-		(descr "GRM18_0.10 L=1.6mm W=0.8mm T=0.8mm")
-		(tags "Capacitor")
+		(descr "Capacitor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
+		(tags "capacitor")
 		(property "Reference" "C40"
-			(at 2.9 -0.1 0)
+			(at 0 -1.43 180)
 			(layer "F.SilkS")
 			(uuid "2a04a825-07ac-4e82-a444-a7011081ce9a")
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.125)
+					(thickness 0.15)
 				)
 			)
 		)
 		(property "Value" "220p"
-			(at 0 0 0)
-			(layer "F.SilkS")
-			(hide yes)
+			(at 0 1.43 180)
+			(layer "F.Fab")
 			(uuid "83d8861f-6af2-41a1-ac6f-2a7337df05f6")
 			(effects
 				(font
-					(size 1.27 1.27)
-					(thickness 0.254)
+					(size 1 1)
+					(thickness 0.15)
 				)
 			)
 		)
 		(property "Datasheet" "https://componentsearchengine.com/Datasheets/1/GRM1885C2A221JA01D.pdf"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "366f9214-e7dd-4880-8e2b-4be7837ec7ba")
 			(effects
 				(font
 					(size 1.27 1.27)
-					(thickness 0.15)
 				)
 			)
 		)
 		(property "Description" "Murata 0603 GRM 220pF Ceramic Multilayer Capacitor, 100 V dc, +125C, C0G Dielectric, +/-5%"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f9733047-89c7-4b9c-8aea-2c9d0d53767f")
 			(effects
 				(font
 					(size 1.27 1.27)
-					(thickness 0.15)
 				)
 			)
 		)
@@ -27515,7 +29166,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "aa7b09d7-c264-4775-bbc7-e388477cf2ae")
+			(uuid "a4def63f-1837-49ef-ad7e-5b4d759d424d")
 			(effects
 				(font
 					(size 1 1)
@@ -27528,7 +29179,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "4e4fd65f-1770-4042-a24d-78937b720a50")
+			(uuid "5adad61d-3872-4259-8339-eedd087063e9")
 			(effects
 				(font
 					(size 1 1)
@@ -27541,7 +29192,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "02892505-2592-426c-9457-57d32a1dd9c3")
+			(uuid "fd545441-c6ab-4926-92f2-7c5c57c81b2a")
 			(effects
 				(font
 					(size 1 1)
@@ -27554,7 +29205,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "99dfd6ad-fb3e-410f-ac77-b2c50e23721e")
+			(uuid "4c22ed11-4931-435a-a590-5910939e6cc0")
 			(effects
 				(font
 					(size 1 1)
@@ -27567,7 +29218,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "21385f99-df1b-473d-9276-40d1aabb30cb")
+			(uuid "ae295f85-3540-4046-aa43-4acf7717eacd")
 			(effects
 				(font
 					(size 1 1)
@@ -27580,7 +29231,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "57e6dadb-15ea-4259-a826-846f031c2db4")
+			(uuid "d237c5db-10a4-4952-92a0-626b70f9e21f")
 			(effects
 				(font
 					(size 1 1)
@@ -27593,7 +29244,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "a5b594ca-6f00-41e7-944d-241d399dac67")
+			(uuid "ea810d4e-c141-44f6-b918-640cf4a59337")
 			(effects
 				(font
 					(size 1 1)
@@ -27606,7 +29257,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "ed7d3605-fb55-496c-8389-343fc37f60fa")
+			(uuid "39c07572-9405-4498-8467-51ffbc6de1f2")
 			(effects
 				(font
 					(size 1 1)
@@ -27619,7 +29270,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "e8c2d261-e3aa-4e6f-b050-395f7ede40bf")
+			(uuid "de05b1e1-06a6-4449-8d89-c570e14cfd32")
 			(effects
 				(font
 					(size 1 1)
@@ -27632,7 +29283,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "4836de92-a0c1-401c-8e06-6efdf5b0cd0d")
+			(uuid "cc4a8d24-b26b-4ac5-9cc7-093c1524fbbd")
 			(effects
 				(font
 					(size 1 1)
@@ -27645,7 +29296,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "2054c5dc-13fd-44ac-8b1e-be534a7698cd")
+			(uuid "1037c544-d986-4c7a-90aa-659acfe3c33a")
 			(effects
 				(font
 					(size 1 1)
@@ -27658,7 +29309,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "207d5935-e15a-4f1d-aacd-5a748179834b")
+			(uuid "0c4c89b8-ee27-4149-b08d-37b0d6349c8f")
 			(effects
 				(font
 					(size 1 1)
@@ -27671,7 +29322,20 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "23cc335f-20d5-48a0-a79a-92f574dd0009")
+			(uuid "82c8cc41-46b5-410d-bd4f-7838b925b505")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f49f8944-8e37-4c26-ac18-d0b9ecb99be3")
 			(effects
 				(font
 					(size 1 1)
@@ -27691,124 +29355,88 @@
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
-			(start 1.225 0.62)
-			(end -1.225 0.62)
+			(start -0.14058 0.51)
+			(end 0.14058 0.51)
 			(stroke
-				(width 0.05)
+				(width 0.12)
 				(type solid)
 			)
-			(layer "F.CrtYd")
-			(uuid "f5b7af91-b6e5-4b69-b07d-b5e52933f66c")
-		)
-		(fp_line
-			(start 1.225 -0.62)
-			(end 1.225 0.62)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(layer "F.CrtYd")
-			(uuid "78c2e9a0-65bd-4216-a13d-190da7e50a1d")
-		)
-		(fp_line
-			(start -1.225 0.62)
-			(end -1.225 -0.62)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(layer "F.CrtYd")
+			(layer "F.SilkS")
 			(uuid "21ac9150-b5c6-406a-902a-7fad52fbdd38")
 		)
 		(fp_line
-			(start -1.225 -0.62)
-			(end 1.225 -0.62)
+			(start -0.14058 -0.51)
+			(end 0.14058 -0.51)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "F.SilkS")
+			(uuid "f5b7af91-b6e5-4b69-b07d-b5e52933f66c")
+		)
+		(fp_rect
+			(start -1.48 -0.73)
+			(end 1.48 0.73)
 			(stroke
 				(width 0.05)
 				(type solid)
 			)
+			(fill no)
 			(layer "F.CrtYd")
-			(uuid "3a2965ab-9ac2-4fbf-bfa0-4952421500db")
+			(uuid "e80f1aa0-db75-4a94-ada2-eda2e0f6b41d")
 		)
-		(fp_line
-			(start 0.8 0.4)
-			(end -0.8 0.4)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "F.Fab")
-			(uuid "f6b01d9d-5f02-458b-9dcf-75b4e6fc86e9")
-		)
-		(fp_line
-			(start 0.8 -0.4)
+		(fp_rect
+			(start -0.8 -0.4)
 			(end 0.8 0.4)
 			(stroke
 				(width 0.1)
 				(type solid)
 			)
+			(fill no)
 			(layer "F.Fab")
-			(uuid "24d79896-bba0-4c9e-860a-56389d544dde")
-		)
-		(fp_line
-			(start -0.8 0.4)
-			(end -0.8 -0.4)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "F.Fab")
-			(uuid "450ef058-fa2d-444f-99f3-9d1eaed4142e")
-		)
-		(fp_line
-			(start -0.8 -0.4)
-			(end 0.8 -0.4)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "F.Fab")
-			(uuid "52ac27ff-c3e7-488e-9c37-e932478ea144")
+			(uuid "5bee76cd-7226-451e-a7b0-c08b4ae67a17")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(uuid "276a0541-0644-42d3-9348-246d1451c4fa")
 			(effects
 				(font
-					(size 1.27 1.27)
-					(thickness 0.254)
+					(size 0.4 0.4)
+					(thickness 0.06)
 				)
 			)
 		)
-		(pad "1" smd rect
-			(at -0.7 0 180)
-			(size 0.75 0.94)
+		(pad "1" smd roundrect
+			(at -0.775 0 180)
+			(size 0.9 0.95)
 			(layers "F.Cu" "F.Mask" "F.Paste")
+			(roundrect_rratio 0.25)
 			(net "/MCU/LNBH26PQR/LNB_OUT")
 			(pinfunction "1_1")
 			(pintype "passive")
 			(uuid "faee4d43-4963-4481-baa1-de3881dfd7a6")
 		)
-		(pad "2" smd rect
-			(at 0.7 0 180)
-			(size 0.75 0.94)
+		(pad "2" smd roundrect
+			(at 0.775 0 180)
+			(size 0.9 0.95)
 			(layers "F.Cu" "F.Mask" "F.Paste")
+			(roundrect_rratio 0.25)
 			(net "/MCU/LNBH26PQR/IF_OUT")
 			(pinfunction "2_2")
 			(pintype "passive")
 			(uuid "6abaee26-5d94-4591-8430-5708fa6f5bd5")
 		)
 		(embedded_fonts no)
-		(model "kicad-embed://GRM1885C2A221JA01D.stp"
+		(model "${KICAD10_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_0603_1608Metric.step"
 			(offset
-				(xyz 0 0.4499999813 0.4)
+				(xyz 0 0 0)
 			)
 			(scale
 				(xyz 1 1 1)
 			)
 			(rotate
-				(xyz -90 0 0)
+				(xyz 0 0 0)
 			)
 		)
 	)
@@ -27998,6 +29626,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "190249b5-6d1d-4299-a8f4-84a7b7aee210")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f230f298-1b93-40b1-8ef6-80b518b01a32")
 			(effects
 				(font
 					(size 1 1)
@@ -28209,6 +29850,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "cfba9790-f940-4e4c-b22f-2c0ffba30f49")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "bfddc85c-947f-4157-8707-ffad266ae35d")
 			(effects
 				(font
 					(size 1 1)
@@ -28446,6 +30100,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "2cfa2e7e-43db-48ec-b24f-c995e870d6cd")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "58ea2f69-80ff-4172-9482-bb183364c2d8")
 			(effects
 				(font
 					(size 1 1)
@@ -28725,6 +30392,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e3fa8dba-41eb-42a3-84a4-48ef4a4c2d08")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Net*Tie*")
 		(path "/55bbbf8d-3539-4819-ba3f-fdb49aab7f51")
 		(sheetname "/")
@@ -28950,6 +30630,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9b466d53-188b-4b97-958e-1c49be49c51a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Resistor_SMD:R_0603_1608Metric")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/7bc09c1b-7435-440f-94a5-6b68efb859ac")
 		(sheetname "/MCU/LNBH26PQR/")
@@ -29115,6 +30808,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "d3f54e57-070a-44b5-9323-d3604a31ed42")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "25228ef3-294a-46f7-b8be-92fc3ad244af")
 			(effects
 				(font
 					(size 1 1)
@@ -29326,6 +31032,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "710579ee-eba8-47f7-9599-e95c25ad0403")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/cd7c3365-4864-4122-86db-7233eb7df12a")
 		(sheetname "/MCU/Ethernet/")
@@ -29492,6 +31211,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "7e5b82be-e987-4c9f-834f-160d23db2bfd")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/a7e5fa34-4a0a-4784-8861-fccab5f2e024")
 		(sheetname "/MCU/Ethernet/")
@@ -29601,6 +31333,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "109c0601-7c36-4421-bd04-ec1d4460d4cb")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -29794,6 +31539,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "32f28c44-4845-4907-82a7-44a8ed5797bc")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -30016,6 +31774,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "782d9c82-5839-4fc5-b1c9-0d3341d7b671")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "c820f136-0b85-44ce-a69c-3fe75fadae59")
 			(effects
 				(font
 					(size 1 1)
@@ -30321,6 +32092,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "b47c88bf-1467-454f-a85e-833a2d53ed58")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "937bacdb-7226-421e-9343-50a3f9eb3419")
 			(effects
 				(font
 					(size 1 1)
@@ -30658,6 +32442,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1e79e4be-2d9f-437b-8254-5fd931edb239")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/2fbbc287-3f5b-4027-8ebf-d6d2b433b7d9")
 		(sheetname "/MCU/")
@@ -30917,6 +32714,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "6ddbc8ad-a9b4-439b-ac7a-3aa8eef27b8d")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "81f4f098-3b2a-4d38-858e-260ea541afbf")
 			(effects
 				(font
 					(size 1 1)
@@ -31297,6 +33107,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f65883f5-326c-4ec2-840d-b876614e4ec8")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/d0400a3b-c86f-44a7-b0b3-790488042027")
 		(sheetname "/MCU/")
@@ -31462,6 +33285,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "7a637d9d-ba9c-4686-aab0-3e683b2c8deb")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d8965910-0b0a-42f9-b399-8c1328a962e3")
 			(effects
 				(font
 					(size 1 1)
@@ -31700,6 +33536,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a26fd218-3ab0-4b72-b6e1-7bc9d1f3a0b7")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "cd302542-68ba-476e-a6a4-ea0d546bd0eb")
 			(effects
 				(font
 					(size 1 1)
@@ -32292,6 +34141,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "2b8046db-50b5-464e-a473-afe33678f027")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Capacitor_SMD:C_0603_1608Metric")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/0a0c41b2-265c-49f2-b416-88e00c29c4a1")
 		(sheetname "/MCU/Ethernet/")
@@ -32587,6 +34449,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "3df1e7ac-f0de-42b4-bfac-06208eda5219")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "941f47e9-07ae-4c93-95b2-66b7742bd599")
 			(effects
 				(font
 					(size 1 1)
@@ -32905,6 +34780,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a09beb18-6842-45ca-852f-c9bc13c947fe")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0a68b6c9-6581-4b95-9d6c-68042fcd3903")
 			(effects
 				(font
 					(size 1 1)
@@ -33386,6 +35274,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "12987105-481c-4e90-9f21-efd3081603ca")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Capacitor_SMD:C_0603_1608Metric")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/bc08a4cf-65f7-49c8-823c-afb6ca9ba235")
 		(sheetname "/MCU/")
@@ -33645,6 +35546,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "babb618f-a4fb-4ade-8fe1-dff96faf0cd6")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9c4f6d57-4947-49c9-98bd-c9c6af1250ad")
 			(effects
 				(font
 					(size 1 1)
@@ -33973,6 +35887,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "15142ab4-a2a2-4545-a58b-290e111996ed")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/a28924c0-8e63-4dac-b973-308ae53db735")
 		(sheetname "/MCU/")
@@ -34242,6 +36169,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "e7eef486-921d-4a1f-a2ec-e542570e0f66")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6722aa83-bce2-4b38-ba36-3c5e06a380a1")
 			(effects
 				(font
 					(size 1 1)
@@ -34525,6 +36465,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "363252fb-448e-4a36-90db-057db28ba461")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/00000000-0000-0000-0000-00005f746fae")
 		(sheetname "/MCU/")
@@ -34781,6 +36734,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "338ea1ec-0e6d-422e-aadd-51cad8b1f797")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9108c363-2170-460a-814e-eed1fb38be56")
 			(effects
 				(font
 					(size 1 1)
@@ -35051,6 +37017,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8530a1db-093e-42c4-8bc2-0ee7d8cbb91f")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/1246a584-302a-4737-9fac-5bc812c05302")
 		(sheetname "/MCU/LNBH26PQR/")
@@ -35216,6 +37195,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "64687036-1775-4092-a195-b7bedca17e3b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e251cd55-13b6-44d4-8d5c-a1a309b4afe5")
 			(effects
 				(font
 					(size 1 1)
@@ -35486,6 +37478,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "a5b8a8f8-696c-4d9e-a693-682ab7ad41f3")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/ae33ce91-a0cd-4269-be1b-39a19fd45be8")
 		(sheetname "/MCU/")
@@ -35742,6 +37747,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "99bd30e2-d22d-41e2-89ea-5535f8eed7e1")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "51ca3487-3e19-4cf5-904e-138dbe715318")
 			(effects
 				(font
 					(size 1 1)
@@ -36200,6 +38218,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5c8921bb-5dc7-44c0-8598-a515a5021001")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/5c53391a-5543-4236-897f-fcccaebdd512")
 		(sheetname "/")
@@ -36438,6 +38469,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "766a5808-736a-4dde-b249-698c0e9d45d1")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/00000000-0000-0000-0000-00005f746197")
 		(sheetname "/MCU/")
@@ -36635,6 +38679,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "31167bda-9008-4291-8554-7c550056ef7b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "c7c2434d-4f55-4d3d-9848-7baad0cad8d7")
 			(effects
 				(font
 					(size 1 1)
@@ -36916,6 +38973,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "5cdf93f5-6c62-4365-8e1b-1339c4556eae")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "17a2ab3b-cb7a-4ace-a723-a236b29634f4")
 			(effects
 				(font
 					(size 1 1)
@@ -37246,6 +39316,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "85206592-eb73-4a87-910e-57967486ec38")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Capacitor_SMD:C_0603_1608Metric")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/d049d1b6-cd4d-4b68-8cb8-5983a7a9371e")
 		(sheetname "/MCU/Ethernet/")
@@ -37450,6 +39533,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f5b298cc-64ec-440a-9157-08790bf53ba2")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/19866729-85b8-45e8-a5d9-f0fbe920199d/bff277a3-769b-4f7e-aa25-563320579096")
 		(sheetname "/MCU/Ethernet/")
@@ -37609,6 +39705,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "c31b088d-3c73-49a4-9dec-2ddddbeac69f")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "c9f547cf-39e3-4f73-b193-bfc90c9a662a")
 			(effects
 				(font
 					(size 1 1)
@@ -37865,6 +39974,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "7c76bba9-9dac-41e8-b101-1ad6f997c36b")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4efa16b3-8d4f-4832-9098-009a3199ce18")
 			(effects
 				(font
 					(size 1 1)
@@ -38464,6 +40586,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "036debf5-ded2-4fad-9370-512bac429e07")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8baef7f1-d19e-4554-820f-d3cdcf976a29")
 			(effects
 				(font
 					(size 1 1)
@@ -39722,6 +41857,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "3222f4a2-d3d3-4fc3-81d9-e84b92220709")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "R_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/b05d064b-3e52-4e36-830b-b189aa41811f")
 		(sheetname "/MCU/")
@@ -39887,6 +42035,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "517a31d4-990b-43b2-a8c8-294ab017d20e")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "21b1b475-3420-4aa9-9054-266fcd7733de")
 			(effects
 				(font
 					(size 1 1)
@@ -40190,6 +42351,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "c997a141-9034-41bf-b4e4-c7cf174a303e")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "aeaee5f4-7c25-472d-9754-b76f91151d26")
 			(effects
 				(font
 					(size 1 1)
@@ -40585,6 +42759,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "19f62e96-a362-4e3f-ad78-24db7fad283a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/3982058e-ee73-4b51-91db-bc1de46166e5")
 		(sheetname "/MCU/")
@@ -40750,6 +42937,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "c7a55a42-f915-4858-92c4-ab05c3c11813")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "dacd06bc-5c99-42e4-b89f-35400ff5a375")
 			(effects
 				(font
 					(size 1 1)
@@ -40961,6 +43161,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "c4b8866a-fc5d-4232-82ae-acae89616840")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Pin* Test*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423/b3c754b8-c548-43af-816c-ad2f8cf390cf")
 		(sheetname "/MCU/LNBH26PQR/")
@@ -41088,6 +43301,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "52ff8aa7-c78b-4dc2-ba37-ae2ad9ec4fc9")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "bf3e7c72-84d4-4335-b275-edebddeafe67")
 			(effects
 				(font
 					(size 1 1)
@@ -41292,6 +43518,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "ea887373-7d77-42c3-a140-5478be63b686")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4a66b258-6c85-483e-913f-c636606fed4f")
 			(effects
 				(font
 					(size 1 1)
@@ -41537,6 +43776,19 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4a17dae2-367e-4068-a8c8-3747c035dc54")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "C_*")
 		(path "/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/00000000-0000-0000-0000-00005f745734")
 		(sheetname "/MCU/")
@@ -41741,6 +43993,19 @@
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "6ccdf6d8-5a33-48c2-add3-46baf9604e20")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d7b329f3-10f7-4c9e-805a-22bf003d61ef")
 			(effects
 				(font
 					(size 1 1)

@@ -2136,6 +2136,102 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Mechanical:Fiducial"
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "FID"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Fiducial"
+				(at 0 3.175 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Fiducial Marker"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "fiducial marker"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Fiducial*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Fiducial_0_1"
+				(circle
+					(center 0 0)
+					(radius 1.27)
+					(stroke
+						(width 0.508)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "diseqc_cntrl:+12V"
 			(power global)
 			(pin_numbers
@@ -5022,6 +5118,18 @@
 		(uuid "779c7345-b717-4a73-af52-2aa034065be0")
 	)
 	(rectangle
+		(start 204.47 17.78)
+		(end 240.03 55.88)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid "91ae43ca-abaf-4c95-bab4-83d16212f006")
+	)
+	(rectangle
 		(start 237.49 115.57)
 		(end 270.51 129.54)
 		(stroke
@@ -5122,6 +5230,16 @@
 			)
 		)
 		(uuid "a732202c-ed1e-4388-8133-63d24fd0b902")
+	)
+	(text "Mechanical"
+		(exclude_from_sim no)
+		(at 210.82 20.574 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "d06c3203-421d-42a7-835c-846b7a7d4351")
 	)
 	(text "Chassis"
 		(exclude_from_sim no)
@@ -7169,6 +7287,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 54.61 40.64 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "78774da8-f61f-4d53-99fa-f5cd3f8e47b2")
 		)
@@ -7359,7 +7488,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "0b7be151-ce70-4fd6-bf8d-ab27b22490d6")
-		(property "Reference" "#PWR011"
+		(property "Reference" "#PWR012"
 			(at 162.56 134.62 0)
 			(hide yes)
 			(show_name no)
@@ -7419,7 +7548,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
-					(reference "#PWR011")
+					(reference "#PWR012")
 					(unit 1)
 				)
 			)
@@ -7491,6 +7620,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 113.03 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "997bdca1-f768-4343-902f-bbb2e03c6245")
 		)
@@ -7518,7 +7658,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "0db8af73-8e7f-42dd-a653-48c25643d3e9")
-		(property "Reference" "C47"
+		(property "Reference" "C17"
 			(at 166.37 139.6999 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7606,6 +7746,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 162.56 140.97 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "87983e63-0c8b-403a-8fbf-b6ffad400e6f")
 		)
@@ -7615,7 +7766,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
-					(reference "C47")
+					(reference "C17")
 					(unit 1)
 				)
 			)
@@ -8031,6 +8182,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 115.57 130.81 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "3fa5a412-cec1-4260-9887-5fc307e7406f")
 		)
@@ -8337,6 +8499,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 83.82 25.4 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -8676,6 +8849,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 115.57 83.82 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "98b77a65-8917-47b9-8cea-b92bfae0084b")
 		)
@@ -8880,6 +9064,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 257.81 53.34 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "bb569710-b52e-4142-b2bc-c817eb332137")
 		)
@@ -8978,6 +9173,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 52.07 97.79 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -9252,6 +9458,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 40.64 142.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "fd730f94-8d68-4bcc-9e19-bff3b614e85b")
 		)
@@ -9279,7 +9496,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "457c4870-fb10-41e7-8962-8b45a04446fd")
-		(property "Reference" "C12"
+		(property "Reference" "C11"
 			(at 139.7 87.6299 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9356,6 +9573,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 135.89 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "30797db0-6682-4237-a9aa-5ba6eb344ce8")
 		)
@@ -9365,7 +9593,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
-					(reference "C12")
+					(reference "C11")
 					(unit 1)
 				)
 			)
@@ -9516,6 +9744,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 20.32 46.99 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "2b00c3ff-a1e4-4d69-83e7-87e06b57887e")
 		)
@@ -9591,6 +9830,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 52.07 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -9811,6 +10061,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 92.71 27.94 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "526bf960-d924-4bae-bffd-f5f3c5391d14")
 		)
@@ -9994,6 +10255,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 95.25 149.86 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "30fe3098-0810-4c23-a9dd-993f10bcbbb9")
 		)
@@ -10153,6 +10425,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 113.03 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "6ee97199-4125-45ba-8a56-c6fb9b884ed3")
 		)
@@ -10235,6 +10518,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 274.32 147.32 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "7e58d5a9-c7fc-41f2-a191-7e44f8b672c0")
 		)
@@ -10245,6 +10539,93 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
 					(reference "NT2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:Fiducial")
+		(at 207.01 34.29 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "5add9198-dd10-4283-8f33-75d828ed31fd")
+		(property "Reference" "FID2"
+			(at 209.55 33.0199 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Fiducial"
+			(at 209.55 35.5599 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Fiducial:Fiducial_1mm_Mask2mm"
+			(at 207.01 34.29 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 207.01 34.29 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Fiducial Marker"
+			(at 207.01 34.29 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 207.01 34.29 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
+					(reference "FID2")
 					(unit 1)
 				)
 			)
@@ -10361,6 +10742,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 257.81 66.04 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "afeee23c-c203-4ea9-8d7d-0e9d01d48b5d")
 		)
@@ -10459,6 +10851,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 95.25 102.87 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -10563,6 +10966,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 52.07 142.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -10752,6 +11166,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 101.6 134.62 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -11022,6 +11447,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 101.6 87.63 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "ede67380-d1cf-484d-a402-61e5cdcd2da4")
 		)
@@ -11049,7 +11485,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "75e9040c-7206-4194-a2a4-7f3c3d91f151")
-		(property "Reference" "#PWR09"
+		(property "Reference" "#PWR011"
 			(at 162.56 87.63 0)
 			(hide yes)
 			(show_name no)
@@ -11109,7 +11545,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
-					(reference "#PWR09")
+					(reference "#PWR011")
 					(unit 1)
 				)
 			)
@@ -11205,7 +11641,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "8372836a-2d4c-41c1-9f5b-36dec89fd8d5")
-		(property "Reference" "C45"
+		(property "Reference" "C12"
 			(at 140.716 139.7 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11293,6 +11729,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 137.16 140.97 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "969b1631-7022-489d-be61-3a67f74d8d73")
 		)
@@ -11302,7 +11749,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
-					(reference "C45")
+					(reference "C12")
 					(unit 1)
 				)
 			)
@@ -11394,6 +11841,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 144.78 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -11520,6 +11978,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 257.81 59.69 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -11723,6 +12192,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 120.65 142.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "62415fbb-0e37-425e-99f7-43982df56ab3")
 		)
@@ -11825,6 +12305,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 231.14 161.29 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "5e530761-9174-481a-bc43-7638d2672d81")
 		)
@@ -11852,7 +12343,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "a5099675-6b81-4eb7-8517-9b7f886e8796")
-		(property "Reference" "C48"
+		(property "Reference" "C15"
 			(at 157.48 87.6299 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -11929,6 +12420,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 153.67 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "3bc70f93-b1a0-459d-8bc6-78fd599bef6c")
 		)
@@ -11938,7 +12440,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
-					(reference "C48")
+					(reference "C15")
 					(unit 1)
 				)
 			)
@@ -11956,7 +12458,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "ab399a6d-646f-4df5-9214-14f834a31231")
-		(property "Reference" "C49"
+		(property "Reference" "C16"
 			(at 166.37 95.2499 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -12033,6 +12535,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 162.56 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "8caa6994-111b-48f7-8ddd-600b85367d32")
 		)
@@ -12042,7 +12555,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
-					(reference "C49")
+					(reference "C16")
 					(unit 1)
 				)
 			)
@@ -12252,6 +12765,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 36.83 25.4 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "ebca87cb-828f-4387-ad42-84a9de584597")
 		)
@@ -12375,6 +12899,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 257.81 78.74 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -12567,6 +13102,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 40.64 97.79 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "19a7c837-2520-44fe-8c6f-4b1dbb13f963")
 		)
@@ -12668,6 +13214,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 120.65 105.41 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -12826,6 +13383,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 231.14 144.78 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -13107,6 +13675,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 120.65 152.4 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -13392,6 +13971,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 120.65 95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "56c65b81-df25-491e-ab41-0dfefb69d8ba")
 		)
@@ -13497,7 +14087,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "db1c63e2-69b3-4196-a985-78b74282e763")
-		(property "Reference" "#PWR010"
+		(property "Reference" "#PWR09"
 			(at 135.89 109.22 0)
 			(hide yes)
 			(show_name no)
@@ -13558,7 +14148,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
-					(reference "#PWR010")
+					(reference "#PWR09")
 					(unit 1)
 				)
 			)
@@ -13713,6 +14303,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 64.77 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "3"
 			(uuid "02872846-81b3-4a75-8164-7e48b9221ec8")
 		)
@@ -13744,6 +14345,93 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
 					(reference "IC1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:Fiducial")
+		(at 207.01 40.64 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "de18fa57-3fbb-49c2-9f3b-b8e8c45f1442")
+		(property "Reference" "FID3"
+			(at 209.55 39.3699 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Fiducial"
+			(at 209.55 41.9099 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Fiducial:Fiducial_1mm_Mask2mm"
+			(at 207.01 40.64 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 207.01 40.64 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Fiducial Marker"
+			(at 207.01 40.64 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 207.01 40.64 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
+					(reference "FID3")
 					(unit 1)
 				)
 			)
@@ -13978,6 +14666,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 64.77 130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "3"
 			(uuid "e41319f8-92a1-480c-8451-038d6c1ae8f5")
 		)
@@ -14026,7 +14725,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "e7e75f09-c801-47b8-b632-f77fcc9d60b7")
-		(property "Reference" "#PWR012"
+		(property "Reference" "#PWR010"
 			(at 137.16 157.48 0)
 			(hide yes)
 			(show_name no)
@@ -14087,7 +14786,94 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
-					(reference "#PWR012")
+					(reference "#PWR010")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:Fiducial")
+		(at 207.01 27.94 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "f6efd59b-1c03-4724-980a-71676c41893c")
+		(property "Reference" "FID1"
+			(at 209.55 26.6699 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Fiducial"
+			(at 209.55 29.2099 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Fiducial:Fiducial_1mm_Mask2mm"
+			(at 207.01 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 207.01 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Fiducial Marker"
+			(at 207.01 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 207.01 27.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
+					(reference "FID1")
 					(unit 1)
 				)
 			)
@@ -14184,7 +14970,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "fe3a6044-f78c-41b9-a150-f87c4f0bc77b")
-		(property "Reference" "C46"
+		(property "Reference" "C14"
 			(at 153.67 139.6999 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14272,6 +15058,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 149.86 140.97 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "949c8a21-e4d2-480f-a9eb-ab6a083fe391")
 		)
@@ -14281,7 +15078,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
-					(reference "C46")
+					(reference "C14")
 					(unit 1)
 				)
 			)

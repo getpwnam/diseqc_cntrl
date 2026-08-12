@@ -4318,7 +4318,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "1246a584-302a-4737-9fac-5bc812c05302")
-		(property "Reference" "C33"
+		(property "Reference" "C37"
 			(at 163.576 71.12 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4472,6 +4472,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 160.02 72.39 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "5d8c72ce-4850-4aa4-ab43-8f09d843b052")
 		)
@@ -4481,7 +4492,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "C33")
+					(reference "C37")
 					(unit 1)
 				)
 			)
@@ -4499,7 +4510,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "2214a9d2-3a4e-4f1f-95d9-058764e987eb")
-		(property "Reference" "#PWR058"
+		(property "Reference" "#PWR060"
 			(at 171.45 85.09 0)
 			(hide yes)
 			(show_name no)
@@ -4559,7 +4570,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "#PWR058")
+					(reference "#PWR060")
 					(unit 1)
 				)
 			)
@@ -4576,7 +4587,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "2616bf8e-0286-41b8-a3a8-3db8ae0a3472")
-		(property "Reference" "TP10"
+		(property "Reference" "TP11"
 			(at 227.584 137.668 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4675,13 +4686,24 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 222.25 138.43 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "0e34aa00-9433-435f-8c44-26fd8d64d7c2")
 		)
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "TP10")
+					(reference "TP11")
 					(unit 1)
 				)
 			)
@@ -4922,6 +4944,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 120.65 90.17 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
@@ -5173,6 +5206,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 218.44 53.34 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "e4c78cdf-2199-49cd-ad59-5864716d2a0b")
 		)
@@ -5403,6 +5447,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 175.26 67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "d5b1d1b7-7fe4-424a-9779-49e4d002fcf2")
 		)
@@ -5430,7 +5485,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "467c12e0-1f1f-47ff-9a88-c6a66b2a3ea5")
-		(property "Reference" "D4"
+		(property "Reference" "D3"
 			(at 100.33 72.0724 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5584,6 +5639,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 97.79 73.66 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "21e299f8-0515-4a26-a023-1ffd3d089370")
 		)
@@ -5593,7 +5659,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "D4")
+					(reference "D3")
 					(unit 1)
 				)
 			)
@@ -5611,7 +5677,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "46a8482b-d0b0-4dc1-b8d3-df9e2d7eea68")
-		(property "Reference" "C31"
+		(property "Reference" "C35"
 			(at 106.68 55.8799 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5765,6 +5831,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 102.87 57.15 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "a9bdcbfc-66a7-49d7-82c3-8c93dc133930")
 		)
@@ -5774,7 +5851,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "C31")
+					(reference "C35")
 					(unit 1)
 				)
 			)
@@ -5792,7 +5869,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "4f210675-a2d6-4fef-a8e3-1683965dbb13")
-		(property "Reference" "D6"
+		(property "Reference" "D5"
 			(at 173.99 70.8024 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5946,6 +6023,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 171.45 72.39 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "78de613f-6fcb-456b-9deb-1c299183a194")
 		)
@@ -5955,7 +6043,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "D6")
+					(reference "D5")
 					(unit 1)
 				)
 			)
@@ -5973,7 +6061,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "50643e56-8de0-490c-b246-3356930f2cc3")
-		(property "Reference" "D5"
+		(property "Reference" "D4"
 			(at 156.21 62.2299 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6149,6 +6237,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 153.67 63.5 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "ff39facd-8c09-4682-a911-86bb9fc831e8")
 		)
@@ -6158,7 +6257,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "D5")
+					(reference "D4")
 					(unit 1)
 				)
 			)
@@ -6176,7 +6275,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "5327c48e-2dc1-400e-9d40-125ceae7ec2e")
-		(property "Reference" "#PWR053"
+		(property "Reference" "#PWR055"
 			(at 102.87 67.31 0)
 			(hide yes)
 			(show_name no)
@@ -6236,7 +6335,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "#PWR053")
+					(reference "#PWR055")
 					(unit 1)
 				)
 			)
@@ -6253,7 +6352,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "5d92ec48-a236-4599-b082-0fa032852576")
-		(property "Reference" "TP11"
+		(property "Reference" "TP12"
 			(at 227.584 144.018 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6352,13 +6451,24 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 222.25 144.78 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "fbca2593-18cd-44f6-a610-49bc3245e587")
 		)
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "TP11")
+					(reference "TP12")
 					(unit 1)
 				)
 			)
@@ -6528,6 +6638,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 218.44 67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "56273e38-df88-47b5-961b-1ab2b2612f98")
 		)
@@ -6555,7 +6676,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "60751ef3-6d60-430b-be22-c877b01390b3")
-		(property "Reference" "D7"
+		(property "Reference" "D6"
 			(at 208.28 26.67 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6758,6 +6879,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 190.5 34.29 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "ca514fb9-42a2-4c38-b7c9-7071e90e993f")
 		)
@@ -6770,7 +6902,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "D7")
+					(reference "D6")
 					(unit 1)
 				)
 			)
@@ -6787,7 +6919,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "624c69fe-155f-4fff-9103-9eec4d4c56dc")
-		(property "Reference" "C35"
+		(property "Reference" "C39"
 			(at 193.04 100.584 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6939,6 +7071,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 187.96 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "7a5d6ab7-3a3a-4c98-b59d-e852280edc4a")
 		)
@@ -6948,7 +7091,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "C35")
+					(reference "C39")
 					(unit 1)
 				)
 			)
@@ -6966,7 +7109,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "72500842-135c-4621-999e-30e8d1a6fedc")
-		(property "Reference" "#PWR054"
+		(property "Reference" "#PWR056"
 			(at 114.3 67.31 0)
 			(hide yes)
 			(show_name no)
@@ -7026,7 +7169,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "#PWR054")
+					(reference "#PWR056")
 					(unit 1)
 				)
 			)
@@ -7044,7 +7187,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "768c823b-a8da-4891-a55a-5022e67397db")
-		(property "Reference" "#PWR057"
+		(property "Reference" "#PWR059"
 			(at 166.37 124.46 0)
 			(hide yes)
 			(show_name no)
@@ -7104,7 +7247,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "#PWR057")
+					(reference "#PWR059")
 					(unit 1)
 				)
 			)
@@ -7122,7 +7265,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "7b15a1e3-6f91-48ec-aa73-a39eb69c9505")
-		(property "Reference" "#PWR055"
+		(property "Reference" "#PWR057"
 			(at 119.38 151.13 0)
 			(hide yes)
 			(show_name no)
@@ -7182,7 +7325,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "#PWR055")
+					(reference "#PWR057")
 					(unit 1)
 				)
 			)
@@ -7200,7 +7343,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "7bc09c1b-7435-440f-94a5-6b68efb859ac")
-		(property "Reference" "R17"
+		(property "Reference" "R20"
 			(at 125.73 135.89 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7363,6 +7506,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 125.73 142.24 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "f623b80f-5ad0-41f9-b559-4706f1493a9e")
 		)
@@ -7372,7 +7526,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "R17")
+					(reference "R20")
 					(unit 1)
 				)
 			)
@@ -7488,6 +7642,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 256.54 138.43 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "1edf21ab-eb61-4447-b74b-f8c5fcf3e766")
 		)
@@ -7512,7 +7677,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "9cbc92b8-9ada-4d9c-9552-e7aedcfe51d3")
-		(property "Reference" "C34"
+		(property "Reference" "C38"
 			(at 177.8 107.9499 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7666,6 +7831,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 173.99 109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "35738e20-2a77-42e4-b450-0e78042c88b0")
 		)
@@ -7675,7 +7851,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "C34")
+					(reference "C38")
 					(unit 1)
 				)
 			)
@@ -7693,7 +7869,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "9ea501c6-55b0-404d-a1d5-a62e6b4b78bf")
-		(property "Reference" "#PWR060"
+		(property "Reference" "#PWR062"
 			(at 226.06 73.66 0)
 			(hide yes)
 			(show_name no)
@@ -7753,7 +7929,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "#PWR060")
+					(reference "#PWR062")
 					(unit 1)
 				)
 			)
@@ -7869,6 +8045,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 256.54 151.13 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "c8e59e37-4248-46fe-9870-310eca948c98")
 		)
@@ -7893,7 +8080,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "b4d9f6e8-792c-4fb0-8f94-e2279e45fe2a")
-		(property "Reference" "C36"
+		(property "Reference" "C40"
 			(at 203.2 59.6899 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7915,7 +8102,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "CAPC1608X90N"
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 295.58 58.42 0)
 			(hide yes)
 			(show_name no)
@@ -8098,6 +8285,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 199.39 67.31 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "a07ce1b8-deba-4bb7-8ad1-c48f4fa3d565")
 		)
@@ -8107,7 +8305,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "C36")
+					(reference "C40")
 					(unit 1)
 				)
 			)
@@ -8124,7 +8322,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "bce99e28-dfd2-4d9d-bdf1-38103575d2c6")
-		(property "Reference" "C30"
+		(property "Reference" "C34"
 			(at 58.928 98.552 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8278,6 +8476,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 66.04 99.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "38a632f1-113b-4b89-bb51-6b7786ae3087")
 		)
@@ -8287,7 +8496,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "C30")
+					(reference "C34")
 					(unit 1)
 				)
 			)
@@ -8305,7 +8514,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "bd5c0a5a-8770-4869-adb2-32cd0db813ba")
-		(property "Reference" "#PWR059"
+		(property "Reference" "#PWR061"
 			(at 187.96 92.71 0)
 			(hide yes)
 			(show_name no)
@@ -8365,7 +8574,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "#PWR059")
+					(reference "#PWR061")
 					(unit 1)
 				)
 			)
@@ -8383,7 +8592,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "c258d2cb-bcff-4fb9-b665-057eedac91d3")
-		(property "Reference" "#PWR056"
+		(property "Reference" "#PWR058"
 			(at 133.35 60.96 0)
 			(hide yes)
 			(show_name no)
@@ -8443,7 +8652,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "#PWR056")
+					(reference "#PWR058")
 					(unit 1)
 				)
 			)
@@ -8461,7 +8670,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "c58d5142-e39b-4e1f-8386-7c186d80f345")
-		(property "Reference" "C32"
+		(property "Reference" "C36"
 			(at 118.11 54.9909 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8615,6 +8824,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 114.3 57.15 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "feeb7241-6af4-4a49-be7a-62b227fa3450")
 		)
@@ -8624,7 +8844,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "C32")
+					(reference "C36")
 					(unit 1)
 				)
 			)
@@ -8740,6 +8960,17 @@
 				)
 			)
 		)
+		(property "VoltageRequirement" ""
+			(at 256.54 144.78 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "98c89ce2-f942-4932-9bd9-7ceabc6475c1")
 		)
@@ -8764,7 +8995,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "de35424c-f350-4657-9a46-eede8a341f81")
-		(property "Reference" "#PWR052"
+		(property "Reference" "#PWR054"
 			(at 73.66 90.17 0)
 			(hide yes)
 			(show_name no)
@@ -8824,7 +9055,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "#PWR052")
+					(reference "#PWR054")
 					(unit 1)
 				)
 			)
@@ -8842,7 +9073,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "f6273e60-5ed9-47c6-b695-ec65ae275c43")
-		(property "Reference" "#PWR051"
+		(property "Reference" "#PWR053"
 			(at 66.04 114.3 0)
 			(hide yes)
 			(show_name no)
@@ -8902,7 +9133,7 @@
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "#PWR051")
+					(reference "#PWR053")
 					(unit 1)
 				)
 			)
@@ -9069,6 +9300,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "VoltageRequirement" ""
+			(at 88.9 87.63 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
 				)
 			)
 		)
