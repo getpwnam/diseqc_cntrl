@@ -7890,12 +7890,6 @@
 		(uuid "0329b885-a627-48b9-b22d-fd3e467e4894")
 	)
 	(junction
-		(at 77.47 162.56)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "0d6d21ef-4b47-4906-9a13-40d72d536eb1")
-	)
-	(junction
 		(at 213.36 34.29)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -7920,16 +7914,16 @@
 		(uuid "3b20c5e1-1a34-4280-b31f-590c37a48d8e")
 	)
 	(junction
-		(at 77.47 172.72)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "3e5f1914-028d-411e-99fe-28fb404daf71")
-	)
-	(junction
 		(at 55.88 172.72)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "46db5c3e-b882-4288-91b4-baa7bdb575af")
+	)
+	(junction
+		(at 77.47 172.72)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "4d6a8e40-8c6b-447f-9915-ca47e02f7c0e")
 	)
 	(junction
 		(at 233.68 125.73)
@@ -7968,22 +7962,10 @@
 		(uuid "6243ffd0-605e-457e-887a-03a2a3e48350")
 	)
 	(junction
-		(at 25.4 162.56)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "6392079f-4833-468a-ad27-8d04bd56fad5")
-	)
-	(junction
 		(at 185.42 78.74)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "64b24755-ba0f-4581-b1d9-009c4196fc10")
-	)
-	(junction
-		(at 25.4 172.72)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "6e86d261-322c-4b82-9155-ba2b2f9611c9")
 	)
 	(junction
 		(at 67.31 172.72)
@@ -8146,6 +8128,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "c2f42148-ad67-4ddb-8d0f-6316711577c8")
+	)
+	(junction
+		(at 77.47 162.56)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "cbaf77a8-dd3e-4c27-8333-8c1380fa6b30")
 	)
 	(junction
 		(at 142.24 166.37)
@@ -8760,7 +8748,7 @@
 	)
 	(wire
 		(pts
-			(xy 16.51 162.56) (xy 77.47 162.56)
+			(xy 25.4 162.56) (xy 77.47 162.56)
 		)
 		(stroke
 			(width 0)
@@ -8990,7 +8978,7 @@
 	)
 	(wire
 		(pts
-			(xy 16.51 172.72) (xy 77.47 172.72)
+			(xy 25.4 172.72) (xy 77.47 172.72)
 		)
 		(stroke
 			(width 0)
@@ -9277,16 +9265,6 @@
 			(type default)
 		)
 		(uuid "65e7a9ed-4abb-47b4-a540-e12062ccf52d")
-	)
-	(wire
-		(pts
-			(xy 16.51 162.56) (xy 16.51 165.1)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "67da6b16-2a1f-48cd-92a0-acef2256b7af")
 	)
 	(wire
 		(pts
@@ -9617,16 +9595,6 @@
 			(type default)
 		)
 		(uuid "93a08904-ef2f-4885-80e0-bf9ce6533222")
-	)
-	(wire
-		(pts
-			(xy 16.51 170.18) (xy 16.51 172.72)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "9517d9fe-4939-48f7-bcce-6e5ac0068058")
 	)
 	(wire
 		(pts
@@ -16978,7 +16946,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "TestPoint:TestPoint_2Pads_Pitch2.54mm_Drill0.8mm"
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
 			(at 191.77 30.48 0)
 			(hide yes)
 			(show_name no)

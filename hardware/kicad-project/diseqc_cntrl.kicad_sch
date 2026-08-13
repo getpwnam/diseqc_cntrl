@@ -684,7 +684,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "#InvenTree:L_6u8_0805"
+		(symbol "#InvenTree:L_33uH_3.2A"
 			(pin_numbers
 				(hide yes)
 			)
@@ -707,7 +707,7 @@
 					)
 				)
 			)
-			(property "Value" "6u8"
+			(property "Value" "33uH"
 				(at 1.905 0 90)
 				(show_name no)
 				(do_not_autoplace no)
@@ -717,7 +717,7 @@
 					)
 				)
 			)
-			(property "Footprint" "Inductor_SMD:L_0805_2012Metric"
+			(property "Footprint" "ebnx_footprints:WE-PD_1260_1245_1280_121054"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -750,7 +750,7 @@
 					)
 				)
 			)
-			(property "InvenTree" "266"
+			(property "InvenTree" "271"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -761,7 +761,7 @@
 					)
 				)
 			)
-			(property "Part URL" "https://inventree.ebnx.net/web/part/266/"
+			(property "Part URL" "https://inventree.ebnx.net/web/part/271/"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -772,7 +772,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "Inductor_SMD:L_0805_2012Metric"
+			(property "ki_fp_filters" "ebnx_footprints:WE-PD_1260_1245_1280_121054"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -783,7 +783,7 @@
 					)
 				)
 			)
-			(symbol "L_6u8_0805_0_1"
+			(symbol "L_33uH_3.2A_0_1"
 				(arc
 					(start 0 2.54)
 					(mid 0.6323 1.905)
@@ -833,7 +833,207 @@
 					)
 				)
 			)
-			(symbol "L_6u8_0805_1_1"
+			(symbol "L_33uH_3.2A_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 1.27)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 1.27)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "#InvenTree:L_6u8_4A_20%"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" ""
+				(at -1.27 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "6.8uH"
+				(at 1.905 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "ebnx_footprints:INDPM5752X300N"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "SMD Power Inductor - 6.8uH 20%"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "InvenTree" "273"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Part URL" "https://inventree.ebnx.net/web/part/273/"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Tolerance" "20%"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "ebnx_footprints:INDPM5752X300N"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "L_6u8_4A_20%_0_1"
+				(arc
+					(start 0 2.54)
+					(mid 0.6323 1.905)
+					(end 0 1.27)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 1.27)
+					(mid 0.6323 0.635)
+					(end 0 0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 0)
+					(mid 0.6323 -0.635)
+					(end 0 -1.27)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 -1.27)
+					(mid 0.6323 -1.905)
+					(end 0 -2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "L_6u8_4A_20%_1_1"
 				(pin passive line
 					(at 0 3.81 270)
 					(length 1.27)
@@ -2804,184 +3004,6 @@
 					(at 0 -2.54 90)
 					(length 2.032)
 					(name ""
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
-		(symbol "diseqc_cntrl:L"
-			(pin_numbers
-				(hide yes)
-			)
-			(pin_names
-				(offset 1.016)
-				(hide yes)
-			)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(in_pos_files yes)
-			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "L"
-				(at -1.27 0 90)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Value" "L"
-				(at 1.905 0 90)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Description" "Inductor"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_keywords" "inductor choke coil reactor magnetic"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "Choke_* *Coil* Inductor_* L_*"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(symbol "L_0_1"
-				(arc
-					(start 0 2.54)
-					(mid 0.6323 1.905)
-					(end 0 1.27)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start 0 1.27)
-					(mid 0.6323 0.635)
-					(end 0 0)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start 0 0)
-					(mid 0.6323 -0.635)
-					(end 0 -1.27)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start 0 -1.27)
-					(mid 0.6323 -1.905)
-					(end 0 -2.54)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "L_1_1"
-				(pin passive line
-					(at 0 3.81 270)
-					(length 1.27)
-					(name "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 0 -3.81 90)
-					(length 1.27)
-					(name "2"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -7061,18 +7083,6 @@
 		)
 		(uuid "e5f7b713-7107-4b9e-a671-a4806f9fed7a")
 	)
-	(label "VIN_FUSED"
-		(at 257.81 53.34 180)
-		(effects
-			(font
-				(size 0.762 0.762)
-				(thickness 0.1524)
-				(bold yes)
-			)
-			(justify right bottom)
-		)
-		(uuid "e734bb48-5f27-45e0-b489-b9e34cd85bfb")
-	)
 	(symbol
 		(lib_id "diseqc_cntrl:RASM742TRX")
 		(at 54.61 40.64 180)
@@ -8008,7 +8018,7 @@
 		)
 	)
 	(symbol
-		(lib_id "#InvenTree:L_6u8_0805")
+		(lib_id "#InvenTree:L_6u8_4A_20%")
 		(at 115.57 130.81 90)
 		(unit 1)
 		(body_style 1)
@@ -8029,7 +8039,7 @@
 				)
 			)
 		)
-		(property "Value" "6u8"
+		(property "Value" "6.8uH"
 			(at 115.57 128.27 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8039,7 +8049,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Inductor_SMD:L_0805_2012Metric"
+		(property "Footprint" "ebnx_footprints:INDPM5752X300N"
 			(at 115.57 130.81 0)
 			(hide yes)
 			(show_name no)
@@ -8061,7 +8071,7 @@
 				)
 			)
 		)
-		(property "Description" "Inductor"
+		(property "Description" "SMD Power Inductor - 6.8uH 20%"
 			(at 115.57 130.81 0)
 			(hide yes)
 			(show_name no)
@@ -8149,18 +8159,7 @@
 				)
 			)
 		)
-		(property "Tolerance" ""
-			(at 115.57 130.81 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree" "266"
+		(property "Tolerance" "20%"
 			(at 115.57 130.81 0)
 			(hide yes)
 			(show_name no)
@@ -8171,7 +8170,18 @@
 				)
 			)
 		)
-		(property "Part URL" "https://inventree.ebnx.net/web/part/266/"
+		(property "InvenTree" "273"
+			(at 115.57 130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Part URL" "https://inventree.ebnx.net/web/part/273/"
 			(at 115.57 130.81 0)
 			(hide yes)
 			(show_name no)
@@ -8686,7 +8696,7 @@
 		)
 	)
 	(symbol
-		(lib_id "diseqc_cntrl:L")
+		(lib_id "#InvenTree:L_33uH_3.2A")
 		(at 115.57 83.82 90)
 		(unit 1)
 		(body_style 1)
@@ -8707,7 +8717,7 @@
 				)
 			)
 		)
-		(property "Value" "33u"
+		(property "Value" "33uH"
 			(at 115.57 81.28 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8717,7 +8727,7 @@
 				)
 			)
 		)
-		(property "Footprint" "ebnx_footprints:INDPM3030X150N"
+		(property "Footprint" "ebnx_footprints:WE-PD_1260_1245_1280_121054"
 			(at 115.57 83.82 0)
 			(hide yes)
 			(show_name no)
@@ -8728,7 +8738,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.we-online.com/components/products/datasheet/74404032330.pdf"
+		(property "Datasheet" ""
 			(at 115.57 83.82 0)
 			(hide yes)
 			(show_name no)
@@ -8783,7 +8793,7 @@
 				)
 			)
 		)
-		(property "Mouser Part Number" "710-74404032330"
+		(property "Mouser Part Number" ""
 			(at 115.57 83.82 90)
 			(hide yes)
 			(show_name no)
@@ -8794,7 +8804,7 @@
 				)
 			)
 		)
-		(property "InvenTree Part" "L_33u_SMD"
+		(property "InvenTree Part" ""
 			(at 115.57 83.82 90)
 			(hide yes)
 			(show_name no)
@@ -8838,8 +8848,8 @@
 				)
 			)
 		)
-		(property "InvenTree" "95"
-			(at 115.57 83.82 90)
+		(property "InvenTree" "271"
+			(at 115.57 83.82 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8857,6 +8867,17 @@
 			(effects
 				(font
 					(size 0.762 0.762)
+				)
+			)
+		)
+		(property "Part URL" "https://inventree.ebnx.net/web/part/271/"
+			(at 115.57 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
 				)
 			)
 		)
@@ -8948,140 +8969,6 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
 					(reference "#PWR015")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "ebnx_symbols:TestPoint_Annotated_Silkscreen")
-		(at 257.81 53.34 270)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "2c07b51f-2664-40da-ab40-5d907073a748")
-		(property "Reference" "TP3"
-			(at 262.89 52.0699 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "VIN_FUSED"
-			(at 262.89 54.6099 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "ebnx_footprints:TestPoint_THTPad_D1.0mm_Drill0.5mm_annotated"
-			(at 257.81 58.42 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 257.81 58.42 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "test point"
-			(at 257.81 53.34 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree Part" ""
-			(at 257.81 53.34 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_3V3OUT" ""
-			(at 257.81 53.34 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_VCC" ""
-			(at 257.81 53.34 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Tolerance" ""
-			(at 257.81 53.34 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "VoltageRequirement" ""
-			(at 257.81 53.34 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 0.762 0.762)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "bb569710-b52e-4142-b2bc-c817eb332137")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
-					(reference "TP3")
 					(unit 1)
 				)
 			)
@@ -12049,7 +11936,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.mouser.com/catalog/specsheets/YAGEO_PYu_RC_Group_51_RoHS_L_12.pdf?_gl=1*1ninmyl*_gcl_au*MTI3NDQ0Mzk2NC4xNzY2NDEzNTk1LjIwMzY5MzAxODkuMTc3MDA1MDY4MS4xNzcwMDU2OTY5*_ga*MTk2NjYzNzAxOS4xNzU4NjIyMzM4*_ga_15W4STQT4T*czE3NzAwNTA2ODAkbzI0JGcxJHQxNzcwMDU2OTgzJGoyNyRsMCRoMA.."
+		(property "Datasheet" ""
 			(at 120.65 142.24 0)
 			(hide yes)
 			(show_name no)
@@ -12104,7 +11991,7 @@
 				)
 			)
 		)
-		(property "Mouser Part Number" "603-RC0603FR-07243KL"
+		(property "Mouser Part Number" ""
 			(at 120.65 142.24 0)
 			(hide yes)
 			(show_name no)
@@ -12115,7 +12002,7 @@
 				)
 			)
 		)
-		(property "InvenTree Part" "R_243k_0603_1%"
+		(property "InvenTree Part" ""
 			(at 120.65 142.24 0)
 			(hide yes)
 			(show_name no)
@@ -13535,7 +13422,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.mouser.co.uk/datasheet/3/508/1/PYu-RC_Group_51_RoHS_L_12.pdf"
+		(property "Datasheet" ""
 			(at 120.65 152.4 0)
 			(hide yes)
 			(show_name no)
@@ -13590,18 +13477,7 @@
 				)
 			)
 		)
-		(property "Mouser Part Number" "603-RC0603FR-1322K1L"
-			(at 120.65 152.4 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree Part" "R_22k1_0603_1%"
+		(property "InvenTree Part" ""
 			(at 120.65 152.4 0)
 			(hide yes)
 			(show_name no)
@@ -13828,7 +13704,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.mouser.com/catalog/specsheets/YAGEO_PYu_RC_Group_51_RoHS_L_12.pdf?_gl=1*1ninmyl*_gcl_au*MTI3NDQ0Mzk2NC4xNzY2NDEzNTk1LjIwMzY5MzAxODkuMTc3MDA1MDY4MS4xNzcwMDU2OTY5*_ga*MTk2NjYzNzAxOS4xNzU4NjIyMzM4*_ga_15W4STQT4T*czE3NzAwNTA2ODAkbzI0JGcxJHQxNzcwMDU2OTgzJGoyNyRsMCRoMA.."
+		(property "Datasheet" ""
 			(at 120.65 95.25 0)
 			(hide yes)
 			(show_name no)
@@ -13883,7 +13759,7 @@
 				)
 			)
 		)
-		(property "Mouser Part Number" "603-RC0603FR-07243KL"
+		(property "Mouser Part Number" ""
 			(at 120.65 95.25 0)
 			(hide yes)
 			(show_name no)
@@ -13894,7 +13770,7 @@
 				)
 			)
 		)
-		(property "InvenTree Part" "R_243k_0603_1%"
+		(property "InvenTree Part" ""
 			(at 120.65 95.25 0)
 			(hide yes)
 			(show_name no)
