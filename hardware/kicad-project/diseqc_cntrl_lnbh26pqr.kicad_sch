@@ -360,6 +360,192 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Connector:Conn_Coaxial"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0.254 3.048 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_Coaxial"
+				(at 2.921 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "coaxial connector (BNC, SMA, SMB, SMC, Cinch/RCA, LEMO, ...)"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "BNC SMA SMB SMC LEMO coaxial connector CINCH RCA MCX MMCX U.FL UMRF"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "*BNC* *SMA* *SMB* *SMC* *Cinch* *LEMO* *UMRF* *MCX* *U.FL*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Conn_Coaxial_0_1"
+				(polyline
+					(pts
+						(xy -2.54 0) (xy -0.508 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 1.778 0)
+					(mid 0.222 -1.8079)
+					(end -1.778 -0.508)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -1.778 0.508)
+					(mid 0.2221 1.8084)
+					(end 1.778 0)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 0 0)
+					(radius 0.508)
+					(stroke
+						(width 0.2032)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -2.54) (xy 0 -1.778)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "Conn_Coaxial_1_1"
+				(pin passive line
+					(at -5.08 0 0)
+					(length 2.54)
+					(name "In"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -5.08 90)
+					(length 2.54)
+					(name "Ext"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "diseqc_cntrl:+12V"
 			(power global)
 			(pin_numbers
@@ -3277,12 +3463,6 @@
 		(uuid "738c7ed8-eafd-4397-b76b-5d3731a9e908")
 	)
 	(junction
-		(at 199.39 67.31)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "775de4a6-ee10-4ade-b4c4-ad69fbdc740d")
-	)
-	(junction
 		(at 119.38 109.22)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3355,10 +3535,10 @@
 		(uuid "ea98fa0c-e2a5-4ef2-a1d5-5cf095824cbf")
 	)
 	(junction
-		(at 226.06 67.31)
+		(at 199.39 67.31)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "f78a92a1-0d99-4f2b-bf28-9dadfc876128")
+		(uuid "eaee5a79-b1eb-4d0e-aef2-fb054a4ef1c3")
 	)
 	(no_connect
 		(at 143.51 123.19)
@@ -3407,26 +3587,6 @@
 			(type default)
 		)
 		(uuid "030f4afb-1531-440b-8c97-e73d7fc9a5a9")
-	)
-	(wire
-		(pts
-			(xy 226.06 53.34) (xy 226.06 67.31)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "03203caa-1562-4409-bec4-63ce612c9c03")
-	)
-	(wire
-		(pts
-			(xy 199.39 67.31) (xy 215.9 67.31)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "06b61105-1854-4223-a6d7-06cc58194ebe")
 	)
 	(wire
 		(pts
@@ -3590,16 +3750,6 @@
 	)
 	(wire
 		(pts
-			(xy 220.98 67.31) (xy 226.06 67.31)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "4d27f37c-a71c-4c6e-a5fb-d5def645c0d2")
-	)
-	(wire
-		(pts
 			(xy 133.35 67.31) (xy 133.35 69.85)
 		)
 		(stroke
@@ -3717,6 +3867,16 @@
 			(type default)
 		)
 		(uuid "685e4438-c4e9-4d88-819d-958d50bceaa9")
+	)
+	(wire
+		(pts
+			(xy 237.49 72.39) (xy 237.49 74.93)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6bc7260a-dba0-4ed8-abfc-83b46c5e3254")
 	)
 	(wire
 		(pts
@@ -3840,6 +4000,16 @@
 	)
 	(wire
 		(pts
+			(xy 199.39 67.31) (xy 232.41 67.31)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "901d1c55-c7d9-4037-a772-71eb877e5df3")
+	)
+	(wire
+		(pts
 			(xy 119.38 106.68) (xy 120.65 106.68)
 		)
 		(stroke
@@ -3960,6 +4130,16 @@
 	)
 	(wire
 		(pts
+			(xy 220.98 53.34) (xy 224.79 53.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b7501248-3481-4597-b2bc-75459c093f02")
+	)
+	(wire
+		(pts
 			(xy 187.96 115.57) (xy 173.99 115.57)
 		)
 		(stroke
@@ -4050,6 +4230,16 @@
 	)
 	(wire
 		(pts
+			(xy 224.79 53.34) (xy 224.79 55.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "da5f36a8-515a-497f-9f8e-82d7eabe9f73")
+	)
+	(wire
+		(pts
 			(xy 119.38 95.25) (xy 119.38 99.06)
 		)
 		(stroke
@@ -4077,16 +4267,6 @@
 			(type default)
 		)
 		(uuid "e41f4e3c-4e37-409c-b62d-dc01ef4d1f71")
-	)
-	(wire
-		(pts
-			(xy 220.98 53.34) (xy 226.06 53.34)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e467ebcf-f918-4cad-b0f8-6c0f6d2aedb2")
 	)
 	(wire
 		(pts
@@ -4249,7 +4429,7 @@
 		(uuid "f44f3aa4-7706-4add-9658-5b87904ee641")
 	)
 	(label "LNB_OUT"
-		(at 207.01 67.31 0)
+		(at 217.17 67.31 0)
 		(effects
 			(font
 				(size 0.762 0.762)
@@ -4301,6 +4481,84 @@
 			(justify left)
 		)
 		(uuid "a8ad3942-3de6-4e0c-a154-460111f12656")
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 237.49 74.93 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "0b1367fc-b297-4b6f-b8ba-c04cf4edd949")
+		(property "Reference" "#PWR062"
+			(at 237.49 81.28 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 237.49 80.01 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 237.49 74.93 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 237.49 74.93 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 237.49 74.93 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "045b1543-f467-4d2c-958f-eb6fd5963b40")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
+					(reference "#PWR062")
+					(unit 1)
+				)
+			)
+		)
 	)
 	(symbol
 		(lib_id "diseqc_cntrl:C")
@@ -6204,8 +6462,8 @@
 		)
 	)
 	(symbol
-		(lib_id "diseqc_cntrl:Conn_Coaxial_Small")
-		(at 218.44 67.31 0)
+		(lib_id "Connector:Conn_Coaxial")
+		(at 237.49 67.31 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -6216,27 +6474,29 @@
 		(fields_autoplaced yes)
 		(uuid "5f6ea4de-660a-4861-b38d-402bff1fb11a")
 		(property "Reference" "J8"
-			(at 217.9204 60.96 0)
+			(at 241.3 66.3331 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
+				(justify left)
 			)
 		)
-		(property "Value" "SMA_Sock"
-			(at 217.9204 63.5 0)
+		(property "Value" "Conn_Coaxial"
+			(at 241.3 68.8731 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
+				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_Coaxial:SMA_Molex_73251-1153_EdgeMount_Horizontal"
-			(at 218.44 67.31 0)
+		(property "Footprint" "ebnx_footprints:AMPHENOL_531-40156"
+			(at 237.49 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6246,8 +6506,8 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.molex.com/en-us/products/part-detail-pdf/732511153?display=pdf"
-			(at 218.44 67.31 0)
+		(property "Datasheet" "https://www.amphenolrf.com/531-40156.html"
+			(at 237.49 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6257,8 +6517,8 @@
 				)
 			)
 		)
-		(property "Description" "small coaxial connector (BNC, SMA, SMB, SMC, Cinch/RCA, LEMO, ...)"
-			(at 218.44 67.31 0)
+		(property "Description" "75 Ohm F-Type right-angle PCB jack, through-hole bulkhead rear mount, 3 GHz"
+			(at 237.49 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6268,8 +6528,8 @@
 				)
 			)
 		)
-		(property "Maufacturer_Part_Number" ""
-			(at 218.44 67.31 0)
+		(property "Maufacturer_Part_Number" "531-40156"
+			(at 237.49 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6279,8 +6539,8 @@
 				)
 			)
 		)
-		(property "Manufacturer_Part_Code" ""
-			(at 218.44 67.31 0)
+		(property "MPN" "531-40156"
+			(at 237.49 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6291,7 +6551,7 @@
 			)
 		)
 		(property "Mouser_Part_Number" ""
-			(at 218.44 67.31 0)
+			(at 237.49 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6301,8 +6561,8 @@
 				)
 			)
 		)
-		(property "Mouser Part Number" "538-73251-1153"
-			(at 218.44 67.31 0)
+		(property "Mouser Part Number" "523-531-40156"
+			(at 254 562.23 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6310,10 +6570,11 @@
 				(font
 					(size 1.27 1.27)
 				)
+				(justify left top)
 			)
 		)
-		(property "InvenTree Part" "J_RF_SMA_SKT"
-			(at 218.44 67.31 0)
+		(property "InvenTree Part" ""
+			(at 237.49 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6324,7 +6585,7 @@
 			)
 		)
 		(property "KLC_S4.2_3V3OUT" ""
-			(at 218.44 67.31 0)
+			(at 237.49 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6335,7 +6596,7 @@
 			)
 		)
 		(property "KLC_S4.2_VCC" ""
-			(at 218.44 67.31 0)
+			(at 237.49 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6346,18 +6607,7 @@
 			)
 		)
 		(property "Tolerance" ""
-			(at 218.44 67.31 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree" "81"
-			(at 218.44 67.31 0)
+			(at 237.49 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6368,7 +6618,7 @@
 			)
 		)
 		(property "VoltageRequirement" ""
-			(at 218.44 67.31 0)
+			(at 237.49 67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6376,6 +6626,76 @@
 				(font
 					(size 0.762 0.762)
 				)
+			)
+		)
+		(property "InvenTree" "277"
+			(at 237.49 67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Part URL" "https://inventree.ebnx.net/web/part/277/"
+			(at 237.49 67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Height" " "
+			(at 254 462.23 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Mouser Price/Stock" "https://www.mouser.co.uk/ProductDetail/Amphenol-RF/531-40156"
+			(at 254 662.23 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Manufacturer_Name" "Amphenol"
+			(at 254 762.23 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Manufacturer_Part_Number" "531-40156"
+			(at 254 862.23 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
 			)
 		)
 		(pin "2"
@@ -6984,6 +7304,83 @@
 	)
 	(symbol
 		(lib_id "power:GND")
+		(at 224.79 55.88 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "770cd35e-9f30-4c09-88be-f0b5534bd56a")
+		(property "Reference" "#PWR079"
+			(at 224.79 62.23 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 224.536 59.944 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 224.79 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 224.79 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 224.79 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "7466afed-6ccf-4cd3-b5dd-f9000134e271")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
+					(reference "#PWR079")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
 		(at 119.38 144.78 0)
 		(unit 1)
 		(body_style 1)
@@ -7581,84 +7978,6 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
 					(reference "C38")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 226.06 67.31 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "9ea501c6-55b0-404d-a1d5-a62e6b4b78bf")
-		(property "Reference" "#PWR062"
-			(at 226.06 73.66 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 226.06 72.39 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 226.06 67.31 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 226.06 67.31 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 226.06 67.31 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "3ec0ffc0-56e4-4434-8aa6-baf9760cd894")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
-					(reference "#PWR062")
 					(unit 1)
 				)
 			)

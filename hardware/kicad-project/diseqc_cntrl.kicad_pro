@@ -94,6 +94,10 @@
           ""
         ],
         [
+          "lib_footprint_mismatch|133160000|117560000|d98b0580-f05e-4121-b674-6080108afaf0|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
           "via_dangling|87287500|103948686|38481770-9503-43c2-836e-a14a70e1255f|00000000-0000-0000-0000-000000000000",
           ""
         ],
@@ -235,7 +239,10 @@
         }
       ],
       "track_widths": [
-        0.0
+        0.0,
+        0.1,
+        0.15,
+        0.28
       ],
       "tuning_pattern_settings": {
         "diff_pair_defaults": {
@@ -1093,7 +1100,7 @@
         "uuid": "82a905d8-f1d7-4995-9c16-94cf3cdcaad9"
       }
     ],
-    "used_designators": "TP1-24,1,FID1-5,IC1-8,J1-9,R1-40,#FLG1-12,11,JP1-2,#PWR1-78,L1-5,C1-51,D1-8,F1,FB1-4,NT1-3,SW1,U1,Y1-2,LED1-2",
+    "used_designators": "TP1-24,1,FID1-5,IC1-8,J1-9,R1-40,#FLG1-12,11,JP1-2,#PWR1-79,L1-5,C1-51,D1-8,F1,FB1-4,NT1-3,SW1,U1,Y1-2,LED1-2",
     "variants": []
   },
   "sheets": [
