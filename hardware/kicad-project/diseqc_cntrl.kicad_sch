@@ -12127,7 +12127,7 @@
 				)
 			)
 		)
-		(property "Value" "FerriteBead"
+		(property "Value" "120r"
 			(at 231.0892 156.21 90)
 			(show_name no)
 			(do_not_autoplace no)

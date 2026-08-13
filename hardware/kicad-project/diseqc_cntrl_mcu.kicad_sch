@@ -8386,10 +8386,6 @@
 		(uuid "c48659e6-6efb-4d48-afde-bb3f03974d22")
 	)
 	(no_connect
-		(at 68.58 127)
-		(uuid "c691dc0b-a33f-445d-bd76-ebf861c0113e")
-	)
-	(no_connect
 		(at 140.97 50.8)
 		(uuid "ca0b0a89-d971-4798-92f8-506575f18357")
 	)
@@ -10418,6 +10414,16 @@
 	)
 	(wire
 		(pts
+			(xy 66.04 138.43) (xy 68.58 138.43)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "edb5598a-4bb3-4da7-bfe8-4463c45290cc")
+	)
+	(wire
+		(pts
 			(xy 134.62 30.48) (xy 137.16 30.48)
 		)
 		(stroke
@@ -10455,6 +10461,16 @@
 			(type default)
 		)
 		(uuid "f015b7c2-a286-4dd1-8ade-4379a83f6769")
+	)
+	(wire
+		(pts
+			(xy 68.58 138.43) (xy 68.58 127)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f0db654e-c349-4108-955f-ebb9f0c7ab10")
 	)
 	(wire
 		(pts
@@ -11251,7 +11267,7 @@
 				)
 			)
 		)
-		(property "LCSC Part #" "C1525"
+		(property "LCSC Part #" ""
 			(at 25.4 167.64 0)
 			(hide yes)
 			(show_name no)
@@ -11452,7 +11468,7 @@
 				)
 			)
 		)
-		(property "LCSC Part #" "C1525"
+		(property "LCSC Part #" ""
 			(at 35.56 167.64 0)
 			(hide yes)
 			(show_name no)
@@ -11653,7 +11669,7 @@
 				)
 			)
 		)
-		(property "LCSC Part #" "C1525"
+		(property "LCSC Part #" ""
 			(at 45.72 167.64 0)
 			(hide yes)
 			(show_name no)
@@ -11854,7 +11870,7 @@
 				)
 			)
 		)
-		(property "LCSC Part #" "C1525"
+		(property "LCSC Part #" ""
 			(at 55.88 167.64 0)
 			(hide yes)
 			(show_name no)
@@ -12055,7 +12071,7 @@
 				)
 			)
 		)
-		(property "LCSC Part #" "C1525"
+		(property "LCSC Part #" ""
 			(at 67.31 167.64 0)
 			(hide yes)
 			(show_name no)
@@ -16990,6 +17006,17 @@
 				)
 			)
 		)
+		(property "InvenTree" "77"
+			(at 191.77 30.48 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "0933de88-883b-46d0-9d16-19e4ec51cf67")
 		)
@@ -19576,7 +19603,7 @@
 				)
 			)
 		)
-		(property "LCSC Part #" "C1525"
+		(property "LCSC Part #" ""
 			(at 77.47 167.64 0)
 			(hide yes)
 			(show_name no)
@@ -20612,6 +20639,84 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
 					(reference "R15")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+3.3VA")
+		(at 66.04 138.43 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "dcf6076c-5363-44a9-9b99-ea5199320910")
+		(property "Reference" "#PWR077"
+			(at 66.04 142.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3.3VA"
+			(at 66.04 133.35 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 66.04 138.43 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 66.04 138.43 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3.3VA\""
+			(at 66.04 138.43 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "adf22fec-1032-4cd7-926c-bf7c136493f7")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
+					(reference "#PWR077")
 					(unit 1)
 				)
 			)

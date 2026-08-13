@@ -3247,12 +3247,6 @@
 		(uuid "24dda17f-8885-4508-b6ee-8b8b523a50fe")
 	)
 	(junction
-		(at 226.06 53.34)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "2748094d-2b52-4580-b480-8c8c403995bd")
-	)
-	(junction
 		(at 166.37 115.57)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3371,12 +3365,12 @@
 		(uuid "0af2c2f5-46f0-40c0-86a1-0c04d12ef4bb")
 	)
 	(no_connect
-		(at 120.65 92.71)
-		(uuid "770a38c5-0fec-465c-bea9-6438bea08246")
+		(at 226.06 34.29)
+		(uuid "5ebb0690-a532-4367-84a4-a87b44625a15")
 	)
 	(no_connect
-		(at 190.5 34.29)
-		(uuid "921597b6-e852-4fa8-bc76-45d504d4200c")
+		(at 120.65 92.71)
+		(uuid "770a38c5-0fec-465c-bea9-6438bea08246")
 	)
 	(no_connect
 		(at 135.89 69.85)
@@ -3686,6 +3680,16 @@
 	)
 	(wire
 		(pts
+			(xy 190.5 34.29) (xy 185.42 34.29)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5f248a86-04e0-4ce4-b7ae-d95281cf5194")
+	)
+	(wire
+		(pts
 			(xy 143.51 59.69) (xy 153.67 59.69)
 		)
 		(stroke
@@ -3813,6 +3817,16 @@
 			(type default)
 		)
 		(uuid "8c33fdc8-909d-44bb-a3fd-979e3691af55")
+	)
+	(wire
+		(pts
+			(xy 185.42 34.29) (xy 185.42 36.83)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8e0a9d6f-a6a1-4165-b2d1-1bba1dd90200")
 	)
 	(wire
 		(pts
@@ -3953,16 +3967,6 @@
 			(type default)
 		)
 		(uuid "b796cd3e-86cd-401e-85e2-b686ccc43d39")
-	)
-	(wire
-		(pts
-			(xy 226.06 34.29) (xy 226.06 53.34)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c02d84fa-8e52-4ba6-b67c-b7b4c2a86bf0")
 	)
 	(wire
 		(pts
@@ -6094,7 +6098,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Diode_SMD:D_SMA-SMB_Universal_Handsoldering"
+		(property "Footprint" "Diode_SMD:D_SMA"
 			(at 149.225 63.5 0)
 			(hide yes)
 			(show_name no)
@@ -9145,6 +9149,84 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
 					(reference "#PWR053")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 185.42 36.83 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "f7d5a69d-87b0-423f-9b51-bbb0164b3b32")
+		(property "Reference" "#PWR078"
+			(at 185.42 43.18 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 185.42 41.91 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 185.42 36.83 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 185.42 36.83 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 185.42 36.83 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "689ec5df-59e9-4d0b-a2a6-64566cddd99b")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5/114baf94-7b4a-4d2d-92f4-f2fc3fb70423"
+					(reference "#PWR078")
 					(unit 1)
 				)
 			)

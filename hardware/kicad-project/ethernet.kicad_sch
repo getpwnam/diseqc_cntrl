@@ -5912,16 +5912,6 @@
 		)
 		(uuid "2c0ca22f-d560-449b-9e6b-420b61cf7409")
 	)
-	(label "RXN"
-		(at 128.27 80.01 180)
-		(effects
-			(font
-				(size 0.762 0.762)
-			)
-			(justify right bottom)
-		)
-		(uuid "2daf3820-0691-4dea-9b67-789e34496826")
-	)
 	(label "TXD0"
 		(at 17.78 82.55 0)
 		(effects
@@ -5942,6 +5932,16 @@
 		)
 		(uuid "4ca370a8-5a99-4cd1-bb49-1a16236bffe1")
 	)
+	(label "RXN"
+		(at 128.27 87.63 180)
+		(effects
+			(font
+				(size 0.762 0.762)
+			)
+			(justify right bottom)
+		)
+		(uuid "5302557f-55c4-412b-b8e5-7190bcbe19b7")
+	)
 	(label "LED2_A"
 		(at 260.35 82.55 0)
 		(effects
@@ -5951,6 +5951,26 @@
 			(justify left bottom)
 		)
 		(uuid "63f660fe-aa70-4765-af7e-373d27f2587b")
+	)
+	(label "TXN"
+		(at 128.27 82.55 180)
+		(effects
+			(font
+				(size 0.762 0.762)
+			)
+			(justify right bottom)
+		)
+		(uuid "6bd41e87-9154-40c8-ad37-7bcdbe668b8b")
+	)
+	(label "TXP"
+		(at 128.27 80.01 180)
+		(effects
+			(font
+				(size 0.762 0.762)
+			)
+			(justify right bottom)
+		)
+		(uuid "6c47fa90-95a2-4f32-ab93-eecb68a67bec")
 	)
 	(label "REF_CLK"
 		(at 17.78 29.21 0)
@@ -5962,6 +5982,16 @@
 		)
 		(uuid "6dd3e367-4c4e-42de-933c-1ae0b26d7fb3")
 	)
+	(label "RXP"
+		(at 128.27 85.09 180)
+		(effects
+			(font
+				(size 0.762 0.762)
+			)
+			(justify right bottom)
+		)
+		(uuid "6eb6580b-73e5-4b26-9323-6ac3431515c9")
+	)
 	(label "RXD0"
 		(at 17.78 90.17 0)
 		(effects
@@ -5971,16 +6001,6 @@
 			(justify left bottom)
 		)
 		(uuid "7aa773e6-d3d0-4621-9b15-293ad1acd6e2")
-	)
-	(label "RXP"
-		(at 128.27 82.55 180)
-		(effects
-			(font
-				(size 0.762 0.762)
-			)
-			(justify right bottom)
-		)
-		(uuid "7cc7007c-fd26-4c09-a91c-00725a350284")
 	)
 	(label "LED1_A"
 		(at 243.84 90.17 0)
@@ -6051,16 +6071,6 @@
 			(justify left bottom)
 		)
 		(uuid "a910eea6-4cfb-4ddb-a455-8da70da84393")
-	)
-	(label "TXP"
-		(at 128.27 87.63 180)
-		(effects
-			(font
-				(size 0.762 0.762)
-			)
-			(justify right bottom)
-		)
-		(uuid "ae3674e7-667a-46bf-a2f0-3ce2233b13e6")
 	)
 	(label "RXP"
 		(at 151.13 72.39 0)
@@ -6161,16 +6171,6 @@
 			(justify left bottom)
 		)
 		(uuid "e4800fae-cf37-40f6-83eb-dc6d877e8114")
-	)
-	(label "TXN"
-		(at 128.27 85.09 180)
-		(effects
-			(font
-				(size 0.762 0.762)
-			)
-			(justify right bottom)
-		)
-		(uuid "e6e3d768-f1e6-4ddb-a89c-794109853c1e")
 	)
 	(label "LED1_A"
 		(at 123.19 93.98 0)
