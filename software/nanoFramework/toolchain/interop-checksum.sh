@@ -3,20 +3,17 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PE_SLOT_GUARD_SCRIPT="$ROOT_DIR/toolchain/interop-pe-slot-guard.sh"
 
 MODE="check"
-ASSEMBLY_NAME="Cubley.Interop"
+ASSEMBLY_NAME="CubleyNative"
 PE_PATH=""
 
-CUBLEY_ASSEMBLY_INFO_PATH="$ROOT_DIR/Cubley.Interop/Properties/AssemblyInfo.cs"
+CUBLEY_ASSEMBLY_INFO_PATH="$ROOT_DIR/CubleyNative.Interop/Properties/AssemblyInfo.cs"
 CUBLEY_NATIVE_INTEROP_PATH="$ROOT_DIR/nf-native/cubley_interop.cpp"
-CUBLEY_NATIVE_SYMBOL="g_CLR_AssemblyNative_Cubley_Interop"
-CUBLEY_DEFAULT_PE_PATH="$ROOT_DIR/build/DiSEqC_Control/Cubley.Interop.pe"
-
-SMOKE_ASSEMBLY_INFO_PATH="$ROOT_DIR/SmokeW5500.Interop/Properties/AssemblyInfo.cs"
-SMOKE_NATIVE_INTEROP_PATH="$ROOT_DIR/nf-native/smoke_w5500_interop.cpp"
-SMOKE_NATIVE_SYMBOL="g_CLR_AssemblyNative_SmokeW5500_Interop"
-SMOKE_DEFAULT_PE_PATH="$ROOT_DIR/build/CubleySmokeTier2_W5500/SmokeW5500.Interop.pe"
+CUBLEY_NATIVE_SYMBOL="g_CLR_AssemblyNative_CubleyNative"
+CUBLEY_DEFAULT_PE_PATH="$ROOT_DIR/build/DiSEqC_Control/CubleyNative.pe"
+LEGACY_SMOKE_ASSEMBLY_INFO_PATH="$ROOT_DIR/SmokeW5500.Interop/Properties/AssemblyInfo.cs"
 
 ASSEMBLY_INFO_PATH=""
 NATIVE_INTEROP_PATH=""
@@ -33,8 +30,7 @@ Modes:
   --fix      Read checksum from PE and update managed + native source values.
 
 Assemblies:
-  Cubley.Interop
-  SmokeW5500.Interop
+  CubleyNative
 
 Notes:
   - PE checksum is read from CLR_RECORD_ASSEMBLY.nativeMethodsChecksum (offset 20).
@@ -44,21 +40,15 @@ EOF
 
 set_targets() {
   case "$ASSEMBLY_NAME" in
-    Cubley.Interop)
+    CubleyNative)
       ASSEMBLY_INFO_PATH="$CUBLEY_ASSEMBLY_INFO_PATH"
       NATIVE_INTEROP_PATH="$CUBLEY_NATIVE_INTEROP_PATH"
       NATIVE_SYMBOL="$CUBLEY_NATIVE_SYMBOL"
       DEFAULT_PE_PATH="$CUBLEY_DEFAULT_PE_PATH"
       ;;
-    SmokeW5500.Interop)
-      ASSEMBLY_INFO_PATH="$SMOKE_ASSEMBLY_INFO_PATH"
-      NATIVE_INTEROP_PATH="$SMOKE_NATIVE_INTEROP_PATH"
-      NATIVE_SYMBOL="$SMOKE_NATIVE_SYMBOL"
-      DEFAULT_PE_PATH="$SMOKE_DEFAULT_PE_PATH"
-      ;;
     *)
       echo "Unsupported assembly '$ASSEMBLY_NAME'." >&2
-      echo "Supported: Cubley.Interop, SmokeW5500.Interop" >&2
+      echo "Supported: CubleyNative" >&2
       exit 2
       ;;
   esac
@@ -142,7 +132,7 @@ assert_native_version_scope() {
   offenders="$(grep -R -n --include='AssemblyInfo.cs' -F 'AssemblyNativeVersion("' "$ROOT_DIR" \
     | cut -d: -f1 \
     | sort -u \
-    | grep -Ev "^$CUBLEY_ASSEMBLY_INFO_PATH$|^$SMOKE_ASSEMBLY_INFO_PATH$" || true)"
+    | grep -Ev "^$CUBLEY_ASSEMBLY_INFO_PATH$|^$LEGACY_SMOKE_ASSEMBLY_INFO_PATH$" || true)"
 
   if [[ -n "$offenders" ]]; then
     echo "Invalid AssemblyNativeVersion usage detected outside allowed interop assemblies:" >&2
@@ -152,7 +142,6 @@ assert_native_version_scope() {
     done <<< "$offenders"
     echo "Allowed files:" >&2
     echo "  - $CUBLEY_ASSEMBLY_INFO_PATH" >&2
-    echo "  - $SMOKE_ASSEMBLY_INFO_PATH" >&2
     exit 1
   fi
 }
@@ -248,6 +237,10 @@ if [[ -f "$PE_PATH" ]]; then
     echo "  source: $CS_SUM" >&2
     echo "Run: ./toolchain/interop-checksum.sh --fix --assembly $ASSEMBLY_NAME --pe $PE_PATH" >&2
     exit 1
+  fi
+
+  if [[ -x "$PE_SLOT_GUARD_SCRIPT" ]]; then
+    "$PE_SLOT_GUARD_SCRIPT" "$PE_PATH"
   fi
 fi
 

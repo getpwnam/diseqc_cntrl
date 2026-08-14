@@ -22,7 +22,7 @@ PROJECT_ARG_SET="${PROJECT:+true}"
 SOLUTION_ARG_SET="${SOLUTION:+true}"
 SERIAL_PORT=""
 DEPLOY_ADDRESS=""
-BAUD="115200"
+BAUD="921600"
 DO_DEPLOY="false"
 DO_RESET="false"
 USE_SWD="false"
@@ -65,7 +65,7 @@ build mode:
   --swd                             Deploy via SWD using st-flash instead of nanoff
   --serialport <port>               Serial wire-protocol port for deployment
   --address <hex>                   Deployment address, e.g. 0x080C0000
-  --baud <rate>                     Serial baud for deploy (default: 115200)
+  --baud <rate>                     Serial baud for deploy (default: 921600)
   --reset                           Reset device after deploy
 EOF
 }
@@ -186,8 +186,7 @@ restore_packages_from_config() {
 
 bootstrap_packages() {
   echo "[stage] Ensuring nanoFramework package cache is present..."
-  restore_packages_from_config "$ROOT_DIR/Cubley.Interop/packages.config"
-  restore_packages_from_config "$ROOT_DIR/SmokeW5500.Interop/packages.config"
+  restore_packages_from_config "$ROOT_DIR/CubleyNative.Interop/packages.config"
   restore_packages_from_config "$ROOT_DIR/DiSEqC_Control/packages.config"
 
   if command -v dotnet >/dev/null 2>&1; then
@@ -558,29 +557,13 @@ else
   fi
   PRIMARY_PE="$OUTPUT_DIR/$ASSEMBLY_NAME.pe"
   CUBLEY_INTEROP_PE="$OUTPUT_DIR/Cubley.Interop.pe"
-  SMOKE_W5500_INTEROP_PE="$OUTPUT_DIR/SmokeW5500.Interop.pe"
   RUNTIME_EVENTS_PE=""
-  CUBLEY_INTEROP_CHECK_ASSEMBLY="Cubley.Interop"
-
-  # Tier2 smoke references SmokeW5500.Interop but currently emits Cubley.Interop.pe.
-  # In this case validate that PE against SmokeW5500 interop checksum policy.
-  if grep -Fq "SmokeW5500.Interop.nfproj" "$PROJECT"; then
-    CUBLEY_INTEROP_CHECK_ASSEMBLY="SmokeW5500.Interop"
-  fi
 
   if [[ -x "$CHECKSUM_TOOL" ]]; then
     if [[ -f "$CUBLEY_INTEROP_PE" ]]; then
-      if ! "$CHECKSUM_TOOL" --check --assembly "$CUBLEY_INTEROP_CHECK_ASSEMBLY" --pe "$CUBLEY_INTEROP_PE"; then
-        echo "[error] $CUBLEY_INTEROP_CHECK_ASSEMBLY checksum mismatch; refusing to continue." >&2
-        echo "[error] To realign, run: $CHECKSUM_TOOL --fix --assembly $CUBLEY_INTEROP_CHECK_ASSEMBLY --pe $CUBLEY_INTEROP_PE" >&2
-        exit 1
-      fi
-    fi
-
-    if [[ -f "$SMOKE_W5500_INTEROP_PE" ]]; then
-      if ! "$CHECKSUM_TOOL" --check --assembly SmokeW5500.Interop --pe "$SMOKE_W5500_INTEROP_PE"; then
-        echo "[error] SmokeW5500.Interop checksum mismatch; refusing to continue." >&2
-        echo "[error] To realign, run: $CHECKSUM_TOOL --fix --assembly SmokeW5500.Interop --pe $SMOKE_W5500_INTEROP_PE" >&2
+      if ! "$CHECKSUM_TOOL" --check --assembly Cubley.Interop --pe "$CUBLEY_INTEROP_PE"; then
+        echo "[error] Cubley.Interop checksum mismatch; refusing to continue." >&2
+        echo "[error] To realign, run: $CHECKSUM_TOOL --fix --assembly Cubley.Interop --pe $CUBLEY_INTEROP_PE" >&2
         exit 1
       fi
     fi
@@ -607,10 +590,6 @@ else
 
     if [[ -f "$CUBLEY_INTEROP_PE" ]]; then
       pack_args+=("$CUBLEY_INTEROP_PE")
-    fi
-
-    if [[ -f "$SMOKE_W5500_INTEROP_PE" ]]; then
-      pack_args+=("$SMOKE_W5500_INTEROP_PE")
     fi
 
     if [[ -f "$OUTPUT_DIR/System.Device.Gpio.pe" ]]; then

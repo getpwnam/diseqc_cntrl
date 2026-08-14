@@ -6,7 +6,7 @@ Define compatibility and review rules for `Cubley.Interop` in the v1 major line.
 
 ## Policy Scope
 
-- Managed declarations in `software/nanoFramework/Cubley.Interop/CubleyInteropNative.cs`
+- Managed declarations in `software/nanoFramework/CubleyNative.Interop/CubleyInteropNative.cs`
 - Native lookup/export in `software/nanoFramework/nf-native/cubley_interop.cpp`
 - Build guard scripts in `software/nanoFramework/toolchain/interop-guard.sh` and `software/nanoFramework/toolchain/interop-checksum.sh`
 

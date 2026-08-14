@@ -1,0 +1,889 @@
+using System;
+using System.Diagnostics;
+using System.Device.Gpio;
+using System.Threading;
+using DiSEqC_Control.Mqtt;
+using DiSEqC_Control.Native;
+
+namespace DiSEqC_Control
+{
+    /// <summary>
+    /// MQTT-first slim entry point. Rotor and LNB control are stubbed until their native
+    /// InternalCall bindings are registered as g_CLR_AssemblyNative_DiSEqC_Control. Currently
+    /// rotor control remains stubbed while Cubley.Interop owns active W5500/LNB bindings.
+    /// </summary>
+    public class Program : IMqttCommandSink, IMqttConfigSink
+    {
+        private const int FramBusId = 1;
+        private static bool EnableFramStartupLoadIsolation = false;
+
+        private static MqttClient _mqttClient;
+        private static bool _isConnected;
+        private static RuntimeConfiguration _runtimeConfig;
+        private static RuntimeConfiguration _savedConfig;
+        private static Program _instance;
+        private static HardwareCapabilities _hardwareCapabilities = HardwareCapabilities.None;
+        private static FramConfigurationStorage _framStorage;
+        private static bool _lnbReady;
+
+        private const int STATUS_LED_PIN = 2;
+        private const int STATUS_LED_BLINK_MS = 500;
+
+        private static bool HasW5500 { get { return _hardwareCapabilities.HasW5500; } }
+        private static bool HasLnbh26 { get { return _hardwareCapabilities.HasLnbh26; } }
+        private static bool HasFram { get { return _hardwareCapabilities.HasFram; } }
+
+        private static string TopicPrefix { get { return _runtimeConfig.MqttTopicPrefix; } }
+        private static string TopicAvailability { get { return TopicPrefix + "/availability"; } }
+
+        private static void Beacon(byte stage, byte detail)
+        {
+            try
+            {
+                uint word = ((uint)0xD5 << 24) | ((uint)stage << 16) | detail;
+                Cubley.Interop.DiagMailbox.NativeSet(word);
+            }
+            catch
+            {
+            }
+        }
+
+        internal static void MainApp(HardwareCapabilities hardwareCapabilities)
+        {
+            _hardwareCapabilities = hardwareCapabilities ?? HardwareCapabilities.None;
+
+            // Hard marker before Beacon path to prove Main entry even if helper calls fail.
+            Cubley.Interop.DiagMailbox.NativeSet(0xD5E00101u);
+
+            Beacon(0xA0, 0x01);
+            // Marker after first Beacon to confirm helper execution path.
+            Cubley.Interop.DiagMailbox.NativeSet(0xD5E00201u);
+            Debug.WriteLine("==============================================");
+            Debug.WriteLine("DiSEqC Controller (MQTT-first build)");
+            Debug.WriteLine("STM32F407VGT6 + W5500 + nanoFramework");
+            Debug.WriteLine("==============================================");
+
+            Beacon(0xA1, 0x01);
+            LogHardwareCapabilities();
+            TryInitializeLnbControl();
+
+            if (EnableFramStartupLoadIsolation)
+            {
+                RunFramStartupLoadIsolation();
+            }
+
+            _runtimeConfig = RuntimeConfiguration.CreateDefaults();
+            _savedConfig = _runtimeConfig.Clone();
+            TryLoadRuntimeConfigFromFram();
+            _instance = new Program();
+
+            Beacon(0xA2, 0x01);
+            StartStatusLedHeartbeat();
+
+            Beacon(0xA3, 0x01);
+            if (HasW5500)
+            {
+                InitializeNetwork();
+
+                Beacon(0xA6, 0x01);
+                ConnectToMqtt();
+            }
+            else
+            {
+                Debug.WriteLine("[probe] W5500 absent; skipping network and MQTT startup.");
+                Debug.WriteLine("[probe] Main app continues with non-network features only.");
+            }
+
+            Beacon(0xA7, 0x01);
+            Debug.WriteLine("Entering main loop...");
+            MainLoop();
+        }
+
+        private static void LogHardwareCapabilities()
+        {
+            Debug.WriteLine("[probe] bitmap=0x" + _hardwareCapabilities.Bitmap.ToString("X2") + " (bit0=W5500, bit1=LNBH26, bit2=FRAM)");
+            Debug.WriteLine("[probe] W5500=" + (HasW5500 ? "present" : "absent") +
+                " LNBH26=" + (HasLnbh26 ? "present" : "absent") +
+                " FRAM=" + (HasFram ? "present" : "absent"));
+        }
+
+        private static bool TryGetFramStorage(out FramConfigurationStorage storage, out string error)
+        {
+            storage = null;
+
+            if (!HasFram)
+            {
+                error = "FRAM not detected";
+                return false;
+            }
+
+            try
+            {
+                if (_framStorage == null)
+                {
+                    _framStorage = new FramConfigurationStorage(FramBusId);
+                }
+
+                storage = _framStorage;
+                error = null;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = "FRAM init failed: " + ex.Message;
+                return false;
+            }
+        }
+
+        private static void TryLoadRuntimeConfigFromFram()
+        {
+            try
+            {
+                if (!TryGetFramStorage(out FramConfigurationStorage storage, out string error))
+                {
+                    Debug.WriteLine("[FRAM] " + error + "; using defaults.");
+                    return;
+                }
+
+                if (storage.TryLoad(out RuntimeConfiguration storedConfig, out error))
+                {
+                    _runtimeConfig = storedConfig;
+                    _savedConfig = storedConfig.Clone();
+                    Debug.WriteLine("[FRAM] Loaded persisted runtime configuration.");
+                    return;
+                }
+
+                Debug.WriteLine("[FRAM] " + error + "; using defaults.");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[FRAM] Startup load threw: " + ex.Message + "; using defaults.");
+            }
+        }
+
+        private static void RunFramStartupLoadIsolation()
+        {
+            Cubley.Interop.DiagMailbox.NativeSet(0xD5F10001u);
+
+            if (!HasFram)
+            {
+                Cubley.Interop.DiagMailbox.NativeSet(0xD5F10000u);
+                return;
+            }
+
+            FramConfigurationStorage storage = null;
+
+            Cubley.Interop.DiagMailbox.NativeSet(0xD5F10101u);
+            try
+            {
+                storage = new FramConfigurationStorage(FramBusId);
+                Cubley.Interop.DiagMailbox.NativeSet(0xD5F10201u);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[FRAM-ISO] ctor exception: " + ex.Message);
+                Cubley.Interop.DiagMailbox.NativeSet(0xD5F1E101u);
+                return;
+            }
+
+            Cubley.Interop.DiagMailbox.NativeSet(0xD5F10301u);
+            try
+            {
+                RuntimeConfiguration loadedConfig;
+                string loadError;
+                bool loaded = storage.TryLoad(out loadedConfig, out loadError);
+
+                if (loaded)
+                {
+                    Cubley.Interop.DiagMailbox.NativeSet(0xD5F10401u);
+                }
+                else
+                {
+                    Debug.WriteLine("[FRAM-ISO] TryLoad returned false: " + loadError);
+                    Cubley.Interop.DiagMailbox.NativeSet(0xD5F10400u);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[FRAM-ISO] TryLoad exception: " + ex.Message);
+                Cubley.Interop.DiagMailbox.NativeSet(0xD5F1E201u);
+            }
+        }
+
+        private static void StartStatusLedHeartbeat()
+        {
+            try
+            {
+                var gpio = new GpioController();
+                var led = gpio.OpenPin(STATUS_LED_PIN, PinMode.Output);
+                new Thread(() =>
+                {
+                    bool on = false;
+                    while (true)
+                    {
+                        on = !on;
+                        led.Write(on ? PinValue.High : PinValue.Low);
+                        Thread.Sleep(STATUS_LED_BLINK_MS);
+                    }
+                }).Start();
+                Debug.WriteLine("[LED] Heartbeat enabled on pin " + STATUS_LED_PIN);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[LED] Heartbeat unavailable: " + ex.Message);
+            }
+        }
+
+        private static void InitializeNetwork()
+        {
+            Debug.WriteLine("\n--- Network Initialization ---");
+            Debug.WriteLine("  Static IP : " + _runtimeConfig.StaticIp);
+            Debug.WriteLine("  Mask      : " + _runtimeConfig.StaticSubnetMask);
+            Debug.WriteLine("  Gateway   : " + _runtimeConfig.StaticGateway);
+            Debug.WriteLine("  MAC       : " + _runtimeConfig.NetworkMac);
+
+            var configureStatus = W5500Socket.ConfigureNetwork(
+                _runtimeConfig.StaticIp,
+                _runtimeConfig.StaticSubnetMask,
+                _runtimeConfig.StaticGateway,
+                _runtimeConfig.NetworkMac);
+
+            Debug.WriteLine("[W5500] ConfigureNetwork => " + configureStatus);
+
+            if (configureStatus != W5500Socket.Status.Ok)
+            {
+                Debug.WriteLine("ERROR: W5500 ConfigureNetwork failed; halting.");
+                Thread.Sleep(Timeout.Infinite);
+            }
+
+            const int PhyWaitIterations = 30;
+            const int PhyWaitIntervalMs = 100;
+            uint phy = 0;
+            for (int i = 0; i < PhyWaitIterations; i++)
+            {
+                phy = W5500Socket.GetVersionPhyStatus();
+                if ((phy & 0x01) != 0)
+                {
+                    break;
+                }
+                Thread.Sleep(PhyWaitIntervalMs);
+            }
+            Debug.WriteLine("[W5500] PHY status raw=0x" + phy.ToString("X4") + " link=" + (((phy & 0x01) != 0) ? "UP" : "DOWN"));
+            Debug.WriteLine("Network Ready (static, W5500 native path)");
+        }
+
+        private static void ConnectToMqtt()
+        {
+            Debug.WriteLine("\n--- MQTT Initialization ---");
+            Debug.WriteLine("Broker: " + _runtimeConfig.MqttBroker + ":" + _runtimeConfig.MqttPort);
+            Debug.WriteLine("Transport: w5500-native (in-tree MQTT 3.1.1 client)");
+
+            try
+            {
+                _mqttClient = CreateMqttClient();
+                _mqttClient.MessageReceived += OnMqttMessageReceived;
+                _mqttClient.ConnectionClosed += OnMqttConnectionClosed;
+
+                bool hasCredentials = !string.IsNullOrEmpty(_runtimeConfig.MqttUsername);
+                byte connectResult = MqttPacket.ConnAckServerUnavailable;
+
+                const int ConnectRetryCount = 12;
+                const int ConnectRetryDelayMs = 1000;
+                const int ConnAckTimeoutMs = 5000;
+                for (int attempt = 1; attempt <= ConnectRetryCount; attempt++)
+                {
+                    Beacon(0xB0, (byte)attempt);
+                    try
+                    {
+                        Debug.WriteLine("[MQTT] Connect attempt " + attempt + "/" + ConnectRetryCount);
+                        byte[] willPayloadBytes = AsciiCodec.GetBytes("offline");
+                        string willTopicStr = TopicAvailability;
+                        string user = hasCredentials ? _runtimeConfig.MqttUsername : null;
+                        string pass = hasCredentials ? _runtimeConfig.MqttPassword : null;
+                        connectResult = _mqttClient.Connect(
+                            _runtimeConfig.MqttClientId,
+                            60,
+                            true,
+                            user,
+                            pass,
+                            willTopicStr,
+                            willPayloadBytes,
+                            1,
+                            true,
+                            ConnAckTimeoutMs);
+                    }
+                    catch (Exception cex)
+                    {
+                        Debug.WriteLine("[MQTT] Connect attempt " + attempt + " threw: " + cex.Message);
+                        connectResult = MqttPacket.ConnAckServerUnavailable;
+                    }
+
+                    Beacon(0xB1, connectResult);
+                    if (connectResult == MqttPacket.ConnAckAccepted)
+                    {
+                        break;
+                    }
+
+                    if (attempt < ConnectRetryCount)
+                    {
+                        Thread.Sleep(ConnectRetryDelayMs);
+                    }
+                }
+
+                if (connectResult == MqttPacket.ConnAckAccepted)
+                {
+                    Beacon(0xB2, 0x01);
+                    Debug.WriteLine("Connected to MQTT broker!");
+                    _isConnected = true;
+
+                    PublishAvailability(true);
+                    SubscribeToTopics();
+                    PublishInitialStatus();
+                    Beacon(0xB3, 0x01);
+                }
+                else
+                {
+                    Debug.WriteLine("ERROR: MQTT connection failed! CONNACK code: 0x" + connectResult.ToString("X2"));
+                    _isConnected = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("ERROR: MQTT exception: " + ex.Message);
+                _isConnected = false;
+            }
+        }
+
+        private static MqttClient CreateMqttClient()
+        {
+            var channel = new W5500MqttNetworkChannelCore(
+                _runtimeConfig.MqttBroker,
+                _runtimeConfig.MqttPort,
+                5000,
+                30000,
+                new W5500SocketApi());
+            return new MqttClient(channel);
+        }
+
+        private static void SubscribeToTopics()
+        {
+            Debug.WriteLine("\n--- Subscribing to MQTT Topics ---");
+            string[] topics = new[]
+            {
+                TopicPrefix + "/command/goto/angle",
+                TopicPrefix + "/command/goto/satellite",
+                TopicPrefix + "/command/halt",
+                TopicPrefix + "/command/manual/step_east",
+                TopicPrefix + "/command/manual/step_west",
+                TopicPrefix + "/command/manual/drive_east",
+                TopicPrefix + "/command/manual/drive_west",
+                TopicPrefix + "/command/lnb/voltage",
+                TopicPrefix + "/command/lnb/polarization",
+                TopicPrefix + "/command/lnb/tone",
+                TopicPrefix + "/command/lnb/band",
+                TopicPrefix + "/command/config/get",
+                TopicPrefix + "/command/config/set",
+                TopicPrefix + "/command/config/save",
+                TopicPrefix + "/command/config/reset",
+                TopicPrefix + "/command/config/reload",
+                TopicPrefix + "/command/config/fram_clear",
+                TopicPrefix + "/command/calibrate/reference"
+            };
+            for (int i = 0; i < topics.Length; i++)
+            {
+                _mqttClient.Subscribe(topics[i], 1);
+            }
+            Debug.WriteLine("Subscribed to " + topics.Length + " topics");
+        }
+
+        private static void PublishAvailability(bool online)
+        {
+            string payload = online ? "online" : "offline";
+            _mqttClient.Publish(TopicAvailability, AsciiCodec.GetBytes(payload), 1, true);
+            Debug.WriteLine("Published availability: " + payload);
+        }
+
+        private static void PublishInitialStatus()
+        {
+            Debug.WriteLine("\n--- Publishing Initial Status ---");
+            PublishStatusInternal("state", "idle");
+            PublishStatusInternal("position/angle", "0.0");
+            PublishStatusInternal("position/satellite", "unknown");
+            PublishStatusInternal("busy", "false");
+            PublishLnbStatusSnapshot();
+            PublishEffectiveConfigInternal();
+            Debug.WriteLine("Initial status published");
+        }
+
+        private static bool TryInitializeLnbControl()
+        {
+            _lnbReady = false;
+
+            if (!HasLnbh26)
+            {
+                Debug.WriteLine("[LNB] LNBH26 not detected; native control disabled.");
+                return false;
+            }
+
+            try
+            {
+                LNBH26.Status status = LNBH26.Init();
+                if (status != LNBH26.Status.Ok)
+                {
+                    Debug.WriteLine("[LNB] Init failed: " + status);
+                    return false;
+                }
+
+                status = LNBH26.SetEnable(true);
+                if (status != LNBH26.Status.Ok)
+                {
+                    Debug.WriteLine("[LNB] SetEnable(true) failed: " + status);
+                    return false;
+                }
+
+                status = LNBH26.SetVoltage(LNBH26.Voltage.V13);
+                if (status != LNBH26.Status.Ok)
+                {
+                    Debug.WriteLine("[LNB] SetVoltage(13V) failed: " + status);
+                    return false;
+                }
+
+                status = LNBH26.SetTone(false);
+                if (status != LNBH26.Status.Ok)
+                {
+                    Debug.WriteLine("[LNB] SetTone(false) failed: " + status);
+                    return false;
+                }
+
+                _lnbReady = true;
+                Debug.WriteLine("[LNB] Init complete: EN=1 V=13V tone=off");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[LNB] Init exception: " + ex.Message);
+                return false;
+            }
+        }
+
+        private static void PublishLnbStatusSnapshot()
+        {
+            if (!HasLnbh26)
+            {
+                PublishStatusInternal("lnb/voltage", "absent");
+                PublishStatusInternal("lnb/tone", "absent");
+                PublishStatusInternal("lnb/polarization", "absent");
+                PublishStatusInternal("lnb/band", "absent");
+                PublishStatusInternal("lnb/status_raw", "absent");
+                return;
+            }
+
+            if (!_lnbReady)
+            {
+                PublishStatusInternal("lnb/voltage", "uninitialized");
+                PublishStatusInternal("lnb/tone", "uninitialized");
+                PublishStatusInternal("lnb/polarization", "uninitialized");
+                PublishStatusInternal("lnb/band", "uninitialized");
+                PublishStatusInternal("lnb/status_raw", "uninitialized");
+                return;
+            }
+
+            PublishStatusInternal("lnb/voltage", LNBH26.GetVoltage() == LNBH26.Voltage.V18 ? "18" : "13");
+            PublishStatusInternal("lnb/tone", LNBH26.GetTone() ? "on" : "off");
+            PublishStatusInternal("lnb/polarization", LNBH26.GetPolarization() == LNBH26.Polarization.Horizontal ? "horizontal" : "vertical");
+            PublishStatusInternal("lnb/band", LNBH26.GetBand() == LNBH26.Band.High ? "high" : "low");
+
+            int statusReg;
+            LNBH26.Status status = LNBH26.ReadStatus(out statusReg);
+            if (status == LNBH26.Status.Ok)
+            {
+                PublishStatusInternal("lnb/status_raw", "0x" + statusReg.ToString("X2"));
+            }
+            else
+            {
+                PublishStatusInternal("lnb/status_raw", "read_error:" + status);
+            }
+        }
+
+        private static bool EnsureLnbReady()
+        {
+            if (_lnbReady)
+            {
+                return true;
+            }
+
+            return TryInitializeLnbControl();
+        }
+
+        private static bool TryApplyLnbOperation(LNBH26.Status status, string context)
+        {
+            if (status != LNBH26.Status.Ok)
+            {
+                PublishErrorInternal(context + ": " + status);
+                return false;
+            }
+
+            PublishStatusInternal("lnb/last_op", context + ":ok");
+            PublishLnbStatusSnapshot();
+            return true;
+        }
+
+        private static string NormalizePayload(string payload)
+        {
+            if (payload == null)
+            {
+                return string.Empty;
+            }
+
+            return payload.Trim().ToLower();
+        }
+
+        private static void OnMqttMessageReceived(string topic, byte[] message)
+        {
+            string payload = AsciiCodec.GetString(message, 0, message.Length);
+            Debug.WriteLine("\n[MQTT] Topic: " + topic);
+            Debug.WriteLine("[MQTT] Payload: " + payload);
+
+            try
+            {
+                if (MqttConfigCommandProcessor.TryHandle(topic, payload, _runtimeConfig, _instance))
+                {
+                    return;
+                }
+                if (!MqttCommandRouter.TryHandle(topic, payload, _instance))
+                {
+                    Debug.WriteLine("[MQTT] Unknown topic: " + topic);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[MQTT] Error handling message: " + ex.Message);
+                PublishErrorInternal("Command error: " + ex.Message);
+            }
+        }
+
+        private static void OnMqttConnectionClosed()
+        {
+            Debug.WriteLine("\n[MQTT] Connection lost! Will reconnect in main loop.");
+            _isConnected = false;
+        }
+
+        private static void PublishStatusInternal(string subtopic, string value)
+        {
+            if (!_isConnected) return;
+            string topic = TopicPrefix + "/status/" + subtopic;
+            try
+            {
+                _mqttClient.Publish(topic, AsciiCodec.GetBytes(value), 0, true);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[MQTT] Publish error: " + ex.Message);
+            }
+        }
+
+        private static void PublishErrorInternal(string errorMessage)
+        {
+            Debug.WriteLine("[ERROR] " + errorMessage);
+            if (_isConnected)
+            {
+                PublishStatusInternal("error", errorMessage);
+            }
+        }
+
+        private static void PublishEffectiveConfigInternal()
+        {
+            if (!_isConnected) return;
+            try
+            {
+                _mqttClient.Publish(TopicPrefix + "/status/config", AsciiCodec.GetBytes(_runtimeConfig.ToKeyValueLines()), 0, true);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[MQTT] Config publish error: " + ex.Message);
+            }
+        }
+
+        private static void MainLoop()
+        {
+            int loopCounter = 0;
+            while (true)
+            {
+                if (!_isConnected || (_mqttClient != null && !_mqttClient.IsConnected))
+                {
+                    if (!HasW5500)
+                    {
+                        Thread.Sleep(1000);
+                        loopCounter++;
+                        continue;
+                    }
+
+                    Debug.WriteLine("[MQTT] Disconnected. Reconnecting...");
+                    Thread.Sleep(5000);
+                    ConnectToMqtt();
+                }
+
+                if (loopCounter % 30 == 0 && _isConnected)
+                {
+                    PublishStatusInternal("uptime_s", loopCounter.ToString());
+                }
+
+                if (loopCounter % 10 == 0)
+                {
+                    Debug.WriteLine("[HEARTBEAT] Uptime: " + loopCounter + "s");
+                }
+
+                loopCounter++;
+                Thread.Sleep(1000);
+            }
+        }
+
+        // ------------------ IMqttCommandSink (rotor/LNB stubs) ------------------
+        public void HandleGotoAngle(string payload) { PublishErrorInternal("rotor not yet bound"); }
+        public void HandleGotoSatellite(string payload) { PublishErrorInternal("rotor not yet bound"); }
+        public void HandleHalt() { PublishErrorInternal("rotor not yet bound"); }
+        public void HandleStepEast(string payload) { PublishErrorInternal("rotor not yet bound"); }
+        public void HandleStepWest(string payload) { PublishErrorInternal("rotor not yet bound"); }
+        public void HandleDriveEast() { PublishErrorInternal("rotor not yet bound"); }
+        public void HandleDriveWest() { PublishErrorInternal("rotor not yet bound"); }
+        public void HandleLnbVoltage(string payload)
+        {
+            if (!HasLnbh26)
+            {
+                PublishErrorInternal("LNB not detected");
+                return;
+            }
+
+            if (!EnsureLnbReady())
+            {
+                PublishErrorInternal("LNB init failed");
+                return;
+            }
+
+            string normalized = NormalizePayload(payload);
+            LNBH26.Voltage voltage;
+
+            if (normalized == "13" || normalized == "13v" || normalized == "v" || normalized == "vertical")
+            {
+                voltage = LNBH26.Voltage.V13;
+            }
+            else if (normalized == "18" || normalized == "18v" || normalized == "h" || normalized == "horizontal")
+            {
+                voltage = LNBH26.Voltage.V18;
+            }
+            else
+            {
+                PublishErrorInternal("lnb/voltage payload must be 13|18|vertical|horizontal");
+                return;
+            }
+
+            TryApplyLnbOperation(LNBH26.SetVoltage(voltage), "lnb/voltage");
+        }
+
+        public void HandleLnbPolarization(string payload)
+        {
+            if (!HasLnbh26)
+            {
+                PublishErrorInternal("LNB not detected");
+                return;
+            }
+
+            if (!EnsureLnbReady())
+            {
+                PublishErrorInternal("LNB init failed");
+                return;
+            }
+
+            string normalized = NormalizePayload(payload);
+            LNBH26.Polarization polarization;
+
+            if (normalized == "vertical" || normalized == "v" || normalized == "13" || normalized == "13v")
+            {
+                polarization = LNBH26.Polarization.Vertical;
+            }
+            else if (normalized == "horizontal" || normalized == "h" || normalized == "18" || normalized == "18v")
+            {
+                polarization = LNBH26.Polarization.Horizontal;
+            }
+            else
+            {
+                PublishErrorInternal("lnb/polarization payload must be vertical|horizontal");
+                return;
+            }
+
+            TryApplyLnbOperation(LNBH26.SetPolarization(polarization), "lnb/polarization");
+        }
+
+        public void HandleLnbTone(string payload)
+        {
+            if (!HasLnbh26)
+            {
+                PublishErrorInternal("LNB not detected");
+                return;
+            }
+
+            if (!EnsureLnbReady())
+            {
+                PublishErrorInternal("LNB init failed");
+                return;
+            }
+
+            string normalized = NormalizePayload(payload);
+            bool enable;
+
+            if (normalized == "on" || normalized == "true" || normalized == "1" || normalized == "high")
+            {
+                enable = true;
+            }
+            else if (normalized == "off" || normalized == "false" || normalized == "0" || normalized == "low")
+            {
+                enable = false;
+            }
+            else
+            {
+                PublishErrorInternal("lnb/tone payload must be on|off");
+                return;
+            }
+
+            TryApplyLnbOperation(LNBH26.SetTone(enable), "lnb/tone");
+        }
+
+        public void HandleLnbBand(string payload)
+        {
+            if (!HasLnbh26)
+            {
+                PublishErrorInternal("LNB not detected");
+                return;
+            }
+
+            if (!EnsureLnbReady())
+            {
+                PublishErrorInternal("LNB init failed");
+                return;
+            }
+
+            string normalized = NormalizePayload(payload);
+            LNBH26.Band band;
+
+            if (normalized == "low" || normalized == "0")
+            {
+                band = LNBH26.Band.Low;
+            }
+            else if (normalized == "high" || normalized == "1")
+            {
+                band = LNBH26.Band.High;
+            }
+            else
+            {
+                PublishErrorInternal("lnb/band payload must be low|high");
+                return;
+            }
+
+            TryApplyLnbOperation(LNBH26.SetBand(band), "lnb/band");
+        }
+        public void HandleCalibrateReference() { PublishErrorInternal("calibration not yet bound"); }
+
+        // ------------------ IMqttConfigSink ------------------
+        public void PublishStatus(string subtopic, string value) { PublishStatusInternal(subtopic, value); }
+        public void PublishError(string message) { PublishErrorInternal(message); }
+        public void PublishEffectiveConfig() { PublishEffectiveConfigInternal(); }
+        public void HandleConfigSave()
+        {
+            try
+            {
+                if (!TryGetFramStorage(out FramConfigurationStorage storage, out string error))
+                {
+                    PublishErrorInternal("config/save: " + error);
+                    return;
+                }
+
+                if (!storage.TrySave(_runtimeConfig, out error))
+                {
+                    PublishErrorInternal("config/save: " + error);
+                    return;
+                }
+
+                _savedConfig = _runtimeConfig.Clone();
+                PublishStatusInternal("config/save", "ok");
+                PublishEffectiveConfigInternal();
+                Debug.WriteLine("[FRAM] Saved runtime configuration.");
+            }
+            catch (Exception ex)
+            {
+                PublishErrorInternal("config/save: exception: " + ex.Message);
+            }
+        }
+        public void HandleConfigReset()
+        {
+            _runtimeConfig = RuntimeConfiguration.CreateDefaults();
+            _savedConfig = _runtimeConfig.Clone();
+            PublishStatusInternal("config/reset", "ok");
+            PublishEffectiveConfigInternal();
+        }
+        public void HandleConfigReload()
+        {
+            try
+            {
+                if (!TryGetFramStorage(out FramConfigurationStorage storage, out string error))
+                {
+                    PublishErrorInternal("config/reload: " + error);
+                    return;
+                }
+
+                if (!storage.TryLoad(out RuntimeConfiguration storedConfig, out error))
+                {
+                    PublishErrorInternal("config/reload: " + error);
+                    return;
+                }
+
+                _runtimeConfig = storedConfig;
+                _savedConfig = storedConfig.Clone();
+                PublishStatusInternal("config/reload", "ok");
+                PublishEffectiveConfigInternal();
+                Debug.WriteLine("[FRAM] Reloaded runtime configuration.");
+            }
+            catch (Exception ex)
+            {
+                PublishErrorInternal("config/reload: exception: " + ex.Message);
+            }
+        }
+
+        public void HandleConfigFramClear(string token)
+        {
+            try
+            {
+                if (!TryGetFramStorage(out FramConfigurationStorage storage, out string error))
+                {
+                    PublishErrorInternal("config/fram_clear: " + error);
+                    return;
+                }
+
+                if (!storage.TryClear(out error))
+                {
+                    PublishErrorInternal("config/fram_clear: " + error);
+                    return;
+                }
+
+                PublishStatusInternal("config/fram_clear", "ok");
+                Debug.WriteLine("[FRAM] Cleared persisted configuration.");
+            }
+            catch (Exception ex)
+            {
+                PublishErrorInternal("config/fram_clear: exception: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Basic I2C communication test for LNBH26
+        /// </summary>
+        private static void LnbI2cBasicTest()
+        {
+            Debug.WriteLine("\n--- LNBH26 I2C Basic Test ---");
+            var status = LNBH26.SetVoltage(LNBH26.Voltage.V13);
+            Debug.WriteLine($"SetVoltage(13V) result: {status}");
+            var voltage = LNBH26.GetVoltage();
+            Debug.WriteLine($"GetVoltage() -> {voltage}");
+            // Optionally, print more status if available
+        }
+    }
+}

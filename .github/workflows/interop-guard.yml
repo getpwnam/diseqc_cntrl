@@ -3,7 +3,7 @@ name: Interop Guard
 on:
   pull_request:
     paths:
-      - software/nanoFramework/Cubley.Interop/**
+      - software/nanoFramework/CubleyNative.Interop/**
       - software/nanoFramework/DiSEqC_Control/Native/**
       - software/nanoFramework/nf-native/cubley_interop.cpp
       - software/nanoFramework/toolchain/interop-checksum.sh
@@ -15,7 +15,7 @@ on:
     branches:
       - main
     paths:
-      - software/nanoFramework/Cubley.Interop/**
+      - software/nanoFramework/CubleyNative.Interop/**
       - software/nanoFramework/DiSEqC_Control/Native/**
       - software/nanoFramework/nf-native/cubley_interop.cpp
       - software/nanoFramework/toolchain/interop-checksum.sh

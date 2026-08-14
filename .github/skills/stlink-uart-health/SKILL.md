@@ -11,7 +11,7 @@ Run a deterministic, non-destructive transport triage for this board and classif
 
 ## Primary Targets
 
-- software/nanoFramework/toolchain/uart-preflight.sh
+- firmware/toolchain/uart-preflight.sh
 - software/nanoFramework/tests/swd_read_bringup_status.sh
 - software/nanoFramework/toolchain/build-native.sh
 - docs/debug/BRINGUP_TEST_LOG.md

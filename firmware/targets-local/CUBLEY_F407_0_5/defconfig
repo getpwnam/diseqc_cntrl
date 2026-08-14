@@ -1,0 +1,48 @@
+# defconfig for CUBLEY_F407_0_5 — ultra-minimal baseline.
+#
+# Design intent: start with the smallest working nanoBooter + nanoCLR image
+# that can enumerate over USART3 wire protocol and blink the status LED.
+# Every feature that the app does not need at Phase 0 is disabled here.
+# APIs and features are re-enabled one at a time as each bring-up phase is
+# entered:
+#   Phase 3  I2C1 FRAM         →  CONFIG_API_SYSTEM_DEVICE_I2C=y
+#   Phase 5  motor / DiSEqC    →  CONFIG_API_SYSTEM_DEVICE_PWM=y
+#   Phase 6  I2C3 LNBH26       →  (already covered by I2C API)
+#   Phase 7  W5500 SPI         →  CONFIG_API_SYSTEM_DEVICE_SPI=y
+#
+# Do not enable anything speculatively; each entry costs flash and complicates
+# bring-up.
+
+# ── Board identification ─────────────────────────────────────────────────────
+CONFIG_TARGET_BOARD="CUBLEY_F407_0_5"
+CONFIG_TARGET_SERIES="STM32F4xx"
+
+# ── RTOS ─────────────────────────────────────────────────────────────────────
+CONFIG_RTOS_CHIBIOS=y
+
+# ── CLR features ─────────────────────────────────────────────────────────────
+CONFIG_NF_FEATURE_DEBUGGER=y
+# CONFIG_NF_FEATURE_HAS_CONFIG_BLOCK is not set
+# CONFIG_NF_FEATURE_RTC is not set
+# CONFIG_NF_FEATURE_USE_RNG is not set
+# CONFIG_NF_ENABLE_DOUBLE_PRECISION_FP is not set
+# CONFIG_NF_BUILD_RTM is not set
+# CONFIG_NF_SUPPORT_ANY_BASE_CONVERSION is not set
+# CONFIG_CHIBIOS_SWO_OUTPUT is not set
+
+# ── Networking ───────────────────────────────────────────────────────────────
+# CONFIG_API_SYSTEM_NET is not set
+# CONFIG_NF_NETWORKING_SNTP is not set
+
+# ── Class libraries (all off — added as each phase needs them) ───────────────
+CONFIG_API_SYSTEM_DEVICE_GPIO=y
+# CONFIG_API_HARDWARE_STM32 is not set
+# CONFIG_API_SYSTEM_DEVICE_ADC is not set
+CONFIG_API_SYSTEM_DEVICE_I2C=y
+# CONFIG_API_SYSTEM_DEVICE_PWM is not set
+# CONFIG_API_SYSTEM_DEVICE_SPI is not set
+# CONFIG_API_SYSTEM_IO_FILESYSTEM is not set
+# CONFIG_API_SYSTEM_IO_PORTS is not set
+# CONFIG_API_SYSTEM_MATH is not set
+# CONFIG_API_NANOFRAMEWORK_DEVICE_CAN is not set
+# CONFIG_API_NANOFRAMEWORK_DEVICE_ONEWIRE is not set

@@ -88,7 +88,8 @@ RUN apt-get install -y --no-install-recommends \
     strace \
     tio \
     xxd \
-    jq
+    jq \
+    rsync
 
 # ---- GitHub CLI ----
 RUN mkdir -p -m 755 /etc/apt/keyrings \
