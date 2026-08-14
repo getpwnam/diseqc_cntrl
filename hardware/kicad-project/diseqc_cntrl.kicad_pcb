@@ -8685,7 +8685,7 @@
 		(descr "Tag-Connect programming header; http://www.tag-connect.com/Materials/TC2050-IDC-430%20Datasheet.pdf")
 		(tags "tag connect programming header pogo pins")
 		(property "Reference" "J5"
-			(at 0.6425 5.94 0)
+			(at -0.29 -3.31 0)
 			(layer "F.SilkS")
 			(uuid "c552fd46-1c9b-43a1-9ac6-08272a3ffa4a")
 			(effects
