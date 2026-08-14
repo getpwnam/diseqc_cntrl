@@ -65,7 +65,7 @@ Builds firmware artifacts by fetching/using `nf-interpreter` inside Docker and c
 Commands (recommended wrapper):
 
 - Cubley base profile (default/canonical): `./toolchain/build-native.sh build --profile cubley-base`
-- Cubley W5500-native profile (reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile cubley-uart`
+- Cubley UART profile (reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile cubley-uart`
 - Cubley USB bring-up profile (no-VBUS-sense default, reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile cubley-usb`
 - Cubley hardalive profile (PA2 + PB10 hard toggle, no RTOS/CLR, reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile cubley-hardalive`
 - Bring-up smoke diagnostic profile (PA2 blink + USART3 heartbeat, reference-only): `NF_ALLOW_REFERENCE_PROFILE=1 ./toolchain/build-native.sh build --profile bringup-smoke`
@@ -87,7 +87,7 @@ Deprecated profile quarantine:
 |---|---|---|---|
 | `cubley-base` | canonical | Default baseline firmware | Minimal UART3 wire-protocol baseline on `M0DMF_CUBLEY_V0.4` |
 | `cubley-stable` | reference-only | Historical stable comparison profile | Non-network, config block on, RTC on, UART wire protocol |
-| `cubley-uart` | reference-only | Native W5500 bring-up scaffold | Non-network, config block off, SPI/GPIO/I2C on |
+| `cubley-uart` | reference-only | UART and peripheral bring-up scaffold | Non-network, config block off, GPIO/I2C on |
 | `cubley-usb` | reference-only | USB-first transport bring-up | OTG1 + USB serial enabled; VBUS-sense mode selectable |
 | `cubley-hardalive` | reference-only | Bare-metal liveness check | No RTOS/CLR startup; hard pin toggles |
 | `bringup-smoke` | reference-only | Fast smoke diagnostics | PA2 blink + USART3 heartbeat |
@@ -130,24 +130,18 @@ For Phase A issue #26 style repeatability runs, use:
 
 The helper performs booter flash, CLR flash, explicit `st-flash reset`, then `nanoff --listdevices` and `--devicedetails` per cycle, writing per-cycle logs under `.debug/`.
 
-## MQTT Transport Mode (Phase 3.5)
+## MQTT Transport Mode
 
 Runtime config key:
 
-- `mqtt.transport_mode=system-net|w5500-native`
+- `mqtt.transport_mode=system-net`
 
 Current behavior:
 
-- `system-net` (default): use standard `MqttClient` network channel path.
-- `w5500-native`: request injected W5500-backed `IMqttNetworkChannel` path.
-- If channel injection fails at runtime, code logs the reason and continues on the `system-net` fallback path.
+- `system-net`: use the standard `MqttClient` network channel path when networking is enabled.
+- The current validated firmware profile has networking disabled; LAN8742A RMII/lwIP enablement remains pending.
 
 Set mode via MQTT config command:
-
-- `mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/set' -m 'mqtt.transport_mode=w5500-native'`
-- `mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/save' -m ''`
-
-Rollback to default:
 
 - `mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/set' -m 'mqtt.transport_mode=system-net'`
 - `mosquitto_pub -h <broker-ip> -t 'diseqc/command/config/save' -m ''`

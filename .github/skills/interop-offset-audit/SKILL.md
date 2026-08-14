@@ -1,6 +1,6 @@
 ---
 name: interop-offset-audit
-description: "Use when checking nanoFramework InternalCall bindings, managed/native interop method order, method_lookup index drift, signature mismatches, checksum/version consistency, or after refactors in Cubley.Interop and native interop tables. Keywords: interop offset, method_lookup, InternalCall, BYREF mismatch, native binding audit, W5500 interop map."
+description: "Use when checking nanoFramework InternalCall bindings, managed/native interop method order, method_lookup index drift, signature mismatches, checksum/version consistency, or after refactors in Cubley.Interop and native interop tables. Keywords: interop offset, method_lookup, InternalCall, BYREF mismatch, native binding audit."
 ---
 
 # Interop Offset Audit
@@ -16,7 +16,6 @@ This skill is optimized for this repository's Cubley interop surfaces.
 - software/nanoFramework/CubleyNative.Interop/CubleyInteropNative.cs
 - software/nanoFramework/CubleyNative.Interop/Properties/AssemblyInfo.cs
 - software/nanoFramework/nf-native/cubley_interop.cpp
-- software/nanoFramework/nf-native/w5500_interop.cpp
 
 ## When To Use
 

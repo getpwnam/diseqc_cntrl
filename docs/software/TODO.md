@@ -8,7 +8,7 @@ Program umbrella: [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11)
 
 - Decision: adopt `cubley-base` as the canonical native firmware baseline, and treat all other build profiles as reference-only/deprecated-by-default.
 - Motivation: repeated wire-protocol instability on the previous profile stack blocked deterministic bring-up; a minimal STM32F407 reference-derived baseline proved stable (`nanoff --listdevices` PASS over UART3 at 115200 8N1).
-- Action: all native features (LNBH26, W5500, FRAM, diagnostics, etc.) will be reintroduced incrementally on top of `cubley-base` with explicit regression checks after each step.
+- Action: native features (LNBH26, FRAM, diagnostics, LAN8742A networking, etc.) will be introduced incrementally on top of `cubley-base` with explicit regression checks after each step.
 - Action: keep `cubley-oldstable` available for comparison only; do not use it as the forward development path.
 - Required follow-up: revisit and re-baseline **Phase A** and **Phase B** on the new configuration before advancing downstream phases.
 
@@ -24,7 +24,7 @@ Program umbrella: [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11)
 - [ ] [Phase B: Interop contract governance (v1) and drift prevention](https://github.com/getpwnam/diseqc_cntrl/issues/13)
 - [ ] [Phase C: Stabilize Tier-0/Tier-1 interop reliability](https://github.com/getpwnam/diseqc_cntrl/issues/14)
 - [ ] [Phase D1: Freeze and validate LNBH26 interop contract](https://github.com/getpwnam/diseqc_cntrl/issues/15)
-- [ ] [Phase D2: Freeze W5500 transport interop contract and constraints](https://github.com/getpwnam/diseqc_cntrl/issues/16)
+- [ ] [Phase D2: Retire the obsolete Ethernet transport contract and define LAN8742A/lwIP constraints](https://github.com/getpwnam/diseqc_cntrl/issues/16)
 - [ ] [Phase D3: Complete DiSEqC interop map and experimental gate](https://github.com/getpwnam/diseqc_cntrl/issues/17)
 - [ ] [Phase E: Managed integration on frozen contracts](https://github.com/getpwnam/diseqc_cntrl/issues/18)
 - [ ] [Phase F: Release discipline, compatibility matrix, and regression gate](https://github.com/getpwnam/diseqc_cntrl/issues/19)
@@ -72,9 +72,9 @@ Program umbrella: [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11)
 
 - [x] Add host-only unit test project for pure managed logic (`tests/DiSEqC_Control.Tests`) and run it on Linux.
 - [x] Cover `RuntimeConfiguration` parsing/validation and `ParityHelper` behavior with unit tests.
-- [x] Add host-side interop contract tests for managed/native boundaries (starting with W5500 socket API status/parameter handling).
-- [ ] Add hardware smoke-test checklist for W5500 RX/TX and USB wire protocol after native implementation lands.
-- [ ] PAUSED: add further host-side test construction until Phase 3 native W5500 transport is implemented.
+- [x] Add host-side interop contract tests for managed/native boundaries used during early Ethernet prototyping.
+- [ ] Add a hardware smoke-test checklist for LAN8742A link/packet traffic and USB wire protocol after networking support lands.
+- [ ] PAUSED: add further network test construction until the LAN8742A/lwIP path is implemented.
 
 ## Implementation Plan (Phased)
 
@@ -86,25 +86,26 @@ Program umbrella: [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11)
 
 ### Phase 2: Interop Contract Tests (paused)
 
-- [x] Add host-side tests for managed/native contract behavior of W5500/DiSEqC/LNB interop API (host-safe reflection contract checks).
+- [x] Add host-side tests for managed/native DiSEqC/LNB interop contracts and the retired prototype network API.
 - [ ] Add runtime/on-device interop tests for parameter validation, lifecycle, and timeout/error paths (host CLR cannot invoke InternalCall methods).
 - [ ] PAUSED pending Phase 3: defer additional test expansion until real native transport behavior exists.
 
-### Phase 3: Real W5500 Native Transport (active focus)
+### Phase 3: Ethernet Transport Migration
 
-- [x] Replace stub behavior in `nf-native/w5500_interop.cpp` with real RX/TX socket path.
-- [x] Wire W5500 local IP/subnet/gateway/MAC defaults to runtime config + FRAM (`network.*`) via native `ConfigureNetwork` interop.
-- [x] Reconcile board-level pin/config definitions required by W5500 runtime path.
+- [x] Preserve the retired prototype transport implementation for historical comparison during migration.
+- [ ] Remove the retired prototype transport from active firmware and managed builds.
+- [ ] Enable the LAN8742A RMII/lwIP path and wire IP/subnet/gateway/MAC defaults to runtime config and FRAM (`network.*`).
+- [ ] Reconcile RMII pins, 50 MHz reference clock, PHY reset/interrupt handling, and target networking configuration.
 - [x] Verify `cubley-uart` firmware profile build remains green in Docker.
 
 ### Phase 3.5: M2Mqtt Adapter Integration (in progress)
 
-- [x] Create in-repo managed adapter implementing `nanoFramework.M2Mqtt.IMqttNetworkChannel` backed by `DiSEqC_Control.Native.W5500Socket`.
+- [x] Create the initial in-repo managed `nanoFramework.M2Mqtt.IMqttNetworkChannel` adapter prototype.
 - [x] Add minimal M2Mqtt entry point to accept injected channel (in-repo overlay helper injecting `IMqttNetworkChannel`).
 - [x] Keep current host/port constructor path intact as fallback to reduce rollout risk.
-- [x] Update `Program.cs` to select transport mode (`system-net` fallback vs `w5500-native` adapter) via runtime config key.
+- [ ] Simplify `Program.cs` to use `system-net` only and remove the retired adapter selection.
 - [x] Add host contract tests for adapter behavior (connect/send/receive/close call routing + status mapping).
-- [x] Add on-device MQTT smoke test against broker using W5500 adapter path.
+- [ ] Add an on-device MQTT smoke test against a broker using the LAN8742A/lwIP path.
 - [x] Document adapter mode usage and rollback steps in `README.md` and testing guide.
 
 ### Phase 4: USB Wire Protocol Migration
@@ -116,7 +117,7 @@ Program umbrella: [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11)
 
 ### Phase 5: Hardware Validation
 
-- [ ] Run board-level smoke tests for W5500 connectivity and stability.
+- [ ] Run board-level LAN8742A link, DHCP/static-IP, packet, and stability tests.
 - [ ] Validate USB wire protocol end-to-end (connect/deploy/debug).
 - [ ] Capture known-good validation matrix and rollback notes in docs.
 
@@ -138,19 +139,19 @@ Program umbrella: [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11)
 
 ## Managed Startup Preflight (idea)
 
-- [ ] Add a minimal, always-completing managed hardware preflight at startup that probes core devices (W5500, LNBH26, FRAM, and other board-critical peripherals), records a per-device pass/fail bitmap + error details, and only then branches to main app behavior.
-- [ ] Ensure preflight tolerates intentionally-missing hardware variants (for example, no W5500 fitted) without blocking remaining checks.
+- [ ] Add a minimal, always-completing managed hardware preflight at startup that probes the LAN8742A, LNBH26, FRAM, and other board-critical peripherals, records a per-device pass/fail bitmap + error details, and only then branches to main app behavior.
+- [ ] Ensure preflight reports PHY/link state without blocking the remaining hardware checks when Ethernet is disconnected.
 - [ ] Emit preflight summary to mailbox/diagnostic channel so failures are visible even when main app path is skipped.
 
 ## Temporary Diagnostics Cleanup
 
 - [ ] Remove temporary deep CLR startup/resolve diagnostics in `toolchain/build-native.sh` (`CUBLEY_CLR_STARTUP_DIAG` and `CUBLEY_CLR_RESOLVE_PTR`) after startup regression risk is low and baseline tests are stable.
 
-## Native/W5500 Follow-up
+## Ethernet Migration Follow-up
 
-- [x] Replace W5500 interop stub behavior with real RX/TX socket path.
+- [ ] Delete retired native socket interop after the LAN8742A/lwIP path is validated.
 - [x] Implement real board pin configuration in `ConfigPins_I2C3()` (PA8/PC9 I2C3 open-drain AF4 setup).
-- [ ] Validate runtime networking path on hardware once board is available.
+- [ ] Validate the LAN8742A runtime networking path on hardware.
 
 ## Deferred: Motor Control (after immediate hardware checks)
 

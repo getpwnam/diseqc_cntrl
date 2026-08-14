@@ -76,7 +76,7 @@ The first three are upstream bugs/limitations; the last two are board-specific d
 
 - DiSEqC carrier/timing: TIM-based output path (board-configured)
 - LNB control: I2C (`LNBH26PQR`)
-- Optional network path (when enabled): W5500 over SPI
+- Ethernet hardware: LAN8742A PHY over RMII; software networking remains disabled in the currently validated profile
 
 ## Domain Boundaries
 
@@ -93,4 +93,3 @@ The first three are upstream bugs/limitations; the last two are board-specific d
 - `MQTT_API.md`
 - `CONFIGURATION.md`
 - `../debug/LNB_I2C_TESTING.md`
-- `../debug/W5500_LINK_BRINGUP_CHECKLIST.md`

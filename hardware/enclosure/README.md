@@ -8,9 +8,9 @@ This folder contains a first-pass printable enclosure for the DiSEqC controller 
   - Parametric base + lid model.
   - Includes side-wall connector apertures for:
     - J1 barrel jack
-    - J4 USB-C
-    - J8 RJ45
-    - J6/J7 SMA pair
+    - J3/J6 USB-C
+    - J9 RJ45
+    - J7/J8 SMA pair
 
 ## Known PCB Geometry Source
 
@@ -42,9 +42,9 @@ The enclosure defaults are based on:
 3. Check connector alignment in side apertures.
 4. Tune these variables in the SCAD file:
    - `J1_y`, `J1_z`, `J1_w`, `J1_h`
-   - `J4_y`, `J4_z`, `J4_w`, `J4_h`
-   - `J8_y`, `J8_z`, `J8_w`, `J8_h`
-   - `J67_y`, `J67_z`, `J67_w`, `J67_h`
+  - USB-C cutout parameters for J3/J6
+  - RJ45 cutout parameters for J9
+  - SMA cutout parameters for J7/J8
 5. Re-export and reprint base.
 6. Once cutouts align, print lid.
 
