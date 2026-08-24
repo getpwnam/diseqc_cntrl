@@ -161,6 +161,32 @@ require_cmd() {
   fi
 }
 
+validate_image_address() {
+  local image="$1"
+  local configured_address="$2"
+  local label="$3"
+  local elf="${image%.bin}.elf"
+
+  if [[ "$elf" == "$image" || ! -f "$elf" ]]; then
+    echo "[flash] Warning: cannot validate $label address without adjacent ELF: $elf" >&2
+    return
+  fi
+
+  require_cmd arm-none-eabi-readelf
+  local linked_address
+  linked_address="$(arm-none-eabi-readelf -l "$elf" | awk '$1 == "LOAD" && $3 ~ /^0x08/ { print $3; exit }')"
+  if [[ -z "$linked_address" ]]; then
+    echo "Unable to determine $label flash address from: $elf" >&2
+    exit 1
+  fi
+
+  if (( configured_address != linked_address )); then
+    printf 'Refusing to flash %s at %s: %s is linked for 0x%08X\n' \
+      "$label" "$configured_address" "$elf" "$((linked_address))" >&2
+    exit 1
+  fi
+}
+
 resolve_path() {
   local path_in="$1"
   local resolved=""
@@ -291,6 +317,11 @@ do_build() {
 
 do_flash() {
   require_cmd st-flash
+
+  if [[ "$FLASH_BOOTER" == "true" ]]; then
+    validate_image_address "$BOOTER_BIN" "$BOOT_ADDR" "nanoBooter"
+  fi
+  validate_image_address "$CLR_BIN" "$CLR_ADDR" "nanoCLR"
 
   if [[ "$ERASE_DEPLOY" == "true" ]]; then
     echo "[flash] Erase deployment region: $DEPLOY_ADDR size $DEPLOY_SIZE"
