@@ -9,7 +9,6 @@ NATIVE_PATH=""
 
 resolve_native_path() {
     local candidates=(
-        "$ROOT_DIR/nf-native/cubley_interop.cpp"
         "$ROOT_DIR/../../firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/cubley_interop.cpp"
         "$ROOT_DIR/../../firmware/nf-interpreter/targets-community/ChibiOS/CUBLEY_F407_0_5/nanoCLR/cubley_interop.cpp"
     )
@@ -84,11 +83,54 @@ cs_text = cs_path.read_text(encoding="utf-8")
 native_text = native_path.read_text(encoding="utf-8")
 
 class_re = re.compile(r"^\s*public\s+static\s+(?:partial\s+)?class\s+([A-Za-z0-9_]+)")
-method_re = re.compile(r"^\s*(public|private)\s+static\s+(extern\s+)?[A-Za-z0-9_<>,\[\]\s]+\s+([A-Za-z0-9_]+)\s*\(")
+method_re = re.compile(
+    r"^\s*(public|private)\s+static\s+(extern\s+)?"
+    r"(?P<return_type>[A-Za-z0-9_<>,\[\]]+)\s+"
+    r"(?P<method_name>[A-Za-z0-9_]+)\s*\((?P<params>[^)]*)\)"
+)
+
+TYPE_CODES = {
+    "void": "VOID",
+    "int": "I4",
+    "uint": "U4",
+    "bool": "BOOLEAN",
+    "string": "STRING",
+    "byte[]": "SZARRAY_U1",
+}
+
+
+def type_code(type_name):
+    if type_name not in TYPE_CODES:
+        raise ValueError(f"unsupported interop type: {type_name}")
+    return TYPE_CODES[type_name]
+
+
+def native_handler_symbol(class_name, method_name, return_type, params_text):
+    parameter_codes = []
+    params_text = params_text.strip()
+    if params_text:
+        for parameter in params_text.split(","):
+            tokens = parameter.strip().split()
+            byref = tokens[0] in ("out", "ref")
+            if byref:
+                tokens = tokens[1:]
+            if len(tokens) < 2:
+                raise ValueError(f"unable to parse parameter: {parameter.strip()}")
+            code = type_code(tokens[0])
+            parameter_codes.append(f"BYREF_{code}" if byref else code)
+
+    symbol = (
+        f"Library_cubley_interop_{class_name}_{method_name}"
+        f"___STATIC__{type_code(return_type)}"
+    )
+    if parameter_codes:
+        symbol += "__" + "__".join(parameter_codes)
+    return symbol
 
 current_class = None
 pending_internal = False
 internalcall_methods = []
+internalcall_handlers = []
 non_extern_methods = []
 
 # Frozen baseline slots reflect the ACTUAL PE MethodDef dispatch order.
@@ -141,7 +183,7 @@ for line in cs_text.splitlines():
         continue
 
     is_extern = m_method.group(2) is not None
-    method_name = m_method.group(3)
+    method_name = m_method.group("method_name")
     fq_name = f"{current_class}.{method_name}"
 
     if pending_internal:
@@ -149,6 +191,18 @@ for line in cs_text.splitlines():
             print(f"ERROR: InternalCall method is not extern: {fq_name}")
             sys.exit(1)
         internalcall_methods.append(fq_name)
+        try:
+            internalcall_handlers.append(
+                native_handler_symbol(
+                    current_class,
+                    method_name,
+                    m_method.group("return_type"),
+                    m_method.group("params"),
+                )
+            )
+        except ValueError as exc:
+            print(f"ERROR: {fq_name}: {exc}")
+            sys.exit(1)
     elif not is_extern:
         non_extern_methods.append(fq_name)
 
@@ -176,23 +230,29 @@ if re.search(r"^\s*NULL\s*,", lookup_body, flags=re.M):
 
 lookup_entries = []
 for line in lookup_body.splitlines():
-    m = re.search(r"//\s*\[(\d+)\]\s+([A-Za-z0-9_]+\.[A-Za-z0-9_]+)", line)
-    if not m:
+    handler_match = re.search(r"^\s*(Library_cubley_interop_[A-Za-z0-9_]+)\s*,", line)
+    comment_match = re.search(r"//\s*\[(\d+)\]\s+([A-Za-z0-9_]+\.[A-Za-z0-9_]+)", line)
+    if not handler_match and not comment_match:
         continue
-    idx = int(m.group(1))
-    name = m.group(2)
-    lookup_entries.append((idx, name))
+    if not handler_match or not comment_match:
+        print(f"ERROR: method_lookup[] entry must contain a handler expression and slot comment: {line.strip()}")
+        sys.exit(1)
+    idx = int(comment_match.group(1))
+    name = comment_match.group(2)
+    handler = handler_match.group(1)
+    lookup_entries.append((idx, name, handler))
 
 if not lookup_entries:
     print("ERROR: method_lookup[] comments with [index] Class.Method markers were not found.")
     sys.exit(1)
 
-for expected_idx, (idx, _) in enumerate(lookup_entries):
+for expected_idx, (idx, _, _) in enumerate(lookup_entries):
     if idx != expected_idx:
         print(f"ERROR: method_lookup index drift: expected [{expected_idx}] but found [{idx}].")
         sys.exit(1)
 
-lookup_methods = [name for _, name in lookup_entries]
+lookup_methods = [name for _, name, _ in lookup_entries]
+lookup_handlers = [handler for _, _, handler in lookup_entries]
 
 if len(lookup_methods) < len(V1_BASELINE):
     print(
@@ -223,6 +283,8 @@ if prefix_drift:
 # The runtime dispatch index == PE MethodDef index, so the expected native order
 # is the managed InternalCall list stable-sorted by declaring class name.
 expected_pe_order = sorted(internalcall_methods, key=lambda fq: fq.split(".", 1)[0])
+handler_by_method = dict(zip(internalcall_methods, internalcall_handlers))
+expected_pe_handlers = [handler_by_method[method] for method in expected_pe_order]
 
 if expected_pe_order != lookup_methods:
     print("ERROR: native method_lookup[] does not match the PE MethodDef dispatch order.")
@@ -233,6 +295,16 @@ if expected_pe_order != lookup_methods:
         native = lookup_methods[i] if i < len(lookup_methods) else "<missing>"
         marker = "OK" if expected == native else "DIFF"
         print(f"  [{i:02d}] expected(PE)={expected} | native={native}  <-- {marker}")
+    sys.exit(1)
+
+if expected_pe_handlers != lookup_handlers:
+    print("ERROR: native method_lookup[] handler expressions do not match managed signatures in PE order.")
+    max_len = max(len(expected_pe_handlers), len(lookup_handlers))
+    for i in range(max_len):
+        expected = expected_pe_handlers[i] if i < len(expected_pe_handlers) else "<missing>"
+        native = lookup_handlers[i] if i < len(lookup_handlers) else "<missing>"
+        marker = "OK" if expected == native else "DIFF"
+        print(f"  [{i:02d}] expected(handler)={expected} | native={native}  <-- {marker}")
     sys.exit(1)
 appended = len(lookup_methods) - len(V1_BASELINE)
 print(

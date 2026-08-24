@@ -114,64 +114,6 @@ HRESULT Library_cubley_interop_LNBH26_NativeReadStatusPair___STATIC__I4__BYREF_I
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
-HRESULT Library_cubley_interop_LNBH26_NativeSetPolarization___STATIC__I4__I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    g_cubley_diag_last_error = ((uint32_t)0xE3 << 24) | ((uint32_t)0xC3 << 16) | ((uint32_t)0x00 << 8) | 0xA1;
-
-    int32_t polarization = stack.Arg0().NumericByRef().s4;
-    lnb_status_t status = (lnb_status_t)lnb_native_set_polarization(polarization);
-
-    // 0xE3 C3 SS DD: LNB set-polarization result, DD=DATA1 readback on success or low I2C detail on failure.
-    uint8_t detail = (uint8_t)(lnb_get_last_i2c_msg() & 0xFF);
-    if (status == LNB_OK)
-    {
-        detail = lnb_try_read_reg_or_detail((int32_t)LNBH26_REGISTER_DATA1, detail);
-    }
-
-    g_cubley_diag_last_error = ((uint32_t)0xE3 << 24) | ((uint32_t)0xC3 << 16) | ((uint32_t)status << 8) | detail;
-    stack.SetResult_I4((int32_t)status);
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_LNBH26_NativeSetBand___STATIC__I4__I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    g_cubley_diag_last_error = ((uint32_t)0xE3 << 24) | ((uint32_t)0xC4 << 16) | ((uint32_t)0x00 << 8) | 0xA1;
-
-    int32_t band = stack.Arg0().NumericByRef().s4;
-    lnb_status_t status = (lnb_status_t)lnb_native_set_band(band);
-
-    // 0xE3 C4 SS DD: LNB set-band result, DD=DATA2 readback on success or low I2C detail on failure.
-    uint8_t detail = (uint8_t)(lnb_get_last_i2c_msg() & 0xFF);
-    if (status == LNB_OK)
-    {
-        detail = lnb_try_read_reg_or_detail((int32_t)LNBH26_REGISTER_DATA2, detail);
-    }
-
-    g_cubley_diag_last_error = ((uint32_t)0xE3 << 24) | ((uint32_t)0xC4 << 16) | ((uint32_t)status << 8) | detail;
-    stack.SetResult_I4((int32_t)status);
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_LNBH26_NativeGetPolarization___STATIC__I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    stack.SetResult_I4(lnb_native_get_polarization());
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
-HRESULT Library_cubley_interop_LNBH26_NativeGetBand___STATIC__I4(CLR_RT_StackFrame& stack)
-{
-    NANOCLR_HEADER();
-
-    stack.SetResult_I4(lnb_native_get_band());
-    NANOCLR_NOCLEANUP_NOLABEL();
-}
-
 HRESULT Library_cubley_interop_LNBH26_NativeSetPolarizationForChannel___STATIC__I4__I4__I4(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();

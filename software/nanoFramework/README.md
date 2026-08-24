@@ -49,11 +49,13 @@ Full build:
 
 Build and deploy via serial:
 
-- `./toolchain/build-CubleyControl.sh build --deploy --serialport /dev/ttyUSB0 --address 0x080C0000`
+- `./toolchain/build-CubleyControl.sh build --deploy --serialport /dev/ttyUSB0 --address 0x08060000`
 
 Build and deploy via SWD:
 
-- `./toolchain/build-CubleyControl.sh build --deploy --swd --address 0x080C0000`
+- `./toolchain/build-CubleyControl.sh build --deploy --swd --address 0x08060000`
+
+These addresses are for the Debug layout. Verify `firmware/nf-interpreter/build/nanoCLR.map` before using another firmware configuration.
 
 ## Build Outputs
 

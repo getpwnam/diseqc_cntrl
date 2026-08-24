@@ -9,9 +9,9 @@ This document summarizes the current Cubley firmware board configuration for:
 It is intended as a quick reference for bring-up and firmware changes.
 
 ## Quick Start
-```
+```sh
 ./bootstrap.sh
-./build-flash-cubley.sh
+./build-flash-cubley.sh build
 ```
 
 ## Scope and Source of Truth
@@ -100,7 +100,7 @@ Notes:
 Native assembly export in `nanoCLR/cubley_interop.cpp`:
 
 - Assembly: `CubleyNative`
-- Native checksum: `0x615A93C4`
+- Native checksum: `0x55A991DA`
 - Version tuple: `{ 1, 0, 0, 0 }`
 
 Method slot map (native `method_lookup`):
@@ -116,29 +116,29 @@ Method slot map (native `method_lookup`):
 | 6 | `LNBH26.NativeInit()` |
 | 7 | `LNBH26.NativeSetEnable(bool)` |
 | 8 | `LNBH26.NativeReadStatus(out int)` |
-| 9 | `LNBH26.NativeSetPolarization(int)` |
-| 10 | `LNBH26.NativeSetBand(int)` |
-| 11 | `LNBH26.NativeGetPolarization()` |
-| 12 | `LNBH26.NativeGetBand()` |
-| 13 | `LNBH26Registers.NativeReadRegister(int, out int)` |
-| 14 | `LNBH26.NativeReadStatusPair(out int, out int)` |
-| 15 | `LNBH26.NativeSetPolarizationForChannel(int, int)` |
-| 16 | `LNBH26.NativeSetBandForChannel(int, int)` |
-| 17 | `LNBH26.NativeSetLowPowerForChannel(int, bool)` |
-| 18 | `LNBH26.NativeSetDiseqcInputModeForChannel(int, int)` |
-| 19 | `LNBH26.NativeGetPolarizationForChannel(int)` |
-| 20 | `LNBH26.NativeGetBandForChannel(int)` |
-| 21 | `LNBH26.NativeGetLastError()` |
-| 22 | `LNBH26.NativeGetLastErrorDetail()` |
+| 9 | `LNBH26.NativeReadStatusPair(out int, out int)` |
+| 10 | `LNBH26.NativeSetPolarizationForChannel(int, int)` |
+| 11 | `LNBH26.NativeSetBandForChannel(int, int)` |
+| 12 | `LNBH26.NativeSetLowPowerForChannel(int, bool)` |
+| 13 | `LNBH26.NativeSetDiseqcInputModeForChannel(int, int)` |
+| 14 | `LNBH26.NativeGetPolarizationForChannel(int)` |
+| 15 | `LNBH26.NativeGetBandForChannel(int)` |
+| 16 | `LNBH26.NativeGetLastError()` |
+| 17 | `LNBH26.NativeGetLastErrorDetail()` |
+| 18 | `LNBH26Registers.NativeReadRegister(int, out int)` |
+| 19 | `LNBH26Tweaks.NativeSetIsetLowForChannel(int, bool)` |
+| 20 | `LNBH26Tweaks.NativeSetIswLowForChannel(int, bool)` |
+| 21 | `LNBH26Tweaks.NativeGetIsetLowForChannel(int)` |
+| 22 | `LNBH26Tweaks.NativeGetIswLowForChannel(int)` |
 | 23 | `UsbCdcConsole.NativeIsEnabled()` |
 | 24 | `UsbCdcConsole.NativeReadByte(int)` |
 | 25 | `UsbCdcConsole.NativeWrite(string)` |
 
 ### Interop ownership and update rules
 
-- Keep managed declaration order and native `method_lookup` order aligned.
+- Keep emitted PE method order and native `method_lookup` order aligned.
 - Do not reorder or repurpose existing slots.
-- Add new methods append-only at the end.
+- Add a method only when the emitted PE order preserves the frozen 26-slot prefix.
 - Recompute and validate checksum after interop changes.
 
 See `docs/software/INTEROP_CONTRACT_V1.md` for policy and process.

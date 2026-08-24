@@ -45,8 +45,8 @@ Examples:
   ./toolchain/build-CubleyControl.sh list
   ./toolchain/build-CubleyControl.sh compile
   ./toolchain/build-CubleyControl.sh build
-  ./toolchain/build-CubleyControl.sh build --deploy --serialport /dev/ttyUSB0 --address 0x080C0000
-  ./toolchain/build-CubleyControl.sh build --deploy --swd --address 0x080C0000
+  ./toolchain/build-CubleyControl.sh build --deploy --serialport /dev/ttyUSB0 --address 0x08060000
+  ./toolchain/build-CubleyControl.sh build --deploy --swd --address 0x08060000
 
 Options:
 
@@ -67,7 +67,7 @@ build mode:
   --deploy                          Deploy managed image after successful build
   --swd                             Deploy via SWD using st-flash instead of nanoff
   --serialport <port>               Serial wire-protocol port for deployment
-  --address <hex>                   Deployment address, e.g. 0x080C0000
+  --address <hex>                   Deployment address (Debug: 0x08060000; verify generated map)
   --baud <rate>                     Serial baud for deploy (default: 921600)
   --reset                           Reset device after deploy
 EOF
@@ -598,48 +598,42 @@ else
   fi
 
   if [[ -f "$PRIMARY_PE" ]]; then
+    required_pe_paths=(
+      "$PRIMARY_PE"
+      "$CUBLEY_INTEROP_PE"
+      "$CUBLEY_LNBH26_MANAGED_PE"
+      "$CUBLEY_DISEQC_MANAGED_PE"
+      "$OUTPUT_DIR/System.Device.Gpio.pe"
+      "$OUTPUT_DIR/System.Device.Pwm.pe"
+      "$RUNTIME_EVENTS_PE"
+      "$OUTPUT_DIR/System.Threading.pe"
+      "$OUTPUT_DIR/nanoFramework.Runtime.Native.pe"
+      "$OUTPUT_DIR/nanoFramework.System.Collections.pe"
+      "$OUTPUT_DIR/System.IO.Streams.pe"
+      "$OUTPUT_DIR/nanoFramework.System.Text.pe"
+      "$OUTPUT_DIR/System.Net.pe"
+      "$OUTPUT_DIR/nanoFramework.M2Mqtt.Core.pe"
+      "$OUTPUT_DIR/nanoFramework.M2Mqtt.pe"
+      "$OUTPUT_DIR/mscorlib.pe"
+    )
+
+    missing_required_pe="false"
+    for required_pe in "${required_pe_paths[@]}"; do
+      if [[ -z "$required_pe" || ! -f "$required_pe" ]]; then
+        echo "[error] Required deployment assembly missing: ${required_pe:-nanoFramework.Runtime.Events.pe}" >&2
+        missing_required_pe="true"
+      fi
+    done
+    if [[ "$missing_required_pe" == "true" ]]; then
+      exit 1
+    fi
+
     pack_args=(
       --required-marker NFMRK1
       --out-dir "$OUTPUT_DIR"
       --out-base "${TARGET_NAME}_bundle"
-      "$PRIMARY_PE"
+      "${required_pe_paths[@]}"
     )
-
-    if [[ -f "$CUBLEY_INTEROP_PE" ]]; then
-      pack_args+=("$CUBLEY_INTEROP_PE")
-    fi
-
-    if [[ -f "$CUBLEY_LNBH26_MANAGED_PE" ]]; then
-      pack_args+=("$CUBLEY_LNBH26_MANAGED_PE")
-    fi
-
-    if [[ -f "$CUBLEY_DISEQC_MANAGED_PE" ]]; then
-      pack_args+=("$CUBLEY_DISEQC_MANAGED_PE")
-    fi
-
-    if [[ -f "$OUTPUT_DIR/System.Device.Gpio.pe" ]]; then
-      pack_args+=("$OUTPUT_DIR/System.Device.Gpio.pe")
-    fi
-
-    if [[ -f "$OUTPUT_DIR/System.Device.I2c.pe" ]]; then
-      pack_args+=("$OUTPUT_DIR/System.Device.I2c.pe")
-    fi
-
-    if [[ -f "$OUTPUT_DIR/System.Device.Pwm.pe" ]]; then
-      pack_args+=("$OUTPUT_DIR/System.Device.Pwm.pe")
-    fi
-
-    if [[ -n "$RUNTIME_EVENTS_PE" && -f "$RUNTIME_EVENTS_PE" ]]; then
-      pack_args+=("$RUNTIME_EVENTS_PE")
-    fi
-
-    if [[ -f "$OUTPUT_DIR/System.Threading.pe" ]]; then
-      pack_args+=("$OUTPUT_DIR/System.Threading.pe")
-    fi
-
-    if [[ -f "$OUTPUT_DIR/mscorlib.pe" ]]; then
-      pack_args+=("$OUTPUT_DIR/mscorlib.pe")
-    fi
 
     if [[ -x "$SCRIPT_DIR/pack-and-validate.sh" ]]; then
       "$SCRIPT_DIR/pack-and-validate.sh" "${pack_args[@]}" >/dev/null

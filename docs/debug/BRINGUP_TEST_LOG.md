@@ -1329,3 +1329,36 @@ This file should be committed and checked on each build to prevent version drift
 - Command(s): build CubleyControl Debug with strict interop guard/checksum; serial CLI hardening in CubleyControl/Program.cs; nanoff --nanodevice --serialport=/dev/ttyUSB0 --devicedetails
 - Artifact: software/nanoFramework/build/CubleyControl/CubleyControl.bin
 - Conclusion: Known-good baseline locked: strict interop guard PASS, checksum 0x88B2008D, and CDC serial CLI upgraded with hybrid responses, long+alias commands, and watch/status output.
+
+### 2026-08-24 21:51:03 UTC [PASS]
+- Git rev: a66642b
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-CubleyControl.sh build --project CubleyControl/CubleyControl.nfproj --configuration Debug; ./toolchain/deploy-CubleyControl.sh --reset
+- Artifact: build/CubleyControl/CubleyControl.bin (87,880 bytes; 9 managed assemblies; deployed at 0x080C0000)
+- Conclusion: CubleyControl Debug managed application built successfully, deployed over /dev/ttyUSB0, and target reset successfully.
+- Note: Managed application only; nanoBooter and nanoCLR firmware were not rebuilt or flashed.
+
+### 2026-08-24 21:56:30 UTC [PASS]
+- Git rev: a66642b
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-CubleyControl.sh build --project CubleyControl/CubleyControl.nfproj --configuration Debug; python3 toolchain/inspect_deploy_bundle.py build/CubleyControl/latest.deploy.bin; ./toolchain/deploy-CubleyControl.sh --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --devicedetails
+- Artifact: build/CubleyControl/latest.deploy.bin (177,572 bytes; 16 managed assembly records; deployed at 0x080C0000)
+- Conclusion: Corrected managed bundle deployed successfully; device details confirms CubleyControl, CubleyNative, M2Mqtt, System.Net, System.IO.Streams, and nanoFramework.System.Text are present at the required versions.
+- Note: Resolved CLR link failure caused by omitted MQTT and network dependency assemblies; native firmware was not rebuilt or flashed.
+
+### 2026-08-24 22:25:03 UTC [PASS]
+- Git rev: a66642b
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/interop-guard.sh; ./toolchain/interop-checksum.sh --check --assembly CubleyNative; ./toolchain/interop-negative-drift-test.sh; ./toolchain/build-CubleyControl.sh build --project CubleyControl/CubleyControl.nfproj --configuration Debug; ../../firmware/build-flash-cubley.sh build
+- Artifact: build/CubleyControl/latest.deploy.bin (177,572 bytes; CubleyNative v1.0.0.0 checksum 0x55A991DA); firmware/nf-interpreter/build/nanoBooter.bin (31,392 bytes); firmware/nf-interpreter/build/nanoCLR.bin (214,812 bytes)
+- Conclusion: Cleaner 26-slot PE-ordered CubleyNative layout passed guard, negative-drift, managed build, and native firmware build validation.
+- Note: Build-only validation; hardware was not flashed or redeployed.
+
+### 2026-08-24 22:30:09 UTC [PASS]
+- Git rev: a66642b
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ../../firmware/build-flash-cubley.sh flash --reset; ./toolchain/deploy-CubleyControl.sh --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --devicedetails; OpenOCD/GDB hardware breakpoint probe at Library_cubley_interop_DiagMailbox_NativeGet___STATIC__U4
+- Artifact: ../../firmware/nf-interpreter/build/nanoBooter.bin (31,392 bytes; 0x08000000); ../../firmware/nf-interpreter/build/nanoCLR.bin (214,812 bytes; 0x08008000); build/CubleyControl/latest.deploy.bin (177,572 bytes; 16 assemblies; Debug deployment region 0x08060000)
+- Breakpoints: Library_cubley_interop_DiagMailbox_NativeGet___STATIC__U4 @ 0x08023D6C: HIT
+- Conclusion: Current 26-slot CubleyNative runtime contract passed: firmware and managed payload deployed, all assemblies resolved, native identity matched v1.0.0.0/0x55A991DA, and managed startup dispatched DiagMailbox.NativeGet.
+- Note: Generated Debug maps defined the flash layout. No assembly resolver/link failures observed.
