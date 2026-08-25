@@ -325,9 +325,9 @@
  *  PB8  - PIN8             (input pull-up)
  *  PB9  - PIN9             (input pull-up)
  *  PB10 - PIN10            (input pull-up)
- *  PB11 - RMII_TX_EN       (input pull-up, Phase 7 -> AF11)
- *  PB12 - RMII_TXD0        (input pull-up, Phase 7 -> AF11)
- *  PB13 - RMII_TXD1        (input pull-up, Phase 7 -> AF11)
+ *  PB11 - RMII_TX_EN       (input pull-down, Phase 7 -> AF11)
+ *  PB12 - RMII_TXD0        (input pull-down, Phase 7 -> AF11)
+ *  PB13 - RMII_TXD1        (input pull-down, Phase 7 -> AF11)
  *  PB14 - PIN14            (input pull-up)
  *  PB15 - PIN15            (input pull-up)
  */
@@ -360,9 +360,9 @@
                                      PIN_PUPDR_PULLUP(GPIOB_PIN8)        |  \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN9)        |  \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN10)       |  \
-                                     PIN_PUPDR_PULLUP(GPIOB_RMII_TX_EN)  |  \
-                                     PIN_PUPDR_PULLUP(GPIOB_RMII_TXD0)   |  \
-                                     PIN_PUPDR_PULLUP(GPIOB_RMII_TXD1)   |  \
+                                     PIN_PUPDR_PULLDOWN(GPIOB_RMII_TX_EN)|  \
+                                     PIN_PUPDR_PULLDOWN(GPIOB_RMII_TXD0) |  \
+                                     PIN_PUPDR_PULLDOWN(GPIOB_RMII_TXD1) |  \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN14)       |  \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN15))
 #define VAL_GPIOB_ODR               0xFFFFFFFFU

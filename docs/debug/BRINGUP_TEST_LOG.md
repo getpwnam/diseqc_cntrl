@@ -1403,3 +1403,21 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: CubleyControl USB CDC console on target board
 - Conclusion: Windows USB CDC enumeration and the CubleyControl command interface are operational on the target board.
 - Note: User-confirmed hardware validation on 2026-08-25; no automated command transcript captured.
+
+### 2026-08-25 16:19:59 UTC [PASS]
+- Git rev: a57bd63
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./firmware/build-flash-cubley.sh build; reversible OpenOCD MDIO reads; live GPIOB PUPDR change from 0x55555514 to 0x5A955514.
+- Artifact: firmware/targets-local/CUBLEY_F407_0_5/board.h; firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin
+- Breakpoints: before fix BMSR 0x782F persistent jabber, ANLPAR 0x5061, PHYSCSR 0x1054 (10FDX); after fix BMSR second read 0x782D jabber clear/link up, ANLPAR 0xD1E1, PHYSCSR 0x1058 (100FDX)
+- Conclusion: RMII TX_EN/TXD pull-ups caused LAN8742 jabber and link flapping; pull-downs produced stable 100FDX.
+- Note: build passed; no firmware was flashed in this run; live SWD pull-down lasts until reset.
+
+### 2026-08-25 16:21:57 UTC [PASS]
+- Git rev: a57bd63
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./firmware/build-flash-cubley.sh flash --reset; switch link observation.
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin
+- Breakpoints: nanoBooter flashed/verified at 0x08000000; nanoCLR flashed/verified at 0x08008000; deployment at 0x08060000 preserved; immediate stable 100FDX after reset with no observed flapping
+- Conclusion: Persistent RMII idle pull-down fix validated; corrected firmware boots directly to stable 100FDX.
+- Note: Managed deployment region was not erased or rewritten.
