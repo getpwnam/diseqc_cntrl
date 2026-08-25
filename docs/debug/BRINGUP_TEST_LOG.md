@@ -1421,3 +1421,19 @@ This file should be committed and checked on each build to prevent version drift
 - Breakpoints: nanoBooter flashed/verified at 0x08000000; nanoCLR flashed/verified at 0x08008000; deployment at 0x08060000 preserved; immediate stable 100FDX after reset with no observed flapping
 - Conclusion: Persistent RMII idle pull-down fix validated; corrected firmware boots directly to stable 100FDX.
 - Note: Managed deployment region was not erased or rewritten.
+
+### 2026-08-25 18:04:56 UTC [PASS]
+- Git rev: f94d5af
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./firmware/build-flash-cubley.sh build; ./firmware/build-flash-cubley.sh flash --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --devicedetails
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin
+- Conclusion: Checksum-enabled nanoBooter and nanoCLR built, flashed, verified, reset, and nanoCLR responded with all 16 managed assemblies intact.
+- Note: Artifact layout: nanoBooter 0x08000000, nanoCLR 0x0800C000, deployment preserved at 0x080C0000.
+
+### 2026-08-25 18:07:36 UTC [PASS]
+- Git rev: f94d5af
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): RouterOS DHCP server log observation after checksum-enabled firmware flash
+- Artifact: firmware/nf-interpreter/build/nanoCLR.bin
+- Conclusion: RouterOS DHCP server assigned 172.17.129.64 to 02:55:47:62:47:01 (nanodevice_624701).
+- Note: Observed server log: 2026-08-25 18:05:16 dhcp,info dhcp_iot assigned 172.17.129.64 for 02:55:47:62:47:01 nanodevice_624701
