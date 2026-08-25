@@ -15,28 +15,75 @@
     "config": {
       "type": "object",
       "required": [
-        "network.static_ip",
-        "network.static_subnet",
-        "network.static_gateway",
+        "network.enabled",
+        "network.hostname",
+        "network.mac",
+        "network.ipv4.mode",
+        "network.ipv4.address",
+        "network.ipv4.prefix_length",
+        "network.ipv4.gateway",
+        "network.ipv4.dns_mode",
+        "network.ipv4.dns_servers",
+        "mqtt.enabled",
         "mqtt.broker",
         "mqtt.port",
         "mqtt.client_id",
         "mqtt.username",
         "mqtt.password",
         "mqtt.topic_prefix",
-        "mqtt.transport_mode",
         "system.device_name",
         "system.location"
       ],
       "properties": {
-        "network.static_ip": {
+        "network.enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "network.hostname": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 63
+        },
+        "network.mac": {
           "type": "string"
         },
-        "network.static_subnet": {
+        "network.ipv4.mode": {
+          "type": "string",
+          "enum": [
+            "dhcp",
+            "static"
+          ],
+          "default": "dhcp"
+        },
+        "network.ipv4.address": {
           "type": "string"
         },
-        "network.static_gateway": {
+        "network.ipv4.prefix_length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 32
+        },
+        "network.ipv4.gateway": {
           "type": "string"
+        },
+        "network.ipv4.dns_mode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "static"
+          ],
+          "default": "auto"
+        },
+        "network.ipv4.dns_servers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 2
+        },
+        "mqtt.enabled": {
+          "type": "boolean",
+          "default": false
         },
         "mqtt.broker": {
           "type": "string"
@@ -57,13 +104,6 @@
         },
         "mqtt.topic_prefix": {
           "type": "string"
-        },
-        "mqtt.transport_mode": {
-          "type": "string",
-          "enum": [
-            "system-net",
-            "w5500-native"
-          ]
         },
         "system.device_name": {
           "type": "string"

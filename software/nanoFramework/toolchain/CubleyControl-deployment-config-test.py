@@ -72,7 +72,7 @@ require(
 
 erase_command = tasks_by_label["nf: erase managed deploy region (SWD)"]["command"]
 require(
-    erase_command == "st-flash erase 0x08060000 0x000A0000",
+    erase_command == "st-flash erase 0x080C0000 0x00040000",
     f"unexpected Debug deployment erase command: {erase_command}",
 )
 
@@ -94,22 +94,22 @@ require(
 
 deploy_script = deploy_script_path.read_text(encoding="utf-8")
 require(
-    'ADDRESS="0x08060000"' in deploy_script,
+    'ADDRESS="0x080C0000"' in deploy_script,
     "deploy helper default is not the Debug deployment start",
 )
 
 debug_booter_linker = debug_booter_linker_path.read_text(encoding="utf-8")
 debug_clr_linker = debug_clr_linker_path.read_text(encoding="utf-8")
 require(
-    "org = 0x08000000, len = 32k" in debug_booter_linker,
+    "org = 0x08000000, len = 48k" in debug_booter_linker,
     "Debug nanoBooter linker range changed",
 )
 require(
-    "org = 0x08008000" in debug_clr_linker,
+    "org = 0x0800C000" in debug_clr_linker,
     "Debug nanoCLR linker origin changed",
 )
 require(
-    "deployment (rx) : org = 0x08060000, len = 640k" in debug_clr_linker,
+    "deployment (rx) : org = 0x080C0000, len = 256k" in debug_clr_linker,
     "Debug deployment linker range changed",
 )
 

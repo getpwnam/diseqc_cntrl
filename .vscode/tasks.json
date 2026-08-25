@@ -26,7 +26,7 @@
     {
       "label": "nf: erase managed deploy region (SWD)",
       "type": "shell",
-      "command": "st-flash erase 0x08060000 0x000A0000",
+      "command": "st-flash erase 0x080C0000 0x00040000",
       "problemMatcher": []
     },
     {

@@ -8,8 +8,8 @@
 
 // 16kB block
 const BlockRange BlockRange1[] = {
-    {BlockRange_BLOCKTYPE_BOOTSTRAP, 0, 0}, // 0x08000000 nanoBooter
-    {BlockRange_BLOCKTYPE_CODE, 1, 3}       // 0x08004000 nanoCLR
+    {BlockRange_BLOCKTYPE_BOOTSTRAP, 0, 2}, // 0x08000000 nanoBooter
+    {BlockRange_BLOCKTYPE_CODE, 3, 3}       // 0x0800C000 nanoCLR
 };
 
 // 64kB block
@@ -19,8 +19,8 @@ const BlockRange BlockRange2[] = {
 
 // 128kB block
 const BlockRange BlockRange3[] = {
-    {BlockRange_BLOCKTYPE_CODE, 0, 0},      // 0x08020000 nanoCLR
-    {BlockRange_BLOCKTYPE_DEPLOYMENT, 1, 6} // 0x08040000 deployment
+    {BlockRange_BLOCKTYPE_CODE, 0, 4},      // 0x08020000 nanoCLR
+    {BlockRange_BLOCKTYPE_DEPLOYMENT, 5, 6} // 0x080C0000 deployment
 };
 
 const BlockRegionInfo BlockRegions[] = {

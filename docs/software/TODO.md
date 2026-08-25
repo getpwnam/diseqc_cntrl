@@ -8,7 +8,7 @@ Program umbrella: [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11)
 
 - Decision: adopt `cubley-base` as the canonical native firmware baseline, and treat all other build profiles as reference-only/deprecated-by-default.
 - Motivation: repeated wire-protocol instability on the previous profile stack blocked deterministic bring-up; a minimal STM32F407 reference-derived baseline proved stable (`nanoff --listdevices` PASS over UART3 at 115200 8N1).
-- Action: all native features (LNBH26, W5500, FRAM, diagnostics, etc.) will be reintroduced incrementally on top of `cubley-base` with explicit regression checks after each step.
+- Action: all native features (LNBH26, LAN8742A Ethernet, FRAM, diagnostics, etc.) will be reintroduced incrementally on top of `cubley-base` with explicit regression checks after each step.
 - Action: keep `cubley-oldstable` available for comparison only; do not use it as the forward development path.
 - Required follow-up: revisit and re-baseline **Phase A** and **Phase B** on the new configuration before advancing downstream phases.
 
@@ -24,7 +24,7 @@ Program umbrella: [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11)
 - [ ] [Phase B: Interop contract governance (v1) and drift prevention](https://github.com/getpwnam/diseqc_cntrl/issues/13)
 - [ ] [Phase C: Stabilize Tier-0/Tier-1 interop reliability](https://github.com/getpwnam/diseqc_cntrl/issues/14)
 - [ ] [Phase D1: Freeze and validate LNBH26 interop contract](https://github.com/getpwnam/diseqc_cntrl/issues/15)
-- [ ] [Phase D2: Freeze W5500 transport interop contract and constraints](https://github.com/getpwnam/diseqc_cntrl/issues/16)
+- [ ] Phase D2 replacement: validate STM32 Ethernet MAC + LAN8742A IPv4 transport and configuration persistence.
 - [ ] [Phase D3: Complete DiSEqC interop map and experimental gate](https://github.com/getpwnam/diseqc_cntrl/issues/17)
 - [ ] [Phase E: Managed integration on frozen contracts](https://github.com/getpwnam/diseqc_cntrl/issues/18)
 - [ ] [Phase F: Release discipline, compatibility matrix, and regression gate](https://github.com/getpwnam/diseqc_cntrl/issues/19)
@@ -90,22 +90,31 @@ Program umbrella: [#11](https://github.com/getpwnam/diseqc_cntrl/issues/11)
 - [ ] Add runtime/on-device interop tests for parameter validation, lifecycle, and timeout/error paths (host CLR cannot invoke InternalCall methods).
 - [ ] PAUSED pending Phase 3: defer additional test expansion until real native transport behavior exists.
 
-### Phase 3: Real W5500 Native Transport (active focus)
+### Phase 3: LAN8742A IPv4 Bring-Up (active focus)
 
-- [x] Replace stub behavior in `nf-native/w5500_interop.cpp` with real RX/TX socket path.
-- [x] Wire W5500 local IP/subnet/gateway/MAC defaults to runtime config + FRAM (`network.*`) via native `ConfigureNetwork` interop.
-- [x] Reconcile board-level pin/config definitions required by W5500 runtime path.
-- [x] Verify `cubley-uart` firmware profile build remains green in Docker.
+- [x] Enable the STM32F407 Ethernet MAC, LAN8742A RMII PHY, `System.Net`, DHCP, DNS, and SNTP in the canonical target.
+- [x] Add a DHCP-default Ethernet configuration block with a stable MAC derived from the MCU unique ID.
+- [x] Reallocate firmware flash for the networking-enabled nanoCLR while retaining a 256 KB managed deployment region.
+- [ ] Flash the new layout and verify wire protocol plus the existing managed application.
+- [ ] Verify DHCP lease acquisition, DNS resolution, ICMP reachability, TCP connection, lease renewal, and cable reconnect on hardware.
+- [ ] Add `show network` status for link, MAC, DHCP state, IPv4 address, gateway, DNS, and last error.
 
-### Phase 3.5: M2Mqtt Adapter Integration (in progress)
+### Phase 3.5: FRAM Network Configuration
 
-- [x] Create in-repo managed adapter implementing `nanoFramework.M2Mqtt.IMqttNetworkChannel` backed by `DiSEqC_Control.Native.W5500Socket`.
-- [x] Add minimal M2Mqtt entry point to accept injected channel (in-repo overlay helper injecting `IMqttNetworkChannel`).
-- [x] Keep current host/port constructor path intact as fallback to reduce rollout risk.
-- [x] Update `Program.cs` to select transport mode (`system-net` fallback vs `w5500-native` adapter) via runtime config key.
-- [x] Add host contract tests for adapter behavior (connect/send/receive/close call routing + status mapping).
-- [x] Add on-device MQTT smoke test against broker using W5500 adapter path.
-- [x] Document adapter mode usage and rollback steps in `README.md` and testing guide.
+- [ ] Implement a versioned, checksummed configuration record through `Fram24C128`.
+- [ ] Persist IPv4 policy, static fallback fields, hostname, MAC override, and MQTT settings; do not persist acquired DHCP leases.
+- [ ] Validate blank, corrupt, reset, save, reload, and power-cycle behavior.
+
+### Phase 4: MQTT over System.Net
+
+- [ ] Keep MQTT disabled until the IPv4 hardware gate passes.
+- [ ] Replace compile-time MQTT constants with validated persisted settings.
+- [ ] Start MQTT only after the interface has a usable IPv4 address.
+- [ ] Verify publish, subscribe, reconnect, broker DNS, cable removal, DHCP renewal, and reboot recovery.
+
+### Deferred: IPv6
+
+- [ ] Revisit IPv6 and SLAAC only after IPv4 and MQTT are stable.
 
 ### Phase 4: USB Wire Protocol Migration
 

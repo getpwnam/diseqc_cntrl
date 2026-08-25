@@ -32,6 +32,8 @@
  */
 #define BOARD_CUBLEY_F407_0_5
 #define BOARD_NAME                  "Cubley v0.5 (STM32F407VG)"
+#define BOARD_PHY_ID                MII_LAN8742A_ID
+#define BOARD_PHY_RMII
 
 /*
  * Board oscillators-related settings.
@@ -251,13 +253,13 @@
  * GPIOA setup (Phase 0): all peripheral pins input pull-up; SWD active.
  *
  *  PA0  - PIN0             (input pull-up)
- *  PA1  - RMII_REF_CLK     (input pull-up, Phase 7 -> AF11)
- *  PA2  - RMII_MDIO        (input pull-up, Phase 7 -> AF11)
+ *  PA1  - RMII_REF_CLK     (alternate 11)
+ *  PA2  - RMII_MDIO        (alternate 11, pull-up)
  *  PA3  - PIN3             (input pull-up)
  *  PA4  - PIN4             (input pull-up)
  *  PA5  - PIN5             (input pull-up)
  *  PA6  - PIN6             (input pull-up)
- *  PA7  - RMII_CRS_DV      (input pull-up, Phase 7 -> AF11)
+ *  PA7  - RMII_CRS_DV      (alternate 11)
  *  PA8  - I2C3_SCL         (input pull-up, Phase 6 -> AF4 OD)
  *  PA9  - VBUS_SENSE       (input floating, VBUS through 100k series resistor)
  *  PA10 - PIN10            (input floating)
@@ -268,13 +270,13 @@
  *  PA15 - PIN15            (input pull-up)
  */
 #define VAL_GPIOA_MODER             (PIN_MODE_INPUT(GPIOA_PIN0)          |  \
-                                     PIN_MODE_INPUT(GPIOA_RMII_REF_CLK)  |  \
-                                     PIN_MODE_INPUT(GPIOA_RMII_MDIO)     |  \
+                                     PIN_MODE_ALTERNATE(GPIOA_RMII_REF_CLK) |  \
+                                     PIN_MODE_ALTERNATE(GPIOA_RMII_MDIO) |  \
                                      PIN_MODE_INPUT(GPIOA_PIN3)          |  \
                                      PIN_MODE_INPUT(GPIOA_PIN4)          |  \
                                      PIN_MODE_INPUT(GPIOA_PIN5)          |  \
                                      PIN_MODE_INPUT(GPIOA_PIN6)          |  \
-                                     PIN_MODE_INPUT(GPIOA_RMII_CRS_DV)   |  \
+                                     PIN_MODE_ALTERNATE(GPIOA_RMII_CRS_DV) |  \
                                      PIN_MODE_INPUT(GPIOA_I2C3_SCL)      |  \
                                      PIN_MODE_INPUT(GPIOA_PIN9)          |  \
                                      PIN_MODE_INPUT(GPIOA_PIN10)         |  \
@@ -287,15 +289,18 @@
 #define VAL_GPIOA_OSPEEDR           (PIN_OSPEED_HIGH(GPIOA_SWDIO)        |  \
                                      PIN_OSPEED_HIGH(GPIOA_SWCLK)        |  \
                                      PIN_OSPEED_HIGH(GPIOA_PIN11)        |  \
-                                     PIN_OSPEED_HIGH(GPIOA_PIN12))
+                                     PIN_OSPEED_HIGH(GPIOA_PIN12)        |  \
+                                     PIN_OSPEED_HIGH(GPIOA_RMII_REF_CLK) |  \
+                                     PIN_OSPEED_HIGH(GPIOA_RMII_MDIO)    |  \
+                                     PIN_OSPEED_HIGH(GPIOA_RMII_CRS_DV))
 #define VAL_GPIOA_PUPDR             (PIN_PUPDR_PULLUP(GPIOA_PIN0)        |  \
-                                     PIN_PUPDR_PULLUP(GPIOA_RMII_REF_CLK)|  \
+                                     PIN_PUPDR_FLOATING(GPIOA_RMII_REF_CLK)| \
                                      PIN_PUPDR_PULLUP(GPIOA_RMII_MDIO)   |  \
                                      PIN_PUPDR_PULLUP(GPIOA_PIN3)        |  \
                                      PIN_PUPDR_PULLUP(GPIOA_PIN4)        |  \
                                      PIN_PUPDR_PULLUP(GPIOA_PIN5)        |  \
                                      PIN_PUPDR_PULLUP(GPIOA_PIN6)        |  \
-                                     PIN_PUPDR_PULLUP(GPIOA_RMII_CRS_DV) |  \
+                                     PIN_PUPDR_FLOATING(GPIOA_RMII_CRS_DV) | \
                                      PIN_PUPDR_PULLUP(GPIOA_I2C3_SCL)    |  \
                                      PIN_PUPDR_FLOATING(GPIOA_PIN9)      |  \
                                      PIN_PUPDR_FLOATING(GPIOA_PIN10)     |  \
@@ -305,7 +310,9 @@
                                      PIN_PUPDR_FLOATING(GPIOA_SWCLK)     |  \
                                      PIN_PUPDR_PULLUP(GPIOA_PIN15))
 #define VAL_GPIOA_ODR               0xFFFFFFFFU
-#define VAL_GPIOA_AFRL              0x00000000U
+#define VAL_GPIOA_AFRL              (PIN_AFIO_AF(GPIOA_RMII_REF_CLK, 11U) | \
+                                     PIN_AFIO_AF(GPIOA_RMII_MDIO, 11U)   |  \
+                                     PIN_AFIO_AF(GPIOA_RMII_CRS_DV, 11U))
 #define VAL_GPIOA_AFRH              (PIN_AFIO_AF(GPIOA_PIN11, 10U)       |  \
                                      PIN_AFIO_AF(GPIOA_PIN12, 10U)       |  \
                                      PIN_AFIO_AF(GPIOA_SWDIO, 0U)        |  \
@@ -325,9 +332,9 @@
  *  PB8  - PIN8             (input pull-up)
  *  PB9  - PIN9             (input pull-up)
  *  PB10 - PIN10            (input pull-up)
- *  PB11 - RMII_TX_EN       (input pull-down, Phase 7 -> AF11)
- *  PB12 - RMII_TXD0        (input pull-down, Phase 7 -> AF11)
- *  PB13 - RMII_TXD1        (input pull-down, Phase 7 -> AF11)
+ *  PB11 - RMII_TX_EN       (alternate 11, pull-down)
+ *  PB12 - RMII_TXD0        (alternate 11, pull-down)
+ *  PB13 - RMII_TXD1        (alternate 11, pull-down)
  *  PB14 - PIN14            (input pull-up)
  *  PB15 - PIN15            (input pull-up)
  */
@@ -342,13 +349,16 @@
                                      PIN_MODE_INPUT(GPIOB_PIN8)          |  \
                                      PIN_MODE_INPUT(GPIOB_PIN9)          |  \
                                      PIN_MODE_INPUT(GPIOB_PIN10)         |  \
-                                     PIN_MODE_INPUT(GPIOB_RMII_TX_EN)    |  \
-                                     PIN_MODE_INPUT(GPIOB_RMII_TXD0)     |  \
-                                     PIN_MODE_INPUT(GPIOB_RMII_TXD1)     |  \
+                                     PIN_MODE_ALTERNATE(GPIOB_RMII_TX_EN) | \
+                                     PIN_MODE_ALTERNATE(GPIOB_RMII_TXD0) |  \
+                                     PIN_MODE_ALTERNATE(GPIOB_RMII_TXD1) |  \
                                      PIN_MODE_INPUT(GPIOB_PIN14)         |  \
                                      PIN_MODE_INPUT(GPIOB_PIN15))
 #define VAL_GPIOB_OTYPER            0x00000000U
-#define VAL_GPIOB_OSPEEDR           (PIN_OSPEED_HIGH(GPIOB_SWO))
+#define VAL_GPIOB_OSPEEDR           (PIN_OSPEED_HIGH(GPIOB_SWO)          |  \
+                                     PIN_OSPEED_HIGH(GPIOB_RMII_TX_EN)   |  \
+                                     PIN_OSPEED_HIGH(GPIOB_RMII_TXD0)    |  \
+                                     PIN_OSPEED_HIGH(GPIOB_RMII_TXD1))
 #define VAL_GPIOB_PUPDR             (PIN_PUPDR_PULLUP(GPIOB_LED_STATUS)  |  \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN1)        |  \
                                      PIN_PUPDR_PULLUP(GPIOB_PIN2)        |  \
@@ -367,17 +377,19 @@
                                      PIN_PUPDR_PULLUP(GPIOB_PIN15))
 #define VAL_GPIOB_ODR               0xFFFFFFFFU
 #define VAL_GPIOB_AFRL              (PIN_AFIO_AF(GPIOB_SWO, 0U))
-#define VAL_GPIOB_AFRH              0x00000000U
+#define VAL_GPIOB_AFRH              (PIN_AFIO_AF(GPIOB_RMII_TX_EN, 11U) |  \
+                                     PIN_AFIO_AF(GPIOB_RMII_TXD0, 11U)  |  \
+                                     PIN_AFIO_AF(GPIOB_RMII_TXD1, 11U))
 
 /*
  * GPIOC setup (Phase 0): all peripheral pins input pull-up.
  *
  *  PC0  - PIN0             (input pull-up)
- *  PC1  - RMII_MDC         (input pull-up, Phase 7 -> AF11)
+ *  PC1  - RMII_MDC         (alternate 11, pull-up)
  *  PC2  - PIN2             (input pull-up)
  *  PC3  - PIN3             (input pull-up)
- *  PC4  - RMII_RXD0        (input pull-up, Phase 7 -> AF11)
- *  PC5  - RMII_RXD1        (input pull-up, Phase 7 -> AF11)
+ *  PC4  - RMII_RXD0        (alternate 11)
+ *  PC5  - RMII_RXD1        (alternate 11)
  *  PC6  - PIN6             (input pull-up)
  *  PC7  - PIN7             (input pull-up)
  *  PC8  - LNB_FLT          (input pull-up)
@@ -389,15 +401,19 @@
  *  PC14 - PIN14            (input pull-up)
  *  PC15 - PIN15            (input pull-up)
  */
-#define VAL_GPIOC_MODER             0x00000000U
+#define VAL_GPIOC_MODER             (PIN_MODE_ALTERNATE(GPIOC_RMII_MDC) |  \
+                                     PIN_MODE_ALTERNATE(GPIOC_RMII_RXD0) | \
+                                     PIN_MODE_ALTERNATE(GPIOC_RMII_RXD1))
 #define VAL_GPIOC_OTYPER            0x00000000U
-#define VAL_GPIOC_OSPEEDR           0x00000000U
+#define VAL_GPIOC_OSPEEDR           (PIN_OSPEED_HIGH(GPIOC_RMII_MDC)    |  \
+                                     PIN_OSPEED_HIGH(GPIOC_RMII_RXD0)   |  \
+                                     PIN_OSPEED_HIGH(GPIOC_RMII_RXD1))
 #define VAL_GPIOC_PUPDR             (PIN_PUPDR_PULLUP(GPIOC_PIN0)        |  \
                                      PIN_PUPDR_PULLUP(GPIOC_RMII_MDC)    |  \
                                      PIN_PUPDR_PULLUP(GPIOC_PIN2)        |  \
                                      PIN_PUPDR_PULLUP(GPIOC_PIN3)        |  \
-                                     PIN_PUPDR_PULLUP(GPIOC_RMII_RXD0)   |  \
-                                     PIN_PUPDR_PULLUP(GPIOC_RMII_RXD1)   |  \
+                                     PIN_PUPDR_FLOATING(GPIOC_RMII_RXD0) | \
+                                     PIN_PUPDR_FLOATING(GPIOC_RMII_RXD1) | \
                                      PIN_PUPDR_PULLUP(GPIOC_PIN6)        |  \
                                      PIN_PUPDR_PULLUP(GPIOC_PIN7)        |  \
                                      PIN_PUPDR_PULLUP(GPIOC_LNB_FLT)     |  \
@@ -409,7 +425,9 @@
                                      PIN_PUPDR_PULLUP(GPIOC_PIN14)       |  \
                                      PIN_PUPDR_PULLUP(GPIOC_PIN15))
 #define VAL_GPIOC_ODR               0xFFFFFFFFU
-#define VAL_GPIOC_AFRL              0x00000000U
+#define VAL_GPIOC_AFRL              (PIN_AFIO_AF(GPIOC_RMII_MDC, 11U)   |  \
+                                     PIN_AFIO_AF(GPIOC_RMII_RXD0, 11U)  |  \
+                                     PIN_AFIO_AF(GPIOC_RMII_RXD1, 11U))
 #define VAL_GPIOC_AFRH              0x00000000U
 
 /*

@@ -7,10 +7,12 @@ Define configuration domains and expected runtime behavior for settings manageme
 ## Current Build Profile Note
 
 - `NF_FEATURE_HAS_CONFIG_BLOCK` is currently disabled in the validated build profile.
-- Treat persistence behavior as profile-dependent unless re-enabled and validated.
-- Current MVP persists config snapshots to FM24CL16B F-RAM on I2C1 (power-cycle persistent), with RAM snapshot fallback if FRAM is unavailable.
+- The active application does not yet implement persisted runtime configuration.
+- Configuration persistence will use the FM24CL16B F-RAM on I2C1 through the existing `Fram24C128` interop.
+- IPv4 DHCP is the default. Static IPv4 values are persisted only as an explicitly selected alternative.
+- IPv6 is deferred.
 
-## Implemented MVP Interface
+## Planned Interface
 
 - MQTT commands:
   - `.../command/config/get`
@@ -28,22 +30,28 @@ Define configuration domains and expected runtime behavior for settings manageme
   - `config fram-dump [bytes]` (debug: dumps raw FRAM bytes from address `0x0000`)
   - `config fram-clear ERASE` (debug: clears FRAM and resets runtime config to defaults)
 
-## Implemented Runtime Keys (MVP)
+## Planned Runtime Keys
 
-- `network.static_ip`
-- `network.static_subnet`
-- `network.static_gateway`
+- `network.enabled` (`true` by default)
+- `network.hostname`
+- `network.mac` (`auto` by default)
+- `network.ipv4.mode` (`dhcp` by default, or `static`)
+- `network.ipv4.address`
+- `network.ipv4.prefix_length`
+- `network.ipv4.gateway`
+- `network.ipv4.dns_mode` (`auto` by default, or `static`)
+- `network.ipv4.dns_servers`
 - `mqtt.broker`
 - `mqtt.port`
 - `mqtt.client_id`
 - `mqtt.username`
 - `mqtt.password`
 - `mqtt.topic_prefix`
-- `mqtt.transport_mode` (`system-net` or `w5500-native`)
+- `mqtt.enabled`
 - `system.device_name`
 - `system.location`
 
-## Persistence Backend (MVP)
+## Planned Persistence Backend
 
 - Device: `FM24CL16B` (16 Kb / 2048-byte I2C F-RAM)
 - Bus: I2C1
