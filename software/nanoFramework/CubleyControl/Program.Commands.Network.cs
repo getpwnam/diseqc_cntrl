@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading;
 using nanoFramework.Runtime.Native;
@@ -66,6 +67,45 @@ namespace CubleyControl
             _activeOutputSink(
                 "config source=" + _networkConfigurationSource +
                 " state=" + (_networkConfigurationDirty ? "staged" : "saved") + "\r\n");
+        }
+
+        private static void HandleDnsCommand(string[] tokens, int reqId)
+        {
+            if (tokens.Length != 3 || tokens[1] != "lookup" || string.IsNullOrEmpty(tokens[2]))
+            {
+                WriteCommandResult(reqId, false, "validation_error", "dns lookup usage", "usage=dns lookup <hostname>");
+                return;
+            }
+
+            string host = tokens[2];
+            try
+            {
+                IPHostEntry entry = Dns.GetHostEntry(host);
+                IPAddress[] addresses = entry == null ? null : entry.AddressList;
+                if (addresses == null || addresses.Length == 0)
+                {
+                    WriteCommandResult(reqId, false, "unavailable", "dns lookup failed", "host=" + host + " reason=no_addresses");
+                    return;
+                }
+
+                string addressList = string.Empty;
+                for (int index = 0; index < addresses.Length; index++)
+                {
+                    if (index > 0)
+                    {
+                        addressList += ",";
+                    }
+
+                    addressList += addresses[index].ToString();
+                }
+
+                _activeOutputSink("dns host=" + host + " addresses=" + addressList + "\r\n");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[DNS] lookup failed host=" + host + " error=" + ex.Message);
+                WriteCommandResult(reqId, false, "unavailable", "dns lookup failed", "host=" + host);
+            }
         }
 
         private static void HandleSetNetworkCommand(string[] tokens, int reqId)

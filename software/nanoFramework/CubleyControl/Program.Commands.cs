@@ -39,7 +39,7 @@ namespace CubleyControl
             {
                 if (tokens.Length == 1)
                 {
-                    WriteCommandResult(reqId, true, "ok", "help", "commands=show,get,set,diseqc,help,status,watch,capabilities,version,led,lnb aliases=h,st,w,caps,ver,l");
+                    WriteCommandResult(reqId, true, "ok", "help", "commands=show,get,set,dns,diseqc,help,status,watch,capabilities,version,led,lnb aliases=h,st,w,caps,ver,l");
                 }
                 else
                 {
@@ -51,6 +51,10 @@ namespace CubleyControl
                     else if (topic == "network" || topic == "net")
                     {
                         WriteCommandResult(reqId, true, "ok", "help network", "usage=get network; set network <mode dhcp|static|address IP|mask MASK|gateway IP|dns auto|dns static DNS1 [DNS2]|save|apply|discard|defaults|reboot>");
+                    }
+                    else if (topic == "dns")
+                    {
+                        WriteCommandResult(reqId, true, "ok", "help dns", "usage=dns lookup <hostname>");
                     }
                     else if (topic == "show" || topic == "get" || topic == "set" || topic == "diseqc")
                     {
@@ -110,6 +114,12 @@ namespace CubleyControl
             if (head == "lnb" || head == "l")
             {
                 HandleLnbCommand(tokens, reqId);
+                return;
+            }
+
+            if (head == "dns")
+            {
+                HandleDnsCommand(tokens, reqId);
                 return;
             }
 
