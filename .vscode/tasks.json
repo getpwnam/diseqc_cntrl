@@ -1,0 +1,91 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "nf: build CubleyControl (Debug)",
+      "type": "shell",
+      "command": "./toolchain/build-CubleyControl.sh",
+      "args": [
+        "build",
+        "--project",
+        "CubleyControl/CubleyControl.nfproj",
+        "--configuration",
+        "Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/software/nanoFramework"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "nf: prepare CubleyControl debug assemblies",
+      "type": "shell",
+      "command": "set -e; out=\"${workspaceFolder}/software/nanoFramework/build/CubleyControl/.debug-assemblies\"; src=\"${workspaceFolder}/software/nanoFramework/build/CubleyControl\"; rm -rf \"$out\"; mkdir -p \"$out\"; cp -f \"$src/CubleyControl.pe\" \"$src/CubleyControl.pdbx\" \"$src/CubleyControl.pdb\" \"$src/CubleyNative.pe\" \"$src/CubleyLnbh26Managed.pe\" \"$src/CubleyDiseqcManaged.pe\" \"$src/System.Device.Gpio.pe\" \"$src/System.Device.Pwm.pe\" \"$src/nanoFramework.Runtime.Events.pe\" \"$src/System.Threading.pe\" \"$src/nanoFramework.Runtime.Native.pe\" \"$src/nanoFramework.System.Collections.pe\" \"$src/System.IO.Streams.pe\" \"$src/nanoFramework.System.Text.pe\" \"$src/System.Net.pe\" \"$src/nanoFramework.M2Mqtt.Core.pe\" \"$src/nanoFramework.M2Mqtt.pe\" \"$src/mscorlib.pe\" \"$out/\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "nf: erase managed deploy region (SWD)",
+      "type": "shell",
+      "command": "st-flash erase 0x08060000 0x000A0000",
+      "problemMatcher": []
+    },
+    {
+      "label": "nf: build+prepare CubleyControl debug (Debug)",
+      "dependsOn": [
+        "nf: build CubleyControl (Debug)",
+        "nf: prepare CubleyControl debug assemblies"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "nf: clean+build+prepare CubleyControl debug (Debug)",
+      "dependsOn": [
+        "nf: erase managed deploy region (SWD)",
+        "nf: build CubleyControl (Debug)",
+        "nf: prepare CubleyControl debug assemblies"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "nf: deploy CubleyControl latest bundle (UART)",
+      "type": "shell",
+      "command": "./toolchain/deploy-CubleyControl.sh",
+      "options": {
+        "cwd": "${workspaceFolder}/software/nanoFramework"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "nf: deploy CubleyControl latest bundle (UART, reset)",
+      "type": "shell",
+      "command": "./toolchain/deploy-CubleyControl.sh",
+      "args": [
+        "--reset"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/software/nanoFramework"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "nf: deploy CubleyControl (Debug)",
+      "dependsOn": [
+        "nf: build CubleyControl (Debug)",
+        "nf: deploy CubleyControl latest bundle (UART)"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "nf: deploy CubleyControl (Debug, reset)",
+      "dependsOn": [
+        "nf: build CubleyControl (Debug)",
+        "nf: deploy CubleyControl latest bundle (UART, reset)"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    }
+  ]
+}
