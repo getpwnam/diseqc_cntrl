@@ -89,6 +89,9 @@ namespace CubleyControl
             var heartbeatThread = new Thread(HeartbeatLoop);
             heartbeatThread.Start();
 
+            var usbConsoleThread = new Thread(UsbConsoleLoop);
+            usbConsoleThread.Start();
+
             InitializeNetworkConfiguration();
             InitializeLnbSafeDefaults();
             InitializeLnbFaultMonitor();
@@ -98,9 +101,6 @@ namespace CubleyControl
                 var lnbFaultPollThread = new Thread(LnbFaultPollLoop);
                 lnbFaultPollThread.Start();
             }
-
-            var usbConsoleThread = new Thread(UsbConsoleLoop);
-            usbConsoleThread.Start();
 
             var mqttThread = new Thread(MqttLoop);
             mqttThread.Start();

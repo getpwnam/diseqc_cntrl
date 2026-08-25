@@ -19,6 +19,8 @@ namespace CubleyControl
 
                 NetworkInterface networkInterface = interfaces[0];
                 string[] dnsAddresses = networkInterface.IPv4DnsAddresses;
+                string configurationSource = _networkConfigurationSource;
+                string configurationError = _networkConfigurationError;
 
                 _activeOutputSink(
                     "network link=" + (NetworkInterface.GetIsNetworkAvailable() ? "up" : "down") +
@@ -32,8 +34,8 @@ namespace CubleyControl
                     "dns mode=" + (networkInterface.IsAutomaticDnsEnabled ? "auto" : "static") +
                     " servers=" + FormatDnsAddresses(dnsAddresses) + "\r\n");
                 _activeOutputSink(
-                    "config source=" + _networkConfigurationSource +
-                    " status=" + (_networkConfigurationError.Length == 0 ? "ok" : _networkConfigurationError) + "\r\n");
+                    "config source=" + (string.IsNullOrEmpty(configurationSource) ? "unknown" : configurationSource) +
+                    " status=" + (string.IsNullOrEmpty(configurationError) ? "ok" : configurationError) + "\r\n");
             }
             catch (Exception ex)
             {
