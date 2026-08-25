@@ -48,6 +48,10 @@ namespace CubleyControl
                     {
                         WriteCommandResult(reqId, true, "ok", "help lnb", "usage=lnb get <pol|band|status>, l g <p|b|s>, set lnb.a.<band|polarization|enabled|iset|isw> <value>, get lnb.a.<band|polarization|status|enabled|iset|isw>, l s <e|p|b> <value>");
                     }
+                    else if (topic == "network" || topic == "net")
+                    {
+                        WriteCommandResult(reqId, true, "ok", "help network", "usage=get network; set network <mode dhcp|static|address IP|mask MASK|gateway IP|dns auto|dns static DNS1 [DNS2]|save|apply|discard|defaults|reboot>");
+                    }
                     else if (topic == "show" || topic == "get" || topic == "set" || topic == "diseqc")
                     {
                         WriteCommandResult(reqId, true, "ok", "help cli", "show=show network|net|lnb [a|b] [detail]|diseqc get=get lnb.a.<band|polarization|status|enabled|iset|isw> set=set lnb.a.<band|polarization|enabled|iset|isw> <value> diseqc=diseqc tone on [freq_hz] [duty_pct]|tone off|tone status|listen on|off|preset <off|direct|aa|ab|ba|bb|status>");

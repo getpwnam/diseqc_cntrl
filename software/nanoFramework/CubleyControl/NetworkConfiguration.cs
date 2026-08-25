@@ -34,6 +34,24 @@ namespace CubleyControl
             };
         }
 
+        public static bool IsValidIpv4Address(string value)
+        {
+            uint address;
+            return TryParseIpv4(value, out address) && address != 0 && (address >> 24) < 224;
+        }
+
+        public static bool IsValidSubnetMask(string value)
+        {
+            uint mask;
+            return TryParseIpv4(value, out mask) && IsContiguousMask(mask);
+        }
+
+        public static bool IsValidDnsAddress(string value)
+        {
+            uint address;
+            return TryParseIpv4(value, out address) && address != 0;
+        }
+
         public bool TryValidate(out string error)
         {
             if (Mode != ModeDhcp && Mode != ModeStatic)

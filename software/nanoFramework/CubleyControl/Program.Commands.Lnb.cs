@@ -99,6 +99,12 @@ namespace CubleyControl
 
         private static void HandleGetCommand(string[] tokens, int reqId)
         {
+            if (tokens.Length >= 2 && (tokens[1] == "network" || tokens[1] == "net"))
+            {
+                HandleGetNetworkCommand(tokens, reqId);
+                return;
+            }
+
             if (!EnsureLnbInitialized())
             {
                 WriteCommandResult(reqId, false, "hw_fault", "get", "lnb_init_rc=" + _lnbInitStatus.ToString());
@@ -182,6 +188,12 @@ namespace CubleyControl
 
         private static void HandleSetCommand(string[] tokens, int reqId)
         {
+            if (tokens.Length >= 2 && (tokens[1] == "network" || tokens[1] == "net"))
+            {
+                HandleSetNetworkCommand(tokens, reqId);
+                return;
+            }
+
             if (!EnsureLnbInitialized())
             {
                 WriteCommandResult(reqId, false, "hw_fault", "set", "lnb_init_rc=" + _lnbInitStatus.ToString());

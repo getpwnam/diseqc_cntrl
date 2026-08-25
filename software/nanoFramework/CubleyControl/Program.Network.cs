@@ -9,6 +9,8 @@ namespace CubleyControl
         private static readonly INetworkConfigurationStorage _networkConfigurationStorage =
             new InternalNetworkConfigurationStorage();
         private static NetworkConfiguration _networkConfiguration = NetworkConfiguration.CreateDefaults();
+        private static NetworkConfiguration _pendingNetworkConfiguration = NetworkConfiguration.CreateDefaults();
+        private static bool _networkConfigurationDirty;
         private static string _networkConfigurationSource = "defaults";
         private static string _networkConfigurationError = string.Empty;
 
@@ -55,6 +57,9 @@ namespace CubleyControl
                 "[NETWORK-CONFIG] source=" + _networkConfigurationSource +
                 " mode=" + _networkConfiguration.Mode +
                 " error=" + (_networkConfigurationError.Length == 0 ? "none" : _networkConfigurationError));
+
+            _pendingNetworkConfiguration = _networkConfiguration.Clone();
+            _networkConfigurationDirty = false;
         }
 
         private static bool TryApplyNetworkConfiguration(NetworkConfiguration configuration, out string error)
