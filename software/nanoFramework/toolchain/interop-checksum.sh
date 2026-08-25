@@ -10,15 +10,31 @@ ASSEMBLY_NAME="CubleyNative"
 PE_PATH=""
 
 CUBLEY_ASSEMBLY_INFO_PATH="$ROOT_DIR/CubleyNative.Interop/Properties/AssemblyInfo.cs"
-CUBLEY_NATIVE_INTEROP_PATH="$ROOT_DIR/nf-native/cubley_interop.cpp"
 CUBLEY_NATIVE_SYMBOL="g_CLR_AssemblyNative_CubleyNative"
-CUBLEY_DEFAULT_PE_PATH="$ROOT_DIR/build/DiSEqC_Control/CubleyNative.pe"
+CUBLEY_DEFAULT_PE_PATH="$ROOT_DIR/build/CubleyControl/CubleyNative.pe"
 LEGACY_SMOKE_ASSEMBLY_INFO_PATH="$ROOT_DIR/SmokeW5500.Interop/Properties/AssemblyInfo.cs"
 
 ASSEMBLY_INFO_PATH=""
 NATIVE_INTEROP_PATH=""
 NATIVE_SYMBOL=""
 DEFAULT_PE_PATH=""
+
+resolve_cubley_native_interop_path() {
+  local candidates=(
+    "$ROOT_DIR/../../firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/cubley_interop.cpp"
+    "$ROOT_DIR/../../firmware/nf-interpreter/targets-community/ChibiOS/CUBLEY_F407_0_5/nanoCLR/cubley_interop.cpp"
+  )
+
+  local c
+  for c in "${candidates[@]}"; do
+    if [[ -f "$c" ]]; then
+      printf '%s\n' "$c"
+      return 0
+    fi
+  done
+
+  return 1
+}
 
 usage() {
   cat <<'EOF'
@@ -42,7 +58,7 @@ set_targets() {
   case "$ASSEMBLY_NAME" in
     CubleyNative)
       ASSEMBLY_INFO_PATH="$CUBLEY_ASSEMBLY_INFO_PATH"
-      NATIVE_INTEROP_PATH="$CUBLEY_NATIVE_INTEROP_PATH"
+      NATIVE_INTEROP_PATH="$(resolve_cubley_native_interop_path || true)"
       NATIVE_SYMBOL="$CUBLEY_NATIVE_SYMBOL"
       DEFAULT_PE_PATH="$CUBLEY_DEFAULT_PE_PATH"
       ;;
@@ -109,6 +125,18 @@ extract_native_checksum() {
     | tr '[:lower:]' '[:upper:]'
 }
 
+extract_managed_assembly_version() {
+  sed -n 's/.*AssemblyVersion("\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\)").*/\1/p' "$ASSEMBLY_INFO_PATH" | head -n1
+}
+
+extract_native_assembly_version() {
+  sed -n "/$NATIVE_SYMBOL/,/};/p" "$NATIVE_INTEROP_PATH" \
+    | grep -Eo '\{[[:space:]]*[0-9]+,[[:space:]]*[0-9]+,[[:space:]]*[0-9]+,[[:space:]]*[0-9]+[[:space:]]*\}' \
+    | tail -n1 \
+    | tr -d '{} ' \
+    | tr ',' '.'
+}
+
 extract_pe_checksum() {
   local pe="$1"
   python3 - <<'PYEOF' "$pe"
@@ -150,6 +178,25 @@ assert_native_version_scope
 
 CS_SUM="$(extract_cs_checksum)"
 NATIVE_SUM="$(extract_native_checksum)"
+MANAGED_VERSION="$(extract_managed_assembly_version)"
+NATIVE_VERSION="$(extract_native_assembly_version)"
+
+if [[ -z "$MANAGED_VERSION" ]]; then
+  echo "Unable to parse AssemblyVersion from $ASSEMBLY_INFO_PATH" >&2
+  exit 1
+fi
+
+if [[ -z "$NATIVE_VERSION" ]]; then
+  echo "Unable to parse $NATIVE_SYMBOL version from $NATIVE_INTEROP_PATH" >&2
+  exit 1
+fi
+
+if [[ "$MANAGED_VERSION" != "$NATIVE_VERSION" ]]; then
+  echo "Assembly version mismatch between source files ($ASSEMBLY_NAME):" >&2
+  echo "  AssemblyInfo: $MANAGED_VERSION" >&2
+  echo "  native table: $NATIVE_VERSION" >&2
+  exit 1
+fi
 
 if [[ -z "$CS_SUM" ]]; then
   echo "Unable to parse AssemblyNativeVersion from $ASSEMBLY_INFO_PATH" >&2
@@ -171,8 +218,11 @@ if [[ "$MODE" == "fix" ]]; then
   PE_SUM="$(extract_pe_checksum "$PE_PATH")"
 
   python3 - <<'PYEOF' "$ASSEMBLY_INFO_PATH" "$NATIVE_INTEROP_PATH" "$NATIVE_SYMBOL" "$PE_SUM"
+import os
 import re
+import stat
 import sys
+import tempfile
 
 assembly_info_path, native_path, native_symbol, pe_sum = sys.argv[1:5]
 
@@ -188,13 +238,15 @@ else:
     cs_count = 1
 
 if cs_count != 1:
-    raise SystemExit(f"Failed to update AssemblyNativeVersion in {assembly_info_path}")
-
-with open(assembly_info_path, 'w', encoding='utf-8') as f:
-    f.write(cs_text)
+  raise SystemExit(f"Failed to update AssemblyNativeVersion in {assembly_info_path}")
 
 with open(native_path, 'r', encoding='utf-8') as f:
     native_text = f.read()
+native_original = native_text
+
+for destination in (assembly_info_path, native_path):
+  if not os.access(destination, os.W_OK):
+    raise SystemExit(f"Source is not writable; no files updated: {destination}")
 
 start = native_text.find(native_symbol)
 if start < 0:
@@ -212,8 +264,45 @@ if block_count != 1:
 
 native_text = native_text[:open_brace] + block_new + native_text[close_brace:]
 
-with open(native_path, 'w', encoding='utf-8') as f:
-    f.write(native_text)
+def stage_replacement(path, text):
+  directory = os.path.dirname(path)
+  fd, staged_path = tempfile.mkstemp(prefix=f".{os.path.basename(path)}.", dir=directory)
+  try:
+    with os.fdopen(fd, 'w', encoding='utf-8') as staged_file:
+      staged_file.write(text)
+      staged_file.flush()
+      os.fsync(staged_file.fileno())
+    os.chmod(staged_path, stat.S_IMODE(os.stat(path).st_mode))
+    return staged_path
+  except Exception:
+    try:
+      os.unlink(staged_path)
+    except FileNotFoundError:
+      pass
+    raise
+
+managed_staged = stage_replacement(assembly_info_path, cs_text)
+native_staged = stage_replacement(native_path, native_text)
+native_replaced = False
+
+try:
+  os.replace(native_staged, native_path)
+  native_staged = None
+  native_replaced = True
+  os.replace(managed_staged, assembly_info_path)
+  managed_staged = None
+except Exception:
+  if native_replaced:
+    native_rollback = stage_replacement(native_path, native_original)
+    os.replace(native_rollback, native_path)
+  raise
+finally:
+  for staged_path in (managed_staged, native_staged):
+    if staged_path:
+      try:
+        os.unlink(staged_path)
+      except FileNotFoundError:
+        pass
 PYEOF
 
   echo "Updated checksums to $PE_SUM for $ASSEMBLY_NAME"

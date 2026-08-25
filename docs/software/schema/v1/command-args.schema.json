@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://getpwnam.github.io/diseqc_cntrl/schema/v1/command-args.schema.json",
+  "title": "Cubley Command Arguments v1",
+  "type": "object",
+  "$defs": {
+    "empty": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "diseqc.rotor.goto_angle": {
+      "type": "object",
+      "required": [
+        "angle_deg"
+      ],
+      "properties": {
+        "angle_deg": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        }
+      },
+      "additionalProperties": false
+    },
+    "diseqc.rotor.goto_satellite": {
+      "type": "object",
+      "required": [
+        "satellite"
+      ],
+      "properties": {
+        "satellite": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      },
+      "additionalProperties": false
+    },
+    "diseqc.rotor.halt": {
+      "$ref": "#/$defs/empty"
+    },
+    "diseqc.rotor.step_east": {
+      "type": "object",
+      "required": [
+        "steps"
+      ],
+      "properties": {
+        "steps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128
+        }
+      },
+      "additionalProperties": false
+    },
+    "diseqc.rotor.step_west": {
+      "type": "object",
+      "required": [
+        "steps"
+      ],
+      "properties": {
+        "steps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128
+        }
+      },
+      "additionalProperties": false
+    },
+    "diseqc.rotor.drive_east": {
+      "$ref": "#/$defs/empty"
+    },
+    "diseqc.rotor.drive_west": {
+      "$ref": "#/$defs/empty"
+    },
+    "diseqc.lnb.set_voltage": {
+      "type": "object",
+      "required": [
+        "voltage"
+      ],
+      "properties": {
+        "voltage": {
+          "$ref": "common.schema.json#/$defs/voltage"
+        }
+      },
+      "additionalProperties": false
+    },
+    "diseqc.lnb.set_polarization": {
+      "type": "object",
+      "required": [
+        "polarization"
+      ],
+      "properties": {
+        "polarization": {
+          "$ref": "common.schema.json#/$defs/polarization"
+        }
+      },
+      "additionalProperties": false
+    },
+    "diseqc.lnb.set_tone": {
+      "type": "object",
+      "required": [
+        "tone"
+      ],
+      "properties": {
+        "tone": {
+          "$ref": "common.schema.json#/$defs/tone"
+        }
+      },
+      "additionalProperties": false
+    },
+    "diseqc.lnb.set_band": {
+      "type": "object",
+      "required": [
+        "band"
+      ],
+      "properties": {
+        "band": {
+          "$ref": "common.schema.json#/$defs/band"
+        }
+      },
+      "additionalProperties": false
+    },
+    "diseqc.calibration.set_reference": {
+      "$ref": "#/$defs/empty"
+    },
+    "system.config.get": {
+      "$ref": "#/$defs/empty"
+    },
+    "system.config.set": {
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "enum": [
+            "network.static_ip",
+            "network.static_subnet",
+            "network.static_gateway",
+            "mqtt.broker",
+            "mqtt.port",
+            "mqtt.client_id",
+            "mqtt.username",
+            "mqtt.password",
+            "mqtt.topic_prefix",
+            "mqtt.transport_mode",
+            "system.device_name",
+            "system.location"
+          ]
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "system.config.save": {
+      "$ref": "#/$defs/empty"
+    },
+    "system.config.reset": {
+      "$ref": "#/$defs/empty"
+    },
+    "system.config.reload": {
+      "$ref": "#/$defs/empty"
+    },
+    "system.config.fram_clear": {
+      "type": "object",
+      "required": [
+        "confirm"
+      ],
+      "properties": {
+        "confirm": {
+          "type": "string",
+          "const": "ERASE"
+        }
+      },
+      "additionalProperties": false
+    },
+    "system.capabilities.get": {
+      "$ref": "#/$defs/empty"
+    },
+    "system.version.get": {
+      "$ref": "#/$defs/empty"
+    }
+  }
+}

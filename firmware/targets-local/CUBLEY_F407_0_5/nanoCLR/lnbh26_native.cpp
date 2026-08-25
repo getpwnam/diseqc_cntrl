@@ -458,6 +458,74 @@ lnb_status_t lnb_set_diseqc_input_mode_for_channel(lnb_handle_t *hlnb, lnb_chann
     return LNB_OK;
 }
 
+static lnb_status_t lnb_update_data3_bit_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, uint8_t maskA, uint8_t maskB, bool setBit)
+{
+    if (hlnb == NULL || !g_lnb_initialized)
+    {
+        lnb_set_last_error(LNB_ERROR_NOT_INITIALIZED, 0);
+        return LNB_ERROR_NOT_INITIALIZED;
+    }
+
+    if (!lnb_try_validate_channel(channel))
+    {
+        return LNB_ERROR_INVALID_PARAM;
+    }
+
+    uint8_t bitMask = (channel == LNB_CHANNEL_A) ? maskA : maskB;
+    lnb_handle_t previous = *hlnb;
+
+    if (setBit)
+    {
+        hlnb->data3_reg |= bitMask;
+    }
+    else
+    {
+        hlnb->data3_reg &= (uint8_t)~bitMask;
+    }
+
+    lnb_status_t status = lnb_write_data_registers(hlnb);
+    if (status != LNB_OK)
+    {
+        *hlnb = previous;
+        return status;
+    }
+
+    g_lnb = *hlnb;
+    return LNB_OK;
+}
+
+lnb_status_t lnb_set_iset_low_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, bool lowRange)
+{
+    return lnb_update_data3_bit_for_channel(hlnb, channel, LNBH26_DATA3_ISET_A, LNBH26_DATA3_ISET_B, lowRange);
+}
+
+lnb_status_t lnb_set_isw_low_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, bool lowLimit)
+{
+    return lnb_update_data3_bit_for_channel(hlnb, channel, LNBH26_DATA3_ISW_A, LNBH26_DATA3_ISW_B, lowLimit);
+}
+
+int32_t lnb_get_iset_low_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel)
+{
+    if (hlnb == NULL || !g_lnb_initialized || !lnb_is_valid_channel(channel))
+    {
+        return 0;
+    }
+
+    uint8_t bitMask = (channel == LNB_CHANNEL_A) ? LNBH26_DATA3_ISET_A : LNBH26_DATA3_ISET_B;
+    return ((hlnb->data3_reg & bitMask) != 0) ? 1 : 0;
+}
+
+int32_t lnb_get_isw_low_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel)
+{
+    if (hlnb == NULL || !g_lnb_initialized || !lnb_is_valid_channel(channel))
+    {
+        return 0;
+    }
+
+    uint8_t bitMask = (channel == LNB_CHANNEL_A) ? LNBH26_DATA3_ISW_A : LNBH26_DATA3_ISW_B;
+    return ((hlnb->data3_reg & bitMask) != 0) ? 1 : 0;
+}
+
 lnb_polarization_t lnb_get_polarization_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel)
 {
     int index;
@@ -588,9 +656,47 @@ int32_t lnb_native_read_status_pair(int32_t *status1Register, int32_t *status2Re
         return (int32_t)LNB_ERROR_INVALID_PARAM;
     }
 
+    if (!g_lnb_initialized)
+    {
+        lnb_status_t initStatus = lnb_init(lnb_get_global_handle(), &I2CD3, LNBH26_I2C_ADDR);
+        if (initStatus != LNB_OK)
+        {
+            return (int32_t)initStatus;
+        }
+    }
+
     uint8_t status1 = 0;
     uint8_t status2 = 0;
-    lnb_status_t status = lnb_read_status_pair(lnb_get_global_handle(), &status1, &status2);
+    lnb_handle_t *handle = lnb_get_global_handle();
+    if (handle == NULL)
+    {
+        lnb_set_last_error(LNB_ERROR_NOT_INITIALIZED, -118);
+        return (int32_t)LNB_ERROR_NOT_INITIALIZED;
+    }
+
+    lnb_status_t status = lnb_read_register_byte(handle, (uint8_t)LNBH26_REGISTER_STATUS1, &status1);
+    if (status == LNB_OK)
+    {
+        status = lnb_read_register_byte(handle, (uint8_t)LNBH26_REGISTER_STATUS2, &status2);
+    }
+
+    // If we still observe an unexpected invalid-parameter result, retry through
+    // the register wrapper path used by NativeReadRegister.
+    if (status == LNB_ERROR_INVALID_PARAM)
+    {
+        int32_t fallbackStatus1 = 0;
+        int32_t fallbackStatus2 = 0;
+        int32_t rc1 = lnb_native_read_register((int32_t)LNBH26_REGISTER_STATUS1, &fallbackStatus1);
+        int32_t rc2 = lnb_native_read_register((int32_t)LNBH26_REGISTER_STATUS2, &fallbackStatus2);
+
+        if (rc1 == (int32_t)LNB_OK && rc2 == (int32_t)LNB_OK)
+        {
+            status1 = (uint8_t)(fallbackStatus1 & 0xFF);
+            status2 = (uint8_t)(fallbackStatus2 & 0xFF);
+            status = LNB_OK;
+        }
+    }
+
     *status1Register = (int32_t)status1;
     *status2Register = (int32_t)status2;
     return (int32_t)status;
@@ -687,6 +793,30 @@ int32_t lnb_native_set_diseqc_input_mode_for_channel(int32_t channelConstant, in
     return (int32_t)LNB_ERROR_INVALID_PARAM;
 }
 
+int32_t lnb_native_set_iset_low_for_channel(int32_t channelConstant, int32_t lowRange)
+{
+    lnb_channel_t channel;
+    lnb_status_t status = lnb_native_parse_channel(channelConstant, &channel);
+    if (status != LNB_OK)
+    {
+        return (int32_t)status;
+    }
+
+    return (int32_t)lnb_set_iset_low_for_channel(lnb_get_global_handle(), channel, lowRange != 0);
+}
+
+int32_t lnb_native_set_isw_low_for_channel(int32_t channelConstant, int32_t lowLimit)
+{
+    lnb_channel_t channel;
+    lnb_status_t status = lnb_native_parse_channel(channelConstant, &channel);
+    if (status != LNB_OK)
+    {
+        return (int32_t)status;
+    }
+
+    return (int32_t)lnb_set_isw_low_for_channel(lnb_get_global_handle(), channel, lowLimit != 0);
+}
+
 int32_t lnb_native_get_polarization_for_channel(int32_t channelConstant)
 {
     lnb_channel_t channel;
@@ -719,6 +849,30 @@ int32_t lnb_native_get_band_for_channel(int32_t channelConstant)
 int32_t lnb_native_get_band(void)
 {
     return lnb_native_get_band_for_channel(LNB_NATIVE_CHANNEL_A);
+}
+
+int32_t lnb_native_get_iset_low_for_channel(int32_t channelConstant)
+{
+    lnb_channel_t channel;
+    lnb_status_t status = lnb_native_parse_channel(channelConstant, &channel);
+    if (status != LNB_OK)
+    {
+        return 0;
+    }
+
+    return lnb_get_iset_low_for_channel(lnb_get_global_handle(), channel);
+}
+
+int32_t lnb_native_get_isw_low_for_channel(int32_t channelConstant)
+{
+    lnb_channel_t channel;
+    lnb_status_t status = lnb_native_parse_channel(channelConstant, &channel);
+    if (status != LNB_OK)
+    {
+        return 0;
+    }
+
+    return lnb_get_isw_low_for_channel(lnb_get_global_handle(), channel);
 }
 
 int32_t lnb_native_read_register(int32_t registerAddress, int32_t *registerValue)

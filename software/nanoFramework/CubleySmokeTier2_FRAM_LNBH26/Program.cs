@@ -7,6 +7,8 @@ namespace CubleySmokeTier2_FRAM_LNBH26
 {
     public static class Program
     {
+        private const int LnbChannelA = 0;
+
         private const byte ResultEnter = 0;
         private const byte ResultPass = 1;
         private const byte ResultFail = 14;
@@ -139,16 +141,16 @@ namespace CubleySmokeTier2_FRAM_LNBH26
             WriteStatus(StageLnbSet, ResultEnter, 0x50);
             int setDisableRc = LNBH26.NativeSetEnable(false);
             LogLnbNativeTrace("set-enable disabled");
-            int setDisableVoltageRc = LNBH26.NativeSetVoltage((int)LNBH26.Voltage.V13);
-            LogLnbNativeTrace("set-voltage 13V (disabled profile)");
-            int setDisableToneRc = LNBH26.NativeSetTone(false);
-            LogLnbNativeTrace("set-tone off (disabled profile)");
+            int setDisablePolRc = LNBH26.NativeSetPolarizationForChannel(LnbChannelA, (int)LNBH26.Polarization.Vertical);
+            LogLnbNativeTrace("set-polarization vertical (disabled profile)");
+            int setDisableBandRc = LNBH26.NativeSetBandForChannel(LnbChannelA, (int)LNBH26.Band.Low);
+            LogLnbNativeTrace("set-band low (disabled profile)");
 
             if (setDisableRc != (int)LNBH26.Status.Ok ||
-                setDisableVoltageRc != (int)LNBH26.Status.Ok ||
-                setDisableToneRc != (int)LNBH26.Status.Ok)
+                setDisablePolRc != (int)LNBH26.Status.Ok ||
+                setDisableBandRc != (int)LNBH26.Status.Ok)
             {
-                byte detail = (byte)(setDisableRc != 0 ? setDisableRc : (setDisableVoltageRc != 0 ? setDisableVoltageRc : setDisableToneRc));
+                byte detail = (byte)(setDisableRc != 0 ? setDisableRc : (setDisablePolRc != 0 ? setDisablePolRc : setDisableBandRc));
                 WriteStatus(StageLnbSet, ResultFail, detail);
                 throw new InvalidOperationException("LNB set (disabled profile) failed");
             }
@@ -165,16 +167,16 @@ namespace CubleySmokeTier2_FRAM_LNBH26
 
             int setEnableRc = LNBH26.NativeSetEnable(true);
             LogLnbNativeTrace("set-enable enabled");
-            int setEnableVoltageRc = LNBH26.NativeSetVoltage((int)LNBH26.Voltage.V13);
-            LogLnbNativeTrace("set-voltage 13V (enabled profile)");
-            int setEnableToneRc = LNBH26.NativeSetTone(false);
-            LogLnbNativeTrace("set-tone off (enabled profile)");
+            int setEnablePolRc = LNBH26.NativeSetPolarizationForChannel(LnbChannelA, (int)LNBH26.Polarization.Vertical);
+            LogLnbNativeTrace("set-polarization vertical (enabled profile)");
+            int setEnableBandRc = LNBH26.NativeSetBandForChannel(LnbChannelA, (int)LNBH26.Band.Low);
+            LogLnbNativeTrace("set-band low (enabled profile)");
 
             if (setEnableRc != (int)LNBH26.Status.Ok ||
-                setEnableVoltageRc != (int)LNBH26.Status.Ok ||
-                setEnableToneRc != (int)LNBH26.Status.Ok)
+                setEnablePolRc != (int)LNBH26.Status.Ok ||
+                setEnableBandRc != (int)LNBH26.Status.Ok)
             {
-                byte detail = (byte)(setEnableRc != 0 ? setEnableRc : (setEnableVoltageRc != 0 ? setEnableVoltageRc : setEnableToneRc));
+                byte detail = (byte)(setEnableRc != 0 ? setEnableRc : (setEnablePolRc != 0 ? setEnablePolRc : setEnableBandRc));
                 WriteStatus(StageLnbSet, ResultFail, detail);
                 throw new InvalidOperationException("LNB set (enabled profile) failed");
             }
@@ -182,12 +184,12 @@ namespace CubleySmokeTier2_FRAM_LNBH26
             WriteStatus(StageLnbSet, ResultPass, 0x51);
 
             WriteStatus(StageLnbGet, ResultEnter, 0x60);
-            int readVoltage = LNBH26.NativeGetVoltage();
-            bool readTone = LNBH26.NativeGetTone();
+            int readPol = LNBH26.NativeGetPolarizationForChannel(LnbChannelA);
+            int readBand = LNBH26.NativeGetBandForChannel(LnbChannelA);
             int status1;
             int readStatusRc = LNBH26.NativeReadStatus(out status1);
 
-            if (readVoltage != (int)LNBH26.Voltage.V13 || readTone || readStatusRc != (int)LNBH26.Status.Ok)
+            if (readPol != (int)LNBH26.Polarization.Vertical || readBand != (int)LNBH26.Band.Low || readStatusRc != (int)LNBH26.Status.Ok)
             {
                 byte detail = (byte)(readStatusRc != 0 ? readStatusRc : 0xE6);
                 WriteStatus(StageLnbGet, ResultFail, detail);
@@ -197,12 +199,12 @@ namespace CubleySmokeTier2_FRAM_LNBH26
             WriteStatus(StageLnbGet, ResultPass, (byte)(status1 & 0xFF));
             DumpLnbRegisters("enabled profile", status1);
 
-            int setToneOnRc = LNBH26.NativeSetTone(true);
-            LogLnbNativeTrace("set-tone on (tone-on profile)");
-            if (setToneOnRc != (int)LNBH26.Status.Ok)
+            int setBandHighRc = LNBH26.NativeSetBandForChannel(LnbChannelA, (int)LNBH26.Band.High);
+            LogLnbNativeTrace("set-band high (tone-on profile)");
+            if (setBandHighRc != (int)LNBH26.Status.Ok)
             {
-                WriteStatus(StageLnbGet, ResultFail, (byte)setToneOnRc);
-                throw new InvalidOperationException("LNB set tone-on profile failed");
+                WriteStatus(StageLnbGet, ResultFail, (byte)setBandHighRc);
+                throw new InvalidOperationException("LNB set high-band profile failed");
             }
 
             int toneOnStatus1;
@@ -222,11 +224,11 @@ namespace CubleySmokeTier2_FRAM_LNBH26
                 throw new InvalidOperationException("LNB tone-on DATA2 TEN_A bit not set");
             }
 
-            bool readToneOn = LNBH26.NativeGetTone();
-            if (!readToneOn)
+            int readBandHigh = LNBH26.NativeGetBandForChannel(LnbChannelA);
+            if (readBandHigh != (int)LNBH26.Band.High)
             {
                 WriteStatus(StageLnbGet, ResultFail, 0xE8);
-                throw new InvalidOperationException("LNB tone-on state not reported by NativeGetTone");
+                throw new InvalidOperationException("LNB high-band state not reported by NativeGetBandForChannel");
             }
 
             Debug.WriteLine("[SMOKE] LNB init/set/get OK status1=0x" + status1.ToString("X2"));

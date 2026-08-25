@@ -2,48 +2,58 @@
 
 ## Purpose
 
-Define compatibility and review rules for `Cubley.Interop` in the v1 major line.
+Define compatibility and review rules for the `CubleyNative` managed/native contract.
 
 ## Policy Scope
 
 - Managed declarations in `software/nanoFramework/CubleyNative.Interop/CubleyInteropNative.cs`
-- Native lookup/export in `software/nanoFramework/nf-native/cubley_interop.cpp`
-- Build guard scripts in `software/nanoFramework/toolchain/interop-guard.sh` and `software/nanoFramework/toolchain/interop-checksum.sh`
+- Canonical native lookup/export in `firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/cubley_interop.cpp`
+- Native CLR wrappers in `firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/*_interop.cpp`
+- Guards in `software/nanoFramework/toolchain/interop-guard.sh` and `interop-checksum.sh`
 
-## Compatibility Rules (v1.x)
+## Compatibility Rules
 
-- Existing v1 slots are immutable and cannot be changed, removed, repurposed, or reordered.
-- Non-append edits to existing slots are breaking and prohibited in v1.x.
-- New methods are allowed only as append-only entries at the tail of the table.
-- `AssemblyNativeVersion` checksum and native export checksum must remain aligned.
+- The 26 slots in `INTEROP_CONTRACT_V1.md` are the immutable v1 prefix.
+- Compatibility is determined from emitted PE order, not managed source order.
+- A v1 addition is allowed only when all existing slots remain unchanged and new slots follow slot 25.
+- Managed and native assembly names, versions, method signatures, and checksums must align.
+- The target-local firmware tree is canonical; the community-target copy is generated build output.
 
-## What Is Compatible
+Because MetadataProcessor groups methods by alphabetically ordered declaring type,
+adding a method to an existing type can shift every later type. Such a change is
+breaking even when the declaration is appended within its source file.
 
-- Adding a new InternalCall as a new trailing slot, with matching managed/native declarations.
-- Non-interop internal implementation changes that do not change method ordering/signatures.
+## Compatible Changes
 
-## What Is Breaking
+- Internal implementation changes that preserve the complete emitted slot map.
+- A new InternalCall whose emitted PE slot follows the frozen 26-slot prefix.
+- Documentation and guard improvements that do not change assembly identity or slots.
 
-- Reordering methods in `CubleyInteropNative.cs`.
-- Inserting a method in the middle of existing slots.
-- Deleting or renaming existing InternalCall methods.
-- Changing signatures in a way that changes metadata order/checksum without coordinated major-version policy.
+## Breaking Changes
+
+- Renaming, deleting, repurposing, or changing the signature of a frozen method.
+- Any source change that inserts or reorders a PE `MethodDef` within slots `0..25`.
+- Changing managed or native assembly version on only one side.
+- Bypassing checksum validation or deploying managed/native artifacts from different contracts.
+
+Breaking changes require a coordinated contract version, regenerated checksum,
+matching managed and native builds, and deployment of both artifacts.
 
 ## Enforcement
 
-- `interop-guard.sh` enforces managed/native slot alignment and immutable v1 baseline prefix.
-- `interop-checksum.sh` enforces checksum alignment between managed metadata and native export.
-- `build-managed.sh` and `build-native.sh` run these checks as hard preflight gates.
+- `interop-guard.sh` validates native-only declarations, PE dispatch order, and the frozen prefix.
+- `interop-checksum.sh` validates checksum and source assembly-version alignment.
+- `interop-negative-drift-test.sh` proves a mutated frozen slot is rejected.
+- Managed and native build wrappers run the guards as preflight gates.
 
 ## Review Requirements
 
 Every interop change PR must include:
 
-1. Slot-impact statement (`no slot change` or `append-only slot addition`).
-2. Guard output showing PASS from both scripts.
-3. Contract update in `INTEROP_CONTRACT_V1.md` if any append occurred.
+1. Slot impact: `no slot change`, `PE-prefix-preserving addition`, or `breaking contract change`.
+2. Output from all three enforcement scripts.
+3. An updated `INTEROP_CONTRACT_V1.md` when identity or slots intentionally change.
+4. For a breaking change, a coordinated firmware and managed deployment plan.
 
-## Versioning Notes
-
-- v1.x is append-only.
-- Any intentional non-append change requires a future major policy decision and a new contract/version line.
+Commit messages for interop changes must be timestamped and include a brief rationale,
+as required by the repository interop policy.

@@ -15,8 +15,8 @@ This skill is optimized for this repository's Cubley interop surfaces.
 
 - software/nanoFramework/CubleyNative.Interop/CubleyInteropNative.cs
 - software/nanoFramework/CubleyNative.Interop/Properties/AssemblyInfo.cs
-- software/nanoFramework/nf-native/cubley_interop.cpp
-- software/nanoFramework/nf-native/w5500_interop.cpp
+- firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/cubley_interop.cpp
+- firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/lnbh26_interop.cpp
 
 ## When To Use
 

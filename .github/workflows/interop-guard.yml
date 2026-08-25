@@ -4,24 +4,40 @@ on:
   pull_request:
     paths:
       - software/nanoFramework/CubleyNative.Interop/**
-      - software/nanoFramework/DiSEqC_Control/Native/**
-      - software/nanoFramework/nf-native/cubley_interop.cpp
+      - firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/cubley_interop.cpp
+      - firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/lnbh26_interop.cpp
       - software/nanoFramework/toolchain/interop-checksum.sh
+      - software/nanoFramework/toolchain/interop-checksum-fix-test.sh
       - software/nanoFramework/toolchain/interop-guard.sh
       - software/nanoFramework/toolchain/interop-negative-drift-test.sh
-      - software/nanoFramework/tests/DiSEqC_Control.Tests/**
+      - software/nanoFramework/toolchain/build-CubleyControl.sh
+      - software/nanoFramework/toolchain/CubleyControl-deployment-config-test.py
+      - software/nanoFramework/toolchain/deploy-CubleyControl.sh
+      - software/nanoFramework/CubleyControl/CubleyControl.nfproj
+      - software/nanoFramework/CubleyControl/packages.config
+      - .vscode/tasks.json
+      - docs/software/INTEROP_CONTRACT_V1.md
+      - docs/software/INTEROP_VERSIONING_POLICY.md
       - .github/workflows/interop-guard.yml
   push:
     branches:
       - main
     paths:
       - software/nanoFramework/CubleyNative.Interop/**
-      - software/nanoFramework/DiSEqC_Control/Native/**
-      - software/nanoFramework/nf-native/cubley_interop.cpp
+      - firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/cubley_interop.cpp
+      - firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/lnbh26_interop.cpp
       - software/nanoFramework/toolchain/interop-checksum.sh
+      - software/nanoFramework/toolchain/interop-checksum-fix-test.sh
       - software/nanoFramework/toolchain/interop-guard.sh
       - software/nanoFramework/toolchain/interop-negative-drift-test.sh
-      - software/nanoFramework/tests/DiSEqC_Control.Tests/**
+      - software/nanoFramework/toolchain/build-CubleyControl.sh
+      - software/nanoFramework/toolchain/CubleyControl-deployment-config-test.py
+      - software/nanoFramework/toolchain/deploy-CubleyControl.sh
+      - software/nanoFramework/CubleyControl/CubleyControl.nfproj
+      - software/nanoFramework/CubleyControl/packages.config
+      - .vscode/tasks.json
+      - docs/software/INTEROP_CONTRACT_V1.md
+      - docs/software/INTEROP_VERSIONING_POLICY.md
       - .github/workflows/interop-guard.yml
 
 jobs:
@@ -45,7 +61,11 @@ jobs:
           cd software/nanoFramework
           ./toolchain/interop-negative-drift-test.sh
 
-      - name: Run host-side interop contract tests
+      - name: Verify checksum fix transaction
         run: |
-          cd software/nanoFramework/tests/DiSEqC_Control.Tests
-          dotnet test --configuration Release --nologo --filter "FullyQualifiedName~ContractTests"
+          cd software/nanoFramework
+          bash ./toolchain/interop-checksum-fix-test.sh
+
+      - name: Verify managed deployment configuration
+        run: |
+          python3 software/nanoFramework/toolchain/CubleyControl-deployment-config-test.py

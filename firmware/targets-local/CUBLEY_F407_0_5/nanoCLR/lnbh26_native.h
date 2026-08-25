@@ -29,6 +29,11 @@ extern "C" {
 #define LNBH26_DATA2_LPM_B (1u << 5)
 #define LNBH26_DATA2_EXTM_B (1u << 6)
 
+#define LNBH26_DATA3_ISET_A (1u << 0)
+#define LNBH26_DATA3_ISW_A (1u << 1)
+#define LNBH26_DATA3_ISET_B (1u << 4)
+#define LNBH26_DATA3_ISW_B (1u << 5)
+
 #define LNB_NATIVE_CHANNEL_A 0
 #define LNB_NATIVE_CHANNEL_B 1
 
@@ -121,6 +126,10 @@ lnb_status_t lnb_set_polarization_for_channel(lnb_handle_t *hlnb, lnb_channel_t 
 lnb_status_t lnb_set_band_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, lnb_band_t band);
 lnb_status_t lnb_set_low_power_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, bool enable);
 lnb_status_t lnb_set_diseqc_input_mode_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, lnb_diseqc_input_mode_t mode);
+lnb_status_t lnb_set_iset_low_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, bool lowRange);
+lnb_status_t lnb_set_isw_low_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, bool lowLimit);
+int32_t lnb_get_iset_low_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel);
+int32_t lnb_get_isw_low_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel);
 lnb_polarization_t lnb_get_polarization(lnb_handle_t *hlnb);
 lnb_band_t lnb_get_band(lnb_handle_t *hlnb);
 lnb_polarization_t lnb_get_polarization_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel);
@@ -142,10 +151,14 @@ int32_t lnb_native_set_polarization_for_channel(int32_t channelConstant, int32_t
 int32_t lnb_native_set_band_for_channel(int32_t channelConstant, int32_t bandConstant);
 int32_t lnb_native_set_low_power_for_channel(int32_t channelConstant, int32_t enable);
 int32_t lnb_native_set_diseqc_input_mode_for_channel(int32_t channelConstant, int32_t modeConstant);
+int32_t lnb_native_set_iset_low_for_channel(int32_t channelConstant, int32_t lowRange);
+int32_t lnb_native_set_isw_low_for_channel(int32_t channelConstant, int32_t lowLimit);
 int32_t lnb_native_get_polarization(void);
 int32_t lnb_native_get_band(void);
 int32_t lnb_native_get_polarization_for_channel(int32_t channelConstant);
 int32_t lnb_native_get_band_for_channel(int32_t channelConstant);
+int32_t lnb_native_get_iset_low_for_channel(int32_t channelConstant);
+int32_t lnb_native_get_isw_low_for_channel(int32_t channelConstant);
 int32_t lnb_native_read_register(int32_t registerAddress, int32_t *registerValue);
 int32_t lnb_native_get_last_error(void);
 int32_t lnb_native_get_last_error_detail(void);
