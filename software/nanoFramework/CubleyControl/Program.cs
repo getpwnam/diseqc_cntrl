@@ -84,6 +84,7 @@ namespace CubleyControl
         public static void Main()
         {
             EmitBootResetCauseLog();
+            InitializeNetworkConfiguration();
             _ledReady = TryInitializeStatusLed();
             InitializeLnbSafeDefaults();
             InitializeLnbFaultMonitor();

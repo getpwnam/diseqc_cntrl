@@ -31,6 +31,9 @@ namespace CubleyControl
                 _activeOutputSink(
                     "dns mode=" + (networkInterface.IsAutomaticDnsEnabled ? "auto" : "static") +
                     " servers=" + FormatDnsAddresses(dnsAddresses) + "\r\n");
+                _activeOutputSink(
+                    "config source=" + _networkConfigurationSource +
+                    " status=" + (_networkConfigurationError.Length == 0 ? "ok" : _networkConfigurationError) + "\r\n");
             }
             catch (Exception ex)
             {

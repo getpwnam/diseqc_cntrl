@@ -19,14 +19,14 @@ Options:
   --clr <path>            nanoCLR binary (default: build/nanoCLR.bin)
 
   --bootaddr <hex>        Booter flash address (default: 0x08000000)
-  --clraddr <hex>         CLR flash address (default: 0x0800C000)
+  --clraddr <hex>         CLR flash address (default: 0x08010000)
 
   --erase-deploy          Erase deployment region before flashing firmware
   --deployaddr <hex>      Deployment start (default: 0x080C0000)
   --deploysize <hex>      Deployment size  (default: 0x00040000)
 
   --release-layout        Use release layout defaults:
-                          clraddr=0x0800C000 deployaddr=0x080C0000 deploysize=0x00040000
+                          clraddr=0x08010000 deployaddr=0x080C0000 deploysize=0x00040000
   --no-booter             Skip flashing nanoBooter
   --reset                 Reset target after flashing
   --help                  Show this help
@@ -82,7 +82,7 @@ BOOTER_BIN="build/nanoBooter.bin"
 CLR_BIN="build/nanoCLR.bin"
 
 BOOT_ADDR="0x08000000"
-CLR_ADDR="0x0800C000"
+CLR_ADDR="0x08010000"
 DEPLOY_ADDR="0x080C0000"
 DEPLOY_SIZE="0x00040000"
 
@@ -129,7 +129,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --release-layout)
-      CLR_ADDR="0x0800C000"
+      CLR_ADDR="0x08010000"
       DEPLOY_ADDR="0x080C0000"
       DEPLOY_SIZE="0x00040000"
       shift

@@ -29,7 +29,11 @@
     <Compile Include="Program.Commands.Mqtt.cs" />
     <Compile Include="Program.Commands.Network.cs" />
     <Compile Include="Program.Commands.cs" />
+    <Compile Include="Program.Network.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="InternalNetworkConfigurationStorage.cs" />
+    <Compile Include="NetworkConfiguration.cs" />
+    <Compile Include="NetworkConfigurationStorage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
