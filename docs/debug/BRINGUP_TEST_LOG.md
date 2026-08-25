@@ -1330,6 +1330,31 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: software/nanoFramework/build/CubleyControl/CubleyControl.bin
 - Conclusion: Known-good baseline locked: strict interop guard PASS, checksum 0x88B2008D, and CDC serial CLI upgraded with hybrid responses, long+alias commands, and watch/status output.
 
+### 2026-08-24 21:01:28 UTC [FAIL]
+- Git rev: 7188573
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): st-info --probe; firmware/build-flash-cubley.sh build-flash --preset CUBLEY_F407_0_5 --clraddr 0x08004000 --reset; st-info --probe (bounded retry)
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin (55124 bytes); firmware/nf-interpreter/build/nanoCLR.bin (210940 bytes)
+- Conclusion: Clean native firmware build succeeded; SWD deploy did not start because no ST-Link programmer was detected.
+- Note: No managed deployment-region erase or write was performed.
+
+### 2026-08-24 21:03:09 UTC [PASS]
+- Git rev: 7188573
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): st-info --probe; st-flash write firmware/nf-interpreter/build/nanoBooter.bin 0x08000000; st-flash write firmware/nf-interpreter/build/nanoCLR.bin 0x08004000; st-flash reset
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin (31392 bytes written and verified); firmware/nf-interpreter/build/nanoCLR.bin (210940 bytes written and verified)
+- Conclusion: ST-Link detected; nanoBooter and nanoCLR flashed over SWD at fixed addresses, verified, and target reset successfully.
+- Note: No managed deployment-region erase or write was performed.
+
+### 2026-08-24 21:29:29 UTC [PASS]
+- Git rev: 7188573
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): firmware/build-flash-cubley.sh flash --reset; OpenOCD + arm-none-eabi-gdb live register/fault/USART3 probe; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --listdevices; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --devicedetails
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin; firmware/nf-interpreter/build/nanoCLR.elf
+- Breakpoints: PC=0x0802E500 (__idle_thread); VTOR=0x08008000; CFSR=0; HFSR=0; USART3 BRR=0x17; nanoff target=CUBLEY_F407_0_5
+- Conclusion: Recovered UART enumeration by flashing debug-layout images at ELF-linked addresses: nanoBooter 0x08000000 and nanoCLR 0x08008000; nanoCLR running and nanoff devicedetails succeeds at 921600.
+- Note: Prior nanoCLR write at 0x08004000 overlapped the debug nanoBooter and did not match the nanoCLR ELF base.
+
 ### 2026-08-24 21:51:03 UTC [PASS]
 - Git rev: a66642b
 - Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)

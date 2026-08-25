@@ -11,7 +11,7 @@ Runs repeated flash/reset cycles and probes UART wire-protocol health.
 Options:
   --cycles <n>            Number of cycles (default: 20)
   --serial <port>         Serial device (default: /dev/ttyUSB0)
-  --baud <rate>           Serial baud rate (default: 115200)
+  --baud <rate>           Serial baud rate (default: 921600)
   --settle-ms <ms>        Delay after reset before nanoff probes (default: 2000)
   --listdevices-retries <n>
                           Extra retries for nanoff --listdevices (default: 0)
@@ -21,7 +21,7 @@ Options:
   --booter <path>         nanoBooter image (default: build/nanoBooter.bin)
   --clr <path>            nanoCLR image (default: build/nanoCLR.bin)
   --bootaddr <hex>        nanoBooter flash address (default: 0x08000000)
-  --clraddr <hex>         nanoCLR flash address (default: 0x08004000)
+  --clraddr <hex>         nanoCLR flash address (default: 0x08008000)
   --log-root <dir>        Output log root (default: .debug/issue26_campaign_<utc>)
   --stop-on-fail          Stop immediately on first failed cycle
   -h, --help              Show help
@@ -33,7 +33,7 @@ EOF
 
 CYCLES=20
 SERIAL_PORT="/dev/ttyUSB0"
-BAUD=115200
+BAUD=921600
 SETTLE_MS=2000
 LISTDEVICES_RETRIES=0
 DEVICEDETAILS_RETRIES=0
@@ -41,7 +41,7 @@ RETRY_DELAY_MS=500
 BOOTER_IMG="build/nanoBooter.bin"
 CLR_IMG="build/nanoCLR.bin"
 BOOT_ADDR="0x08000000"
-CLR_ADDR="0x08004000"
+CLR_ADDR="0x08008000"
 LOG_ROOT=""
 STOP_ON_FAIL=0
 
