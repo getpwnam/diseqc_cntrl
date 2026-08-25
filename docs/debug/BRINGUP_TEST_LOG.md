@@ -1362,3 +1362,19 @@ This file should be committed and checked on each build to prevent version drift
 - Breakpoints: Library_cubley_interop_DiagMailbox_NativeGet___STATIC__U4 @ 0x08023D6C: HIT
 - Conclusion: Current 26-slot CubleyNative runtime contract passed: firmware and managed payload deployed, all assemblies resolved, native identity matched v1.0.0.0/0x55A991DA, and managed startup dispatched DiagMailbox.NativeGet.
 - Note: Generated Debug maps defined the flash layout. No assembly resolver/link failures observed.
+
+### 2026-08-24 23:41:33 UTC [INFO]
+- Git rev: ea4160a
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./firmware/build-flash-cubley.sh build; ./firmware/build-flash-cubley.sh flash --reset; nanoff devicedetails on /dev/ttyUSB0 at 921600; read-only SWD USB register snapshot
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin and nanoCLR.bin
+- Conclusion: Flashed native firmware using corrected PA9 VBUS sensing; USART3 wire protocol and all 16 managed assemblies remain operational; Windows CDC enumeration pending host confirmation.
+- Note: GCCFG=0x000DFFFF (NOVBUSSENS cleared), PA11/PA12 AF10, SD3 unchanged, and no deployment erase.
+
+### 2026-08-25 14:37:55 UTC [PASS]
+- Git rev: ea4160a
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Manual Windows USB CDC/PuTTY session; exercised CubleyControl interface commands
+- Artifact: CubleyControl USB CDC console on target board
+- Conclusion: Windows USB CDC enumeration and the CubleyControl command interface are operational on the target board.
+- Note: User-confirmed hardware validation on 2026-08-25; no automated command transcript captured.

@@ -1,57 +1,144 @@
-# Unified Command Map v1
+# CubleyControl Command Map
 
-Status: draft for implementation
+Status: implemented command set as of 2026-08-25
 
 ## Purpose
 
-Define one canonical command contract and bind it to both transports.
+Document the command grammar implemented by `software/nanoFramework/CubleyControl`.
+USB CDC and MQTT pass command text to the same parser. Commands are case-insensitive,
+leading and trailing whitespace is ignored, and repeated spaces are collapsed.
 
-1. Canonical command ID is transport-neutral.
-2. CLI syntax is operator-friendly.
-3. MQTT topic path is machine-friendly.
+The canonical IDs declared in `Contracts/CommandIds.cs` are not all executable. Only
+the canonical forms listed below are currently handled by the parser.
 
-## Canonical Transport Roots
+## USB CDC Transport
 
-1. MQTT base root: cubley/v1
-2. CLI mode root: cubley v1
+Enter commands directly at the USB CDC prompt. There is no `cubley v1` CLI prefix.
 
-## Mapping Rules
+Normal command results are framed as:
 
-1. Each command ID has exactly one CLI command form.
-2. Each command ID has exactly one MQTT topic.
-3. Request payload must validate against request-envelope.schema.json.
-4. Response payload must validate against result-envelope.schema.json.
+```text
+OK
+kv <key=value fields>
+```
 
-## Command Matrix
+Failures are framed as:
 
-| Canonical Command ID | CLI Command | MQTT Topic | MQTT Payload Notes |
-|---|---|---|---|
-| diseqc.rotor.goto_angle | rotor goto-angle <angle_deg> | cubley/v1/diseqc/command/rotor/goto_angle | JSON request envelope with args.angle_deg |
-| diseqc.rotor.goto_satellite | rotor goto-satellite <satellite> | cubley/v1/diseqc/command/rotor/goto_satellite | JSON request envelope with args.satellite |
-| diseqc.rotor.halt | rotor halt | cubley/v1/diseqc/command/rotor/halt | JSON request envelope with empty args |
-| diseqc.rotor.step_east | rotor step-east <steps> | cubley/v1/diseqc/command/rotor/step_east | JSON request envelope with args.steps |
-| diseqc.rotor.step_west | rotor step-west <steps> | cubley/v1/diseqc/command/rotor/step_west | JSON request envelope with args.steps |
-| diseqc.rotor.drive_east | rotor drive-east | cubley/v1/diseqc/command/rotor/drive_east | JSON request envelope with empty args |
-| diseqc.rotor.drive_west | rotor drive-west | cubley/v1/diseqc/command/rotor/drive_west | JSON request envelope with empty args |
-| diseqc.lnb.set_voltage | lnb set-voltage <13\|18> | cubley/v1/diseqc/command/lnb/set_voltage | JSON request envelope with args.voltage |
-| diseqc.lnb.set_polarization | lnb set-polarization <vertical\|horizontal> | cubley/v1/diseqc/command/lnb/set_polarization | JSON request envelope with args.polarization |
-| diseqc.lnb.set_tone | lnb set-tone <on\|off> | cubley/v1/diseqc/command/lnb/set_tone | JSON request envelope with args.tone |
-| diseqc.lnb.set_band | lnb set-band <low\|high> | cubley/v1/diseqc/command/lnb/set_band | JSON request envelope with args.band |
-| diseqc.calibration.set_reference | calibration set-reference | cubley/v1/diseqc/command/calibration/set_reference | JSON request envelope with empty args |
-| system.config.get | system config get | cubley/v1/system/command/config/get | JSON request envelope with empty args |
-| system.config.set | system config set <key>=<value> | cubley/v1/system/command/config/set | JSON request envelope with args.key and args.value |
-| system.config.save | system config save | cubley/v1/system/command/config/save | JSON request envelope with empty args |
-| system.config.reset | system config reset | cubley/v1/system/command/config/reset | JSON request envelope with empty args |
-| system.config.reload | system config reload | cubley/v1/system/command/config/reload | JSON request envelope with empty args |
-| system.config.fram_clear | system config fram-clear ERASE | cubley/v1/system/command/config/fram_clear | JSON request envelope with args.confirm=ERASE |
-| system.capabilities.get | system capabilities get | cubley/v1/system/command/capabilities/get | JSON request envelope with empty args |
-| system.version.get | system version get | cubley/v1/system/command/version/get | JSON request envelope with empty args |
+```text
+Fail: <reason>
+```
 
-## Common Result Topics
+Some `show` commands emit their data directly instead of using the normal result
+framing. Detailed command diagnostics are written to the firmware debug log.
 
-1. Diseqc command results: cubley/v1/diseqc/result
-2. System command results: cubley/v1/system/result
-3. State snapshot stream: cubley/v1/system/state/snapshot
-4. Capabilities snapshot stream: cubley/v1/system/meta/capabilities
+## Operator Commands
 
-Each result payload uses result-envelope.schema.json.
+| Command | Aliases | Behavior |
+|---|---|---|
+| `help` | `h` | List command groups. |
+| `help <lnb\|show\|get\|set\|diseqc>` | `help l` for LNB help | Show brief command-specific usage. |
+| `status` | `st` | Show USB CDC and status LED health. |
+| `watch [on\|off]` | `w`, values `1\|0`; omitted value means `on` | Enable or disable the periodic serial status line. |
+| `capabilities` | `caps` | Show the current capability summary. |
+| `version` | `ver` | Show the interface and shell version identifiers. |
+| `led on` | none | Drive the status LED high. |
+| `led off` | none | Drive the status LED low. |
+| `pulse` | none | Pulse the status LED for 100 ms. |
+
+## LNB Commands
+
+Logical channels are `a` and `b`. The short `lnb` command family operates on
+channel A only.
+
+### Show
+
+| Command | Behavior |
+|---|---|
+| `show` | Emit system, channel-A LNB, and placeholder DiSEqC summary lines. |
+| `show lnb [a\|b]` | Emit a one-line LNB summary; channel A is the default. |
+| `show lnb [a\|b] detail` | Emit an LNBH26 register snapshot as JSON. |
+| `show diseqc` | Emit the current placeholder DiSEqC summary. |
+
+### Channel-A Short Forms
+
+| Command | Aliases | Accepted values |
+|---|---|---|
+| `lnb get polarization` | `lnb get pol`, `lnb get p`, `l g p` | none |
+| `lnb get band` | `lnb get b`, `l g b` | none |
+| `lnb get status` | `lnb get s`, `l g s` | none |
+| `lnb set enable <value>` | `lnb set e`, `l s e` | `on\|off`, `1\|0`, `true\|false` |
+| `lnb set polarization <value>` | `lnb set pol`, `lnb set p`, `l s p` | `vertical\|horizontal`, `v\|h` |
+| `lnb set band <value>` | `lnb set b`, `l s b` | `low\|high`, `l\|h` |
+
+### Channel-Aware Get and Set
+
+| Command | Accepted values or result |
+|---|---|
+| `get lnb.<a\|b>.band` | Returns `low` or `high`. |
+| `get lnb.<a\|b>.polarization` | `polarization` may be shortened to `pol`; returns `vertical` or `horizontal`. |
+| `get lnb.<a\|b>.status` | Returns both LNBH26 status registers. |
+| `get lnb.<a\|b>.enabled` | Recognized but currently returns `unsupported` because there is no native getter. |
+| `get lnb.<a\|b>.iset` | Returns the current ISET range. |
+| `get lnb.<a\|b>.isw` | Returns the current ISW limit. |
+| `set lnb.<a\|b>.band <value>` | `low\|high`, `l\|h` |
+| `set lnb.<a\|b>.polarization <value>` | `polarization` may be shortened to `pol`; `vertical\|horizontal`, `v\|h` |
+| `set lnb.<a\|b>.enabled <value>` | `enabled` may be shortened to `enable`; `on\|off`, `1\|0`, `true\|false` |
+| `set lnb.<a\|b>.iset <value>` | Default range: `default\|normal\|high\|0`; reduced range: `low\|reduced\|1`. |
+| `set lnb.<a\|b>.isw <value>` | 4 A: `4a\|4\|default\|high\|0`; 2.5 A: `2.5a\|2p5a\|2_5a\|low\|reduced\|1`. |
+
+Enabling either logical channel calls the current global native enable operation.
+
+## DiSEqC Commands
+
+| Command | Accepted values and behavior |
+|---|---|
+| `diseqc goto <position>` | Go to stored position `0..255`. This is not an angle command. |
+| `diseqc step <east\|west> <steps>` | Move `1..128` steps. |
+| `diseqc drive <east\|west>` | Start continuous movement. |
+| `diseqc stop` | Transmit the positioner halt command. |
+| `diseqc preset <off\|direct\|aa\|ab\|ba\|bb>` | Select the routing prefix applied to positioner commands. |
+| `diseqc preset status` | Show the selected routing preset. |
+| `diseqc tx <hex_byte> <hex_byte> [hex_byte ...]` | Transmit 2 to 7 hexadecimal bytes. The current overlength error says `max_bytes=6`, but the parser accepts seven. |
+| `diseqc tone on [frequency_hz] [duty_percent]` | Start the carrier; defaults to 22000 Hz and 50%. Frequency range is 1000..100000 Hz and duty range is 1..99%. |
+| `diseqc tone off` | Stop the carrier. |
+| `diseqc tone status` | Show carrier state and settings. |
+| `diseqc listen <on\|off>` | Enable or disable the channel-A LNBH26 external DiSEqC input; boolean aliases are accepted. |
+
+The selected preset prefixes `goto`, `step`, `drive`, and `stop`. Raw `diseqc tx`
+frames are transmitted unchanged.
+
+## Executable Canonical Commands
+
+These dotted command forms are accepted directly:
+
+| Canonical command | Argument |
+|---|---|
+| `system.version.get` | none |
+| `system.capabilities.get` | none |
+| `diseqc.lnb.get.status` | none; channel A |
+| `diseqc.lnb.get.pol` | none; channel A |
+| `diseqc.lnb.get.band` | none; channel A |
+| `diseqc.lnb.set.enable <value>` | Boolean value; channel A |
+| `diseqc.lnb.set.pol <value>` | Polarization value; channel A |
+| `diseqc.lnb.set.band <value>` | Band value; channel A |
+
+Other IDs declared in `Contracts/CommandIds.cs`, including `system.config.*`, rotor
+angle/satellite commands, calibration, LNB voltage, and LNB tone IDs, are not
+currently executable.
+
+## MQTT Transport
+
+MQTT support exists in the managed source but is disabled in the current firmware
+with `MqttEnabled = false`; native networking is not enabled in the validated build.
+
+When enabled, the current binding is:
+
+| Direction | Topic | Payload |
+|---|---|---|
+| Command to device | `diseqc/command` | One command line using the same grammar as USB CDC. |
+| Result from device | `diseqc/status` | One published message for each `OK`, `Fail`, or `kv` output line. |
+| Device availability | `diseqc/availability` | Retained `online` or last-will `offline`. |
+
+The per-command `cubley/v1/...` topics and JSON request/result envelopes described
+by the interface schema files are design contracts and are not implemented by the
+current MQTT transport.

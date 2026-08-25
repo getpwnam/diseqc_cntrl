@@ -34,13 +34,6 @@
 #define BOARD_NAME                  "Cubley v0.5 (STM32F407VG)"
 
 /*
- * USB OTG_FS VBUS sense workaround.
- * Board wiring presents VBUS on PA9 through high impedance, so force OTG FS
- * into no-VBUS-sense mode to avoid missed connect detection.
- */
-#define BOARD_OTG_NOVBUSSENS
-
-/*
  * Board oscillators-related settings.
  * NOTE: LSE not fitted on Cubley v0.5.
  */
@@ -266,7 +259,7 @@
  *  PA6  - PIN6             (input pull-up)
  *  PA7  - RMII_CRS_DV      (input pull-up, Phase 7 -> AF11)
  *  PA8  - I2C3_SCL         (input pull-up, Phase 6 -> AF4 OD)
- *  PA9  - VBUS_SENSE       (input floating, USB FS VBUS sense)
+ *  PA9  - VBUS_SENSE       (input floating, VBUS through 100k series resistor)
  *  PA10 - PIN10            (input floating)
  *  PA11 - USB_FS_DM        (alternate 10)
  *  PA12 - USB_FS_DP        (alternate 10)
