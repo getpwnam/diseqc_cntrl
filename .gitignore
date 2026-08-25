@@ -1,5 +1,7 @@
 .vscode/*
 !.vscode/tasks.json
+.agents/
+.claude/settings.local.json
 .debug/
 .worktrees/
 
