@@ -42,7 +42,8 @@ namespace CubleyControl
                 }
             }
 
-            if (!TryApplyNetworkConfiguration(_networkConfiguration, out error))
+            if (_networkConfigurationStorage.RequiresApplyAfterLoad &&
+                !TryApplyNetworkConfiguration(_networkConfiguration, out error))
             {
                 _networkConfigurationError = error;
                 _networkConfiguration = NetworkConfiguration.CreateDefaults();

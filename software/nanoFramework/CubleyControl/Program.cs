@@ -84,13 +84,14 @@ namespace CubleyControl
         public static void Main()
         {
             EmitBootResetCauseLog();
-            InitializeNetworkConfiguration();
             _ledReady = TryInitializeStatusLed();
-            InitializeLnbSafeDefaults();
-            InitializeLnbFaultMonitor();
 
             var heartbeatThread = new Thread(HeartbeatLoop);
             heartbeatThread.Start();
+
+            InitializeNetworkConfiguration();
+            InitializeLnbSafeDefaults();
+            InitializeLnbFaultMonitor();
 
             if (_lnbFaultReady && !_lnbFaultInterruptEnabled)
             {
@@ -130,8 +131,17 @@ namespace CubleyControl
                         Thread.Sleep(LedPulseMs);
                         _gpio.Write(_ledPin, PinValue.Low);
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        try
+                        {
+                            _gpio.Write(_ledPin, PinValue.Low);
+                        }
+                        catch
+                        {
+                        }
+
+                        Debug.WriteLine("[HEARTBEAT] LED disabled: " + ex.Message);
                         _ledReady = false;
                     }
                 }
