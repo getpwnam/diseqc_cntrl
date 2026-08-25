@@ -50,7 +50,7 @@ namespace CubleyControl
                     }
                     else if (topic == "show" || topic == "get" || topic == "set" || topic == "diseqc")
                     {
-                        WriteCommandResult(reqId, true, "ok", "help cli", "show=show lnb [a|b] [detail]|show diseqc get=get lnb.a.<band|polarization|status|enabled|iset|isw> set=set lnb.a.<band|polarization|enabled|iset|isw> <value> diseqc=diseqc tone on [freq_hz] [duty_pct]|tone off|tone status|listen on|off|preset <off|direct|aa|ab|ba|bb|status>");
+                        WriteCommandResult(reqId, true, "ok", "help cli", "show=show network|net|lnb [a|b] [detail]|diseqc get=get lnb.a.<band|polarization|status|enabled|iset|isw> set=set lnb.a.<band|polarization|enabled|iset|isw> <value> diseqc=diseqc tone on [freq_hz] [duty_pct]|tone off|tone status|listen on|off|preset <off|direct|aa|ab|ba|bb|status>");
                     }
                     else
                     {

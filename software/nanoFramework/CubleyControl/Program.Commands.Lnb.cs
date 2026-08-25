@@ -88,6 +88,12 @@ namespace CubleyControl
                 return;
             }
 
+            if (tokens[1] == "network" || tokens[1] == "net")
+            {
+                EmitNetworkStatus(reqId);
+                return;
+            }
+
             WriteCommandResult(reqId, false, "validation_error", "show target invalid", "target=" + tokens[1]);
         }
 

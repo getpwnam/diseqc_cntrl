@@ -1437,3 +1437,19 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: firmware/nf-interpreter/build/nanoCLR.bin
 - Conclusion: RouterOS DHCP server assigned 172.17.129.64 to 02:55:47:62:47:01 (nanodevice_624701).
 - Note: Observed server log: 2026-08-25 18:05:16 dhcp,info dhcp_iot assigned 172.17.129.64 for 02:55:47:62:47:01 nanodevice_624701
+
+### 2026-08-25 18:22:36 UTC [INFO]
+- Git rev: 8c1e029
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-CubleyControl.sh build --project CubleyControl/CubleyControl.nfproj --configuration Debug; ./toolchain/deploy-CubleyControl.sh --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --devicedetails
+- Artifact: build/CubleyControl/latest.deploy.bin
+- Conclusion: Read-only show network phase built and deployed; target responded with all 16 managed assemblies.
+- Note: USB CDC command output remains to be validated before committing this phase.
+
+### 2026-08-25 18:27:40 UTC [PASS]
+- Git rev: 8c1e029
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): USB CDC: show network; show net
+- Artifact: build/CubleyControl/latest.deploy.bin
+- Conclusion: Read-only network status and net alias returned link, DHCP mode, MAC, IPv4 address, mask, gateway, and DNS on hardware.
+- Note: Observed DHCP address 172.17.129.64 and MAC 02:55:47:62:47:01.
