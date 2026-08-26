@@ -13,6 +13,7 @@ DEFAULT_NANO_PS_PATH=""
 NANO_EXT_ROOT="${HOME:-/home/vscode}/.vscode-server/extensions"
 NF_MDP_MSBUILDTASK_PATH_EFFECTIVE="${NF_MDP_MSBUILDTASK_PATH:-}"
 NF_MDP_TEMP_DIR=""
+BUILD_INFO_SOURCE=""
 
 CONFIGURATION="${CONFIGURATION:-Release}"
 MODE=""
@@ -259,6 +260,7 @@ run_msbuild() {
       "-p:OutputPath=$MANAGED_BUILD_DIR/" \
       "-p:NanoFrameworkProjectSystemPath=$NANO_PS_PATH" \
       "-p:NF_MDP_MSBUILDTASK_PATH=$NF_MDP_MSBUILDTASK_PATH_EFFECTIVE" \
+      "-p:BuildInfoSource=$BUILD_INFO_SOURCE" \
       -verbosity:minimal
   else
     "$msbuild_cmd" "$PROJECT" \
@@ -267,8 +269,45 @@ run_msbuild() {
       "-p:OutputPath=$MANAGED_BUILD_DIR/" \
       "-p:NanoFrameworkProjectSystemPath=$NANO_PS_PATH" \
       "-p:NF_MDP_MSBUILDTASK_PATH=$NF_MDP_MSBUILDTASK_PATH_EFFECTIVE" \
+      "-p:BuildInfoSource=$BUILD_INFO_SOURCE" \
       -verbosity:minimal
   fi
+}
+
+generate_build_info() {
+  local assembly_info
+  local assembly_version
+  local product_version
+  local git_commit
+  local dirty_suffix=""
+
+  assembly_info="$(dirname "$PROJECT")/Properties/AssemblyInfo.cs"
+  assembly_version="$(sed -n 's/.*AssemblyVersion("\([0-9][0-9.]*\)").*/\1/p' "$assembly_info" | head -n1)"
+  if [[ -z "$assembly_version" ]]; then
+    echo "[error] Unable to determine product version from: $assembly_info" >&2
+    exit 1
+  fi
+
+  product_version="${assembly_version%.*}"
+  git_commit="$(git -C "$ROOT_DIR" rev-parse --short=8 HEAD 2>/dev/null || true)"
+  if [[ -z "$git_commit" ]]; then
+    git_commit="unknown"
+  elif [[ -n "$(git -C "$ROOT_DIR" status --porcelain --untracked-files=normal 2>/dev/null)" ]]; then
+    dirty_suffix=".dirty"
+  fi
+
+  BUILD_INFO_SOURCE="$MANAGED_BUILD_DIR/BuildInfo.g.cs"
+  printf '%s\n' \
+    'namespace CubleyControl' \
+    '{' \
+    '    internal static class BuildInfo' \
+    '    {' \
+    "        public const string Version = \"${product_version}+g${git_commit}${dirty_suffix}\";" \
+    "        public const string GitCommit = \"${git_commit}\";" \
+    '    }' \
+    '}' > "$BUILD_INFO_SOURCE"
+
+  echo "[build] Product version: ${product_version}+g${git_commit}${dirty_suffix}"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -536,6 +575,7 @@ IMAGE_FALLBACK_PATH="$MANAGED_BUILD_DIR/$TARGET_NAME.pe"
 IMAGE_NFMRK2_PATH="$MANAGED_BUILD_DIR/$TARGET_NAME.nfmrk2.bin"
 
 mkdir -p "$MANAGED_BUILD_DIR"
+generate_build_info
 
 if [[ "$SKIP_RESTORE" != "true" ]]; then
   echo "[1/3] Restoring packages"
@@ -605,6 +645,7 @@ else
       "$CUBLEY_DISEQC_MANAGED_PE"
       "$OUTPUT_DIR/System.Device.Gpio.pe"
       "$OUTPUT_DIR/System.Device.Pwm.pe"
+      "$OUTPUT_DIR/nanoFramework.Hardware.Stm32.pe"
       "$RUNTIME_EVENTS_PE"
       "$OUTPUT_DIR/System.Threading.pe"
       "$OUTPUT_DIR/nanoFramework.Runtime.Native.pe"

@@ -284,7 +284,7 @@ namespace CubleyControl
                     // queue may not be draining yet, so a single write can return 0
                     // and the banner/prompt would be lost forever. Retry each loop
                     // iteration until the write succeeds.
-                    string banner = "\r\nCubley USB CDC console ready. Type 'help'.\r\n" + GetUsbPrompt();
+                    string banner = "\r\nCubley Rotation Control v" + BuildInfo.Version + "\r\n" + GetUsbPrompt();
                     int rc = SafeUsbWrite(banner);
                     uint diag = DiagMailbox.NativeGet();
                     Debug.WriteLine("[CDC] connected, banner rc=" + rc.ToString() +

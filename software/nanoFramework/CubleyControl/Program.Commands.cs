@@ -308,12 +308,15 @@ namespace CubleyControl
             if (_activeCommandTransport == CommandTransport.Usb)
             {
                 WriteHumanHeading("Version");
+                WriteHumanField("Product", "Cubley Rotation Control");
+                WriteHumanField("Version", BuildInfo.Version);
+                WriteHumanField("Git commit", BuildInfo.GitCommit);
                 WriteHumanField("Interface", "cubley/v1 serial");
                 WriteHumanField("Shell", "main");
                 return;
             }
 
-            WriteCommandResult(reqId, true, "ok", "version", "iface=cubley_v1_serial shell=main");
+            WriteCommandResult(reqId, true, "ok", "version", "version=" + BuildInfo.Version + " git=" + BuildInfo.GitCommit + " iface=cubley_v1_serial shell=main");
         }
 
         private static bool HandleOperatorCommand(string[] tokens, int reqId)

@@ -21,6 +21,8 @@
   <ItemGroup>
     <Compile Include="ApplicationConfigurationRecord.cs" />
     <Compile Include="ApplicationConfigurationStorage.cs" />
+    <Compile Include="BuildInfo.cs" Condition=" '$(BuildInfoSource)' == '' " />
+    <Compile Include="$(BuildInfoSource)" Condition=" '$(BuildInfoSource)' != '' " />
     <Compile Include="Contracts\CapabilityRegistry.cs" />
     <Compile Include="Contracts\CommandIds.cs" />
     <Compile Include="Contracts\ResultCodes.cs" />
@@ -62,6 +64,9 @@
     </Reference>
     <Reference Include="nanoFramework.M2Mqtt.Core">
       <HintPath>..\packages\nanoFramework.M2Mqtt.5.1.221\lib\nanoFramework.M2Mqtt.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="nanoFramework.Hardware.Stm32">
+      <HintPath>..\packages\nanoFramework.Hardware.Stm32.1.10.37\lib\nanoFramework.Hardware.Stm32.dll</HintPath>
     </Reference>
     <Reference Include="nanoFramework.Runtime.Native">
       <HintPath>..\packages\nanoFramework.Runtime.Native.1.7.11\lib\nanoFramework.Runtime.Native.dll</HintPath>

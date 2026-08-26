@@ -11,6 +11,7 @@ REQUIRED_ASSEMBLIES = [
     "CubleyDiseqcManaged.pe",
     "System.Device.Gpio.pe",
     "System.Device.Pwm.pe",
+    "nanoFramework.Hardware.Stm32.pe",
     "nanoFramework.Runtime.Events.pe",
     "System.Threading.pe",
     "nanoFramework.Runtime.Native.pe",
@@ -30,6 +31,7 @@ EXPECTED_BUILD_MANIFEST = [
     "$CUBLEY_DISEQC_MANAGED_PE",
     "$OUTPUT_DIR/System.Device.Gpio.pe",
     "$OUTPUT_DIR/System.Device.Pwm.pe",
+    "$OUTPUT_DIR/nanoFramework.Hardware.Stm32.pe",
     "$RUNTIME_EVENTS_PE",
     "$OUTPUT_DIR/System.Threading.pe",
     "$OUTPUT_DIR/nanoFramework.Runtime.Native.pe",
@@ -52,6 +54,7 @@ repo_root = Path(__file__).resolve().parents[3]
 tasks_path = repo_root / ".vscode/tasks.json"
 build_script_path = repo_root / "software/nanoFramework/toolchain/build-CubleyControl.sh"
 deploy_script_path = repo_root / "software/nanoFramework/toolchain/deploy-CubleyControl.sh"
+project_path = repo_root / "software/nanoFramework/CubleyControl/CubleyControl.nfproj"
 debug_booter_linker_path = (
     repo_root
     / "firmware/targets-local/CUBLEY_F407_0_5/nanoBooter/STM32F407xG_booter-DEBUG.ld"
@@ -77,6 +80,20 @@ require(
 )
 
 build_script = build_script_path.read_text(encoding="utf-8")
+project = project_path.read_text(encoding="utf-8")
+require(
+    "generate_build_info" in build_script and 'git -C "$ROOT_DIR" rev-parse --short=8 HEAD' in build_script,
+    "build script does not generate Git-qualified build identity",
+)
+require(
+    '"-p:BuildInfoSource=$BUILD_INFO_SOURCE"' in build_script,
+    "build script does not pass generated build identity to MSBuild",
+)
+require(
+    '<Compile Include="BuildInfo.cs" Condition=" \'$(BuildInfoSource)\' == \'\' " />' in project and
+    '<Compile Include="$(BuildInfoSource)" Condition=" \'$(BuildInfoSource)\' != \'\' " />' in project,
+    "project does not select generated build identity with a direct-build fallback",
+)
 manifest_match = re.search(
     r"required_pe_paths=\((?P<body>.*?)\n\s*\)", build_script, flags=re.S
 )

@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Threading;
+using nanoFramework.Hardware.Stm32;
 using nanoFramework.M2Mqtt;
 using nanoFramework.M2Mqtt.Exceptions;
 using nanoFramework.M2Mqtt.Messages;
@@ -66,9 +67,10 @@ namespace CubleyControl
 
         private static void RunMqttSession(MqttConfiguration configuration, int revision)
         {
-            string availabilityTopic = configuration.TopicPrefix + "/availability";
-            _mqttCommandTopic = configuration.TopicPrefix + "/command";
-            _mqttStatusTopic = configuration.TopicPrefix + "/status";
+            string topicRoot = BuildMqttTopicRoot(configuration);
+            string availabilityTopic = topicRoot + "/availability";
+            _mqttCommandTopic = topicRoot + "/command";
+            _mqttStatusTopic = topicRoot + "/status";
             _mqttReconnectAttempts++;
             _mqttRuntimeState = "connecting";
 
@@ -80,7 +82,7 @@ namespace CubleyControl
             try
             {
                 MqttReasonCode result = _mqttClient.Connect(
-                    ResolveMqttClientId(configuration.ClientId),
+                    ResolveMqttClientId(configuration),
                     string.IsNullOrEmpty(configuration.Username) ? null : configuration.Username,
                     string.IsNullOrEmpty(configuration.Password) ? null : configuration.Password,
                     true,
@@ -208,26 +210,48 @@ namespace CubleyControl
                 interfaces[0].IPv4Address != "0.0.0.0";
         }
 
-        private static string ResolveMqttClientId(string configuredClientId)
+        private static string ResolveMqttClientId(MqttConfiguration configuration)
         {
-            if (!string.IsNullOrEmpty(configuredClientId))
+            if (!string.IsNullOrEmpty(configuration.ClientId))
             {
-                return configuredClientId;
+                return configuration.ClientId;
             }
 
-            NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
-            if (interfaces == null || interfaces.Length == 0 || interfaces[0].PhysicalAddress == null || interfaces[0].PhysicalAddress.Length < 3)
+            return ResolveHostname(configuration.Hostname);
+        }
+
+        private static string BuildMqttTopicRoot(MqttConfiguration configuration)
+        {
+            return configuration.TopicPrefix + "/" + ResolveHostname(configuration.Hostname);
+        }
+
+        private static string ResolveHostname(string configuredHostname)
+        {
+            if (!string.IsNullOrEmpty(configuredHostname))
+            {
+                return configuredHostname;
+            }
+
+            byte[] uniqueDeviceId = Utilities.UniqueDeviceId;
+            if (uniqueDeviceId == null || uniqueDeviceId.Length == 0)
             {
                 return "cubley";
             }
 
-            byte[] address = interfaces[0].PhysicalAddress;
-            return "cubley-" + ToHex(address[address.Length - 3]) + ToHex(address[address.Length - 2]) + ToHex(address[address.Length - 1]);
+            uint hash = 2166136261;
+            for (int index = 0; index < uniqueDeviceId.Length; index++)
+            {
+                hash ^= uniqueDeviceId[index];
+                hash = unchecked(hash * 16777619);
+            }
+
+            return "cubley-" + ToLowerHex((byte)(hash >> 16)) +
+                ToLowerHex((byte)(hash >> 8)) + ToLowerHex((byte)hash);
         }
 
-        private static string ToHex(byte value)
+        private static string ToLowerHex(byte value)
         {
-            const string digits = "0123456789ABCDEF";
+            const string digits = "0123456789abcdef";
             return new string(new char[] { digits[(value >> 4) & 0x0F], digits[value & 0x0F] });
         }
 

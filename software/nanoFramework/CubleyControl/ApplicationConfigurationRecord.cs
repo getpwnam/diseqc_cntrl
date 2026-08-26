@@ -6,7 +6,7 @@ namespace CubleyControl
     {
         public const int RecordSize = 512;
         public const int HeaderSize = 16;
-        public const byte SchemaVersion = 1;
+        public const byte SchemaVersion = 2;
 
         public static bool TryEncode(MqttConfiguration configuration, uint generation, out byte[] record, out string error)
         {
