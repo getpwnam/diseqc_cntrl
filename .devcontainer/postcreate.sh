@@ -7,6 +7,29 @@ echo "Setting up environment..."
 
 #pip install -r requirements.txt
 
+# Persistent Bash history
+sudo touch /home/vscode/commandhistory/.bash_history
+sudo chown "$(id -u):$(id -g)" \
+	/home/vscode/commandhistory \
+	/home/vscode/commandhistory/.bash_history
+chmod 600 /home/vscode/commandhistory/.bash_history
+
+if ! grep -q "### devcontainer persistent bash history ###" ~/.bashrc; then
+cat >> ~/.bashrc <<'EOF'
+### devcontainer persistent bash history ###
+export HISTFILE=/home/vscode/commandhistory/.bash_history
+export HISTSIZE=10000
+export HISTFILESIZE=20000
+shopt -s histappend
+case ";${PROMPT_COMMAND:-};" in
+	*";history -a; history -n;"*) ;;
+	*) PROMPT_COMMAND="history -a; history -n${PROMPT_COMMAND:+; ${PROMPT_COMMAND}}" ;;
+esac
+### end devcontainer persistent bash history ###
+
+EOF
+fi
+
 # Git prompt
 if ! grep -q "### devcontainer git prompt ###" ~/.bashrc; then
 cat >> ~/.bashrc <<'EOF'
