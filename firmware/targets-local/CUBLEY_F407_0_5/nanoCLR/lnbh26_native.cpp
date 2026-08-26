@@ -24,6 +24,16 @@ static void lnb_set_last_error(int32_t status, int32_t detail)
     g_lnb_last_error.detail = detail;
 }
 
+static int32_t lnb_get_i2c_error_detail(I2CDriver *i2c_driver, msg_t status)
+{
+    if (status == MSG_RESET)
+    {
+        return (int32_t)i2cGetErrors(i2c_driver);
+    }
+
+    return (int32_t)status;
+}
+
 static bool lnb_is_valid_reg(uint8_t reg)
 {
     return reg <= (uint8_t)LNBH26_REGISTER_DATA4;
@@ -142,7 +152,7 @@ static lnb_status_t lnb_write_data_registers(lnb_handle_t *hlnb)
 
     if (status != MSG_OK)
     {
-        lnb_set_last_error(LNB_ERROR_I2C, g_lnb_last_i2c_msg);
+        lnb_set_last_error(LNB_ERROR_I2C, lnb_get_i2c_error_detail(hlnb->i2c_driver, status));
         return LNB_ERROR_I2C;
     }
 
@@ -167,7 +177,7 @@ static lnb_status_t lnb_read_register(lnb_handle_t *hlnb, uint8_t reg, uint8_t *
 
     if (status != MSG_OK)
     {
-        lnb_set_last_error(LNB_ERROR_I2C, g_lnb_last_i2c_msg);
+        lnb_set_last_error(LNB_ERROR_I2C, lnb_get_i2c_error_detail(hlnb->i2c_driver, status));
         return LNB_ERROR_I2C;
     }
 

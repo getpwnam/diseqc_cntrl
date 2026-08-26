@@ -14,7 +14,6 @@ namespace CubleyControl
         private const int UsbConsoleReadTimeoutMs = 50;
         private const int UsbConsoleIdleSleepMs = 100;
         private const int UsbConsoleStatusIntervalMs = 1000;
-        private const int UsbConsoleHealthLogIntervalLoops = 50;
         private const int UsbConsoleLineMaxLength = 192;
         private const int MqttCommandMaxLength = 64;
         private const int UsbWriteLogEveryNEvents = 20;
@@ -125,14 +124,6 @@ namespace CubleyControl
         {
             while (true)
             {
-                Debug.WriteLine("alive");
-                Debug.WriteLine(
-                    "[CDC-MON] pre=" + _cdcPreEnabledCount.ToString() +
-                    " post=" + _cdcPostEnabledCount.ToString() +
-                    " fail=" + _usbWriteFailureCount.ToString() +
-                    " partial=" + _usbWritePartialCount.ToString() +
-                    " ex=" + _usbWriteExceptionCount.ToString());
-
                 if (_ledReady)
                 {
                     try
@@ -245,23 +236,12 @@ namespace CubleyControl
         private static void UsbConsoleLoopBody()
         {
             bool wasEnabled = false;
-            int healthLoop = 0;
 
             while (true)
             {
-                healthLoop++;
                 _cdcPreEnabledCount++;
                 int enabled = UsbCdcConsole.NativeIsEnabled();
                 _cdcPostEnabledCount++;
-
-                if ((healthLoop % UsbConsoleHealthLogIntervalLoops) == 0)
-                {
-                    Debug.WriteLine(
-                        "[CDC] health enabled=" + enabled.ToString() +
-                        " fail=" + _usbWriteFailureCount.ToString() +
-                        " partial=" + _usbWritePartialCount.ToString() +
-                        " ex=" + _usbWriteExceptionCount.ToString());
-                }
 
                 if (enabled == 0)
                 {

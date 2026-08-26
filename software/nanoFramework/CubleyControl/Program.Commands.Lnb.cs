@@ -13,7 +13,6 @@ namespace CubleyControl
         {
             if (!EnsureLnbInitialized())
             {
-                Debug.WriteLine("[CDC-LNB] boot safe defaults skipped; init rc=" + _lnbInitStatus.ToString());
                 return;
             }
 
@@ -163,7 +162,7 @@ namespace CubleyControl
         {
             if (!EnsureLnbInitialized())
             {
-                WriteCommandResult(reqId, false, "hw_fault", "lnb init failed", "lnb_init_rc=" + _lnbInitStatus.ToString());
+                WriteCommandResult(reqId, false, "hw_fault", "lnb init failed", BuildLnbInitDiagnosticData());
                 return;
             }
 
@@ -303,11 +302,11 @@ namespace CubleyControl
                 if (_activeCommandTransport == CommandTransport.Usb)
                 {
                     WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper());
-                    WriteHumanField("State", "Initialization failed (code " + _lnbInitStatus.ToString() + ")");
+                    WriteHumanField("State", BuildLnbInitFailureText());
                 }
                 else
                 {
-                    _activeOutputSink("lnb." + LnbChannelToSchemaName(channel) + " state=init_failed rc=" + _lnbInitStatus.ToString() + "\r\n");
+                    _activeOutputSink("lnb." + LnbChannelToSchemaName(channel) + " state=init_failed " + BuildLnbInitDiagnosticData() + "\r\n");
                 }
                 return;
             }
@@ -392,7 +391,7 @@ namespace CubleyControl
                 if (_activeCommandTransport == CommandTransport.Usb)
                 {
                     WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper() + " details");
-                    WriteHumanField("State", "Initialization failed (code " + _lnbInitStatus.ToString() + ")");
+                    WriteHumanField("State", BuildLnbInitFailureText());
                 }
                 else
                 {
@@ -514,6 +513,105 @@ namespace CubleyControl
         private static string ToHexU8(int value)
         {
             return "0x" + (value & 0xFF).ToString("X2");
+        }
+
+        private static string BuildLnbInitDiagnosticData()
+        {
+            int lastError = LNBH26.NativeGetLastError();
+            int lastDetail = LNBH26.NativeGetLastErrorDetail();
+            string data =
+                "lnb_init_rc=" + _lnbInitStatus.ToString() +
+                " lnb_init_status=" + LnbStatusToToken(_lnbInitStatus);
+
+            if (lastError == (int)LNBH26.Status.IoError)
+            {
+                data +=
+                    " i2c_error=" + LnbI2cDetailToToken(lastDetail) +
+                    " i2c_detail=" + ToHexU8(lastDetail);
+            }
+
+            return data;
+        }
+
+        private static string BuildLnbInitFailureText()
+        {
+            int lastError = LNBH26.NativeGetLastError();
+            int lastDetail = LNBH26.NativeGetLastErrorDetail();
+
+            if (lastError == (int)LNBH26.Status.IoError)
+            {
+                return "Initialization failed: I2C " + LnbI2cDetailToToken(lastDetail) + " (" + ToHexU8(lastDetail) + ")";
+            }
+
+            return "Initialization failed: " + LnbStatusToToken(_lnbInitStatus) + " (code " + _lnbInitStatus.ToString() + ")";
+        }
+
+        private static string LnbStatusToToken(int status)
+        {
+            if (status == (int)LNBH26.Status.Ok)
+            {
+                return "ok";
+            }
+
+            if (status == (int)LNBH26.Status.InvalidParam)
+            {
+                return "invalid_param";
+            }
+
+            if (status == (int)LNBH26.Status.NotInitialized)
+            {
+                return "not_initialized";
+            }
+
+            if (status == (int)LNBH26.Status.IoError)
+            {
+                return "io_error";
+            }
+
+            return "unknown";
+        }
+
+        private static string LnbI2cDetailToToken(int detail)
+        {
+            if (detail == -1)
+            {
+                return "timeout";
+            }
+
+            if (detail == -2)
+            {
+                return "peripheral_error_unspecified";
+            }
+
+            if (detail == 0)
+            {
+                return "unspecified";
+            }
+
+            string text = string.Empty;
+            AppendLnbI2cFlag(ref text, detail, 0x01, "bus_error");
+            AppendLnbI2cFlag(ref text, detail, 0x02, "arbitration_lost");
+            AppendLnbI2cFlag(ref text, detail, 0x04, "ack_failure");
+            AppendLnbI2cFlag(ref text, detail, 0x08, "overrun");
+            AppendLnbI2cFlag(ref text, detail, 0x10, "pec_error");
+            AppendLnbI2cFlag(ref text, detail, 0x20, "hardware_timeout");
+            AppendLnbI2cFlag(ref text, detail, 0x40, "smbus_alert");
+            return text.Length > 0 ? text : "unknown";
+        }
+
+        private static void AppendLnbI2cFlag(ref string text, int detail, int mask, string label)
+        {
+            if ((detail & mask) == 0)
+            {
+                return;
+            }
+
+            if (text.Length > 0)
+            {
+                text += "+";
+            }
+
+            text += label;
         }
 
         private static void EmitLnbFaultSnapshot(string source, int sequence)
@@ -656,12 +754,11 @@ namespace CubleyControl
 
             _lnbInitAttempted = true;
             _lnbInitStatus = LNBH26.NativeInit();
-            int lastError = LNBH26.NativeGetLastError();
-            int lastDetail = LNBH26.NativeGetLastErrorDetail();
-            Debug.WriteLine(
-                "[CDC-LNB] init rc=" + _lnbInitStatus.ToString() +
-                " last=" + lastError.ToString() +
-                " detail=" + lastDetail.ToString());
+
+            if (_lnbInitStatus != (int)LNBH26.Status.Ok)
+            {
+                Debug.WriteLine("[CDC-LNB] init failed " + BuildLnbInitDiagnosticData());
+            }
 
             return _lnbInitStatus == (int)LNBH26.Status.Ok;
         }
