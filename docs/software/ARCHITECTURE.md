@@ -91,6 +91,7 @@ The first three are upstream bugs/limitations; the last two are board-specific d
 - `INTEROP_CONTRACT_V1.md`
 - `INTEROP_VERSIONING_POLICY.md`
 - `MQTT_API.md`
+- `OBSERVABILITY_CONTRACT_V1.md`
 - `CONFIGURATION.md`
 - `../debug/LNB_I2C_TESTING.md`
 - `../debug/W5500_LINK_BRINGUP_CHECKLIST.md`

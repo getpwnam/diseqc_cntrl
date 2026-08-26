@@ -1,5 +1,10 @@
 # MQTT API Reference
 
+The target structured payload and subsystem ownership rules are defined in
+[OBSERVABILITY_CONTRACT_V1.md](OBSERVABILITY_CONTRACT_V1.md). This document
+describes the currently implemented MQTT transport; topic migration is tracked in
+the observability contract.
+
 ## Transport
 
 CubleyControl uses MQTT 3.1.1 without TLS. It connects through the STM32F407

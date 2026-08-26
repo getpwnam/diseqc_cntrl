@@ -316,6 +316,9 @@ commands use the operational grammar documented above.
 
 MQTT uses the active LAN8742A IPv4/DHCP/DNS implementation. It starts only after
 MQTT is enabled in saved configuration and the interface has a usable IPv4 address.
+The target subsystem-owned message schema and state/event subtopics are specified
+in [OBSERVABILITY_CONTRACT_V1.md](OBSERVABILITY_CONTRACT_V1.md); the table below
+records the currently implemented binding.
 
 When enabled, the current binding is:
 
