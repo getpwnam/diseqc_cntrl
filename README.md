@@ -53,7 +53,7 @@ See:
 | --- | --- |
 | I2C1 | LNBH26PQR LNB supply controller |
 | I2C3 | FM24CL16B 16 Kb F-RAM and expansion header |
-| SPI | W5500 Ethernet controller |
+| Ethernet MAC (RMII) | LAN8742A 10/100 Ethernet PHY |
 | TIM4 CH1 | DiSEqC 22 kHz tone generation |
 | USART3 | Serial debug / expansion (pin header J2) |
 | USB OTG FS | USB 2.0 device (USB-C) |
@@ -91,10 +91,10 @@ A filtered +3V3_ANA rail is derived from +3.3 V via a ferrite bead for the MCU a
 
 ### Ethernet
 
-- **W5500** hardwired TCP/IP controller (WIZnet, QFP-48) on SPI bus
-- 25 MHz crystal (ABLS-25.000MHZ-D-FT)
-- **H1102NL** 1:1 Ethernet isolation transformer (Pulse Electronics)
-- **RJCSE-538101** RJ45 connector with integrated link/activity LEDs (Amphenol)
+- STM32F407 integrated 10/100 Ethernet MAC connected over RMII
+- **LAN8742A-CZ-TR** 10/100 Ethernet PHY (Microchip, SQFN-24)
+- 25 MHz PHY crystal (ABLS-25.000MHZ-D-FT)
+- **J0011D21BNL** RJ45 connector with integrated magnetics and link/activity LEDs
 
 ### USB
 
@@ -118,7 +118,7 @@ A filtered +3V3_ANA rail is derived from +3.3 V via a ferrite bead for the MCU a
 | J5 | 2×5 pin header (2.54 mm) | SWD debug |
 | J6 | SMA edge-mount | IF input from LNB |
 | J7 | SMA edge-mount | LNB output (power + DiSEqC + IF) |
-| J8 | RJ45 (RJCSE-538101) | 10/100 Ethernet |
+| J9 | RJ45 (J0011D21BNL) | 10/100 Ethernet with integrated magnetics and LEDs |
 | S1 | SPDT slide switch (PCM12SMTBR) | Mode / power select |
 
 ### Test Points
