@@ -5,9 +5,10 @@
 CubleyControl uses MQTT 3.1.1 without TLS. It connects through the STM32F407
 Ethernet MAC and LAN8742A PHY after IPv4 and DNS are ready.
 
-The configured topic prefix is `diseqc` by default. All command grammars are
-shared with USB CDC; MQTT carries a complete command line rather than using a
-separate topic for every operation.
+The configured topic prefix is `diseqc` by default. MQTT carries one complete
+operational command line rather than using a separate topic for every operation.
+It shares the operational parser with USB CDC but has a strict allowlist and does
+not expose administrative configuration commands.
 
 | Direction | Topic | Payload | QoS | Retained |
 |---|---|---|---:|---|
@@ -20,18 +21,18 @@ last will is retained `offline` at QoS 1.
 
 ## Commands And Results
 
-Publish any command documented in
-[INTERFACE_COMMAND_MAP_V1.md](INTERFACE_COMMAND_MAP_V1.md) to
-`<prefix>/command`. Each parser output line is published separately to
-`<prefix>/status`.
+Publish a command marked as MQTT-supported in
+[INTERFACE_COMMAND_MAP_V1.md](INTERFACE_COMMAND_MAP_V1.md) to `<prefix>/command`.
+Each parser output line is published separately to `<prefix>/status`.
 
 Examples:
 
 ```bash
 mosquitto_sub -t 'diseqc/status' -t 'diseqc/availability' -v
 mosquitto_pub -q 1 -t 'diseqc/command' -m 'show lnb a'
+mosquitto_pub -q 1 -t 'diseqc/command' -m 'lnb a pol v'
 mosquitto_pub -q 1 -t 'diseqc/command' -m 'diseqc goto 12'
-mosquitto_pub -q 1 -t 'diseqc/command' -m 'system.capabilities.get'
+mosquitto_pub -q 1 -t 'diseqc/command' -m 'show capabilities'
 ```
 
 Command payloads must be 1 to 64 ASCII bytes. The device rejects messages on an
@@ -51,20 +52,22 @@ close the active session and reconnect using the new settings.
 
 ## Configuration
 
-Use the shared command channel or USB CDC to inspect and stage MQTT settings:
+MQTT service state and redacted configuration can be inspected from USB operational
+mode with `show mqtt` and `show running-config mqtt`. MQTT and network settings can
+be changed only through USB CDC configuration mode:
 
 ```text
-get mqtt
-show mqtt
-set mqtt broker 192.168.1.50
-set mqtt topic-prefix diseqc
-set mqtt enabled on
-set mqtt save
+cubley> configure
+cubley(config)# mqtt broker 192.168.1.50
+cubley(config)# mqtt topic-prefix diseqc
+cubley(config)# mqtt enabled on
+cubley(config)# commit
 ```
 
-The broker must be set before an enabled configuration can be saved. Credentials
+The broker must be set before an enabled configuration can be committed. Credentials
 are case-preserving but cannot contain spaces in schema v1. Password commands are
-redacted from debug logs, and query output reports only whether credentials exist.
+redacted from debug logs and configuration output. MQTT messages containing
+configuration commands are rejected as unsupported.
 
 See [CONFIGURATION.md](CONFIGURATION.md) for the complete command list and
 [CONFIGURATION_STORAGE.md](CONFIGURATION_STORAGE.md) for the persisted schema.

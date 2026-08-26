@@ -171,7 +171,7 @@ namespace CubleyControl
                 return;
             }
 
-            if (e.Message == null || e.Message.Length == 0 || e.Message.Length > UsbConsoleLineMaxLength)
+            if (e.Message == null || e.Message.Length == 0 || e.Message.Length > MqttCommandMaxLength)
             {
                 Debug.WriteLine("[MQTT-CMD] rejected invalid length");
                 return;
@@ -180,7 +180,7 @@ namespace CubleyControl
             string payload = AsciiBytesToString(e.Message);
             Debug.WriteLine("[MQTT-CMD] topic=" + e.Topic + " payload=" + RedactCommandForLog(payload));
 
-            ExecuteCommand(payload, MqttOutputSink);
+            ExecuteCommand(payload, MqttOutputSink, CommandTransport.Mqtt);
         }
 
         private static void MqttOutputSink(string line)

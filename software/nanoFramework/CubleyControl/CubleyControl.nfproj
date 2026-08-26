@@ -25,7 +25,7 @@
     <Compile Include="Contracts\CommandIds.cs" />
     <Compile Include="Contracts\ResultCodes.cs" />
     <Compile Include="Contracts\ResultEnvelope.cs" />
-    <Compile Include="Program.Commands.Canonical.cs" />
+    <Compile Include="Program.Commands.Configuration.cs" />
     <Compile Include="Program.Commands.Diseqc.cs" />
     <Compile Include="Program.Commands.Lnb.cs" />
     <Compile Include="Program.Commands.Mqtt.cs" />

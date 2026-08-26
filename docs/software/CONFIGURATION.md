@@ -28,43 +28,68 @@ backend-neutral so the same bytes can move to dual FRAM slots later.
 MQTT starts only when enabled, the configuration validates, the network link is
 available, and the interface has a non-zero IPv4 address.
 
-## MQTT Commands
+## USB Configuration Mode
 
-Configuration edits are staged in RAM. `save` and `apply` are equivalent: both
-persist the complete application record and publish the new configuration to the
-MQTT service. The service disconnects and reconnects when a saved revision changes.
+Network and MQTT configuration is available only through the USB CDC console.
+Enter configuration mode with `configure`; edits are staged in RAM until the
+complete candidate is committed.
 
 ```text
-get mqtt
-show mqtt
-set mqtt enabled on|off
-set mqtt broker <host|clear>
-set mqtt port <1..65535>
-set mqtt client-id <id|auto>
-set mqtt username <value|clear>
-set mqtt password <value|clear>
-set mqtt topic-prefix <prefix>
-set mqtt keepalive <15..3600>
-set mqtt reconnect <1..60>
-set mqtt save
-set mqtt apply
-set mqtt discard
-set mqtt defaults
+cubley> configure
+cubley(config)# network mode dhcp|static
+cubley(config)# network address <ipv4>
+cubley(config)# network mask <mask>
+cubley(config)# network gateway <ipv4>
+cubley(config)# network dns auto
+cubley(config)# network dns static <dns1> [dns2]
+cubley(config)# mqtt enabled on|off
+cubley(config)# mqtt broker <host|clear>
+cubley(config)# mqtt port <1..65535>
+cubley(config)# mqtt client-id <id|auto>
+cubley(config)# mqtt username <value|clear>
+cubley(config)# mqtt password <value|clear>
+cubley(config)# mqtt topic-prefix <prefix>
+cubley(config)# mqtt keepalive <15..3600>
+cubley(config)# mqtt reconnect <1..60>
+cubley(config)# show storage
+cubley(config)# show candidate-config
+cubley(config)# show config diff
+cubley(config)# debug on|off
+cubley(config)# commit
+cubley(config)# exit
 ```
 
+The prompt changes to `cubley(config*)#` while the candidate differs from the
+running configuration. `commit` or `discard` returns it to `cubley(config)#`.
+`exit`, `end`, and `Ctrl+D` leave configuration mode only when the candidate is
+clean. With uncommitted changes they remain in configuration mode and direct the
+operator to commit or discard explicitly.
+
 Values are case-preserving, printable non-space ASCII tokens. The broker is
-required before an enabled configuration can be saved. The topic prefix cannot
+required before an enabled configuration can be committed. The topic prefix cannot
 start or end with `/` or contain MQTT wildcards (`#` or `+`).
 
-`get mqtt` reports staged values and exposes only `username_set` and
-`password_set`. `show mqtt` reports service state, connection state, reconnect
-attempts, and a sanitized last error.
+`show candidate-config` renders the complete candidate except for secret material.
+`show running-config` and `show startup-config` are available from either USB mode.
+`show storage` reports configuration backend and load status separately from live
+network and MQTT service state. Successful setters are silent by default;
+`debug on` enables result details for the current USB session and `debug off`
+restores quiet output.
+`show mqtt` reports service state, connection state, reconnect attempts, and a
+sanitized last error. MQTT command messages cannot enter configuration mode or
+inspect configuration.
 
 ## Save And Recovery
 
-MQTT defaults are not written automatically. An explicit `set mqtt save` or
-`set mqtt apply` updates internal flash and verifies a complete readback. Invalid,
-blank, or CRC-failed records cause startup to use disabled defaults.
+MQTT defaults are not written automatically. `commit` validates the complete
+network and MQTT candidate before writing changed domains. The MQTT write updates
+internal flash and verifies a complete readback. Invalid, blank, or CRC-failed
+records cause startup to use disabled defaults.
+
+If a domain write fails, the application attempts to restore the previously
+committed values. Successful recovery returns `persist_failed`; failed recovery
+returns `persist_partial` and exposes degraded configuration status. Uncommitted
+changes are discarded when USB disconnects.
 
 The internal flash update preserves the standard nanoFramework network block but
 is not power-fail atomic because the STM32 sector must be erased. A future FRAM

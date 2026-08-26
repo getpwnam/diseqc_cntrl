@@ -19,57 +19,45 @@ namespace CubleyControl
                 return;
             }
 
+            if (lower[0] == '!')
+            {
+                return;
+            }
+
             _activeCommand = RedactCommandForLog(normalized);
             Debug.WriteLine("[CDC-CMD] cmd=" + _activeCommand);
 
             string[] tokens = SplitTokens(lower);
             string[] valueTokens = SplitTokens(normalized);
-            if (HandleOperatorCommand(tokens, valueTokens, reqId))
+            _activeCommandIsSetter = IsSetterCommand(tokens);
+            if (_activeCommandTransport == CommandTransport.Mqtt && !IsMqttOperationalCommand(tokens))
             {
+                WriteCommandResult(reqId, false, "unsupported", "command unavailable on mqtt", "transport=mqtt");
                 return;
             }
 
-            if (HandleCanonicalCommand(lower, reqId))
+            if (_activeCommandTransport == CommandTransport.Usb && _usbConfigurationMode)
+            {
+                HandleConfigurationModeCommand(tokens, valueTokens, reqId);
+                return;
+            }
+
+            if (HandleOperatorCommand(tokens, reqId))
             {
                 return;
             }
 
             string head = tokens[0];
 
-            if (head == "help" || head == "h")
+            if (IsConfigureCommand(tokens))
             {
-                if (tokens.Length == 1)
-                {
-                    WriteCommandResult(reqId, true, "ok", "help", "commands=show,get,set,dns,diseqc,help,status,watch,capabilities,version,led,lnb aliases=h,st,w,caps,ver,l");
-                }
-                else
-                {
-                    string topic = tokens[1];
-                    if (topic == "lnb" || topic == "l")
-                    {
-                        WriteCommandResult(reqId, true, "ok", "help lnb", "usage=lnb get <pol|band|status>, l g <p|b|s>, set lnb.a.<band|polarization|enabled|iset|isw> <value>, get lnb.a.<band|polarization|status|enabled|iset|isw>, l s <e|p|b> <value>");
-                    }
-                    else if (topic == "network" || topic == "net")
-                    {
-                        WriteCommandResult(reqId, true, "ok", "help network", "usage=get network; set network <mode dhcp|static|address IP|mask MASK|gateway IP|dns auto|dns static DNS1 [DNS2]|save|apply|discard|defaults|reboot>");
-                    }
-                    else if (topic == "dns")
-                    {
-                        WriteCommandResult(reqId, true, "ok", "help dns", "usage=dns lookup <hostname>");
-                    }
-                    else if (topic == "mqtt")
-                    {
-                        WriteCommandResult(reqId, true, "ok", "help mqtt", "usage=get mqtt; show mqtt; set mqtt <enabled|broker|port|client-id|username|password|topic-prefix|keepalive|reconnect|save|apply|discard|defaults> [value]");
-                    }
-                    else if (topic == "show" || topic == "get" || topic == "set" || topic == "diseqc")
-                    {
-                        WriteCommandResult(reqId, true, "ok", "help cli", "show=show network|net|lnb [a|b] [detail]|diseqc get=get lnb.a.<band|polarization|status|enabled|iset|isw> set=set lnb.a.<band|polarization|enabled|iset|isw> <value> diseqc=diseqc tone on [freq_hz] [duty_pct]|tone off|tone status|listen on|off|preset <off|direct|aa|ab|ba|bb|status>");
-                    }
-                    else
-                    {
-                        WriteCommandResult(reqId, false, "validation_error", "unknown help topic", "topic=" + topic);
-                    }
-                }
+                BeginUsbConfigurationSession(reqId);
+                return;
+            }
+
+            if (head == "help" || head == "h" || head == "?")
+            {
+                HandleOperationalHelp(tokens);
                 return;
             }
 
@@ -101,18 +89,13 @@ namespace CubleyControl
 
             if (head == "capabilities" || head == "caps")
             {
-                WriteCommandResult(
-                    reqId,
-                    true,
-                    "ok",
-                    "capabilities",
-                    "root=cubley/v1/diseqc serial_format=hybrid cmd_count=7");
+                EmitCapabilities(reqId);
                 return;
             }
 
             if (head == "version" || head == "ver")
             {
-                WriteCommandResult(reqId, true, "ok", "version", "iface=cubley_v1_serial shell=main");
+                EmitVersion(reqId);
                 return;
             }
 
@@ -172,7 +155,168 @@ namespace CubleyControl
             WriteCommandResult(reqId, false, "unsupported", "unknown command", "cmd=" + head);
         }
 
-        private static bool HandleOperatorCommand(string[] tokens, string[] valueTokens, int reqId)
+        private static void HandleOperationalHelp(string[] tokens)
+        {
+            if (tokens.Length == 1)
+            {
+                WriteHumanHeading("Available commands");
+                WriteHelpCommand("show [topic]", "Display device and service state");
+                WriteHelpCommand("lnb <a|b> <field> <value>", "Set LNB channel state");
+                WriteHelpCommand("diseqc <action> ...", "Control switches and positioners");
+                WriteHelpCommand("dns lookup <hostname>", "Resolve a host name");
+                WriteHelpCommand("configure", "Enter configuration mode");
+                WriteHelpCommand("watch [on|off]", "Control periodic status output");
+                WriteHelpCommand("led <on|off> | pulse", "Control the status LED");
+                WriteHelpCommand("help [command]", "Show command help (alias: ?)");
+                _activeOutputSink("\r\nUse 'help <command>' for more information.\r\n");
+                return;
+            }
+
+            if (tokens.Length != 2)
+            {
+                _activeOutputSink("Usage: help [command]\r\n");
+                return;
+            }
+
+            string topic = tokens[1];
+            if (topic == "lnb" || topic == "l")
+            {
+                WriteHumanHeading("LNB commands");
+                WriteHelpCommand("show lnb [a|b] [detail]", "Display LNB state or registers");
+                WriteHelpCommand("lnb <a|b> enable <value>", "Enable or disable LNB output");
+                WriteHelpCommand("lnb <a|b> polarization <value>", "Set vertical or horizontal polarization");
+                WriteHelpCommand("lnb <a|b> band <value>", "Set low or high band");
+                WriteHelpCommand("lnb <a|b> iset <value>", "Set current range");
+                WriteHelpCommand("lnb <a|b> isw <value>", "Set switch current limit");
+                return;
+            }
+
+            if (topic == "show")
+            {
+                WriteHumanHeading("Show commands");
+                WriteHelpCommand("show", "Display a device summary");
+                WriteHelpCommand("show lnb [a|b] [detail]", "Display LNB state");
+                WriteHelpCommand("show diseqc", "Display DiSEqC state");
+                WriteHelpCommand("show network", "Display live network state");
+                WriteHelpCommand("show mqtt", "Display live MQTT state");
+                WriteHelpCommand("show running-config [domain]", "Display active configuration");
+                WriteHelpCommand("show startup-config [domain]", "Display persisted configuration");
+                WriteHelpCommand("show status|capabilities|version", "Display system information");
+                return;
+            }
+
+            if (topic == "diseqc")
+            {
+                WriteHumanHeading("DiSEqC commands");
+                WriteHelpCommand("diseqc goto <0..255>", "Move to a stored position");
+                WriteHelpCommand("diseqc step <east|west> <1..128>", "Move a fixed number of steps");
+                WriteHelpCommand("diseqc drive <east|west>", "Start continuous movement");
+                WriteHelpCommand("diseqc stop", "Stop movement");
+                WriteHelpCommand("diseqc preset <value>", "Select or inspect routing preset");
+                WriteHelpCommand("diseqc tx <hex bytes>", "Transmit a raw frame");
+                WriteHelpCommand("diseqc tone <on|off|status>", "Control or inspect the carrier tone");
+                WriteHelpCommand("diseqc listen <on|off>", "Control external modulation input");
+                return;
+            }
+
+            if (topic == "network" || topic == "net")
+            {
+                WriteHumanHeading("Network commands");
+                WriteHelpCommand("show network", "Display live interface state");
+                WriteHelpCommand("show running-config network", "Display active network configuration");
+                WriteHelpCommand("configure", "Change network configuration");
+                return;
+            }
+
+            if (topic == "mqtt")
+            {
+                WriteHumanHeading("MQTT commands");
+                WriteHelpCommand("show mqtt", "Display live MQTT service state");
+                WriteHelpCommand("show running-config mqtt", "Display active MQTT configuration");
+                WriteHelpCommand("configure", "Change MQTT configuration");
+                return;
+            }
+
+            if (topic == "dns")
+            {
+                WriteHumanHeading("DNS commands");
+                WriteHelpCommand("dns lookup <hostname>", "Resolve a host name");
+                return;
+            }
+
+            if (topic == "configure" || topic == "config" || topic == "conf")
+            {
+                WriteHumanHeading("Configuration mode");
+                WriteHelpCommand("configure", "Enter USB configuration mode");
+                WriteHelpCommand("config | conf | conf t", "Accepted aliases");
+                return;
+            }
+
+            if (topic == "watch" || topic == "w")
+            {
+                WriteHumanHeading("Watch command");
+                WriteHelpCommand("watch [on|off]", "Control periodic status output");
+                return;
+            }
+
+            if (topic == "led")
+            {
+                WriteHumanHeading("LED commands");
+                WriteHelpCommand("led <on|off>", "Set the status LED");
+                WriteHelpCommand("pulse", "Pulse the status LED for 100 ms");
+                return;
+            }
+
+            _activeOutputSink("No help available for '" + topic + "'.\r\n");
+        }
+
+        private static void WriteHelpCommand(string syntax, string description)
+        {
+            const int DescriptionColumn = 40;
+            string command = "  " + syntax;
+            if (command.Length >= DescriptionColumn)
+            {
+                _activeOutputSink(command + "\r\n" + new string(' ', DescriptionColumn) + description + "\r\n");
+                return;
+            }
+
+            _activeOutputSink(command.PadRight(DescriptionColumn, ' ') + description + "\r\n");
+        }
+
+        private static void EmitCapabilities(int reqId)
+        {
+            if (_activeCommandTransport == CommandTransport.Usb)
+            {
+                WriteHumanHeading("Capabilities");
+                WriteHumanField("Serial commands", "Available");
+                WriteHumanField("MQTT commands", "Available");
+                WriteHumanField("USB configuration", "Available");
+                WriteHumanField("MQTT configuration", "Unavailable");
+                return;
+            }
+
+            WriteCommandResult(
+                reqId,
+                true,
+                "ok",
+                "capabilities",
+                "root=cubley/v1/diseqc serial_format=hybrid transport.serial=1 transport.mqtt=1 config_usb=1 config_mqtt=0");
+        }
+
+        private static void EmitVersion(int reqId)
+        {
+            if (_activeCommandTransport == CommandTransport.Usb)
+            {
+                WriteHumanHeading("Version");
+                WriteHumanField("Interface", "cubley/v1 serial");
+                WriteHumanField("Shell", "main");
+                return;
+            }
+
+            WriteCommandResult(reqId, true, "ok", "version", "iface=cubley_v1_serial shell=main");
+        }
+
+        private static bool HandleOperatorCommand(string[] tokens, int reqId)
         {
             if (tokens.Length == 0)
             {
@@ -186,18 +330,6 @@ namespace CubleyControl
                 return true;
             }
 
-            if (verb == "get")
-            {
-                HandleGetCommand(tokens, reqId);
-                return true;
-            }
-
-            if (verb == "set")
-            {
-                HandleSetCommand(tokens, valueTokens, reqId);
-                return true;
-            }
-
             if (verb == "diseqc")
             {
                 HandleDiseqcCommand(tokens, reqId);
@@ -207,9 +339,55 @@ namespace CubleyControl
             return false;
         }
 
+        private static bool IsSetterCommand(string[] tokens)
+        {
+            if (tokens.Length == 0)
+            {
+                return false;
+            }
+
+            string head = tokens[0];
+            if (_usbConfigurationMode)
+            {
+                return head == "network" || head == "net" ||
+                    head == "mqtt" || head == "mq" ||
+                    head == "commit" || head == "apply" ||
+                    head == "discard" || head == "abort" ||
+                    head == "load" || head == "defaults" ||
+                    head == "debug" || head == "exit" || head == "end";
+            }
+
+            if (head == "lnb" || head == "l" ||
+                head == "watch" || head == "w" ||
+                head == "led" || head == "pulse" ||
+                IsConfigureCommand(tokens))
+            {
+                return true;
+            }
+
+            if (head != "diseqc")
+            {
+                return false;
+            }
+
+            return tokens.Length < 3 ||
+                !((tokens[1] == "preset" || tokens[1] == "tone") && tokens[2] == "status");
+        }
+
         private static void EmitStatusSnapshot(int reqId)
         {
             int enabled = UsbCdcConsole.NativeIsEnabled();
+            if (_activeCommandTransport == CommandTransport.Usb)
+            {
+                WriteHumanHeading("System");
+                WriteHumanField("USB console", enabled != 0 ? "Connected" : "Disconnected");
+                WriteHumanField("Status LED", _ledReady ? "Ready" : "Unavailable");
+                WriteHumanField("Write failures", _usbWriteFailureCount.ToString());
+                WriteHumanField("Partial writes", _usbWritePartialCount.ToString());
+                WriteHumanField("Write exceptions", _usbWriteExceptionCount.ToString());
+                return;
+            }
+
             WriteCommandResult(
                 reqId,
                 true,
@@ -224,10 +402,18 @@ namespace CubleyControl
 
         private static void EmitStatusBar(int enabled)
         {
-            SafeUsbWrite(
-                "status enabled=" + enabled.ToString() +
-                " led=" + (_ledReady ? "ready" : "off") +
-                "\r\n");
+            SafeUsbWrite("Status: USB " + (enabled != 0 ? "connected" : "disconnected") +
+                ", LED " + (_ledReady ? "ready" : "unavailable") + "\r\n");
+        }
+
+        private static void WriteHumanHeading(string heading)
+        {
+            _activeOutputSink(heading + "\r\n");
+        }
+
+        private static void WriteHumanField(string label, string value)
+        {
+            _activeOutputSink("  " + label + ": " + value + "\r\n");
         }
 
         private static void WriteCommandResult(int reqId, bool ok, string code, string msg, string data)
@@ -243,6 +429,14 @@ namespace CubleyControl
                 (payload.Length > 0 ? " " + payload : string.Empty);
 
             Debug.WriteLine("[CDC-CMD] cmd=" + _activeCommand + " " + kvLine);
+
+            if (ok &&
+                _activeCommandTransport == CommandTransport.Usb &&
+                _activeCommandIsSetter &&
+                !_usbDebugEnabled)
+            {
+                return;
+            }
 
             if (ok)
             {
@@ -405,9 +599,14 @@ namespace CubleyControl
                 return string.Empty;
             }
 
-            if (command.ToLower().IndexOf("set mqtt password ") == 0)
+            string[] tokens = SplitTokens(NormalizeCommandInput(command).ToLower());
+            int domainIndex = tokens.Length > 0 && tokens[0] == "set" ? 1 : 0;
+            int fieldIndex = domainIndex + 1;
+            if (tokens.Length > fieldIndex &&
+                (tokens[domainIndex] == "mqtt" || tokens[domainIndex] == "mq") &&
+                (tokens[fieldIndex] == "password" || tokens[fieldIndex] == "pass"))
             {
-                return "set mqtt password <redacted>";
+                return "mqtt password <redacted>";
             }
 
             return command;

@@ -2,8 +2,6 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Threading;
-using nanoFramework.Runtime.Native;
 
 namespace CubleyControl
 {
@@ -22,8 +20,20 @@ namespace CubleyControl
 
                 NetworkInterface networkInterface = interfaces[0];
                 string[] dnsAddresses = networkInterface.IPv4DnsAddresses;
-                string configurationSource = _networkConfigurationSource;
-                string configurationError = _networkConfigurationError;
+
+                if (_activeCommandTransport == CommandTransport.Usb)
+                {
+                    WriteHumanHeading("Network");
+                    WriteHumanField("Link", NetworkInterface.GetIsNetworkAvailable() ? "Up" : "Down");
+                    WriteHumanField("Mode", networkInterface.IsDhcpEnabled ? "DHCP" : "Static");
+                    WriteHumanField("MAC address", FormatMacAddress(networkInterface.PhysicalAddress));
+                    WriteHumanField("IPv4 address", ValueOrUnset(networkInterface.IPv4Address));
+                    WriteHumanField("Subnet mask", ValueOrUnset(networkInterface.IPv4SubnetMask));
+                    WriteHumanField("Gateway", ValueOrUnset(networkInterface.IPv4GatewayAddress));
+                    WriteHumanField("DNS mode", networkInterface.IsAutomaticDnsEnabled ? "Automatic" : "Static");
+                    WriteHumanField("DNS servers", FormatDnsAddresses(dnsAddresses));
+                    return;
+                }
 
                 _activeOutputSink(
                     "network link=" + (NetworkInterface.GetIsNetworkAvailable() ? "up" : "down") +
@@ -36,37 +46,12 @@ namespace CubleyControl
                 _activeOutputSink(
                     "dns mode=" + (networkInterface.IsAutomaticDnsEnabled ? "auto" : "static") +
                     " servers=" + FormatDnsAddresses(dnsAddresses) + "\r\n");
-                _activeOutputSink(
-                    "config source=" + (string.IsNullOrEmpty(configurationSource) ? "unknown" : configurationSource) +
-                    " status=" + (string.IsNullOrEmpty(configurationError) ? "ok" : configurationError) + "\r\n");
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("[NETWORK] show failed: " + ex.Message);
                 WriteCommandResult(reqId, false, "unavailable", "network unavailable", "reason=read_failed");
             }
-        }
-
-        private static void HandleGetNetworkCommand(string[] tokens, int reqId)
-        {
-            if (tokens.Length != 2)
-            {
-                WriteCommandResult(reqId, false, "validation_error", "get network usage", "usage=get network");
-                return;
-            }
-
-            NetworkConfiguration configuration = _pendingNetworkConfiguration.Clone();
-            _activeOutputSink("network mode=" + configuration.Mode + "\r\n");
-            _activeOutputSink(
-                "ipv4 address=" + ValueOrUnset(configuration.Address) +
-                " mask=" + ValueOrUnset(configuration.SubnetMask) +
-                " gateway=" + ValueOrUnset(configuration.Gateway) + "\r\n");
-            _activeOutputSink(
-                "dns mode=" + (configuration.AutomaticDns ? "auto" : "static") +
-                " servers=" + FormatConfiguredDns(configuration) + "\r\n");
-            _activeOutputSink(
-                "config source=" + _networkConfigurationSource +
-                " state=" + (_networkConfigurationDirty ? "staged" : "saved") + "\r\n");
         }
 
         private static void HandleDnsCommand(string[] tokens, int reqId)
@@ -99,7 +84,16 @@ namespace CubleyControl
                     addressList += addresses[index].ToString();
                 }
 
-                _activeOutputSink("dns host=" + host + " addresses=" + addressList + "\r\n");
+                if (_activeCommandTransport == CommandTransport.Usb)
+                {
+                    WriteHumanHeading("DNS lookup");
+                    WriteHumanField("Host", host);
+                    WriteHumanField("Addresses", addressList);
+                }
+                else
+                {
+                    _activeOutputSink("dns host=" + host + " addresses=" + addressList + "\r\n");
+                }
             }
             catch (Exception ex)
             {
@@ -117,33 +111,7 @@ namespace CubleyControl
             }
 
             string field = tokens[2];
-            if (field == "save" || field == "apply")
-            {
-                if (tokens.Length != 3)
-                {
-                    WriteNetworkSetUsage(reqId);
-                    return;
-                }
-
-                SavePendingNetworkConfiguration(reqId, field);
-                return;
-            }
-
-            if (field == "discard")
-            {
-                if (tokens.Length != 3)
-                {
-                    WriteNetworkSetUsage(reqId);
-                    return;
-                }
-
-                _pendingNetworkConfiguration = _networkConfiguration.Clone();
-                _networkConfigurationDirty = false;
-                WriteCommandResult(reqId, true, "ok", "network discarded", "state=saved");
-                return;
-            }
-
-            if (field == "defaults")
+            if (field == "default" || field == "defaults")
             {
                 if (tokens.Length != 3)
                 {
@@ -152,28 +120,8 @@ namespace CubleyControl
                 }
 
                 _pendingNetworkConfiguration = NetworkConfiguration.CreateDefaults();
-                _networkConfigurationDirty = true;
-                WriteCommandResult(reqId, true, "ok", "network staged", "field=defaults mode=dhcp");
-                return;
-            }
-
-            if (field == "reboot")
-            {
-                if (tokens.Length != 3)
-                {
-                    WriteNetworkSetUsage(reqId);
-                    return;
-                }
-
-                if (_networkConfigurationDirty)
-                {
-                    WriteCommandResult(reqId, false, "validation_error", "network reboot blocked", "reason=unsaved_changes");
-                    return;
-                }
-
-                WriteCommandResult(reqId, true, "ok", "network reboot", "state=saved");
-                Thread.Sleep(100);
-                Power.RebootDevice(RebootOption.NormalReboot);
+                _networkConfigurationDirty = _pendingNetworkConfiguration.ToPayload() != _networkConfiguration.ToPayload();
+                WriteCommandResult(reqId, true, "ok", "network staged", "field=defaults mode=dhcp state=" + (_networkConfigurationDirty ? "staged" : "saved"));
                 return;
             }
 
@@ -187,11 +135,17 @@ namespace CubleyControl
                 }
 
                 _pendingNetworkConfiguration.Mode = mode;
+                if (mode == NetworkConfiguration.ModeDhcp)
+                {
+                    _pendingNetworkConfiguration.Address = "0.0.0.0";
+                    _pendingNetworkConfiguration.SubnetMask = "0.0.0.0";
+                    _pendingNetworkConfiguration.Gateway = "0.0.0.0";
+                }
                 StageNetworkChange(reqId, "mode", mode);
                 return;
             }
 
-            if (field == "address" && tokens.Length == 4)
+            if ((field == "address" || field == "addr" || field == "ip") && tokens.Length == 4)
             {
                 string address = tokens[3];
                 if (!NetworkConfiguration.IsValidIpv4Address(address))
@@ -219,7 +173,7 @@ namespace CubleyControl
                 return;
             }
 
-            if (field == "gateway" && tokens.Length == 4)
+            if ((field == "gateway" || field == "gw") && tokens.Length == 4)
             {
                 string gateway = tokens[3];
                 if (!NetworkConfiguration.IsValidIpv4Address(gateway))
@@ -278,63 +232,14 @@ namespace CubleyControl
                 "field=" + field + " value=" + value + " state=" + (_networkConfigurationDirty ? "staged" : "saved"));
         }
 
-        private static void SavePendingNetworkConfiguration(int reqId, string action)
-        {
-            NetworkConfiguration candidate = _pendingNetworkConfiguration.Clone();
-            string error;
-            if (!candidate.TryValidate(out error))
-            {
-                WriteCommandResult(reqId, false, "validation_error", "network not saved", "reason=" + error);
-                return;
-            }
-
-            if (!_networkConfigurationStorage.TrySave(candidate, out error))
-            {
-                WriteCommandResult(reqId, false, "persist_failed", "network not saved", "reason=" + error);
-                return;
-            }
-
-            NetworkConfiguration verified;
-            if (!_networkConfigurationStorage.TryLoad(out verified, out error) ||
-                verified.ToPayload() != candidate.ToPayload())
-            {
-                WriteCommandResult(
-                    reqId,
-                    false,
-                    "persist_failed",
-                    "network verify failed",
-                    "reason=" + (string.IsNullOrEmpty(error) ? "readback_mismatch" : error));
-                return;
-            }
-
-            _networkConfiguration = verified;
-            _pendingNetworkConfiguration = verified.Clone();
-            _networkConfigurationSource = _networkConfigurationStorage.Source;
-            _networkConfigurationError = string.Empty;
-            _networkConfigurationDirty = false;
-            WriteCommandResult(reqId, true, "ok", "network " + action, "persisted=1 applied=1 reboot_required=0");
-        }
-
         private static void WriteNetworkSetUsage(int reqId)
         {
             WriteCommandResult(
                 reqId,
                 false,
                 "validation_error",
-                "set network usage",
-                "usage=set network <mode dhcp|static|address IP|mask MASK|gateway IP|dns auto|dns static DNS1 [DNS2]|save|apply|discard|defaults|reboot>");
-        }
-
-        private static string FormatConfiguredDns(NetworkConfiguration configuration)
-        {
-            if (configuration.AutomaticDns)
-            {
-                return "auto";
-            }
-
-            return configuration.Dns2 == "0.0.0.0"
-                ? configuration.Dns1
-                : configuration.Dns1 + "," + configuration.Dns2;
+                "network usage",
+                "usage=network <mode dhcp|static|address IP|mask MASK|gateway IP|dns auto|dns static DNS1 [DNS2]|defaults>");
         }
 
         private static string FormatMacAddress(byte[] address)
