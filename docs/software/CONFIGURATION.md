@@ -1,158 +1,83 @@
 # Configuration Reference
 
-## Purpose
+## Current Architecture
 
-Define configuration domains and expected runtime behavior for settings management.
+CubleyControl has two persisted configuration domains:
 
-## Current Build Profile Note
+- IPv4, DHCP, and DNS use the standard nanoFramework network configuration block.
+- MQTT uses the portable 512-byte Cubley application record described in
+  [CONFIGURATION_STORAGE.md](CONFIGURATION_STORAGE.md).
 
-- `NF_FEATURE_HAS_CONFIG_BLOCK` is currently disabled in the validated build profile.
-- The active application does not yet implement persisted runtime configuration.
-- Configuration persistence will use the FM24CL16B F-RAM on I2C1 through the existing `Fram24C128` interop.
-- IPv4 DHCP is the default. Static IPv4 values are persisted only as an explicitly selected alternative.
-- IPv6 is deferred.
+The active MQTT backend is STM32 internal flash. FRAM is not initialized or
+probed on the current development board. The application record is deliberately
+backend-neutral so the same bytes can move to dual FRAM slots later.
 
-## Planned Interface
+## MQTT Defaults
 
-- MQTT commands:
-  - `.../command/config/get`
-  - `.../command/config/set` with payload `key=value`
-  - `.../command/config/save`
-  - `.../command/config/reset`
-  - `.../command/config/reload`
-  - `.../command/config/fram_clear` with payload `ERASE` (guarded destructive operation)
-- Serial command interface (same command set):
-  - `config get`
-  - `config set key=value`
-  - `config save`
-  - `config reset`
-  - `config reload`
-  - `config fram-dump [bytes]` (debug: dumps raw FRAM bytes from address `0x0000`)
-  - `config fram-clear ERASE` (debug: clears FRAM and resets runtime config to defaults)
+| Setting | Default |
+|---|---|
+| Enabled | `off` |
+| Broker | unset |
+| Port | `1883` |
+| Client ID | automatic from the final three MAC bytes |
+| Username/password | unset |
+| Topic prefix | `diseqc` |
+| Keepalive | 60 seconds |
+| Reconnect delay | 5 seconds |
 
-## Planned Runtime Keys
+MQTT starts only when enabled, the configuration validates, the network link is
+available, and the interface has a non-zero IPv4 address.
 
-- `network.enabled` (`true` by default)
-- `network.hostname`
-- `network.mac` (`auto` by default)
-- `network.ipv4.mode` (`dhcp` by default, or `static`)
-- `network.ipv4.address`
-- `network.ipv4.prefix_length`
-- `network.ipv4.gateway`
-- `network.ipv4.dns_mode` (`auto` by default, or `static`)
-- `network.ipv4.dns_servers`
-- `mqtt.broker`
-- `mqtt.port`
-- `mqtt.client_id`
-- `mqtt.username`
-- `mqtt.password`
-- `mqtt.topic_prefix`
-- `mqtt.enabled`
-- `system.device_name`
-- `system.location`
+## MQTT Commands
 
-## Planned Persistence Backend
+Configuration edits are staged in RAM. `save` and `apply` are equivalent: both
+persist the complete application record and publish the new configuration to the
+MQTT service. The service disconnects and reconnects when a saved revision changes.
 
-- Device: `FM24CL16B` (16 Kb / 2048-byte I2C F-RAM)
-- Bus: I2C1
-- Format: key-value UTF-8 payload with header (`DCFG` magic, version, length, checksum)
-- Save behavior:
-  - `config/save` updates RAM snapshot and attempts FRAM persist
-  - status `config/persisted` reports `true|false`
-- Reload behavior:
-  - `config/reload` attempts FRAM load first
-  - falls back to RAM snapshot when FRAM read/validation fails
-  - status `config/reload_source` reports `fram|ram`
-
-## Configuration Domains
-
-1. **Rotor**
-   - logical limits (`east/west`)
-   - reference/calibration state
-   - movement behavior (timeouts/step defaults)
-
-2. **LNB**
-   - voltage/polarization default
-   - tone/band default
-   - optional current-limit policy
-
-3. **Network/MQTT** (optional when networking enabled)
-   - broker host/port/client id
-   - topic prefix
-   - reconnect behavior
-
-4. **System**
-   - device name/location
-   - logging/telemetry intervals
-
-## Recommended Data Shape
-
-```json
-{
-  "system": {
-    "device_name": "diseqc-ctrl",
-    "location": "default"
-  },
-  "rotor": {
-    "max_angle_east": 80.0,
-    "max_angle_west": -80.0,
-    "reference_angle": 0.0,
-    "calibrated": false
-  },
-  "lnb": {
-    "voltage": 13,
-    "tone": false,
-    "band": "low"
-  },
-  "mqtt": {
-    "enabled": false,
-    "broker": "192.168.1.50",
-    "port": 1883,
-    "topic_prefix": "diseqc"
-  }
-}
+```text
+get mqtt
+show mqtt
+set mqtt enabled on|off
+set mqtt broker <host|clear>
+set mqtt port <1..65535>
+set mqtt client-id <id|auto>
+set mqtt username <value|clear>
+set mqtt password <value|clear>
+set mqtt topic-prefix <prefix>
+set mqtt keepalive <15..3600>
+set mqtt reconnect <1..60>
+set mqtt save
+set mqtt apply
+set mqtt discard
+set mqtt defaults
 ```
 
-## Validation Rules
+Values are case-preserving, printable non-space ASCII tokens. The broker is
+required before an enabled configuration can be saved. The topic prefix cannot
+start or end with `/` or contain MQTT wildcards (`#` or `+`).
 
-- `max_angle_west < max_angle_east`
-- Angle values must remain within firmware-supported range
-- LNB voltage must be `13` or `18`
-- LNB band must be `low` or `high`
-- MQTT port must be `1..65535`
+`get mqtt` reports staged values and exposes only `username_set` and
+`password_set`. `show mqtt` reports service state, connection state, reconnect
+attempts, and a sanitized last error.
 
-Reject invalid updates atomically (all-or-nothing) to avoid partial state drift.
+## Save And Recovery
 
-## Lifecycle
+MQTT defaults are not written automatically. An explicit `set mqtt save` or
+`set mqtt apply` updates internal flash and verifies a complete readback. Invalid,
+blank, or CRC-failed records cause startup to use disabled defaults.
 
-1. Load defaults
-2. Overlay persisted config (if supported by active profile)
-3. Apply runtime overrides (if any)
-4. Validate final effective config
-5. Start services using effective config
+The internal flash update preserves the standard nanoFramework network block but
+is not power-fail atomic because the STM32 sector must be erased. A future FRAM
+backend uses two generation-selected slots to provide atomic record replacement.
 
-## Runtime Update Strategy
+## Credentials
 
-- Apply safe settings live when possible (e.g., telemetry interval)
-- Defer disruptive changes to controlled restart points (e.g., full network stack re-init)
-- Publish outcome/status for each requested change
+Schema v1 stores MQTT credentials as cleartext in the application record. Password
+values are redacted from command debug logs and are never returned by configuration
+commands. TLS and encrypted-at-rest credentials are outside the v1 scope.
 
-## Reset and Recovery
+## Related Documents
 
-- Provide a “reset to defaults” action
-- On config parse/validation failure:
-  - log error
-  - revert to last-known-good or defaults
-  - report degraded state via status channel
-
-## Security/Operational Notes
-
-- Avoid storing plaintext credentials in source control
-- Keep device-specific secrets out of examples
-- Version config schema if introducing breaking key changes
-
-## Related Documents (Software + Debug)
-
-- `MQTT_API.md`
-- `ARCHITECTURE.md`
-- `../debug/TESTING_GUIDE.md`
+- [CONFIGURATION_STORAGE.md](CONFIGURATION_STORAGE.md)
+- [MQTT_API.md](MQTT_API.md)
+- [INTERFACE_COMMAND_MAP_V1.md](INTERFACE_COMMAND_MAP_V1.md)

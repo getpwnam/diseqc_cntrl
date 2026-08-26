@@ -33,6 +33,8 @@ CONFIG_NF_FEATURE_DEBUGGER=y
 # ── Networking ───────────────────────────────────────────────────────────────
 CONFIG_API_SYSTEM_NET=y
 CONFIG_NF_NETWORKING_SNTP=y
+CONFIG_API_NANOFRAMEWORK_SYSTEM_COLLECTIONS=y
+CONFIG_API_NANOFRAMEWORK_SYSTEM_TEXT=y
 
 # ── Class libraries (all off — added as each phase needs them) ───────────────
 CONFIG_API_SYSTEM_DEVICE_GPIO=y

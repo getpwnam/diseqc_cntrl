@@ -14,7 +14,7 @@ namespace CubleyControl
 
             if (lower == "system.capabilities.get")
             {
-                WriteCommandResult(reqId, true, "ok", "system.capabilities.get", "domain.diseqc=1 domain.system=1 domain.azel=0 transport.serial=1 transport.mqtt=0 feature.status_bar=1 feature.config_fram=0");
+                WriteCommandResult(reqId, true, "ok", "system.capabilities.get", "domain.diseqc=1 domain.system=1 domain.azel=0 transport.serial=1 transport.mqtt=1 feature.status_bar=1 feature.config_internal=1 feature.config_fram=0");
                 return true;
             }
 

@@ -36,7 +36,7 @@ framing. Detailed command diagnostics are written to the firmware debug log.
 | Command | Aliases | Behavior |
 |---|---|---|
 | `help` | `h` | List command groups. |
-| `help <lnb\|show\|get\|set\|diseqc>` | `help l` for LNB help | Show brief command-specific usage. |
+| `help <lnb\|show\|get\|set\|diseqc\|mqtt>` | `help l` for LNB help | Show brief command-specific usage. |
 | `status` | `st` | Show USB CDC and status LED health. |
 | `watch [on\|off]` | `w`, values `1\|0`; omitted value means `on` | Enable or disable the periodic serial status line. |
 | `capabilities` | `caps` | Show the current capability summary. |
@@ -88,6 +88,31 @@ channel A only.
 
 Enabling either logical channel calls the current global native enable operation.
 
+## Network And MQTT Configuration
+
+Network addressing is persisted by nanoFramework. MQTT edits are staged and are
+written to the portable application configuration record only by `save` or `apply`.
+
+| Command | Behavior |
+|---|---|
+| `get network` | Show configured IPv4 and DNS values. |
+| `show network` | Show active link, MAC, IPv4, DNS, and persistence state. |
+| `get mqtt` | Show staged MQTT settings; credentials are represented only by set flags. |
+| `show mqtt` | Show active MQTT state, endpoint, reconnect attempts, and last error. |
+| `set mqtt enabled <on\|off>` | Stage transport enablement. |
+| `set mqtt broker <host\|clear>` | Stage the broker IPv4 address or DNS hostname. |
+| `set mqtt port <port>` | Stage port `1..65535`. |
+| `set mqtt client-id <id\|auto>` | Stage an explicit ID or MAC-derived automatic ID. |
+| `set mqtt username <value\|clear>` | Stage a username. |
+| `set mqtt password <value\|clear>` | Stage a redacted password. |
+| `set mqtt topic-prefix <prefix>` | Stage the topic root without wildcards or edge slashes. |
+| `set mqtt keepalive <seconds>` | Stage `15..3600`. |
+| `set mqtt reconnect <seconds>` | Stage `1..60`. |
+| `set mqtt save` | Validate, persist, and activate staged settings. |
+| `set mqtt apply` | Alias of `set mqtt save`. |
+| `set mqtt discard` | Restore staged values from active settings. |
+| `set mqtt defaults` | Stage disabled MQTT defaults. |
+
 ## DiSEqC Commands
 
 | Command | Accepted values and behavior |
@@ -128,16 +153,19 @@ currently executable.
 
 ## MQTT Transport
 
-MQTT support exists in the managed source but is disabled in the current firmware
-with `MqttEnabled = false`; native networking is not enabled in the validated build.
+MQTT uses the active LAN8742A IPv4/DHCP/DNS implementation. It starts only after
+MQTT is enabled in saved configuration and the interface has a usable IPv4 address.
 
 When enabled, the current binding is:
 
 | Direction | Topic | Payload |
 |---|---|---|
-| Command to device | `diseqc/command` | One command line using the same grammar as USB CDC. |
-| Result from device | `diseqc/status` | One published message for each `OK`, `Fail`, or `kv` output line. |
-| Device availability | `diseqc/availability` | Retained `online` or last-will `offline`. |
+| Command to device | `<prefix>/command` | One non-retained command line using the same grammar as USB CDC. |
+| Result from device | `<prefix>/status` | One published message for each output line. |
+| Device availability | `<prefix>/availability` | Retained `online` or last-will `offline`. |
+
+Retained, empty, and greater-than-64-byte command payloads are rejected. The topic
+prefix defaults to `diseqc` and is configurable with `set mqtt topic-prefix`.
 
 The per-command `cubley/v1/...` topics and JSON request/result envelopes described
 by the interface schema files are design contracts and are not implemented by the

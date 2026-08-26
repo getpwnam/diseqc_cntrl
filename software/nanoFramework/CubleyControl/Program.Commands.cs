@@ -19,11 +19,12 @@ namespace CubleyControl
                 return;
             }
 
-            _activeCommand = normalized;
+            _activeCommand = RedactCommandForLog(normalized);
             Debug.WriteLine("[CDC-CMD] cmd=" + _activeCommand);
 
             string[] tokens = SplitTokens(lower);
-            if (HandleOperatorCommand(tokens, reqId))
+            string[] valueTokens = SplitTokens(normalized);
+            if (HandleOperatorCommand(tokens, valueTokens, reqId))
             {
                 return;
             }
@@ -55,6 +56,10 @@ namespace CubleyControl
                     else if (topic == "dns")
                     {
                         WriteCommandResult(reqId, true, "ok", "help dns", "usage=dns lookup <hostname>");
+                    }
+                    else if (topic == "mqtt")
+                    {
+                        WriteCommandResult(reqId, true, "ok", "help mqtt", "usage=get mqtt; show mqtt; set mqtt <enabled|broker|port|client-id|username|password|topic-prefix|keepalive|reconnect|save|apply|discard|defaults> [value]");
                     }
                     else if (topic == "show" || topic == "get" || topic == "set" || topic == "diseqc")
                     {
@@ -167,7 +172,7 @@ namespace CubleyControl
             WriteCommandResult(reqId, false, "unsupported", "unknown command", "cmd=" + head);
         }
 
-        private static bool HandleOperatorCommand(string[] tokens, int reqId)
+        private static bool HandleOperatorCommand(string[] tokens, string[] valueTokens, int reqId)
         {
             if (tokens.Length == 0)
             {
@@ -189,7 +194,7 @@ namespace CubleyControl
 
             if (verb == "set")
             {
-                HandleSetCommand(tokens, reqId);
+                HandleSetCommand(tokens, valueTokens, reqId);
                 return true;
             }
 
@@ -391,6 +396,21 @@ namespace CubleyControl
             }
 
             return new string(chars);
+        }
+
+        private static string RedactCommandForLog(string command)
+        {
+            if (string.IsNullOrEmpty(command))
+            {
+                return string.Empty;
+            }
+
+            if (command.ToLower().IndexOf("set mqtt password ") == 0)
+            {
+                return "set mqtt password <redacted>";
+            }
+
+            return command;
         }
 
         private static string NormalizeCommandInput(string text)

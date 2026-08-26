@@ -93,6 +93,7 @@ namespace CubleyControl
             usbConsoleThread.Start();
 
             InitializeNetworkConfiguration();
+            InitializeMqttConfiguration();
             InitializeLnbSafeDefaults();
             InitializeLnbFaultMonitor();
 

@@ -94,6 +94,12 @@ namespace CubleyControl
                 return;
             }
 
+            if (tokens[1] == "mqtt")
+            {
+                EmitMqttStatus(reqId);
+                return;
+            }
+
             WriteCommandResult(reqId, false, "validation_error", "show target invalid", "target=" + tokens[1]);
         }
 
@@ -102,6 +108,12 @@ namespace CubleyControl
             if (tokens.Length >= 2 && (tokens[1] == "network" || tokens[1] == "net"))
             {
                 HandleGetNetworkCommand(tokens, reqId);
+                return;
+            }
+
+            if (tokens.Length >= 2 && tokens[1] == "mqtt")
+            {
+                HandleGetMqttCommand(tokens, reqId);
                 return;
             }
 
@@ -186,11 +198,17 @@ namespace CubleyControl
             WriteCommandResult(reqId, false, "validation_error", "get field invalid", "field=" + field);
         }
 
-        private static void HandleSetCommand(string[] tokens, int reqId)
+        private static void HandleSetCommand(string[] tokens, string[] valueTokens, int reqId)
         {
             if (tokens.Length >= 2 && (tokens[1] == "network" || tokens[1] == "net"))
             {
                 HandleSetNetworkCommand(tokens, reqId);
+                return;
+            }
+
+            if (tokens.Length >= 2 && tokens[1] == "mqtt")
+            {
+                HandleSetMqttCommand(tokens, valueTokens, reqId);
                 return;
             }
 

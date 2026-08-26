@@ -22,12 +22,13 @@ namespace CubleyControl
             {
                 _networkConfiguration = loaded;
                 _networkConfigurationSource = _networkConfigurationStorage.Source;
+                _networkConfigurationError = string.Empty;
             }
             else
             {
                 _networkConfiguration = NetworkConfiguration.CreateDefaults();
                 _networkConfigurationSource = "defaults";
-                _networkConfigurationError = error;
+                _networkConfigurationError = string.IsNullOrEmpty(error) ? "load_failed" : error;
 
                 string saveError;
                 NetworkConfiguration verified;
@@ -40,14 +41,14 @@ namespace CubleyControl
                 }
                 else
                 {
-                    _networkConfigurationError = saveError;
+                    _networkConfigurationError = string.IsNullOrEmpty(saveError) ? "save_failed" : saveError;
                 }
             }
 
             if (_networkConfigurationStorage.RequiresApplyAfterLoad &&
                 !TryApplyNetworkConfiguration(_networkConfiguration, out error))
             {
-                _networkConfigurationError = error;
+                _networkConfigurationError = string.IsNullOrEmpty(error) ? "apply_failed" : error;
                 _networkConfiguration = NetworkConfiguration.CreateDefaults();
                 _networkConfigurationSource = "defaults";
                 TryApplyNetworkConfiguration(_networkConfiguration, out error);
@@ -56,7 +57,7 @@ namespace CubleyControl
             Debug.WriteLine(
                 "[NETWORK-CONFIG] source=" + _networkConfigurationSource +
                 " mode=" + _networkConfiguration.Mode +
-                " error=" + (_networkConfigurationError.Length == 0 ? "none" : _networkConfigurationError));
+                " error=" + (string.IsNullOrEmpty(_networkConfigurationError) ? "none" : _networkConfigurationError));
 
             _pendingNetworkConfiguration = _networkConfiguration.Clone();
             _networkConfigurationDirty = false;
