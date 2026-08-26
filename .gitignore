@@ -1,20 +1,19 @@
+
+.debug/
+
+# Agent instructions directory, mounted locally.
+.agents/
+.claude/
+
+
+# VScode stuff
 .vscode/*
 !.vscode/tasks.json
-.agents/
-.claude/settings.local.json
-.debug/
 .worktrees/
 
 
-hardware/kicad-project/production/
 
-software/.debug/
 software/nanoFramework/build/
-software/nanoFramework/.vs/
-software/packages/
-
-# Docker volumes
-.docker/
 
 *.suo
 *.user
@@ -24,7 +23,6 @@ software/packages/
 bin/
 obj/
 packages/
-
 
 # Temporary files
 *.tmp
@@ -39,13 +37,28 @@ desktop.ini
 
 # Logs
 *.log
-build.log
-
-# Runtime/debug probe outputs
-.debug/
-
-**/.nuget/
-**/nuget.exe
 
 # Windows ADS artifacts copied into WSL paths
 *.Zone.Identifier
+
+# KiCad project outputs
+hardware/kicad-project/production/
+
+# KiCad generated and machine-local files
+/hardware/kicad-project/**/*.000
+/hardware/kicad-project/**/*.bck
+/hardware/kicad-project/**/*-backups
+/hardware/kicad-project/**/*-cache*
+/hardware/kicad-project/**/*-bak*
+/hardware/kicad-project/**/~*
+/hardware/kicad-project/**/_autosave-*
+/hardware/kicad-project/**/\#auto_saved_files\#
+/hardware/kicad-project/**/*-save.pro
+/hardware/kicad-project/**/*-save.kicad_pcb
+/hardware/kicad-project/**/fp-info-cache
+/hardware/kicad-project/**/*.net
+/hardware/kicad-project/**/*.dsn
+/hardware/kicad-project/**/*.ses
+/hardware/kicad-project/**/*.xml
+/hardware/kicad-project/**/*.csv
+/hardware/kicad-project/**/*.kicad_prl

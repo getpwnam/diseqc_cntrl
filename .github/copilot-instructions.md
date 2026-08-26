@@ -25,6 +25,12 @@ These are hard rules for this repository. Apply them unless a user explicitly ov
 - `firmware/nf-interpreter/targets-community/ChibiOS/CUBLEY_F407_0_5/` is populated during build flow and is not the canonical edit location.
 - When debugging runtime behavior, verify the built artifacts are sourced from targets-local inputs.
 
+## Network Hardware Source of Truth
+
+- Cubley v0.5 uses the STM32F407 internal Ethernet MAC over RMII with a LAN8742A PHY.
+- W5500 was removed from the current plan and hardware design. Treat W5500 references in historical logs, stale documents, scripts, and unused KiCad library assets as legacy residue; never infer the current network architecture from them.
+- Verify network work against `firmware/targets-local/CUBLEY_F407_0_5/`, `hardware/kicad-project/ethernet.kicad_sch`, and the current PCB before selecting firmware or managed networking APIs.
+
 ## Transport Separation
 
 - `/dev/ttyUSB0` is wire protocol transport for `nanoff` and deployment operations.
