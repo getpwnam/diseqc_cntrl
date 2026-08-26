@@ -15,7 +15,8 @@ namespace CubleyControl
         private const int UsbConsoleIdleSleepMs = 100;
         private const int UsbConsoleStatusIntervalMs = 1000;
         private const int UsbConsoleHealthLogIntervalLoops = 50;
-        private const int UsbConsoleLineMaxLength = 64;
+        private const int UsbConsoleLineMaxLength = 192;
+        private const int MqttCommandMaxLength = 64;
         private const int UsbWriteLogEveryNEvents = 20;
         private const int LnbFaultPollIntervalMs = 25;
         private const int LnbChannelA = 0;
@@ -50,14 +51,22 @@ namespace CubleyControl
         // (LNB init status, DiSEqC TX-busy flag, etc.) is static and not
         // designed for concurrent access from two transport threads at once.
         public delegate void OutputSink(string line);
+        private enum CommandTransport
+        {
+            Usb,
+            Mqtt
+        }
+
         private static readonly object _commandLock = new object();
         private static OutputSink _activeOutputSink;
+        private static CommandTransport _activeCommandTransport;
 
-        private static void ExecuteCommand(string command, OutputSink outputSink)
+        private static void ExecuteCommand(string command, OutputSink outputSink, CommandTransport transport)
         {
             lock (_commandLock)
             {
                 _activeOutputSink = outputSink;
+                _activeCommandTransport = transport;
                 try
                 {
                     HandleConsoleCommand(command);
@@ -85,20 +94,23 @@ namespace CubleyControl
         {
             EmitBootResetCauseLog();
             _ledReady = TryInitializeStatusLed();
-            InitializeLnbSafeDefaults();
-            InitializeLnbFaultMonitor();
 
             var heartbeatThread = new Thread(HeartbeatLoop);
             heartbeatThread.Start();
+
+            InitializeNetworkConfiguration();
+            InitializeMqttConfiguration();
+            InitializeLnbSafeDefaults();
+            InitializeLnbFaultMonitor();
+
+            var usbConsoleThread = new Thread(UsbConsoleLoop);
+            usbConsoleThread.Start();
 
             if (_lnbFaultReady && !_lnbFaultInterruptEnabled)
             {
                 var lnbFaultPollThread = new Thread(LnbFaultPollLoop);
                 lnbFaultPollThread.Start();
             }
-
-            var usbConsoleThread = new Thread(UsbConsoleLoop);
-            usbConsoleThread.Start();
 
             var mqttThread = new Thread(MqttLoop);
             mqttThread.Start();
@@ -129,8 +141,17 @@ namespace CubleyControl
                         Thread.Sleep(LedPulseMs);
                         _gpio.Write(_ledPin, PinValue.Low);
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        try
+                        {
+                            _gpio.Write(_ledPin, PinValue.Low);
+                        }
+                        catch
+                        {
+                        }
+
+                        Debug.WriteLine("[HEARTBEAT] LED disabled: " + ex.Message);
                         _ledReady = false;
                     }
                 }
@@ -244,6 +265,11 @@ namespace CubleyControl
 
                 if (enabled == 0)
                 {
+                    if (wasEnabled)
+                    {
+                        ResetUsbConfigurationSession();
+                    }
+
                     wasEnabled = false;
                     _watchElapsedMs = 0;
                     _consoleLine = string.Empty;
@@ -258,7 +284,7 @@ namespace CubleyControl
                     // queue may not be draining yet, so a single write can return 0
                     // and the banner/prompt would be lost forever. Retry each loop
                     // iteration until the write succeeds.
-                    string banner = "\r\nCubley USB CDC console ready. Type 'help'.\r\n> ";
+                    string banner = "\r\nCubley USB CDC console ready. Type 'help'.\r\n" + GetUsbPrompt();
                     int rc = SafeUsbWrite(banner);
                     uint diag = DiagMailbox.NativeGet();
                     Debug.WriteLine("[CDC] connected, banner rc=" + rc.ToString() +
@@ -295,12 +321,23 @@ namespace CubleyControl
 
                 char c = (char)value;
 
+                if (c == '\x04')
+                {
+                    if (_usbConfigurationMode && _consoleLine.Length == 0)
+                    {
+                        SafeUsbWrite("\r\n");
+                        ExecuteCommand("exit", WriteSerialLine, CommandTransport.Usb);
+                        SafeUsbWrite(GetUsbPrompt());
+                    }
+                    continue;
+                }
+
                 if (c == '\r' || c == '\n')
                 {
                     SafeUsbWrite("\r\n");
-                    ExecuteCommand(_consoleLine, WriteSerialLine);
+                    ExecuteCommand(_consoleLine, WriteSerialLine, CommandTransport.Usb);
                     _consoleLine = string.Empty;
-                    SafeUsbWrite("> ");
+                    SafeUsbWrite(GetUsbPrompt());
                     continue;
                 }
 
@@ -308,8 +345,12 @@ namespace CubleyControl
                 {
                     if (_consoleLine.Length > 0)
                     {
+                        bool sensitive = IsSensitiveConsoleInput(_consoleLine);
                         _consoleLine = _consoleLine.Substring(0, _consoleLine.Length - 1);
-                        SafeUsbWrite("\b \b");
+                        if (!sensitive)
+                        {
+                            SafeUsbWrite("\b \b");
+                        }
                     }
                     continue;
                 }
@@ -322,9 +363,21 @@ namespace CubleyControl
                 if (c >= ' ' && c <= '~')
                 {
                     _consoleLine += c.ToString();
-                    SafeUsbWrite(c.ToString());
+                    if (!IsSensitiveConsoleInput(_consoleLine))
+                    {
+                        SafeUsbWrite(c.ToString());
+                    }
                 }
             }
+        }
+
+        private static bool IsSensitiveConsoleInput(string line)
+        {
+            string normalized = NormalizeCommandInput(line).ToLower();
+            return normalized.IndexOf("mqtt password ") == 0 ||
+                normalized.IndexOf("mqtt pass ") == 0 ||
+                normalized.IndexOf("mq password ") == 0 ||
+                normalized.IndexOf("mq pass ") == 0;
         }
 
         private static bool TrySetLed(PinValue value)

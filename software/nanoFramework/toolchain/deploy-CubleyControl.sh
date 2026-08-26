@@ -4,7 +4,7 @@ set -euo pipefail
 # Default deploy settings (override via CLI flags below).
 SERIAL_PORT="/dev/ttyUSB0"
 BAUD="921600"
-ADDRESS="0x08060000"
+ADDRESS="0x080C0000"
 IMAGE_PATH="build/CubleyControl/latest.deploy.bin"
 DO_RESET="false"
 
@@ -20,7 +20,7 @@ Deploy CubleyControl latest bundle via nanoff.
 Options:
   --serialport <path>   Serial port to use (default: /dev/ttyUSB0)
   --baud <rate>         UART baud rate (default: 921600)
-  --address <addr>      Flash address (default: 0x08060000, Debug layout)
+  --address <addr>      Flash address (default: 0x080C0000)
   --image <path>        Bundle path, relative to software/nanoFramework or absolute
   --reset               Reset device after deploy
   -h, --help            Show this help

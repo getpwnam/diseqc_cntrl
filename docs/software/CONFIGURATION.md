@@ -1,150 +1,108 @@
 # Configuration Reference
 
-## Purpose
+## Current Architecture
 
-Define configuration domains and expected runtime behavior for settings management.
+CubleyControl has two persisted configuration domains:
 
-## Current Build Profile Note
+- IPv4, DHCP, and DNS use the standard nanoFramework network configuration block.
+- MQTT uses the portable 512-byte Cubley application record described in
+  [CONFIGURATION_STORAGE.md](CONFIGURATION_STORAGE.md).
 
-- `NF_FEATURE_HAS_CONFIG_BLOCK` is currently disabled in the validated build profile.
-- Treat persistence behavior as profile-dependent unless re-enabled and validated.
-- Current MVP persists config snapshots to FM24CL16B F-RAM on I2C1 (power-cycle persistent), with RAM snapshot fallback if FRAM is unavailable.
+The active MQTT backend is STM32 internal flash. FRAM is not initialized or
+probed on the current development board. The application record is deliberately
+backend-neutral so the same bytes can move to dual FRAM slots later.
 
-## Implemented MVP Interface
+## MQTT Defaults
 
-- MQTT commands:
-  - `.../command/config/get`
-  - `.../command/config/set` with payload `key=value`
-  - `.../command/config/save`
-  - `.../command/config/reset`
-  - `.../command/config/reload`
-  - `.../command/config/fram_clear` with payload `ERASE` (guarded destructive operation)
-- Serial command interface (same command set):
-  - `config get`
-  - `config set key=value`
-  - `config save`
-  - `config reset`
-  - `config reload`
-  - `config fram-dump [bytes]` (debug: dumps raw FRAM bytes from address `0x0000`)
-  - `config fram-clear ERASE` (debug: clears FRAM and resets runtime config to defaults)
+| Setting | Default |
+|---|---|
+| Enabled | `off` |
+| Broker | unset |
+| Port | `1883` |
+| Client ID | automatic from the final three MAC bytes |
+| Username/password | unset |
+| Topic prefix | `diseqc` |
+| Keepalive | 60 seconds |
+| Reconnect delay | 5 seconds |
 
-## Implemented Runtime Keys (MVP)
+MQTT starts only when enabled, the configuration validates, the network link is
+available, and the interface has a non-zero IPv4 address.
 
-- `network.static_ip`
-- `network.static_subnet`
-- `network.static_gateway`
-- `mqtt.broker`
-- `mqtt.port`
-- `mqtt.client_id`
-- `mqtt.username`
-- `mqtt.password`
-- `mqtt.topic_prefix`
-- `mqtt.transport_mode` (`system-net` or `w5500-native`)
-- `system.device_name`
-- `system.location`
+## USB Configuration Mode
 
-## Persistence Backend (MVP)
+Network and MQTT configuration is available only through the USB CDC console.
+Enter configuration mode with `configure`; edits are staged in RAM until the
+complete candidate is committed.
 
-- Device: `FM24CL16B` (16 Kb / 2048-byte I2C F-RAM)
-- Bus: I2C1
-- Format: key-value UTF-8 payload with header (`DCFG` magic, version, length, checksum)
-- Save behavior:
-  - `config/save` updates RAM snapshot and attempts FRAM persist
-  - status `config/persisted` reports `true|false`
-- Reload behavior:
-  - `config/reload` attempts FRAM load first
-  - falls back to RAM snapshot when FRAM read/validation fails
-  - status `config/reload_source` reports `fram|ram`
-
-## Configuration Domains
-
-1. **Rotor**
-   - logical limits (`east/west`)
-   - reference/calibration state
-   - movement behavior (timeouts/step defaults)
-
-2. **LNB**
-   - voltage/polarization default
-   - tone/band default
-   - optional current-limit policy
-
-3. **Network/MQTT** (optional when networking enabled)
-   - broker host/port/client id
-   - topic prefix
-   - reconnect behavior
-
-4. **System**
-   - device name/location
-   - logging/telemetry intervals
-
-## Recommended Data Shape
-
-```json
-{
-  "system": {
-    "device_name": "diseqc-ctrl",
-    "location": "default"
-  },
-  "rotor": {
-    "max_angle_east": 80.0,
-    "max_angle_west": -80.0,
-    "reference_angle": 0.0,
-    "calibrated": false
-  },
-  "lnb": {
-    "voltage": 13,
-    "tone": false,
-    "band": "low"
-  },
-  "mqtt": {
-    "enabled": false,
-    "broker": "192.168.1.50",
-    "port": 1883,
-    "topic_prefix": "diseqc"
-  }
-}
+```text
+cubley> configure
+cubley(config)# network mode dhcp|static
+cubley(config)# network address <ipv4>
+cubley(config)# network mask <mask>
+cubley(config)# network gateway <ipv4>
+cubley(config)# network dns auto
+cubley(config)# network dns static <dns1> [dns2]
+cubley(config)# mqtt enabled on|off
+cubley(config)# mqtt broker <host|clear>
+cubley(config)# mqtt port <1..65535>
+cubley(config)# mqtt client-id <id|auto>
+cubley(config)# mqtt username <value|clear>
+cubley(config)# mqtt password <value|clear>
+cubley(config)# mqtt topic-prefix <prefix>
+cubley(config)# mqtt keepalive <15..3600>
+cubley(config)# mqtt reconnect <1..60>
+cubley(config)# show storage
+cubley(config)# show candidate-config
+cubley(config)# show config diff
+cubley(config)# debug on|off
+cubley(config)# commit
+cubley(config)# exit
 ```
 
-## Validation Rules
+The prompt changes to `cubley(config*)#` while the candidate differs from the
+running configuration. `commit` or `discard` returns it to `cubley(config)#`.
+`exit`, `end`, and `Ctrl+D` leave configuration mode only when the candidate is
+clean. With uncommitted changes they remain in configuration mode and direct the
+operator to commit or discard explicitly.
 
-- `max_angle_west < max_angle_east`
-- Angle values must remain within firmware-supported range
-- LNB voltage must be `13` or `18`
-- LNB band must be `low` or `high`
-- MQTT port must be `1..65535`
+Values are case-preserving, printable non-space ASCII tokens. The broker is
+required before an enabled configuration can be committed. The topic prefix cannot
+start or end with `/` or contain MQTT wildcards (`#` or `+`).
 
-Reject invalid updates atomically (all-or-nothing) to avoid partial state drift.
+`show candidate-config` renders the complete candidate except for secret material.
+`show running-config` and `show startup-config` are available from either USB mode.
+`show storage` reports configuration backend and load status separately from live
+network and MQTT service state. Successful setters are silent by default;
+`debug on` enables result details for the current USB session and `debug off`
+restores quiet output.
+`show mqtt` reports service state, connection state, reconnect attempts, and a
+sanitized last error. MQTT command messages cannot enter configuration mode or
+inspect configuration.
 
-## Lifecycle
+## Save And Recovery
 
-1. Load defaults
-2. Overlay persisted config (if supported by active profile)
-3. Apply runtime overrides (if any)
-4. Validate final effective config
-5. Start services using effective config
+MQTT defaults are not written automatically. `commit` validates the complete
+network and MQTT candidate before writing changed domains. The MQTT write updates
+internal flash and verifies a complete readback. Invalid, blank, or CRC-failed
+records cause startup to use disabled defaults.
 
-## Runtime Update Strategy
+If a domain write fails, the application attempts to restore the previously
+committed values. Successful recovery returns `persist_failed`; failed recovery
+returns `persist_partial` and exposes degraded configuration status. Uncommitted
+changes are discarded when USB disconnects.
 
-- Apply safe settings live when possible (e.g., telemetry interval)
-- Defer disruptive changes to controlled restart points (e.g., full network stack re-init)
-- Publish outcome/status for each requested change
+The internal flash update preserves the standard nanoFramework network block but
+is not power-fail atomic because the STM32 sector must be erased. A future FRAM
+backend uses two generation-selected slots to provide atomic record replacement.
 
-## Reset and Recovery
+## Credentials
 
-- Provide a “reset to defaults” action
-- On config parse/validation failure:
-  - log error
-  - revert to last-known-good or defaults
-  - report degraded state via status channel
+Schema v1 stores MQTT credentials as cleartext in the application record. Password
+values are redacted from command debug logs and are never returned by configuration
+commands. TLS and encrypted-at-rest credentials are outside the v1 scope.
 
-## Security/Operational Notes
+## Related Documents
 
-- Avoid storing plaintext credentials in source control
-- Keep device-specific secrets out of examples
-- Version config schema if introducing breaking key changes
-
-## Related Documents (Software + Debug)
-
-- `MQTT_API.md`
-- `ARCHITECTURE.md`
-- `../debug/TESTING_GUIDE.md`
+- [CONFIGURATION_STORAGE.md](CONFIGURATION_STORAGE.md)
+- [MQTT_API.md](MQTT_API.md)
+- [INTERFACE_COMMAND_MAP_V1.md](INTERFACE_COMMAND_MAP_V1.md)

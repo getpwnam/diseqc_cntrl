@@ -1421,3 +1421,75 @@ This file should be committed and checked on each build to prevent version drift
 - Breakpoints: nanoBooter flashed/verified at 0x08000000; nanoCLR flashed/verified at 0x08008000; deployment at 0x08060000 preserved; immediate stable 100FDX after reset with no observed flapping
 - Conclusion: Persistent RMII idle pull-down fix validated; corrected firmware boots directly to stable 100FDX.
 - Note: Managed deployment region was not erased or rewritten.
+
+### 2026-08-25 18:04:56 UTC [PASS]
+- Git rev: f94d5af
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./firmware/build-flash-cubley.sh build; ./firmware/build-flash-cubley.sh flash --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --devicedetails
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin
+- Conclusion: Checksum-enabled nanoBooter and nanoCLR built, flashed, verified, reset, and nanoCLR responded with all 16 managed assemblies intact.
+- Note: Artifact layout: nanoBooter 0x08000000, nanoCLR 0x0800C000, deployment preserved at 0x080C0000.
+
+### 2026-08-25 18:07:36 UTC [PASS]
+- Git rev: f94d5af
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): RouterOS DHCP server log observation after checksum-enabled firmware flash
+- Artifact: firmware/nf-interpreter/build/nanoCLR.bin
+- Conclusion: RouterOS DHCP server assigned 172.17.129.64 to 02:55:47:62:47:01 (nanodevice_624701).
+- Note: Observed server log: 2026-08-25 18:05:16 dhcp,info dhcp_iot assigned 172.17.129.64 for 02:55:47:62:47:01 nanodevice_624701
+
+### 2026-08-25 18:22:36 UTC [INFO]
+- Git rev: 8c1e029
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-CubleyControl.sh build --project CubleyControl/CubleyControl.nfproj --configuration Debug; ./toolchain/deploy-CubleyControl.sh --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --devicedetails
+- Artifact: build/CubleyControl/latest.deploy.bin
+- Conclusion: Read-only show network phase built and deployed; target responded with all 16 managed assemblies.
+- Note: USB CDC command output remains to be validated before committing this phase.
+
+### 2026-08-25 18:27:40 UTC [PASS]
+- Git rev: 8c1e029
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): USB CDC: show network; show net
+- Artifact: build/CubleyControl/latest.deploy.bin
+- Conclusion: Read-only network status and net alias returned link, DHCP mode, MAC, IPv4 address, mask, gateway, and DNS on hardware.
+- Note: Observed DHCP address 172.17.129.64 and MAC 02:55:47:62:47:01.
+
+### 2026-08-26 17:29:31 UTC [PASS]
+- Git rev: 0e7377e
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./firmware/build-flash-cubley.sh build; ./firmware/build-flash-cubley.sh flash --reset; st-info --probe
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin @ 0x08000000; firmware/nf-interpreter/build/nanoCLR.bin @ 0x08010000
+- Conclusion: Latest native firmware built, flashed, verified, and reset; managed deployment region was not erased or written.
+- Note: CubleyControl deployment intentionally left to the user.
+
+### 2026-08-26 18:27:31 UTC [PASS]
+- Git rev: 0e7377e
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./firmware/build-flash-cubley.sh build; ./firmware/build-flash-cubley.sh flash --reset
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin
+- Conclusion: System.Text native API firmware built, flashed, and verified without erasing config or managed deployment.
+- Note: nanoFramework.System.Text 100.0.0.1 checksum 0x8E6EB73D; nanoBooter 34156 bytes at 0x08000000; nanoCLR 689888 bytes at 0x08010000.
+
+### 2026-08-26 18:35:42 UTC [INFO]
+- Git rev: 0e7377e
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): CCFG SWD read at 0x0800FE00; MQTT 3.1.1 anonymous CONNECT probe to mqtt.ebnx.net:1883; CubleyControl Debug build
+- Artifact: software/nanoFramework/build/CubleyControl/CubleyControl_bundle_20260826-183438.bin
+- Conclusion: Broker returned CONNACK 0x05 for an anonymous MQTT 3.1.1 client; valid broker credentials are required.
+- Note: Persisted CCFG generation 7 is CRC-valid with username and password unset. Managed fix maps unset credentials to absent CONNECT fields and pins MQTT 3.1.1; interop checksum C830C9B7.
+
+### 2026-08-26 18:53:22 UTC [PASS]
+- Git rev: 0e7377e
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./firmware/build-flash-cubley.sh build; ./firmware/build-flash-cubley.sh flash --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --devicedetails
+- Artifact: firmware/nf-interpreter/build/nanoCLR.bin
+- Conclusion: System.Collections native API built, flashed, verified, and managed deployment preserved.
+- Note: M2Mqtt EnqueueInflight and Close failures mapped to native Queue.Enqueue and Queue.Clear calls. Runtime reports nanoFramework.System.Collections 100.0.2.0 checksum 0x40DC251F; CubleyNative remains C830C9B7.
+
+### 2026-08-26 19:02:25 UTC [PASS]
+- Git rev: 0e7377e
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): USB CDC: show mqtt
+- Artifact: CubleyControl runtime
+- Conclusion: MQTT session connected successfully to mqtt.ebnx.net with no runtime error.
+- Note: Observed state=connected, enabled=on, connected=1, attempts=0, last_error=none after enabling System.Text and System.Collections native APIs.

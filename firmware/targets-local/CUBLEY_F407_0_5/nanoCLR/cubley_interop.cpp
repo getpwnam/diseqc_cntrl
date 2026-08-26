@@ -3,6 +3,7 @@
 #include <nanoCLR_Checks.h>
 #include <hal.h>
 #include <string.h>
+#include "app_config_native.h"
 #include "fram_native.h"
 
 #if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
@@ -36,6 +37,8 @@ HRESULT Library_cubley_interop_LNBH26Registers_NativeReadRegister___STATIC__I4__
 HRESULT Library_cubley_interop_Fram24C128_NativeInit___STATIC__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_Fram24C128_NativeWrite___STATIC__I4__I4__SZARRAY_U1__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_Fram24C128_NativeRead___STATIC__I4__I4__SZARRAY_U1__I4__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_ZPersistentConfiguration_NativeRead___STATIC__I4__SZARRAY_U1__I4__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_ZPersistentConfiguration_NativeWrite___STATIC__I4__SZARRAY_U1__I4__I4(CLR_RT_StackFrame& stack);
 
 // Diagnostics words used by managed bring-up code.
 //
@@ -154,7 +157,8 @@ static const CLR_RT_MethodHandler method_lookup[] =
     // ALPHABETICAL type name (then declaration order within a type). The runtime
     // InternalCall dispatch index is the PE MethodDef index, so this native table
     // MUST follow that alphabetical order, NOT managed source/append order.
-    // Type order: DiagMailbox, Fram24C128, LNBH26, LNBH26Registers, LNBH26Tweaks, UsbCdcConsole.
+    // Type order: DiagMailbox, Fram24C128, LNBH26, LNBH26Registers, LNBH26Tweaks,
+    // UsbCdcConsole, ZPersistentConfiguration.
     Library_cubley_interop_LNBH26Tweaks_NativeSetIsetLowForChannel___STATIC__I4__I4__BOOLEAN,              // [19] LNBH26Tweaks.NativeSetIsetLowForChannel
     Library_cubley_interop_LNBH26Tweaks_NativeSetIswLowForChannel___STATIC__I4__I4__BOOLEAN,               // [20] LNBH26Tweaks.NativeSetIswLowForChannel
     Library_cubley_interop_LNBH26Tweaks_NativeGetIsetLowForChannel___STATIC__I4__I4,                        // [21] LNBH26Tweaks.NativeGetIsetLowForChannel
@@ -162,12 +166,14 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_UsbCdcConsole_NativeIsEnabled___STATIC__I4,                                      // [23] UsbCdcConsole.NativeIsEnabled
     Library_cubley_interop_UsbCdcConsole_NativeReadByte___STATIC__I4__I4,                                   // [24] UsbCdcConsole.NativeReadByte
     Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [25] UsbCdcConsole.NativeWrite
+    Library_cubley_interop_ZPersistentConfiguration_NativeRead___STATIC__I4__SZARRAY_U1__I4__I4,           // [26] ZPersistentConfiguration.NativeRead
+    Library_cubley_interop_ZPersistentConfiguration_NativeWrite___STATIC__I4__SZARRAY_U1__I4__I4,          // [27] ZPersistentConfiguration.NativeWrite
 };
 
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_CubleyNative =
 {
     "CubleyNative",
-    0x55A991DA,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
+    0xC830C9B7,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
     method_lookup,
     { 1, 0, 0, 0 }
 };
@@ -203,6 +209,46 @@ HRESULT Library_cubley_interop_DiagMailbox_NativeGetLastNativeError___STATIC__U4
 
     stack.SetResult_U4(g_cubley_diag_last_error);
 
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_ZPersistentConfiguration_NativeRead___STATIC__I4__SZARRAY_U1__I4__I4(
+    CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    CLR_RT_HeapBlock_Array* buffer = stack.Arg0().DereferenceArray();
+    int32_t offset = stack.Arg1().NumericByRef().s4;
+    int32_t count = stack.Arg2().NumericByRef().s4;
+    if (buffer == NULL || offset < 0 || count != (int32_t)CUBLEY_APP_CONFIG_RECORD_SIZE ||
+        offset > (int32_t)buffer->m_numOfElements - count)
+    {
+        stack.SetResult_I4((int32_t)CUBLEY_APP_CONFIG_INVALID_PARAM);
+        NANOCLR_NOCLEANUP_NOLABEL();
+    }
+
+    uint8_t* destination = (uint8_t*)buffer->GetFirstElement() + offset;
+    stack.SetResult_I4((int32_t)cubley_app_config_read(destination, (size_t)count));
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_ZPersistentConfiguration_NativeWrite___STATIC__I4__SZARRAY_U1__I4__I4(
+    CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    CLR_RT_HeapBlock_Array* buffer = stack.Arg0().DereferenceArray();
+    int32_t offset = stack.Arg1().NumericByRef().s4;
+    int32_t count = stack.Arg2().NumericByRef().s4;
+    if (buffer == NULL || offset < 0 || count != (int32_t)CUBLEY_APP_CONFIG_RECORD_SIZE ||
+        offset > (int32_t)buffer->m_numOfElements - count)
+    {
+        stack.SetResult_I4((int32_t)CUBLEY_APP_CONFIG_INVALID_PARAM);
+        NANOCLR_NOCLEANUP_NOLABEL();
+    }
+
+    const uint8_t* source = (const uint8_t*)buffer->GetFirstElement() + offset;
+    stack.SetResult_I4((int32_t)cubley_app_config_write(source, (size_t)count));
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 

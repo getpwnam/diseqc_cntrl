@@ -22,13 +22,6 @@ namespace CubleyControl.Contracts
         public const string DiseqcLnbSetPol = "diseqc.lnb.set.pol";
         public const string DiseqcLnbSetBandChannel = "diseqc.lnb.set.band";
 
-        // Channel-aware LNB key templates for operator get/set syntax.
-        // Replace {channel} with a logical channel name such as "a".
-        public const string LnbKeyBandTemplate = "lnb.{channel}.band";
-        public const string LnbKeyPolarizationTemplate = "lnb.{channel}.polarization";
-        public const string LnbKeyEnabledTemplate = "lnb.{channel}.enabled";
-        public const string LnbKeyStatusTemplate = "lnb.{channel}.status";
-
         public const string DiseqcCalibrationSetReference = "diseqc.calibration.set_reference";
 
         // System commands

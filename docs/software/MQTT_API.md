@@ -1,164 +1,79 @@
 # MQTT API Reference
 
-## Purpose
+## Transport
 
-Define topic names and payload contracts for command/status integration.
+CubleyControl uses MQTT 3.1.1 without TLS. It connects through the STM32F407
+Ethernet MAC and LAN8742A PHY after IPv4 and DNS are ready.
 
-## Current Build Profile Note
+The configured topic prefix is `diseqc` by default. MQTT carries one complete
+operational command line rather than using a separate topic for every operation.
+It shares the operational parser with USB CDC but has a strict allowlist and does
+not expose administrative configuration commands.
 
-Networking is disabled in the currently validated firmware profile. This API remains the canonical contract for when networking is enabled.
+| Direction | Topic | Payload | QoS | Retained |
+|---|---|---|---:|---|
+| Command to device | `<prefix>/command` | One command line | 1 | Must be false |
+| Result from device | `<prefix>/status` | One output line | 0 | No |
+| Device availability | `<prefix>/availability` | `online` or `offline` | 0/1 | Yes |
 
-## Topic Namespace
+The broker receives a retained `online` message after connection. The configured
+last will is retained `offline` at QoS 1.
 
-Root prefix: `diseqc/`
+## Commands And Results
 
-- Commands to device: `diseqc/command/...`
-- Status from device: `diseqc/status/...`
-- Availability (LWT): `diseqc/availability`
+Publish a command marked as MQTT-supported in
+[INTERFACE_COMMAND_MAP_V1.md](INTERFACE_COMMAND_MAP_V1.md) to `<prefix>/command`.
+Each parser output line is published separately to `<prefix>/status`.
 
-## Commands
-
-### Rotor Positioning
-
-- `diseqc/command/goto/angle`
-  - payload: float string in degrees (range typically `-80..80`)
-  - example: `45.5`
-
-- `diseqc/command/goto/satellite`
-  - payload: satellite identifier string
-  - example: `astra_19.2e`
-
-- `diseqc/command/halt`
-  - payload: ignored (empty recommended)
-
-### Manual Rotor Control
-
-- `diseqc/command/manual/step_east`
-- `diseqc/command/manual/step_west`
-  - payload: integer step count (`1..128`)
-
-- `diseqc/command/manual/drive_east`
-- `diseqc/command/manual/drive_west`
-  - payload: ignored
-
-### LNB Control
-
-- `diseqc/command/lnb/voltage`
-  - payload: `13` or `18`
-
-- `diseqc/command/lnb/polarization`
-  - payload: `vertical|horizontal` (`v|h` accepted aliases)
-
-- `diseqc/command/lnb/tone`
-  - payload: `on|off` (`true|false|1|0` aliases)
-
-- `diseqc/command/lnb/band`
-  - payload: `low|high`
-
-### Configuration/Calibration
-
-- `diseqc/command/config/get`
-  - payload: ignored
-  - action: publish effective runtime config to `diseqc/status/config/effective/...`
-
-- `diseqc/command/config/set`
-  - payload: `key=value`
-  - example: `mqtt.broker=192.168.1.60`
-  - key set (MVP):
-    - `network.static_ip`
-    - `network.static_subnet`
-    - `network.static_gateway`
-    - `mqtt.broker`
-    - `mqtt.port`
-    - `mqtt.client_id`
-    - `mqtt.username`
-    - `mqtt.password`
-    - `mqtt.topic_prefix`
-    - `mqtt.transport_mode` (`system-net` or `w5500-native`)
-    - `system.device_name`
-    - `system.location`
-
-- `diseqc/command/config/save`
-  - payload: ignored
-  - action: snapshot current runtime config as last-saved config (in-memory)
-
-- `diseqc/command/config/reset`
-  - payload: ignored
-  - action: reset runtime config to factory defaults
-
-- `diseqc/command/config/reload`
-  - payload: ignored
-  - action: restore runtime config from last-saved snapshot (in-memory)
-
-- `diseqc/command/config/fram_clear`
-  - payload: `ERASE`
-  - action: clears FRAM and resets runtime config defaults
-  - safety: ignored unless payload exactly matches `ERASE`
-
-- `diseqc/command/calibrate/reference`
-
-Payload for these commands is ignored unless otherwise documented by implementation.
-
-## Status Topics
-
-### Device/Position
-
-- `diseqc/status/state` (`idle|moving|error|...`)
-- `diseqc/status/busy` (`true|false`)
-- `diseqc/status/position/angle` (float string)
-- `diseqc/status/position/satellite` (identifier or `unknown`)
-
-### LNB
-
-- `diseqc/status/lnb/voltage` (`13|18`)
-- `diseqc/status/lnb/polarization` (`vertical|horizontal`)
-- `diseqc/status/lnb/tone` (`on|off`)
-- `diseqc/status/lnb/band` (`low|high`)
-
-### Diagnostics
-
-- `diseqc/status/error` (last error or empty)
-
-### Runtime Configuration
-
-- `diseqc/status/config/saved` (`true` when save command succeeds)
-- `diseqc/status/config/reset` (`true` when reset command succeeds)
-- `diseqc/status/config/reloaded` (`true` when reload command succeeds)
-- `diseqc/status/config/updated` (last updated key)
-- `diseqc/status/config/persisted` (`true|false`, FRAM persist result for `config/save`)
-- `diseqc/status/config/reload_source` (`fram|ram`)
-- `diseqc/status/config/fram_cleared` (`true` when FRAM clear succeeds)
-- `diseqc/status/config/effective/...` (effective runtime config snapshot)
-
-### Availability
-
-- `diseqc/availability`: `online|offline`
-  - published retained; `offline` is typically the MQTT LWT payload
-
-## QoS / Retain Guidelines
-
-- Commands: QoS `1`, retained `false`
-- State-like status (`availability`, current angle/lnb settings): retained `true`
-- Telemetry/heartbeat-like status: retained `false`
-
-## Example CLI Usage
+Examples:
 
 ```bash
-# Halt
-mosquitto_pub -t diseqc/command/halt -m ''
-
-# Move to angle
-mosquitto_pub -t diseqc/command/goto/angle -m '19.2'
-
-# Set LNB horizontal + high band
-mosquitto_pub -t diseqc/command/lnb/polarization -m 'horizontal'
-mosquitto_pub -t diseqc/command/lnb/band -m 'high'
-
-# Observe status
-mosquitto_sub -t 'diseqc/status/#' -v
+mosquitto_sub -t 'diseqc/status' -t 'diseqc/availability' -v
+mosquitto_pub -q 1 -t 'diseqc/command' -m 'show lnb a'
+mosquitto_pub -q 1 -t 'diseqc/command' -m 'lnb a pol v'
+mosquitto_pub -q 1 -t 'diseqc/command' -m 'diseqc goto 12'
+mosquitto_pub -q 1 -t 'diseqc/command' -m 'show capabilities'
 ```
 
-## Compatibility Notes
+Command payloads must be 1 to 64 ASCII bytes. The device rejects messages on an
+unexpected topic, empty or oversized payloads, and retained command messages.
+This prevents a stale retained command from executing after reconnect or reboot.
 
-- Consumers should tolerate unknown topics for forward compatibility.
-- Publishers should keep payloads simple (plain text scalars) unless explicitly specified otherwise.
+## Connection Lifecycle
+
+The MQTT worker remains disabled until a valid saved configuration has
+`enabled=on`. It then waits for network availability and a non-`0.0.0.0` IPv4
+address before connecting. Broker hostnames use the configured nanoFramework DNS
+settings.
+
+An empty client ID is resolved as `cubley-XXXXXX`, where `XXXXXX` is the final
+three MAC-address bytes in uppercase hexadecimal. Saved configuration changes
+close the active session and reconnect using the new settings.
+
+## Configuration
+
+MQTT service state and redacted configuration can be inspected from USB operational
+mode with `show mqtt` and `show running-config mqtt`. MQTT and network settings can
+be changed only through USB CDC configuration mode:
+
+```text
+cubley> configure
+cubley(config)# mqtt broker 192.168.1.50
+cubley(config)# mqtt topic-prefix diseqc
+cubley(config)# mqtt enabled on
+cubley(config)# commit
+```
+
+The broker must be set before an enabled configuration can be committed. Credentials
+are case-preserving but cannot contain spaces in schema v1. Password commands are
+redacted from debug logs and configuration output. MQTT messages containing
+configuration commands are rejected as unsupported.
+
+See [CONFIGURATION.md](CONFIGURATION.md) for the complete command list and
+[CONFIGURATION_STORAGE.md](CONFIGURATION_STORAGE.md) for the persisted schema.
+
+## Scope
+
+No JSON envelope or per-command topic contract is defined for the current MQTT
+transport. TLS, certificate management, and encrypted credential storage are also
+deferred.

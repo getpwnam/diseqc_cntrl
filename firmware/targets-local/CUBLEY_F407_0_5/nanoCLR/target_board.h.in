@@ -14,5 +14,7 @@
 #include <target_common.h>
 
 #define OEMSYSTEMINFOSTRING "nanoCLR running @ @TARGET_NAME@"
+#define SNTP_SERVER0_DEFAULT_ADDRESS "0.pool.ntp.org"
+#define SNTP_SERVER1_DEFAULT_ADDRESS "1.pool.ntp.org"
 
 #endif // TARGET_BOARD_NANOCLR_H

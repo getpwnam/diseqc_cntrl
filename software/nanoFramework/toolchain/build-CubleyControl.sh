@@ -45,8 +45,8 @@ Examples:
   ./toolchain/build-CubleyControl.sh list
   ./toolchain/build-CubleyControl.sh compile
   ./toolchain/build-CubleyControl.sh build
-  ./toolchain/build-CubleyControl.sh build --deploy --serialport /dev/ttyUSB0 --address 0x08060000
-  ./toolchain/build-CubleyControl.sh build --deploy --swd --address 0x08060000
+  ./toolchain/build-CubleyControl.sh build --deploy --serialport /dev/ttyUSB0 --address 0x080C0000
+  ./toolchain/build-CubleyControl.sh build --deploy --swd --address 0x080C0000
 
 Options:
 
@@ -67,7 +67,7 @@ build mode:
   --deploy                          Deploy managed image after successful build
   --swd                             Deploy via SWD using st-flash instead of nanoff
   --serialport <port>               Serial wire-protocol port for deployment
-  --address <hex>                   Deployment address (Debug: 0x08060000; verify generated map)
+  --address <hex>                   Deployment address (0x080C0000; verify generated map)
   --baud <rate>                     Serial baud for deploy (default: 921600)
   --reset                           Reset device after deploy
 EOF

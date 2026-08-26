@@ -85,9 +85,9 @@ int main(void)
     osDelay(20); // let clocks settle before probing flash
 
     // If flash contains a valid CLR image, launch it.
-    if (CubleyHasValidClrImageAt((uint32_t)&__nanoImage_end__))
+    if (CubleyHasValidClrImageAt((uint32_t)&__nanoConfig_end__))
     {
-        LaunchCLR((uint32_t)&__nanoImage_end__);
+        LaunchCLR((uint32_t)&__nanoConfig_end__);
     }
 
     // No valid CLR — stay in booter and accept updates over USART3.

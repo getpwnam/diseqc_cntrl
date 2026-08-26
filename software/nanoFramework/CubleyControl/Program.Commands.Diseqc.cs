@@ -30,7 +30,7 @@ namespace CubleyControl
         {
             if (tokens.Length < 2)
             {
-                WriteCommandResult(reqId, false, "validation_error", "diseqc usage", "usage=diseqc tone on [freq_hz] [duty_pct]|tone off|tone status|listen on|off");
+                WriteCommandResult(reqId, false, "validation_error", "diseqc usage", "usage=diseqc <goto|step|drive|stop|preset|tx|tone|listen> ...");
                 return;
             }
 
@@ -122,6 +122,29 @@ namespace CubleyControl
             WriteCommandResult(reqId, false, "validation_error", "diseqc syntax invalid", "verb=" + verb);
         }
 
+        private static void EmitDiseqcShowSummaryLine()
+        {
+            bool toneEnabled = _diseqcCarrier != null;
+            if (_activeCommandTransport == CommandTransport.Usb)
+            {
+                WriteHumanHeading("DiSEqC");
+                WriteHumanField("Preset", DiseqcV1Presets.ToText(_diseqcRoutePreset));
+                WriteHumanField("Tone", toneEnabled ? "On" : "Off");
+                WriteHumanField("Frequency", toneEnabled ? _diseqcCarrierFrequencyHz.ToString() + " Hz" : "Not active");
+                WriteHumanField("Duty cycle", toneEnabled ? _diseqcCarrierDutyPercent.ToString() + "%" : "Not active");
+                WriteHumanField("Transmitter", _diseqcTxBusy ? "Busy" : "Idle");
+                return;
+            }
+
+            _activeOutputSink(
+                "diseqc preset=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) +
+                " tone=" + (toneEnabled ? "on" : "off") +
+                " frequency_hz=" + (toneEnabled ? _diseqcCarrierFrequencyHz.ToString() : "0") +
+                " duty_percent=" + (toneEnabled ? _diseqcCarrierDutyPercent.ToString() : "0") +
+                " tx_busy=" + (_diseqcTxBusy ? "1" : "0") +
+                "\r\n");
+        }
+
         private static void HandleDiseqcPresetCommand(string[] tokens, int reqId)
         {
             if (tokens.Length != 3)
@@ -157,7 +180,7 @@ namespace CubleyControl
 
             if (tokens.Length > 9)
             {
-                WriteCommandResult(reqId, false, "validation_error", "diseqc tx length invalid", "max_bytes=6");
+                WriteCommandResult(reqId, false, "validation_error", "diseqc tx length invalid", "max_bytes=7");
                 return;
             }
 

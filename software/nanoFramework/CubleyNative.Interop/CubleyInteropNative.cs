@@ -179,4 +179,24 @@ namespace Cubley.Interop
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeGetIswLowForChannel(int channel);
     }
+
+    public static class ZPersistentConfiguration
+    {
+        public enum Status
+        {
+            Ok = 0,
+            InvalidParam = 1,
+            StorageUnavailable = 2,
+            LayoutConflict = 3,
+            EraseFailed = 4,
+            WriteFailed = 5,
+            VerifyFailed = 6
+        }
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeRead(byte[] buffer, int offset, int count);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeWrite(byte[] buffer, int offset, int count);
+    }
 }
