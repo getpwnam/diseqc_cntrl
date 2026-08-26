@@ -10,15 +10,19 @@
 		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
 		// Keep command history 
 		"source=nano-bashhistory,target=/home/vscode/commandhistory,type=volume",
+
 		//OPTIONAL: Mount gh cli config for seamless GitHub auth and access to private repos
 		"source=${env:HOME}${env:USERPROFILE}/.config/gh,target=/home/vscode/.config/gh,type=bind",
 
 		// OPTIONAL: Mount ssh agent socket for seamless ssh auth to git repos and other servers
-    	"source=${env:HOME}${env:USERPROFILE}/.ssh/agent.sock,target=/tmp/ssh-agent.sock,type=bind"
+		"source=${env:HOME}${env:USERPROFILE}/.ssh/agent.sock,target=/tmp/ssh-agent.sock,type=bind",
 
 		// OPTIONAL: Mount .azure folder for seamless az cli auth
 		// "source=${env:HOME}${env:USERPROFILE}/.azure,target=/home/vscode/.azure,type=bind"
+		// OPTIONAL: Mount workspace-specific agent skills
+		"source=${localEnv:HOME}/Dev/skills/.agents/skills,target=${containerWorkspaceFolder}/.agents/skills,type=bind"
 	],
+
 	// Set the *default* container specific settings.json values on container create.
 	"customizations": {
 		"vscode": {
