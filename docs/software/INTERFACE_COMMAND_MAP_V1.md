@@ -321,13 +321,17 @@ When enabled, the current binding is:
 
 | Direction | Topic | Payload |
 |---|---|---|
-| Command to device | `<prefix>/<hostname>/command` | One non-retained command from the MQTT operational allowlist. |
-| Result from device | `<prefix>/<hostname>/status` | One published message for each output line. |
+| Command to device | `<prefix>/<hostname>/command` | `<uint16-id> <command>` from the MQTT operational allowlist. |
+| Response from device | `<prefix>/<hostname>/response` | `id=<id> <output line>` for each command output line. |
+| Asynchronous transition | `<prefix>/<hostname>/event` | Non-retained event key/value fields. |
+| Current device state | `<prefix>/<hostname>/state` | Retained system and LNB state key/value fields. |
 | Device availability | `<prefix>/<hostname>/availability` | Retained `online` or last-will `offline`. |
 
-Retained, empty, and greater-than-64-byte command payloads are rejected. The topic
-prefix defaults to `diseqc` and is configurable from USB configuration mode with
-`mqtt topic-prefix`.
+Retained, empty, malformed-ID, and greater-than-64-byte command lines are rejected.
+QoS 1 duplicate commands among the eight most recent IDs replay cached responses
+without executing again; reuse of a cached ID with different command text fails.
+The topic prefix defaults to `diseqc` and is configurable from USB configuration
+mode with `mqtt topic-prefix`.
 
 The effective device root is `<prefix>/<hostname>`. The hostname and MQTT client ID
 are configured independently. The per-command `cubley/v1/...` topics and JSON request/result envelopes described

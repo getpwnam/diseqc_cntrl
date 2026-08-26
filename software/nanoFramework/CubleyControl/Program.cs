@@ -42,6 +42,8 @@ namespace CubleyControl
         private static bool _lnbFaultInterruptEnabled;
         private static bool _lnbFaultAsserted;
         private static int _lnbFaultSequence;
+        private static bool _lnbFaultCheckPending;
+        private static readonly object _lnbFaultTransitionLock = new object();
         // Shared command execution across transports (serial + MQTT). All
         // commands funnel through ExecuteCommand -> HandleConsoleCommand ->
         // WriteCommandResult, which writes through whichever OutputSink is
@@ -64,15 +66,20 @@ namespace CubleyControl
         {
             lock (_commandLock)
             {
+                BeginLnbIoOperation();
                 _activeOutputSink = outputSink;
                 _activeCommandTransport = transport;
                 try
                 {
-                    HandleConsoleCommand(command);
+                    lock (_lnbIoLock)
+                    {
+                        HandleConsoleCommand(command);
+                    }
                 }
                 finally
                 {
                     _activeOutputSink = null;
+                    EndLnbIoOperation();
                 }
             }
         }
@@ -105,7 +112,7 @@ namespace CubleyControl
             var usbConsoleThread = new Thread(UsbConsoleLoop);
             usbConsoleThread.Start();
 
-            if (_lnbFaultReady && !_lnbFaultInterruptEnabled)
+            if (_lnbFaultReady)
             {
                 var lnbFaultPollThread = new Thread(LnbFaultPollLoop);
                 lnbFaultPollThread.Start();
@@ -113,6 +120,9 @@ namespace CubleyControl
 
             var mqttThread = new Thread(MqttLoop);
             mqttThread.Start();
+
+            var lnbHealthThread = new Thread(LnbHealthLoop);
+            lnbHealthThread.Start();
 
             while (true)
             {
@@ -158,11 +168,22 @@ namespace CubleyControl
 
         private static void LnbFaultPollLoop()
         {
-            Debug.WriteLine("[LNB-FAULT] poll loop started pin=" + _lnbFaultPin.ToString());
+            Debug.WriteLine("[LNB-FAULT] worker started pin=" + _lnbFaultPin.ToString());
 
             while (true)
             {
-                TryProcessLnbFaultPin("poll");
+                bool processFault;
+                lock (_lnbFaultTransitionLock)
+                {
+                    processFault = !_lnbFaultInterruptEnabled || _lnbFaultCheckPending || _lnbFaultAsserted;
+                    _lnbFaultCheckPending = false;
+                }
+
+                if (processFault)
+                {
+                    TryProcessLnbFaultPin(_lnbFaultInterruptEnabled ? "worker" : "poll");
+                }
+
                 Thread.Sleep(LnbFaultPollIntervalMs);
             }
         }
@@ -578,7 +599,10 @@ namespace CubleyControl
                 return;
             }
 
-            TryProcessLnbFaultPin("irq");
+            lock (_lnbFaultTransitionLock)
+            {
+                _lnbFaultCheckPending = true;
+            }
         }
 
         private static void TryProcessLnbFaultPin(string source)
@@ -599,19 +623,38 @@ namespace CubleyControl
             }
 
             bool asserted = value == PinValue.Low;
-            if (asserted)
+            bool changed;
+            int sequence;
+            lock (_lnbFaultTransitionLock)
             {
-                if (!_lnbFaultAsserted)
+                changed = asserted != _lnbFaultAsserted;
+                if (!changed)
                 {
-                    _lnbFaultAsserted = true;
-                    _lnbFaultSequence++;
-                    EmitLnbFaultSnapshot(source, _lnbFaultSequence);
+                    return;
                 }
 
-                return;
+                _lnbFaultAsserted = asserted;
+                _lnbFaultSequence++;
+                sequence = _lnbFaultSequence;
             }
 
-            _lnbFaultAsserted = false;
+            if (asserted)
+            {
+                BeginLnbIoOperation();
+                try
+                {
+                    lock (_lnbIoLock)
+                    {
+                        EmitLnbFaultSnapshot(source, sequence);
+                    }
+                }
+                finally
+                {
+                    EndLnbIoOperation();
+                }
+            }
+
+            PublishMqttLnbFaultTransition(asserted, source, sequence);
         }
     }
 }
