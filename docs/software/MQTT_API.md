@@ -74,6 +74,6 @@ See [CONFIGURATION.md](CONFIGURATION.md) for the complete command list and
 
 ## Scope
 
-The `cubley/v1/...` topics and JSON envelopes in the interface schema documents
-remain design contracts; they are not implemented by this initial transport.
-TLS, certificate management, and encrypted credential storage are also deferred.
+No JSON envelope or per-command topic contract is defined for the current MQTT
+transport. TLS, certificate management, and encrypted credential storage are also
+deferred.
