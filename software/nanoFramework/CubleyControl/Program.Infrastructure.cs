@@ -395,6 +395,8 @@ namespace CubleyControl
                     int rc = SafeUsbWrite(remainingBanner);
                     if (rc > 0)
                     {
+                        // The banner is ASCII-only, so the native byte count maps
+                        // directly to managed string character positions.
                         int accepted = rc > remainingBanner.Length ? remainingBanner.Length : rc;
                         bannerWriteOffset += accepted;
                         if (bannerWriteOffset > banner.Length)
