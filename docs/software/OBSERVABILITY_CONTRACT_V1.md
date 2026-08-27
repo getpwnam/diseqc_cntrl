@@ -3,13 +3,14 @@
 ## Purpose
 
 This contract defines one structured message model for retained state, asynchronous
-events, command responses, and `Debug.WriteLine` diagnostics. MQTT and debug output
-must be projections of the same canonical payload rather than independently
-formatted descriptions of the same operation.
+events, and `Debug.WriteLine` diagnostics. MQTT and debug output for structured
+domain data must be projections of the same canonical payload rather than
+independently formatted descriptions of the same operation.
 
-This is the target contract. The current implementation still uses aggregate
-`state` and `event` topics and several historical debug prefixes; see
-[Migration](#migration).
+This is the target contract. LNB state and events plus LNB, command, and MQTT debug
+diagnostics use the schema-1 contract. Other subsystem diagnostics still use
+historical formats; see [Migration](#migration). MQTT command responses deliberately
+use the compact acknowledgement format defined under [MQTT Topics](#mqtt-topics).
 
 ## Subsystems
 
@@ -54,7 +55,7 @@ Additional common fields are:
 | `operation` | Action being attempted or reported |
 | `status` | `ok`, `error`, `busy`, `unavailable`, or a domain state |
 | `code` | Stable machine-readable result or error code |
-| `id` | Requester-assigned 16-bit command ID on responses |
+| `id` | Requester-assigned 16-bit command ID in command diagnostics |
 | `event_id` | Device-assigned event sequence |
 | `source` | Origin such as `irq`, `poll`, `health`, or `command` |
 | `transport` | `mqtt` or `cdc` when transport is relevant |
@@ -73,7 +74,7 @@ schema=1 subsystem=lnb component=health status=ok sequence=187 s1=0x00 s2=0x00
 schema=1 subsystem=lnb component=fault status=active source=irq event_id=731 fault=overcurrent
 schema=1 subsystem=mqtt component=subscribe status=ok qos=1 message_id=14
 schema=1 subsystem=config component=storage domain=mqtt operation=load status=ok generation=6
-schema=1 subsystem=command component=response transport=mqtt id=42 status=ok code=ok
+schema=1 subsystem=command component=completion transport=mqtt id=42 status=ok code=ok
 ```
 
 ## MQTT Topics
@@ -88,10 +89,12 @@ The effective root remains `<prefix>/<hostname>`.
 | Subsystem snapshot | `<root>/state/<subsystem>` | Yes | 1 |
 | Availability | `<root>/availability` | Yes | 0/1 |
 
-`response` remains unified because the command ID is the correlation key. Every
-response also identifies the subsystem that owns the result. Parser and routing
-failures use `subsystem=command`; successfully routed operations use the owning
-domain subsystem such as `lnb`, `diseqc`, or `network`.
+`response` remains unified because the command ID is the correlation key. A
+state-changing or action command publishes one terminal `id=<id> OK` response on
+success or one `id=<id> Fail: ...` response on failure. Queries may publish their
+requested output lines before the terminal response. Responses intentionally stay
+compact and are not schema-1 payloads; state and health details belong on subsystem
+state and event topics.
 
 Each retained `state/<subsystem>` payload is a complete snapshot owned by that
 subsystem. Splitting retained state prevents an LNB update from replacing network
@@ -100,8 +103,9 @@ current state.
 
 ## Debug Alignment
 
-Structured state, event, and response payloads are built once. The exact payload
-is published to MQTT when applicable and appended unchanged to the debug prefix:
+Structured state and event payloads are built once. The exact payload is published
+to MQTT when applicable and appended unchanged to the debug prefix. Structured
+diagnostics use the same schema and ownership rules but are not command responses:
 
 ```text
 [LNB] schema=1 subsystem=lnb component=health status=ok sequence=187 s1=0x00 s2=0x00
@@ -114,7 +118,8 @@ not the prefix. Prefixes use the uppercase subsystem name: `[MAIN]`, `[CONFIG]`,
 Messages that are only useful for local diagnostics still use the same schema and
 include `level=debug`. A future MQTT verbosity setting may suppress publication of
 `level=debug` messages, but it must not change payload shape or suppress retained
-state, command responses, warnings, errors, or safety events.
+state, warnings, errors, or safety events. Compact command responses are never
+controlled by diagnostic verbosity.
 
 Secrets must be redacted before the canonical payload is passed to either sink.
 
@@ -152,3 +157,16 @@ Current debug prefixes map to the contract as follows:
 Migration should introduce one payload formatter/sink boundary first, then convert
 subsystems incrementally. During migration, documentation and implementation must
 clearly distinguish legacy lines from schema-1 payloads.
+
+Current migration status:
+
+| Subsystem | Status |
+|---|---|
+| `lnb` | State, events, health, fault, initialization, and register diagnostics migrated |
+| `command` | Shared dispatch/completion and MQTT receive/deduplication diagnostics migrated |
+| `mqtt` | Connection, subscription, publication, and reconnect diagnostics migrated |
+| `main` | Boot and heartbeat diagnostics migrated |
+| `config` | MQTT/network storage-load and network-apply diagnostics migrated |
+| `network` | Interface-read and DNS diagnostics migrated |
+| `cdc` | Worker, connection, and output diagnostics migrated |
+| `diseqc` | No standalone legacy diagnostics; command outcomes use `subsystem=command` |

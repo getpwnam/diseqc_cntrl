@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 
@@ -49,7 +48,10 @@ namespace CubleyControl
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("[NETWORK] show failed: " + ex.Message);
+                WriteStructuredDebug(
+                    "NETWORK",
+                    "schema=1 subsystem=network component=interface operation=read status=error" +
+                    " code=read_failed detail=" + SanitizeToken(ex.Message));
                 WriteCommandResult(reqId, false, "unavailable", "network unavailable", "reason=read_failed");
             }
         }
@@ -97,7 +99,11 @@ namespace CubleyControl
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("[DNS] lookup failed host=" + host + " error=" + ex.Message);
+                WriteStructuredDebug(
+                    "NETWORK",
+                    "schema=1 subsystem=network component=dns operation=lookup status=error" +
+                    " code=lookup_failed host=" + SanitizeToken(host) +
+                    " detail=" + SanitizeToken(ex.Message));
                 WriteCommandResult(reqId, false, "unavailable", "dns lookup failed", "host=" + host);
             }
         }

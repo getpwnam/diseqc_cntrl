@@ -325,14 +325,16 @@ When enabled, the current binding is:
 | Direction | Topic | Payload |
 |---|---|---|
 | Command to device | `<prefix>/<hostname>/command` | `<uint16-id> <command>` from the MQTT operational allowlist. |
-| Response from device | `<prefix>/<hostname>/response` | `id=<id> <output line>` for each command output line. |
-| Asynchronous transition | `<prefix>/<hostname>/event` | Non-retained event key/value fields. |
-| Current device state | `<prefix>/<hostname>/state` | Retained system and LNB state key/value fields. |
+| Response from device | `<prefix>/<hostname>/response` | Terminal `id=<id> OK` or `id=<id> Fail: ...`; queries may first emit requested output lines. |
+| LNB asynchronous transition | `<prefix>/<hostname>/event/lnb` | Non-retained schema-1 LNB event fields. |
+| Current LNB state | `<prefix>/<hostname>/state/lnb` | Retained schema-1 LNB state fields. |
 | Device availability | `<prefix>/<hostname>/availability` | Retained `online` or last-will `offline`. |
 
 Retained, empty, malformed-ID, and greater-than-64-byte command lines are rejected.
 QoS 1 duplicate commands among the eight most recent IDs replay cached responses
 without executing again; reuse of a cached ID with different command text fails.
+State and health details are carried by subsystem state and event topics rather
+than repeated in successful command acknowledgements.
 The topic prefix defaults to `diseqc` and is configurable from USB configuration
 mode with `mqtt topic-prefix`.
 

@@ -30,7 +30,11 @@ namespace CubleyControl
         private static void LnbHealthLoop()
         {
             int delayMs = LnbHealthIntervalMs;
-            Debug.WriteLine("[LNB-HEALTH] worker started interval_ms=" + LnbHealthIntervalMs.ToString());
+            WriteStructuredDebug(
+                "LNB",
+                "schema=1 subsystem=lnb component=health operation=start status=ok" +
+                " interval_ms=" + LnbHealthIntervalMs.ToString() +
+                " level=debug");
 
             while (true)
             {
@@ -39,7 +43,9 @@ namespace CubleyControl
 
                 if (!TryBeginLnbHealthOperation())
                 {
-                    Debug.WriteLine("[LNB-HEALTH] skipped busy");
+                    WriteStructuredDebug(
+                        "LNB",
+                        "schema=1 subsystem=lnb component=health operation=check status=busy level=debug");
                     delayMs = LnbHealthIntervalMs;
                     continue;
                 }
@@ -83,7 +89,11 @@ namespace CubleyControl
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine("[LNB-HEALTH] worker error: " + ex.Message);
+                    WriteStructuredDebug(
+                        "LNB",
+                        "schema=1 subsystem=lnb component=health operation=check status=error" +
+                        " code=worker_exception detail=" + SanitizeToken(ex.Message) +
+                        " level=error");
                     delayMs = LnbHealthMaximumBackoffMs;
                 }
                 finally
@@ -156,13 +166,16 @@ namespace CubleyControl
                 _lnbHealthState = "unavailable";
             }
 
-            Debug.WriteLine(
-                "[LNB-HEALTH] seq=" + _lnbHealthCheckSequence.ToString() +
-                " state=" + _lnbHealthState +
+            WriteStructuredDebug(
+                "LNB",
+                "schema=1 subsystem=lnb component=health operation=check" +
+                " status=" + _lnbHealthState +
+                " sequence=" + _lnbHealthCheckSequence.ToString() +
                 " rc=" + result.ToString() +
                 " failures=" + _lnbHealthConsecutiveFailures.ToString() +
                 " s1=" + ToHexU8(s1) +
-                " s2=" + ToHexU8(s2));
+                " s2=" + ToHexU8(s2) +
+                " level=debug");
 
             return !hadResult ||
                 previousCommsOk != _lnbHealthCommsOk ||

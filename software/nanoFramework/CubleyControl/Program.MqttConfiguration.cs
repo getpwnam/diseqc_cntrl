@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace CubleyControl
 {
     public static partial class Program
@@ -38,11 +36,16 @@ namespace CubleyControl
             _pendingMqttConfiguration = _mqttConfiguration.Clone();
             _mqttConfigurationDirty = false;
             _mqttConfigurationRevision = 1;
-            Debug.WriteLine(
-                "[MQTT-CONFIG] source=" + _mqttConfigurationSource +
+            WriteStructuredDebug(
+                "CONFIG",
+                "schema=1 subsystem=config component=storage domain=mqtt operation=load" +
+                " status=" + (string.IsNullOrEmpty(_mqttConfigurationError) ? "ok" : "error") +
+                " source=" + SanitizeToken(_mqttConfigurationSource) +
                 " generation=" + _mqttConfigurationGeneration.ToString() +
-                " enabled=" + (_mqttConfiguration.Enabled ? "true" : "false") +
-                " status=" + (string.IsNullOrEmpty(_mqttConfigurationError) ? "ok" : _mqttConfigurationError));
+                " enabled=" + (_mqttConfiguration.Enabled ? "1" : "0") +
+                (string.IsNullOrEmpty(_mqttConfigurationError)
+                    ? string.Empty
+                    : " code=" + SanitizeToken(_mqttConfigurationError)));
         }
     }
 }

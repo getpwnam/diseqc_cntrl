@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Device.Gpio;
 using System.Threading;
 using Cubley.Interop;
@@ -25,7 +24,11 @@ namespace CubleyControl
             }
 
             _activeCommand = RedactCommandForLog(normalized);
-            Debug.WriteLine("[CDC-CMD] cmd=" + _activeCommand);
+            WriteStructuredDebug(
+                "COMMAND",
+                "schema=1 subsystem=command component=dispatch operation=receive status=ok" +
+                " transport=" + (_activeCommandTransport == CommandTransport.Mqtt ? "mqtt" : "cdc") +
+                " command=" + SanitizeToken(_activeCommand));
 
             string[] tokens = SplitTokens(lower);
             string[] valueTokens = SplitTokens(normalized);
@@ -431,13 +434,30 @@ namespace CubleyControl
                 " req_id=" + reqId.ToString() +
                 (payload.Length > 0 ? " " + payload : string.Empty);
 
-            Debug.WriteLine("[CDC-CMD] cmd=" + _activeCommand + " " + kvLine);
+            WriteStructuredDebug(
+                "COMMAND",
+                "schema=1 subsystem=command component=completion" +
+                " operation=execute" +
+                " status=" + (ok ? "ok" : "error") +
+                " code=" + code +
+                " transport=" + (_activeCommandTransport == CommandTransport.Mqtt ? "mqtt" : "cdc") +
+                (_activeCommandTransport == CommandTransport.Mqtt ? " id=" + _mqttActiveCommandId.ToString() : string.Empty) +
+                " request_id=" + reqId.ToString() +
+                " command=" + SanitizeToken(_activeCommand) +
+                " detail=" + safeMsg +
+                (payload.Length > 0 ? " " + payload : string.Empty));
 
             if (ok &&
                 _activeCommandTransport == CommandTransport.Usb &&
                 _activeCommandIsSetter &&
                 !_usbDebugEnabled)
             {
+                return;
+            }
+
+            if (ok && _activeCommandTransport == CommandTransport.Mqtt)
+            {
+                _activeOutputSink("OK\r\n");
                 return;
             }
 

@@ -19,9 +19,9 @@ configuration commands.
 | Direction | Topic | Payload | QoS | Retained |
 |---|---|---|---:|---|
 | Command to device | `<prefix>/<hostname>/command` | `<id> <command line>` | 1 | Must be false |
-| Response from device | `<prefix>/<hostname>/response` | `id=<id> <output line>` | 1 | No |
-| Asynchronous transition | `<prefix>/<hostname>/event` | Event key/value fields | 1 | No |
-| Current device state | `<prefix>/<hostname>/state` | State key/value fields | 1 | Yes |
+| Response from device | `<prefix>/<hostname>/response` | `id=<id> OK`, `id=<id> Fail: ...`, or requested query output | 1 | No |
+| LNB asynchronous transition | `<prefix>/<hostname>/event/lnb` | Schema-1 LNB event fields | 1 | No |
+| Current LNB state | `<prefix>/<hostname>/state/lnb` | Schema-1 LNB state fields | 1 | Yes |
 | Device availability | `<prefix>/<hostname>/availability` | `online` or `offline` | 0/1 | Yes |
 
 The broker receives a retained `online` message after connection. The configured
@@ -32,13 +32,20 @@ last will is retained `offline` at QoS 1.
 Publish a command marked as MQTT-supported in
 [INTERFACE_COMMAND_MAP_V1.md](INTERFACE_COMMAND_MAP_V1.md) to
 `<prefix>/<hostname>/command`. Prefix the command with a requester-assigned decimal
-16-bit ID and one space. Each parser output line is published separately to
-`<prefix>/<hostname>/response` and carries the same ID.
+16-bit ID and one space. State-changing and action commands publish one terminal
+`id=<id> OK` response on success or one `id=<id> Fail: ...` response on failure.
+Queries may publish requested output lines before their terminal response. Each
+published line carries the same ID.
+
+Detailed current condition is owned by retained `state/<subsystem>` topics, while
+asynchronous transitions are owned by `event/<subsystem>`. The compact response
+only acknowledges whether the command completed successfully; it does not repeat
+state or health fields.
 
 Examples:
 
 ```bash
-mosquitto_sub -t 'diseqc/+/response' -t 'diseqc/+/event' -t 'diseqc/+/state' -t 'diseqc/+/availability' -v
+mosquitto_sub -t 'diseqc/+/response' -t 'diseqc/+/event/+' -t 'diseqc/+/state/+' -t 'diseqc/+/availability' -v
 mosquitto_pub -q 1 -t 'diseqc/cubley-a1b2c3/command' -m '41 show lnb a'
 mosquitto_pub -q 1 -t 'diseqc/cubley-a1b2c3/command' -m '42 lnb a pol v'
 mosquitto_pub -q 1 -t 'diseqc/cubley-a1b2c3/command' -m '43 diseqc goto 12'
@@ -58,16 +65,22 @@ must therefore coordinate IDs when more than one publisher controls a device.
 
 ## Events And State
 
-`event` reports non-retained asynchronous transitions. LNB fault assertion and
-clearing events include `event_id`, `type=lnb_fault`, `active`, and `source` fields.
+`event/lnb` reports non-retained asynchronous LNB transitions. LNB fault assertion
+and clearing events include `schema=1 subsystem=lnb component=fault`, `event_id`,
+`status`, `fault_sequence`, and `source` fields.
 The GPIO callback only signals a worker; register inspection and MQTT publication
 run outside the interrupt callback.
 
-`state` is a retained snapshot published on connection, after each MQTT command,
-and after each fault transition. It includes fault state and sequence, LNB monitor
-and initialization state, channel polarization and band when available, and the
-current DiSEqC preset and carrier state. Consumers should use `event` for live
-transitions and `state` to establish or recover current state.
+`state/lnb` is a retained snapshot published on connection, after each MQTT
+command, and after each fault transition. It begins with
+`schema=1 subsystem=lnb component=state` and includes health, communication,
+fault, monitor and initialization state, register values, and channel polarization
+and band when available. Consumers should use `event/lnb` for live transitions
+and `state/lnb` to establish or recover current state.
+
+The exact LNB schema-1 payload is also emitted through `Debug.WriteLine` with an
+`[LNB]` prefix. Debug output remains available while MQTT is disconnected; MQTT
+publication is conditional on an active connection.
 
 ## LNB Health Monitoring
 
@@ -77,11 +90,11 @@ The health check skips a cycle when an LNB operation or DiSEqC transmission is
 already active, so monitoring cannot interrupt operational traffic.
 
 The worker maintains health even while MQTT is disconnected. When connected, a
-changed health result updates retained `state`; unchanged state is refreshed at
-least every 60 seconds. The snapshot includes `lnb_health`, `lnb_comms`,
+changed health result updates retained `state/lnb`; unchanged state is refreshed
+at least every 60 seconds. The snapshot includes `status`, `comms`,
 `health_sequence`, `health_failures`, `health_rc`, and raw `s1`, `s2`, `d1` through
 `d4` register values. Communication loss and restoration publish non-retained
-`type=lnb_comms` messages to `event`.
+`component=health operation=comms` messages to `event/lnb`.
 
 After failed register access, checks back off from 10 to 20, 40, and at most 60
 seconds. A successful check restores the normal 10-second interval and clears the

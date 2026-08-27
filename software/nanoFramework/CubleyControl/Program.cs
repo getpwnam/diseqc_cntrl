@@ -62,6 +62,11 @@ namespace CubleyControl
         private static OutputSink _activeOutputSink;
         private static CommandTransport _activeCommandTransport;
 
+        private static void WriteStructuredDebug(string subsystem, string payload)
+        {
+            Debug.WriteLine("[" + subsystem + "] " + payload);
+        }
+
         private static void ExecuteCommand(string command, OutputSink outputSink, CommandTransport transport)
         {
             lock (_commandLock)
@@ -152,7 +157,10 @@ namespace CubleyControl
                         {
                         }
 
-                        Debug.WriteLine("[HEARTBEAT] LED disabled: " + ex.Message);
+                        WriteStructuredDebug(
+                            "MAIN",
+                            "schema=1 subsystem=main component=heartbeat operation=led status=error" +
+                            " code=led_disabled detail=" + SanitizeToken(ex.Message));
                         _ledReady = false;
                     }
                 }
@@ -168,7 +176,11 @@ namespace CubleyControl
 
         private static void LnbFaultPollLoop()
         {
-            Debug.WriteLine("[LNB-FAULT] worker started pin=" + _lnbFaultPin.ToString());
+            WriteStructuredDebug(
+                "LNB",
+                "schema=1 subsystem=lnb component=fault operation=worker_start status=ok" +
+                " pin=" + _lnbFaultPin.ToString() +
+                " level=debug");
 
             while (true)
             {
@@ -194,15 +206,20 @@ namespace CubleyControl
 
             if ((diagWord & ResetCauseMarkerMask) != ResetCauseMarkerValue)
             {
-                Debug.WriteLine("[BOOT] reset cause unavailable diag=0x" + diagWord.ToString("X8"));
+                WriteStructuredDebug(
+                    "MAIN",
+                    "schema=1 subsystem=main component=boot operation=reset_cause status=unavailable" +
+                    " diag=0x" + diagWord.ToString("X8"));
                 return;
             }
 
             int flags = (int)((diagWord >> 16) & 0xFFu);
             int csrLow = (int)(diagWord & 0xFFFFu);
 
-            Debug.WriteLine(
-                "[BOOT] reset flags=" + ResetFlagsToText(flags) +
+            WriteStructuredDebug(
+                "MAIN",
+                "schema=1 subsystem=main component=boot operation=reset_cause status=ok" +
+                " flags=" + ResetFlagsToText(flags).ToLower() +
                 " csr_low=0x" + csrLow.ToString("X4"));
         }
 
@@ -243,14 +260,19 @@ namespace CubleyControl
 
         private static void UsbConsoleLoop()
         {
-            Debug.WriteLine("[CDC] thread started");
+            WriteStructuredDebug(
+                "CDC",
+                "schema=1 subsystem=cdc component=worker operation=start status=ok");
             try
             {
                 UsbConsoleLoopBody();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("[CDC] FATAL thread exception: " + ex.Message);
+                WriteStructuredDebug(
+                    "CDC",
+                    "schema=1 subsystem=cdc component=worker operation=run status=error" +
+                    " code=worker_exception detail=" + SanitizeToken(ex.Message));
             }
         }
 
@@ -288,7 +310,11 @@ namespace CubleyControl
                     string banner = "\r\nCubley Rotation Control v" + BuildInfo.Version + "\r\n" + GetUsbPrompt();
                     int rc = SafeUsbWrite(banner);
                     uint diag = DiagMailbox.NativeGet();
-                    Debug.WriteLine("[CDC] connected, banner rc=" + rc.ToString() +
+                    WriteStructuredDebug(
+                        "CDC",
+                        "schema=1 subsystem=cdc component=connection operation=banner" +
+                        " status=" + (rc >= banner.Length ? "ok" : "busy") +
+                        " rc=" + rc.ToString() +
                         " diag=0x" + diag.ToString("X8"));
 
                     if (rc < banner.Length)
@@ -439,8 +465,11 @@ namespace CubleyControl
                 int eventCount = _usbWriteFailureCount + _usbWritePartialCount + _usbWriteExceptionCount;
                 if (eventCount == 1 || (eventCount % UsbWriteLogEveryNEvents) == 0)
                 {
-                    Debug.WriteLine(
-                        "[CDC] write issue rc=" + written.ToString() +
+                    WriteStructuredDebug(
+                        "CDC",
+                        "schema=1 subsystem=cdc component=output operation=write status=error" +
+                        " code=" + (written < 0 ? "write_failed" : "partial_write") +
+                        " rc=" + written.ToString() +
                         " len=" + expected.ToString() +
                         " fail=" + _usbWriteFailureCount.ToString() +
                         " partial=" + _usbWritePartialCount.ToString() +
@@ -455,7 +484,11 @@ namespace CubleyControl
 
                 if (_usbWriteExceptionCount == 1 || (_usbWriteExceptionCount % UsbWriteLogEveryNEvents) == 0)
                 {
-                    Debug.WriteLine("[CDC] write exception: " + ex.Message);
+                    WriteStructuredDebug(
+                        "CDC",
+                        "schema=1 subsystem=cdc component=output operation=write status=error" +
+                        " code=write_exception detail=" + SanitizeToken(ex.Message) +
+                        " exceptions=" + _usbWriteExceptionCount.ToString());
                 }
 
                 return -1;
@@ -558,7 +591,10 @@ namespace CubleyControl
 
                 if (!_lnbFaultReady)
                 {
-                    Debug.WriteLine("[LNB-FAULT] monitor disabled; unable to open PC8 candidate pins");
+                    WriteStructuredDebug(
+                        "LNB",
+                        "schema=1 subsystem=lnb component=fault operation=monitor_init status=unavailable" +
+                        " code=pin_open_failed");
                     return;
                 }
 
@@ -572,8 +608,10 @@ namespace CubleyControl
                     _lnbFaultInterruptEnabled = false;
                 }
 
-                Debug.WriteLine(
-                    "[LNB-FAULT] monitor ready pin=" + _lnbFaultPin.ToString() +
+                WriteStructuredDebug(
+                    "LNB",
+                    "schema=1 subsystem=lnb component=fault operation=monitor_init status=ok" +
+                    " pin=" + _lnbFaultPin.ToString() +
                     " mode=" + (_lnbFaultInterruptEnabled ? "interrupt" : "poll"));
 
                 // Capture startup asserted state if fault is already active.
@@ -583,7 +621,10 @@ namespace CubleyControl
             {
                 _lnbFaultReady = false;
                 _lnbFaultInterruptEnabled = false;
-                Debug.WriteLine("[LNB-FAULT] monitor initialization failed");
+                WriteStructuredDebug(
+                    "LNB",
+                    "schema=1 subsystem=lnb component=fault operation=monitor_init status=error" +
+                    " code=exception");
             }
         }
 
