@@ -89,7 +89,9 @@ RUN apt-get install -y --no-install-recommends \
     tio \
     xxd \
     jq \
-    rsync
+    rsync \
+    # poppler-utils (pdftotext)
+    poppler-utils
 
 # ---- GitHub CLI ----
 RUN mkdir -p -m 755 /etc/apt/keyrings \
