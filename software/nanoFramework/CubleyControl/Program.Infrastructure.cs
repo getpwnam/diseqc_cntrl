@@ -355,6 +355,8 @@ namespace CubleyControl
             int escapeSequenceState = 0;
             int sessionId = 0;
             int bannerWriteOffset = 0;
+            string banner = "\r\nCubley Rotation Control v" + BuildInfo.Version +
+                "\r\nConsole inactive. Press Enter to activate.\r\n";
 
             while (true)
             {
@@ -389,11 +391,7 @@ namespace CubleyControl
                     // queue may not be draining yet, so a single write can return 0
                     // and the banner/prompt would be lost forever. Retry each loop
                     // iteration from the first unwritten byte until it succeeds.
-                    string banner = "\r\nCubley Rotation Control v" + BuildInfo.Version +
-                        "\r\nConsole inactive. Press Enter to activate.\r\n";
-                    string remainingBanner = bannerWriteOffset == 0
-                        ? banner
-                        : banner.Substring(bannerWriteOffset);
+                    string remainingBanner = banner.Substring(bannerWriteOffset);
                     int rc = SafeUsbWrite(remainingBanner);
                     if (rc > 0)
                     {
