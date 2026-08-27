@@ -17,7 +17,7 @@ namespace CubleyControl
         {
             NetworkConfiguration loaded;
             string error;
-            if (_networkConfigurationStorage.TryLoad(out loaded, out error))
+            if (_networkConfigurationStorage.TryLoad(out loaded, out error) && loaded != null)
             {
                 _networkConfiguration = loaded;
                 _networkConfigurationSource = _networkConfigurationStorage.Source;

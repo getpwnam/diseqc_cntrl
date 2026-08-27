@@ -19,6 +19,8 @@ namespace CubleyControl
 
                 NetworkInterface networkInterface = interfaces[0];
                 string[] dnsAddresses = networkInterface.IPv4DnsAddresses;
+                string configurationSource = _networkConfigurationSource;
+                string configurationError = _networkConfigurationError;
 
                 if (_activeCommandTransport == CommandTransport.Usb)
                 {
@@ -31,6 +33,8 @@ namespace CubleyControl
                     WriteHumanField("Gateway", ValueOrUnset(networkInterface.IPv4GatewayAddress));
                     WriteHumanField("DNS mode", networkInterface.IsAutomaticDnsEnabled ? "Automatic" : "Static");
                     WriteHumanField("DNS servers", FormatDnsAddresses(dnsAddresses));
+                    WriteHumanField("Configuration source", string.IsNullOrEmpty(configurationSource) ? "Unknown" : configurationSource);
+                    WriteHumanField("Configuration status", string.IsNullOrEmpty(configurationError) ? "OK" : configurationError);
                     return;
                 }
 
@@ -45,6 +49,9 @@ namespace CubleyControl
                 _activeOutputSink(
                     "dns mode=" + (networkInterface.IsAutomaticDnsEnabled ? "auto" : "static") +
                     " servers=" + FormatDnsAddresses(dnsAddresses) + "\r\n");
+                _activeOutputSink(
+                    "config source=" + (string.IsNullOrEmpty(configurationSource) ? "unknown" : configurationSource) +
+                    " status=" + (string.IsNullOrEmpty(configurationError) ? "ok" : configurationError) + "\r\n");
             }
             catch (Exception ex)
             {

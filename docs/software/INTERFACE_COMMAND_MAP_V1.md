@@ -282,7 +282,7 @@ limit, voltage, tone, low-power mode, external DiSEqC input, and fault registers
 | `lnb <a\|b> iset <value>` | root `l` | `default\|normal\|high\|0` or `low\|reduced\|1` |
 | `lnb <a\|b> isw <value>` | root `l` | `4a\|4\|default\|high\|0` or `2.5a\|2p5a\|2_5a\|low\|reduced\|1` |
 
-Enabling either logical channel calls the current global native enable operation.
+Enabling a logical channel updates that channel's native LNB output state.
 An LNB command without a value is an error; all reads begin with `show`.
 
 ## Network And MQTT Configuration
