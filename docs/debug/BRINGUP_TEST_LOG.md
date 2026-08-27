@@ -1573,3 +1573,27 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260827-astra28_11224h.png
 - Conclusion: A 20-sweep averaged trace resolved the broad, flat-topped Astra 28.2E 11.224 GHz H mux response around 1.474 GHz IF at J7.
 - Note: Marker 1 at 1.485792 GHz (-70.82 dBm) lies on the upper shoulder and is not a channel-power measurement; averaging improves visual clarity but does not provide DVB C/N or lock margin.
+
+### 2026-08-27 14:00:48 UTC [PASS] [NON-BASELINE]
+- Git rev: 81c73ef
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Cubley CLI: diseqc tone off; diseqc listen off; lnb a enable on; lnb a polarization horizontal; lnb a band low/high; show lnb a detail; Siglent SDS814X-HD scope at J8, AC-coupled 10x/1Mohm, 20us/div
+- Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260827-scope-j8-highband.png; docs/debug/artifacts/rf-interface-2026-08-27/20260827-scope-j8-lowband.png
+- Conclusion: After the C31 path modification, high-band selection produces an in-spec 22.138 kHz, 788.5 mVpp tone at J8, while low-band selection removes the coherent 22 kHz waveform.
+- Note: High-band period 45.171 us and frequency/amplitude satisfy LNBH26 limits (20-24 kHz, 0.55-0.8 Vpp). Low-band trace is visually flat with 3.61 mV standard deviation; automatic 31.45 kHz/114.6 mVpp readings are noise-trigger artifacts. Exact C31 modification value remains to be recorded.
+
+### 2026-08-27 14:02:40 UTC [INFO] [NON-BASELINE]
+- Git rev: 81c73ef
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Physical inspection/confirmation of C31 modification value
+- Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260827-scope-j8-highband.png; docs/debug/artifacts/rf-interface-2026-08-27/20260827-scope-j8-lowband.png
+- Conclusion: C31 modification confirmed as replacement of the original 1 nF capacitor with a 1 kOhm resistor; this configuration restores correct low/high-band 22 kHz switching at J8.
+- Note: Current board state updated in .debug/CURRENT_BOARD_STATE.md; GitHub issue #100 updated with the exact bodge value.
+
+### 2026-08-27 14:17:00 UTC [PASS] [NON-BASELINE]
+- Git rev: 81c73ef
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Cubley CLI: hold LNB A horizontal at 18 V and toggle low/high band; Siglent SSA3032X Plus capture 900-2100 MHz, 0 dB attenuation, RBW/VBW 1 MHz, Trace A average 20
+- Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260827-lowband_horizontal_avg.png; docs/debug/artifacts/rf-interface-2026-08-27/20260827-highband_horizontal_avg.png
+- Conclusion: With polarization fixed, low/high-band selection produces distinctly different carrier populations across the same 900-2100 MHz IF window, confirming that the repaired 22 kHz control is switching the universal LNB band/LO state.
+- Note: Low-band LO is 9.750 GHz and high-band LO is 10.600 GHz; the same analyzer IF bin therefore corresponds to satellite RF frequencies separated by 850 MHz. The trace is expected to be replaced by a differently translated RF band, not divided into attenuated lower and boosted upper IF halves.
