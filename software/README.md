@@ -4,7 +4,7 @@ Software is intentionally split into two layers:
 
 1. `nanoFramework/`
    - Project-owned code and build orchestration.
-   - Contains managed code (`DiseqC/`), native integration (`nf-native/`), and Docker/CMake build scripts.
+   - Contains the managed application, its native interop declarations, and build tooling.
 
 2. `nf-interpreter` (external)
    - Upstream nanoFramework/ChibiOS firmware base.
@@ -12,6 +12,6 @@ Software is intentionally split into two layers:
 
 ## Documentation Ownership
 
-- Keep runtime/build/user docs under `software/nanoFramework/docs/`.
+- Keep runtime/build/user docs under `docs/software/`.
 - Keep hardware docs under `hardware/`.
 - Keep root-level docs limited to repository overview and cross-domain navigation.

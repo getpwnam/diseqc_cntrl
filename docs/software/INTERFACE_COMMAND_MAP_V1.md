@@ -9,9 +9,6 @@ USB CDC and MQTT pass command text to the same parser after transport policy is
 applied. Commands are case-insensitive, leading and trailing whitespace is ignored,
 and repeated spaces are collapsed.
 
-The canonical IDs declared in `Contracts/CommandIds.cs` are internal contract
-identifiers and are not accepted as external command text.
-
 ## USB CDC Transport
 
 Opening the USB CDC transport displays the product banner followed by `Console
@@ -78,8 +75,8 @@ CubleyControl console
 |   |-- show
 |   |   |-- show
 |   |   |     Display system, both LNB channels, and DiSEqC summary.
-|   |   |-- lnb [a|b] [detail]
-|   |   |     Display LNB state; "detail" includes register details.
+|   |   |-- lnb [a|b]
+|   |   |     Display LNB state.
 |   |   |-- diseqc
 |   |   |     Display routing preset, carrier, transmitter, and motion state.
 |   |   |-- network|net
@@ -260,7 +257,7 @@ that commit, for example `1.0.0+g1a2b3c4d.dirty`. Direct project builds use
 | `show`, `show status` | yes | yes | Show overall runtime health. |
 | `show capabilities` | yes | yes | Show supported operational capabilities. |
 | `show version` | yes | yes | Show firmware and interface versions. |
-| `show lnb [a\|b] [detail]` | yes | yes | Inspect both channels or one selected channel. |
+| `show lnb [a\|b]` | yes | yes | Inspect both channels or one selected channel. |
 | `lnb <a\|b> <action> [value]` | yes | yes | Perform one LNB state change. |
 | `show diseqc`, `diseqc ...` | yes | yes | Inspect or perform one DiSEqC operation. |
 | `help [topic]` | yes | no | Show context-sensitive console help. |
@@ -437,7 +434,6 @@ alias for the `lnb` command family.
 | `show` | Emit system, both LNB channels, and DiSEqC summary lines. |
 | `show lnb` | Emit one summary line for each LNB channel. |
 | `show lnb <a\|b>` | Emit one selected channel summary. |
-| `show lnb [a\|b] detail` | Emit LNBH26 register JSON for both or one selected channel. |
 | `show diseqc` | Emit routing preset, tone, carrier settings, and transmit-busy state. |
 
 Each LNB summary includes enabled state, polarization, band, ISET range, ISW
