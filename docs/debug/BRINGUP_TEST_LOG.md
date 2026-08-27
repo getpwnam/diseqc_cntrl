@@ -1493,3 +1493,83 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: CubleyControl runtime
 - Conclusion: MQTT session connected successfully to mqtt.ebnx.net with no runtime error.
 - Note: Observed state=connected, enabled=on, connected=1, attempts=0, last_error=none after enabling System.Text and System.Collections native APIs.
+
+### 2026-08-26 20:47:40 UTC [INFO]
+- Git rev: a29541d
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-CubleyControl.sh build --project CubleyControl/CubleyControl.nfproj --configuration Debug; ./toolchain/interop-checksum.sh --check --assembly CubleyNative --pe build/CubleyControl/CubleyNative.pe; ../../firmware/build-flash-cubley.sh build
+- Artifact: software/nanoFramework/build/CubleyControl/CubleyControl.bin; firmware nanoBooter.bin and nanoCLR.bin
+- Conclusion: Managed and native builds pass after CDC log cleanup and LNB I2C error-detail capture; interop checksum C830C9B7 passes. Firmware was not flashed and board behavior is unverified.
+- Note: Existing rc=3/detail=-2 means LNB_ERROR_I2C with ChibiOS MSG_RESET; rebuilt firmware will report the specific i2cGetErrors flag.
+
+### 2026-08-26 20:50:36 UTC [PASS]
+- Git rev: a29541d
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ../../firmware/build-flash-cubley.sh flash --reset
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin @ 0x08000000; firmware/nf-interpreter/build/nanoCLR.bin @ 0x08010000
+- Conclusion: nanoBooter and nanoCLR writes were verified by st-flash and the STM32F407 was software-reset; deployment region at 0x080C0000 was not erased.
+- Note: Optional SWD mailbox verification was not run because tests/swd_read_bringup_status.sh is absent from the current tree. Managed application deployment remains for the user via the VS Code nanoFramework extension.
+
+### 2026-08-26 21:08:33 UTC [PASS]
+- Git rev: a29541d
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Physical correction of suspected L1 misalignment; USB CDC command: show lnb
+- Artifact: USB CDC console output
+- Conclusion: +12 V rail restored; LNBH26 initialization and status reads pass for both channels. Both outputs remain disabled at safe defaults; S1=0x00 and S2=0x0C.
+- Note: Earlier I2C ack_failure was caused by the absent +12 V rail. L1 misalignment was suspected and corrected, but the precise electrical failure mode was not independently confirmed.
+
+### 2026-08-26 21:45:26 UTC [PASS]
+- Git rev: a29541d
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): python3 software/nanoFramework/toolchain/CubleyControl-deployment-config-test.py; ./software/nanoFramework/toolchain/build-CubleyControl.sh build; ./software/nanoFramework/toolchain/interop-checksum.sh --check; ./firmware/build-flash-cubley.sh build
+- Artifact: software/nanoFramework/build/CubleyControl/CubleyControl.bin; firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin
+- Conclusion: Managed bundle and native firmware build successfully with STM32 UID support and nanoFramework.Hardware.Stm32 100.0.5.1 enabled.
+- Note: No firmware was flashed and no managed payload was deployed.
+
+### 2026-08-26 21:51:46 UTC [PASS]
+- Git rev: a29541d
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): st-info --probe; artifact-derived ELF/map layout check; ./firmware/build-flash-cubley.sh flash --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --devicedetails
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin @ derived 0x08000000; firmware/nf-interpreter/build/nanoCLR.bin @ derived 0x08010000
+- Conclusion: nanoBooter and nanoCLR flashed, verified, reset, and booted with nanoFramework.Hardware.Stm32 native assembly 100.0.5.1 checksum 0xFE16F347.
+- Note: Managed deployment region was preserved. Existing CubleyControl boots without resolver errors, but nanoFramework.Hardware.Stm32 managed assembly is not present until the updated managed bundle is deployed.
+
+### 2026-08-26 22:09:27 UTC [PASS]
+- Git rev: a29541d
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-CubleyControl.sh build --project CubleyControl/CubleyControl.nfproj --configuration Debug; strings build/CubleyControl/CubleyControl.pe
+- Artifact: software/nanoFramework/build/CubleyControl/CubleyControl.bin
+- Conclusion: Managed bundle embeds hostname-based USB prompts, Cubley Rotation Control version banner, and Git-qualified build identity 1.0.0+ga29541d0.dirty.
+- Note: Managed payload was not deployed; validate the USB CDC banner and prompt after VS Code nanoFramework deployment.
+
+### 2026-08-27 09:23:24 UTC [INFO]
+- Git rev: 1aa0e93
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): SSA3032X Plus read-only SCPI identity/settings/Trace 1 capture; fixture normalized through the same cables plus one F-to-SMA adapter.
+- Artifact: docs/debug/artifacts/rf-interface-2026-08-27/unpowered-j8-to-j7-normalized.csv and .png
+- Conclusion: Unpowered J8-to-J7 RF transmission measured 0.757-10.059 dB insertion loss from 950-2150 MHz, worst at 1.742 GHz.
+- Note: Board unpowered; LNB_OUT and IF_OUT were each confirmed at 0 V before connection. Scalar TG measurement does not provide return loss or phase.
+
+### 2026-08-27 10:40:04 UTC [INFO] [NON-BASELINE]
+- Git rev: 1aa0e93
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Cubley CLI: LNB A horizontal, low band, 18 V, tone off; SSA3032X Plus: center 1.474 GHz, span 60 MHz, reference -30 dBm, attenuation 10 dB, RBW/VBW 1 MHz; three read-only Trace 1 captures.
+- Artifact: SSA3032X Plus live Trace 1; no retained file.
+- Conclusion: Powered LNB RF reached J7: the Astra 28.2E 11.224 GHz H mux at 1.474 GHz IF measured 4.38 dB above adjacent sidebands.
+- Note: Bench PSU rose from 40 mA idle to 170 mA with LNB A enabled; LNB A reported status OK, S1 0x00, S2 0x0C. Trace means were stable within 0.17 dB. The 4.38 dB plateau-to-sideband result is not a DVB C/N or lock-margin measurement.
+
+### 2026-08-27 11:52:19 UTC [PASS] [NON-BASELINE]
+- Git rev: 1aa0e93
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Cubley CLI switched LNB A between vertical and horizontal with low band and tone off; SSA3032X Plus observed 974-1974 MHz at 1 MHz RBW/VBW and 0 dB input attenuation.
+- Artifact: `docs/debug/artifacts/rf-interface-2026-08-27/20260827-lowband_horizontal_18v.png` (12:47:29) and `docs/debug/artifacts/rf-interface-2026-08-27/20260827-lowband_vertical_13v.png` (12:49:45).
+- Conclusion: LNB A vertical/horizontal polarization switching produced clearly different low-band transponder spectra at J7, confirming voltage-controlled polarization selection and live RF passage.
+- Note: Both traces contain multiple broad transponder responses, but with materially different frequency occupancy and amplitudes. The filenames identify the 18 V capture as horizontal and the 13 V capture as vertical; the marker amplitudes alone do not measure cross-polar isolation or DVB C/N.
+
+### 2026-08-27 12:10:51 UTC [INFO] [NON-BASELINE]
+- Git rev: 1aa0e93
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Cubley CLI: LNB A horizontal, low band, 18 V, tone off; SSA3032X Plus: center 1.474 GHz, span 60 MHz, reference -30 dBm, attenuation 0 dB, RBW/VBW 1 MHz, preamp off, Trace A average 20.
+- Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260827-astra28_11224h.png
+- Conclusion: A 20-sweep averaged trace resolved the broad, flat-topped Astra 28.2E 11.224 GHz H mux response around 1.474 GHz IF at J7.
+- Note: Marker 1 at 1.485792 GHz (-70.82 dBm) lies on the upper shoulder and is not a channel-power measurement; averaging improves visual clarity but does not provide DVB C/N or lock margin.
