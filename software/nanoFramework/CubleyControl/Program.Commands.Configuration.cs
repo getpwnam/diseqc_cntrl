@@ -200,6 +200,7 @@ namespace CubleyControl
                 WriteHelpCommand("discard", "Abandon candidate changes");
                 WriteHelpCommand("load defaults [domain]", "Stage default values");
                 WriteHelpCommand("exit", "Leave configuration mode when clean");
+                WriteHelpCommand("quit", "Release the console when clean (alias: logout)");
                 WriteHelpCommand("help [command]", "Show command help (alias: ?)");
                 _activeOutputSink("\r\nA '*' in the prompt marks uncommitted changes.\r\n");
                 return;

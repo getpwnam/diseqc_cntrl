@@ -15,6 +15,8 @@ namespace CubleyControl
         private const int UsbConsoleIdleSleepMs = 100;
         private const int UsbConsoleStatusIntervalMs = 1000;
         private const int UsbConsoleLineMaxLength = 192;
+        private const int ConsoleIdleTimeoutMs = 10 * 60 * 1000;
+        private const int ConsoleIdleWarningMs = 60 * 1000;
         private const int MqttCommandMaxLength = 64;
         private const int UsbWriteLogEveryNEvents = 20;
         private const int LnbFaultPollIntervalMs = 25;
@@ -58,9 +60,20 @@ namespace CubleyControl
             Mqtt
         }
 
+        private enum ConsoleTransport
+        {
+            None,
+            Usb
+        }
+
         private static readonly object _commandLock = new object();
+        private static readonly object _consoleLeaseLock = new object();
         private static OutputSink _activeOutputSink;
         private static CommandTransport _activeCommandTransport;
+        private static ConsoleTransport _consoleLeaseOwner;
+        private static int _consoleLeaseSessionId;
+        private static int _nextConsoleLeaseSessionId;
+        private static long _consoleLeaseLastActivityMs;
 
         private static void WriteStructuredDebug(string subsystem, string payload)
         {
@@ -86,6 +99,94 @@ namespace CubleyControl
                     _activeOutputSink = null;
                     EndLnbIoOperation();
                 }
+            }
+        }
+
+        private static bool TryAcquireConsoleLease(ConsoleTransport transport, out int sessionId)
+        {
+            lock (_consoleLeaseLock)
+            {
+                if (_consoleLeaseOwner != ConsoleTransport.None)
+                {
+                    sessionId = 0;
+                    return false;
+                }
+
+                _nextConsoleLeaseSessionId++;
+                if (_nextConsoleLeaseSessionId <= 0)
+                {
+                    _nextConsoleLeaseSessionId = 1;
+                }
+
+                _consoleLeaseOwner = transport;
+                _consoleLeaseSessionId = _nextConsoleLeaseSessionId;
+                _consoleLeaseLastActivityMs = Environment.TickCount64;
+                sessionId = _consoleLeaseSessionId;
+                return true;
+            }
+        }
+
+        private static bool TryGetConsoleLeaseIdleMs(ConsoleTransport transport, int sessionId, out long idleMs)
+        {
+            lock (_consoleLeaseLock)
+            {
+                if (_consoleLeaseOwner != transport || _consoleLeaseSessionId != sessionId)
+                {
+                    idleMs = 0;
+                    return false;
+                }
+
+                idleMs = Environment.TickCount64 - _consoleLeaseLastActivityMs;
+                return true;
+            }
+        }
+
+        private static bool TouchConsoleLease(ConsoleTransport transport, int sessionId, out bool expired)
+        {
+            lock (_consoleLeaseLock)
+            {
+                expired = false;
+                if (_consoleLeaseOwner != transport || _consoleLeaseSessionId != sessionId)
+                {
+                    return false;
+                }
+
+                long nowMs = Environment.TickCount64;
+                if (nowMs - _consoleLeaseLastActivityMs >= ConsoleIdleTimeoutMs)
+                {
+                    _consoleLeaseOwner = ConsoleTransport.None;
+                    _consoleLeaseSessionId = 0;
+                    _consoleLeaseLastActivityMs = 0;
+                    expired = true;
+                    return false;
+                }
+
+                _consoleLeaseLastActivityMs = nowMs;
+                return true;
+            }
+        }
+
+        private static bool ReleaseConsoleLease(ConsoleTransport transport, int sessionId)
+        {
+            lock (_consoleLeaseLock)
+            {
+                if (_consoleLeaseOwner != transport || _consoleLeaseSessionId != sessionId)
+                {
+                    return false;
+                }
+
+                _consoleLeaseOwner = ConsoleTransport.None;
+                _consoleLeaseSessionId = 0;
+                _consoleLeaseLastActivityMs = 0;
+                return true;
+            }
+        }
+
+        private static bool IsConsoleLeaseActive(ConsoleTransport transport)
+        {
+            lock (_consoleLeaseLock)
+            {
+                return _consoleLeaseOwner == transport;
             }
         }
 
@@ -279,6 +380,9 @@ namespace CubleyControl
         private static void UsbConsoleLoopBody()
         {
             bool wasEnabled = false;
+            bool idleWarningSent = false;
+            bool suppressNextLineFeed = false;
+            int sessionId = 0;
 
             while (true)
             {
@@ -290,10 +394,14 @@ namespace CubleyControl
                 {
                     if (wasEnabled)
                     {
+                        ReleaseConsoleLease(ConsoleTransport.Usb, sessionId);
                         ResetUsbConfigurationSession();
                     }
 
                     wasEnabled = false;
+                    idleWarningSent = false;
+                    suppressNextLineFeed = false;
+                    sessionId = 0;
                     _watchElapsedMs = 0;
                     _consoleLine = string.Empty;
                     Thread.Sleep(UsbConsoleIdleSleepMs);
@@ -307,7 +415,8 @@ namespace CubleyControl
                     // queue may not be draining yet, so a single write can return 0
                     // and the banner/prompt would be lost forever. Retry each loop
                     // iteration until the write succeeds.
-                    string banner = "\r\nCubley Rotation Control v" + BuildInfo.Version + "\r\n" + GetUsbPrompt();
+                    string banner = "\r\nCubley Rotation Control v" + BuildInfo.Version +
+                        "\r\nConsole inactive. Press Enter to activate.\r\n";
                     int rc = SafeUsbWrite(banner);
                     uint diag = DiagMailbox.NativeGet();
                     WriteStructuredDebug(
@@ -333,8 +442,38 @@ namespace CubleyControl
                 int value = UsbCdcConsole.NativeReadByte(UsbConsoleReadTimeoutMs);
                 if (value < 0)
                 {
+                    if (sessionId != 0)
+                    {
+                        long idleMs;
+                        if (!TryGetConsoleLeaseIdleMs(ConsoleTransport.Usb, sessionId, out idleMs))
+                        {
+                            ResetUsbConfigurationSession();
+                            sessionId = 0;
+                            idleWarningSent = false;
+                            _consoleLine = string.Empty;
+                            SafeUsbWrite("\r\nConsole inactive. Press Enter to activate.\r\n");
+                        }
+                        else if (idleMs >= ConsoleIdleTimeoutMs)
+                        {
+                            ReleaseConsoleLease(ConsoleTransport.Usb, sessionId);
+                            ResetUsbConfigurationSession();
+                            sessionId = 0;
+                            idleWarningSent = false;
+                            _consoleLine = string.Empty;
+                            SafeUsbWrite("\r\nConsole session timed out. Press Enter to activate.\r\n");
+                            WriteStructuredDebug(
+                                "CDC",
+                                "schema=1 sub=cdc comp=session operation=release stat=ok reason=timeout");
+                        }
+                        else if (!idleWarningSent && idleMs >= ConsoleIdleTimeoutMs - ConsoleIdleWarningMs)
+                        {
+                            idleWarningSent = true;
+                            SafeUsbWrite("\r\nConsole session will time out in 1 minute.\r\n" + GetUsbPrompt() + _consoleLine);
+                        }
+                    }
+
                     _watchElapsedMs += UsbConsoleReadTimeoutMs + UsbConsoleIdleSleepMs;
-                    if (_watchEnabled && _watchElapsedMs >= UsbConsoleStatusIntervalMs)
+                    if (sessionId != 0 && _watchEnabled && _watchElapsedMs >= UsbConsoleStatusIntervalMs)
                     {
                         _watchElapsedMs = 0;
                         EmitStatusBar(enabled);
@@ -348,6 +487,58 @@ namespace CubleyControl
 
                 char c = (char)value;
 
+                if (suppressNextLineFeed && c == '\n')
+                {
+                    suppressNextLineFeed = false;
+                    continue;
+                }
+
+                suppressNextLineFeed = false;
+
+                if (sessionId == 0)
+                {
+                    if (c == '\r' || c == '\n')
+                    {
+                        if (TryAcquireConsoleLease(ConsoleTransport.Usb, out sessionId))
+                        {
+                            idleWarningSent = false;
+                            suppressNextLineFeed = c == '\r';
+                            SafeUsbWrite("\r\nConsole active. Type 'quit' to release.\r\n" + GetUsbPrompt());
+                            WriteStructuredDebug(
+                                "CDC",
+                                "schema=1 sub=cdc comp=session operation=acquire stat=ok transport=cdc");
+                        }
+                        else
+                        {
+                            SafeUsbWrite("\r\nConsole is currently in use. Press Enter to retry.\r\n");
+                        }
+                    }
+
+                    continue;
+                }
+
+                bool leaseExpired;
+                if (!TouchConsoleLease(ConsoleTransport.Usb, sessionId, out leaseExpired))
+                {
+                    ResetUsbConfigurationSession();
+                    sessionId = 0;
+                    idleWarningSent = false;
+                    _consoleLine = string.Empty;
+                    SafeUsbWrite(
+                        leaseExpired
+                            ? "\r\nConsole session timed out. Press Enter to activate.\r\n"
+                            : "\r\nConsole inactive. Press Enter to activate.\r\n");
+                    if (leaseExpired)
+                    {
+                        WriteStructuredDebug(
+                            "CDC",
+                            "schema=1 sub=cdc comp=session operation=release stat=ok reason=timeout");
+                    }
+                    continue;
+                }
+
+                idleWarningSent = false;
+
                 if (c == '\x04')
                 {
                     if (_usbConfigurationMode && _consoleLine.Length == 0)
@@ -356,12 +547,44 @@ namespace CubleyControl
                         ExecuteCommand("exit", WriteSerialLine, CommandTransport.Usb);
                         SafeUsbWrite(GetUsbPrompt());
                     }
+                    else if (!_usbConfigurationMode && _consoleLine.Length == 0)
+                    {
+                        ReleaseConsoleLease(ConsoleTransport.Usb, sessionId);
+                        ResetUsbConfigurationSession();
+                        sessionId = 0;
+                        SafeUsbWrite("\r\nConsole released. Press Enter to activate.\r\n");
+                        WriteStructuredDebug(
+                            "CDC",
+                            "schema=1 sub=cdc comp=session operation=release stat=ok reason=ctrl_d");
+                    }
                     continue;
                 }
 
                 if (c == '\r' || c == '\n')
                 {
+                    suppressNextLineFeed = c == '\r';
                     SafeUsbWrite("\r\n");
+
+                    string normalized = NormalizeCommandInput(_consoleLine).ToLower();
+                    if (normalized == "quit" || normalized == "logout")
+                    {
+                        _consoleLine = string.Empty;
+                        if (_usbConfigurationMode && (_networkConfigurationDirty || _mqttConfigurationDirty))
+                        {
+                            SafeUsbWrite("Warning: uncommitted changes. Use 'commit' to apply or 'discard' to abandon them.\r\n" + GetUsbPrompt());
+                            continue;
+                        }
+
+                        ReleaseConsoleLease(ConsoleTransport.Usb, sessionId);
+                        ResetUsbConfigurationSession();
+                        sessionId = 0;
+                        SafeUsbWrite("Console released. Press Enter to activate.\r\n");
+                        WriteStructuredDebug(
+                            "CDC",
+                            "schema=1 sub=cdc comp=session operation=release stat=ok reason=command");
+                        continue;
+                    }
+
                     ExecuteCommand(_consoleLine, WriteSerialLine, CommandTransport.Usb);
                     _consoleLine = string.Empty;
                     SafeUsbWrite(GetUsbPrompt());

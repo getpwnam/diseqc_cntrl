@@ -1,6 +1,6 @@
 # CubleyControl Command Map
 
-Status: implemented command set as of 2026-08-26
+Status: implemented command set as of 2026-08-27
 
 ## Purpose
 
@@ -14,7 +14,22 @@ identifiers and are not accepted as external command text.
 
 ## USB CDC Transport
 
-Enter commands directly at the USB CDC prompt. There is no `cubley v1` CLI prefix.
+Opening the USB CDC transport displays the product banner followed by `Console
+inactive. Press Enter to activate.` Press Enter to acquire the interactive console
+lease and display the prompt. There is no `cubley v1` CLI prefix.
+
+Only one interactive console may hold the lease at a time. A later USB, SSH, or
+other interactive transport must wait until the owner runs `quit` or `logout`,
+disconnects, or remains inactive for ten minutes. The console warns after nine
+minutes of inactivity. Only input received from the operator refreshes the lease;
+periodic `watch` output and other asynchronous output do not. MQTT commands are
+stateless and do not acquire the interactive console lease.
+
+In operational mode, empty-line `Ctrl+D` also releases the console. In
+configuration mode, `Ctrl+D` retains its existing meaning of leaving configuration
+mode when the candidate is clean. `quit` and `logout` release the console from
+either mode only when the candidate is clean. Disconnect and inactivity timeout
+discard an uncommitted candidate before releasing ownership.
 
 USB `show` commands render labeled, human-readable text. Successful setter and
 action commands are silent by default; the changed prompt or subsequent `show`
@@ -58,10 +73,10 @@ authorization boundary.
 
 ### Operational Mode
 
-The initial USB prompt is `<hostname>> `. Operational mode contains normal LNB and
-DiSEqC control, runtime status, and local diagnostics. Read-only administrative
-views remain available at this prompt; entering configuration mode is required
-only to mutate configuration.
+After console activation, the initial USB prompt is `<hostname>> `. Operational
+mode contains normal LNB and DiSEqC control, runtime status, and local diagnostics.
+Read-only administrative views remain available at this prompt; entering
+configuration mode is required only to mutate configuration.
 
 On connection, the console emits `Cubley Rotation Control v<VERSION>`. Wrapper
 builds encode the three-part product version from `AssemblyVersion`, the first
@@ -85,6 +100,7 @@ that commit, for example `1.0.0+g1a2b3c4d.dirty`. Direct project builds use
 | `dns lookup <hostname>` | yes | no | Run a local DNS diagnostic. |
 | `led on`, `led off`, `pulse` | yes | no | Run local status LED diagnostics. |
 | `configure` | yes | no | Enter configuration mode. |
+| `quit`, `logout` | yes | no | Release the interactive console lease. |
 
 The `MQTT` column above is the complete command allowlist for that transport.
 The MQTT dispatcher must reject every other command as `unsupported` before it
@@ -236,6 +252,7 @@ a new device requires entering the password separately before `commit`.
 | `led off` | none | Drive the status LED low. |
 | `pulse` | none | Pulse the status LED for 100 ms. |
 | `configure` | `config`, `conf`, `configure terminal`, `config terminal`, `conf t` | Enter USB configuration mode. |
+| `quit` | `logout`; empty-line `Ctrl+D` in operational mode | Release the interactive console lease. |
 
 ## LNB Commands
 

@@ -37,11 +37,15 @@ namespace CubleyControl
                 {
                     WriteHumanHeading("System");
                     WriteHumanField("Serial", "Up");
-                    WriteHumanField("USB console", enabled != 0 ? "Connected" : "Disconnected");
+                    WriteHumanField(
+                        "USB console",
+                        enabled == 0 ? "Disconnected" : IsConsoleLeaseActive(ConsoleTransport.Usb) ? "Active" : "Inactive");
                 }
                 else
                 {
-                    _activeOutputSink("system serial=up cdc_enabled=" + enabled.ToString() + "\r\n");
+                    _activeOutputSink(
+                        "system serial=up cdc_enabled=" + enabled.ToString() +
+                        " console_active=" + (IsConsoleLeaseActive(ConsoleTransport.Usb) ? "1" : "0") + "\r\n");
                 }
                 EmitLnbShowSummaryLine(LnbChannelA);
                 EmitLnbShowSummaryLine(1);

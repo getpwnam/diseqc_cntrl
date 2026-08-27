@@ -170,6 +170,7 @@ namespace CubleyControl
                 WriteHelpCommand("configure", "Enter configuration mode");
                 WriteHelpCommand("watch [on|off]", "Control periodic status output");
                 WriteHelpCommand("led <on|off> | pulse", "Control the status LED");
+                WriteHelpCommand("quit", "Release the console (alias: logout)");
                 WriteHelpCommand("help [command]", "Show command help (alias: ?)");
                 _activeOutputSink("\r\nUse 'help <command>' for more information.\r\n");
                 return;
@@ -267,6 +268,13 @@ namespace CubleyControl
                 WriteHumanHeading("LED commands");
                 WriteHelpCommand("led <on|off>", "Set the status LED");
                 WriteHelpCommand("pulse", "Pulse the status LED for 100 ms");
+                return;
+            }
+
+            if (topic == "quit" || topic == "logout")
+            {
+                WriteHumanHeading("Console session");
+                WriteHelpCommand("quit | logout", "Release the console when configuration is clean");
                 return;
             }
 
@@ -383,10 +391,11 @@ namespace CubleyControl
         private static void EmitStatusSnapshot(int reqId)
         {
             int enabled = UsbCdcConsole.NativeIsEnabled();
+            bool active = enabled != 0 && IsConsoleLeaseActive(ConsoleTransport.Usb);
             if (_activeCommandTransport == CommandTransport.Usb)
             {
                 WriteHumanHeading("System");
-                WriteHumanField("USB console", enabled != 0 ? "Connected" : "Disconnected");
+                WriteHumanField("USB console", enabled == 0 ? "Disconnected" : active ? "Active" : "Inactive");
                 WriteHumanField("Status LED", _ledReady ? "Ready" : "Unavailable");
                 WriteHumanField("Write failures", _usbWriteFailureCount.ToString());
                 WriteHumanField("Partial writes", _usbWritePartialCount.ToString());
@@ -400,6 +409,7 @@ namespace CubleyControl
                 "ok",
                 "status",
                 "enabled=" + enabled.ToString() +
+                " active=" + (active ? "1" : "0") +
                 " led=" + (_ledReady ? "ready" : "not_ready") +
                 " fail=" + _usbWriteFailureCount.ToString() +
                 " partial=" + _usbWritePartialCount.ToString() +
