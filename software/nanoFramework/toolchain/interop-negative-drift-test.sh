@@ -90,8 +90,8 @@ from pathlib import Path
 
 path = Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
-old = "public static extern int NativeSetEnable(bool enable);"
-new = "public static extern int NativeSetEnable(int enable);"
+old = "public static extern int NativeSetEnable(int channel, bool enable);"
+new = "public static extern int NativeSetEnable(int channel, int enable);"
 if text.count(old) != 1:
     raise SystemExit("Unable to locate NativeSetEnable signature for fixture mutation")
 path.write_text(text.replace(old, new), encoding="utf-8")

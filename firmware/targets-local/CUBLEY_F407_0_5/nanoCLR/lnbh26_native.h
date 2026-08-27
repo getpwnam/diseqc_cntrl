@@ -143,6 +143,7 @@ lnb_last_error_t lnb_get_last_error(void);
 // Interop-shaped wrappers (native only for now).
 int32_t lnb_native_init(void);
 int32_t lnb_native_set_enable(int32_t enable);
+int32_t lnb_native_set_enable_for_channel(int32_t channelConstant, int32_t enable);
 int32_t lnb_native_read_status(int32_t *statusRegister);
 int32_t lnb_native_read_status_pair(int32_t *status1Register, int32_t *status2Register);
 int32_t lnb_native_set_polarization(int32_t polarizationConstant);

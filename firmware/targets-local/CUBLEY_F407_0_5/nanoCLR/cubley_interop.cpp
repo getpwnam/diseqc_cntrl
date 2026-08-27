@@ -15,7 +15,7 @@ HRESULT Library_cubley_interop_DiagMailbox_NativeSet___STATIC__VOID__U4(CLR_RT_S
 HRESULT Library_cubley_interop_DiagMailbox_NativeGet___STATIC__U4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_DiagMailbox_NativeGetLastNativeError___STATIC__U4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeInit___STATIC__I4(CLR_RT_StackFrame& stack);
-HRESULT Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__I4__BOOLEAN(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeReadStatusPair___STATIC__I4__BYREF_I4__BYREF_I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_LNBH26_NativeSetPolarizationForChannel___STATIC__I4__I4__I4(CLR_RT_StackFrame& stack);
@@ -141,7 +141,7 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_Fram24C128_NativeWrite___STATIC__I4__I4__SZARRAY_U1__I4__I4,                    // [4] Fram24C128.NativeWrite
     Library_cubley_interop_Fram24C128_NativeRead___STATIC__I4__I4__SZARRAY_U1__I4__I4,                     // [5] Fram24C128.NativeRead
     Library_cubley_interop_LNBH26_NativeInit___STATIC__I4,                                                  // [6] LNBH26.NativeInit
-    Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN,                                    // [7] LNBH26.NativeSetEnable
+    Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__I4__BOOLEAN,                               // [7] LNBH26.NativeSetEnable
     Library_cubley_interop_LNBH26_NativeReadStatus___STATIC__I4__BYREF_I4,                                  // [8] LNBH26.NativeReadStatus
     Library_cubley_interop_LNBH26_NativeReadStatusPair___STATIC__I4__BYREF_I4__BYREF_I4,                   // [9] LNBH26.NativeReadStatusPair
     Library_cubley_interop_LNBH26_NativeSetPolarizationForChannel___STATIC__I4__I4__I4,                    // [10] LNBH26.NativeSetPolarizationForChannel
@@ -173,7 +173,7 @@ static const CLR_RT_MethodHandler method_lookup[] =
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_CubleyNative =
 {
     "CubleyNative",
-    0xC830C9B7,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
+    0xB2D08F16,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
     method_lookup,
     { 1, 0, 0, 0 }
 };

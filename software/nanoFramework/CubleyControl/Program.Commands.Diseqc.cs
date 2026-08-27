@@ -348,7 +348,7 @@ namespace CubleyControl
                 }
 
                 // For this board, EXTM + TEN yields the external DiSEqC gating path.
-                if (LNBH26.NativeSetEnable(true) != (int)LNBH26.Status.Ok)
+                if (LNBH26.NativeSetEnable(LnbChannelA, true) != (int)LNBH26.Status.Ok)
                 {
                     error = "lnb_enable_failed";
                     return false;

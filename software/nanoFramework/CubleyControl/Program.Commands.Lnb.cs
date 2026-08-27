@@ -15,7 +15,7 @@ namespace CubleyControl
                 return;
             }
 
-            int setEnableRc = LNBH26.NativeSetEnable(false);
+            int setEnableRc = LNBH26.NativeSetEnable(LnbChannelA, false);
             int setPolRc = LNBH26.NativeSetPolarizationForChannel(LnbChannelA, (int)LNBH26.Polarization.Vertical);
             int setBandRc = LNBH26.NativeSetBandForChannel(LnbChannelA, (int)LNBH26.Band.Low);
 
@@ -197,10 +197,10 @@ namespace CubleyControl
                     return;
                 }
 
-                int rc = LNBH26.NativeSetEnable(enable);
+                int rc = LNBH26.NativeSetEnable(channel, enable);
                 if (rc == (int)LNBH26.Status.Ok)
                 {
-                    WriteCommandResult(reqId, true, "ok", "lnb enable", "channel=" + LnbChannelToSchemaName(channel) + " value=" + (enable ? "on" : "off") + " scope=global");
+                    WriteCommandResult(reqId, true, "ok", "lnb enable", "channel=" + LnbChannelToSchemaName(channel) + " value=" + (enable ? "on" : "off"));
                 }
                 else
                 {
@@ -361,6 +361,7 @@ namespace CubleyControl
             if (_activeCommandTransport == CommandTransport.Usb)
             {
                 WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper());
+                WriteHumanField("Enabled", IsLnbChannelEnabled(channel, d1) ? "Yes" : "No");
                 WriteHumanField("Polarization", PolarizationToText(pol));
                 WriteHumanField("Band", BandToText(band));
                 WriteHumanField("Current range", IsetToText(isetLow));
@@ -376,6 +377,7 @@ namespace CubleyControl
 
             _activeOutputSink(
                 "lnb." + LnbChannelToSchemaName(channel) +
+                " enabled=" + (IsLnbChannelEnabled(channel, d1) ? "on" : "off") +
                 " pol=" + PolarizationToText(pol) +
                 " band=" + BandToText(band) +
                 " iset=" + IsetToText(isetLow) +
@@ -479,6 +481,12 @@ namespace CubleyControl
             return channel == LnbChannelA
                 ? (data2 & (int)LNBH26.Data2Flags.TenA) != 0
                 : (data2 & (int)LNBH26.Data2Flags.TenB) != 0;
+        }
+
+        private static bool IsLnbChannelEnabled(int channel, int data1)
+        {
+            int voltageSelect = channel == LnbChannelA ? (data1 & 0x0F) : ((data1 >> 4) & 0x0F);
+            return voltageSelect != 0;
         }
 
         private static bool IsLowPowerEnabledForChannel(int channel, int data2)

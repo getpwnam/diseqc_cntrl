@@ -1597,3 +1597,11 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260827-lowband_horizontal_avg.png; docs/debug/artifacts/rf-interface-2026-08-27/20260827-highband_horizontal_avg.png
 - Conclusion: With polarization fixed, low/high-band selection produces distinctly different carrier populations across the same 900-2100 MHz IF window, confirming that the repaired 22 kHz control is switching the universal LNB band/LO state.
 - Note: Low-band LO is 9.750 GHz and high-band LO is 10.600 GHz; the same analyzer IF bin therefore corresponds to satellite RF frequencies separated by 850 MHz. The trace is expected to be replaced by a differently translated RF band, not divided into attenuated lower and boosted upper IF halves.
+
+### 2026-08-27 15:02:17 UTC [PASS]
+- Git rev: f518683
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): st-info --probe; ./firmware/build-flash-cubley.sh build; ./firmware/build-flash-cubley.sh flash --bootaddr 0x08000000 --clraddr 0x08010000 --deployaddr 0x080C0000 --deploysize 0x00040000 --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --devicedetails
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin
+- Conclusion: Rebuilt and flashed nanoBooter and nanoCLR; nanoCLR runtime identity and CubleyNative checksum B2D08F16 verified.
+- Note: Managed deployment intentionally not performed; user will deploy the matching managed bundle.

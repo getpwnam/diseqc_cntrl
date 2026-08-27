@@ -644,6 +644,18 @@ int32_t lnb_native_set_enable(int32_t enable)
     return (int32_t)lnb_set_enable(lnb_get_global_handle(), enable != 0);
 }
 
+int32_t lnb_native_set_enable_for_channel(int32_t channelConstant, int32_t enable)
+{
+    lnb_channel_t channel;
+    lnb_status_t channelStatus = lnb_native_parse_channel(channelConstant, &channel);
+    if (channelStatus != LNB_OK)
+    {
+        return (int32_t)channelStatus;
+    }
+
+    return (int32_t)lnb_set_enable_for_channel(lnb_get_global_handle(), channel, enable != 0);
+}
+
 int32_t lnb_native_read_status(int32_t *statusRegister)
 {
     if (statusRegister == NULL)

@@ -48,14 +48,15 @@ HRESULT Library_cubley_interop_LNBH26_NativeInit___STATIC__I4(CLR_RT_StackFrame&
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
-HRESULT Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__BOOLEAN(CLR_RT_StackFrame& stack)
+HRESULT Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__I4__BOOLEAN(CLR_RT_StackFrame& stack)
 {
     NANOCLR_HEADER();
 
     g_cubley_diag_last_error = ((uint32_t)0xE3 << 24) | ((uint32_t)0xC2 << 16) | ((uint32_t)0x00 << 8) | 0xA1;
 
-    bool enable = stack.Arg0().NumericByRef().u1 != 0;
-    lnb_status_t status = (lnb_status_t)lnb_native_set_enable(enable ? 1 : 0);
+    const int32_t channel = stack.Arg0().NumericByRef().s4;
+    const bool enable = stack.Arg1().NumericByRef().u1 != 0;
+    lnb_status_t status = (lnb_status_t)lnb_native_set_enable_for_channel(channel, enable ? 1 : 0);
 
     // 0xE3 C2 SS DD: LNB set-enable result, DD=DATA1 readback on success or low I2C detail on failure.
     uint8_t detail = (uint8_t)(lnb_get_last_i2c_msg() & 0xFF);

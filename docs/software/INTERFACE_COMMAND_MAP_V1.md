@@ -269,8 +269,8 @@ alias for the `lnb` command family.
 | `show lnb [a\|b] detail` | Emit LNBH26 register JSON for both or one selected channel. |
 | `show diseqc` | Emit routing preset, tone, carrier settings, and transmit-busy state. |
 
-Each LNB summary includes polarization, band, ISET range, ISW limit, voltage,
-tone, low-power mode, external DiSEqC input, and fault registers.
+Each LNB summary includes enabled state, polarization, band, ISET range, ISW
+limit, voltage, tone, low-power mode, external DiSEqC input, and fault registers.
 
 ### State Assignments
 
