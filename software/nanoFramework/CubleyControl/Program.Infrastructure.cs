@@ -397,7 +397,12 @@ namespace CubleyControl
                     int rc = SafeUsbWrite(remainingBanner);
                     if (rc > 0)
                     {
-                        bannerWriteOffset += rc;
+                        int accepted = rc > remainingBanner.Length ? remainingBanner.Length : rc;
+                        bannerWriteOffset += accepted;
+                        if (bannerWriteOffset > banner.Length)
+                        {
+                            bannerWriteOffset = banner.Length;
+                        }
                     }
 
                     bool bannerWritten = bannerWriteOffset >= banner.Length;
