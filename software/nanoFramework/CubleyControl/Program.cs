@@ -234,6 +234,9 @@ namespace CubleyControl
             var lnbHealthThread = new Thread(LnbHealthLoop);
             lnbHealthThread.Start();
 
+            var diseqcMotionThread = new Thread(DiseqcMotionMonitorLoop);
+            diseqcMotionThread.Start();
+
             while (true)
             {
                 Thread.Sleep(MainLoopSleepMs);

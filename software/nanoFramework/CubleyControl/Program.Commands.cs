@@ -221,6 +221,7 @@ namespace CubleyControl
                 WriteHelpCommand("diseqc tx <hex bytes>", "Transmit a raw frame");
                 WriteHelpCommand("diseqc tone <on|off|status>", "Control or inspect the carrier tone");
                 WriteHelpCommand("diseqc listen <on|off>", "Control external modulation input");
+                WriteHelpCommand("diseqc complete <motion-id>", "Release a completed motion lock");
                 return;
             }
 

@@ -19,12 +19,23 @@ namespace CubleyControl
         private const int DiseqcBitZeroMarkUs = 1000;
         private const int DiseqcBitZeroSpaceUs = 500;
         private const int DiseqcQuietGapUs = 15000;
+        private const int DiseqcMotionPollIntervalMs = 250;
+        private const int DiseqcMotionWorstCaseMs = 90_000;
+        private const int DiseqcStepBaseTimeMs = 1000;
+        private const int DiseqcStepTimePerStepMs = 250;
 
         private static PwmChannel _diseqcCarrier;
         private static int _diseqcCarrierFrequencyHz;
         private static int _diseqcCarrierDutyPercent;
         private static bool _diseqcTxBusy;
         private static DiseqcV1RoutePreset _diseqcRoutePreset = DiseqcV1RoutePreset.Direct;
+        private static readonly object _diseqcMotionLock = new object();
+        private static bool _diseqcMotionBusy;
+        private static int _diseqcMotionId;
+        private static int _diseqcNextMotionId;
+        private static string _diseqcMotionOperation = "idle";
+        private static long _diseqcMotionDeadlineMs;
+        private static string _diseqcMotionCompletionSource = "none";
 
         private static void HandleDiseqcCommand(string[] tokens, int reqId)
         {
@@ -55,12 +66,28 @@ namespace CubleyControl
 
             if (verb == "tx")
             {
+                if (!EnsureDiseqcMotionIdle(reqId))
+                {
+                    return;
+                }
+
                 HandleDiseqcTxCommand(tokens, reqId);
+                return;
+            }
+
+            if (verb == "complete")
+            {
+                HandleDiseqcCompleteCommand(tokens, reqId);
                 return;
             }
 
             if (verb == "goto" && tokens.Length == 3)
             {
+                if (!EnsureDiseqcMotionIdle(reqId))
+                {
+                    return;
+                }
+
                 int position;
                 if (!TryParseByteDec(tokens[2], out position))
                 {
@@ -69,12 +96,22 @@ namespace CubleyControl
                 }
 
                 byte[] frame = DiseqcCommandBuilder.BuildGotoStoredPosition((byte)position);
-                EmitDiseqcTransmitResult(reqId, "diseqc goto", frame);
+                EmitDiseqcPositionerTransmitResult(
+                    reqId,
+                    "diseqc goto",
+                    frame,
+                    "goto",
+                    DiseqcMotionWorstCaseMs);
                 return;
             }
 
             if (verb == "step" && tokens.Length == 4)
             {
+                if (!EnsureDiseqcMotionIdle(reqId))
+                {
+                    return;
+                }
+
                 string dir = tokens[2];
                 int steps;
                 if (dir != "east" && dir != "west")
@@ -92,12 +129,18 @@ namespace CubleyControl
                 byte[] frame = dir == "east"
                     ? DiseqcCommandBuilder.BuildStepEast((byte)steps)
                     : DiseqcCommandBuilder.BuildStepWest((byte)steps);
-                EmitDiseqcPositionerTransmitResult(reqId, "diseqc step", frame);
+                int motionTimeMs = DiseqcStepBaseTimeMs + (steps * DiseqcStepTimePerStepMs);
+                EmitDiseqcPositionerTransmitResult(reqId, "diseqc step", frame, "step_" + dir, motionTimeMs);
                 return;
             }
 
             if (verb == "drive" && tokens.Length == 3)
             {
+                if (!EnsureDiseqcMotionIdle(reqId))
+                {
+                    return;
+                }
+
                 string dir = tokens[2];
                 if (dir != "east" && dir != "west")
                 {
@@ -108,14 +151,19 @@ namespace CubleyControl
                 byte[] frame = dir == "east"
                     ? DiseqcCommandBuilder.BuildDriveEast()
                     : DiseqcCommandBuilder.BuildDriveWest();
-                EmitDiseqcPositionerTransmitResult(reqId, "diseqc drive", frame);
+                EmitDiseqcPositionerTransmitResult(
+                    reqId,
+                    "diseqc drive",
+                    frame,
+                    "drive_" + dir,
+                    DiseqcMotionWorstCaseMs);
                 return;
             }
 
             if (verb == "stop" && tokens.Length == 2)
             {
                 byte[] frame = DiseqcCommandBuilder.BuildHalt();
-                EmitDiseqcPositionerTransmitResult(reqId, "diseqc stop", frame);
+                EmitDiseqcPositionerTransmitResult(reqId, "diseqc stop", frame, null, 0);
                 return;
             }
 
@@ -125,6 +173,17 @@ namespace CubleyControl
         private static void EmitDiseqcShowSummaryLine()
         {
             bool toneEnabled = _diseqcCarrier != null;
+            bool motionBusy;
+            int motionId;
+            string motionOperation;
+            int motionRemainingMs;
+            string motionCompletionSource;
+            GetDiseqcMotionSnapshot(
+                out motionBusy,
+                out motionId,
+                out motionOperation,
+                out motionRemainingMs,
+                out motionCompletionSource);
             if (_activeCommandTransport == CommandTransport.Usb)
             {
                 WriteHumanHeading("DiSEqC");
@@ -133,6 +192,11 @@ namespace CubleyControl
                 WriteHumanField("Frequency", toneEnabled ? _diseqcCarrierFrequencyHz.ToString() + " Hz" : "Not active");
                 WriteHumanField("Duty cycle", toneEnabled ? _diseqcCarrierDutyPercent.ToString() + "%" : "Not active");
                 WriteHumanField("Transmitter", _diseqcTxBusy ? "Busy" : "Idle");
+                WriteHumanField("Motion", motionBusy ? "Busy" : "Idle");
+                WriteHumanField("Motion ID", motionId == 0 ? "None" : motionId.ToString());
+                WriteHumanField("Operation", motionOperation);
+                WriteHumanField("Remaining", motionBusy ? ((motionRemainingMs + 999) / 1000).ToString() + " s" : "0 s");
+                WriteHumanField("Completion source", motionCompletionSource);
                 return;
             }
 
@@ -142,6 +206,11 @@ namespace CubleyControl
                 " frequency_hz=" + (toneEnabled ? _diseqcCarrierFrequencyHz.ToString() : "0") +
                 " duty_percent=" + (toneEnabled ? _diseqcCarrierDutyPercent.ToString() : "0") +
                 " tx_busy=" + (_diseqcTxBusy ? "1" : "0") +
+                " motion_busy=" + (motionBusy ? "1" : "0") +
+                " motion_id=" + motionId.ToString() +
+                " motion_operation=" + motionOperation +
+                " motion_remaining_ms=" + motionRemainingMs.ToString() +
+                " motion_completion=" + motionCompletionSource +
                 "\r\n");
         }
 
@@ -212,7 +281,12 @@ namespace CubleyControl
             WriteCommandResult(reqId, true, "ok", source, "bytes=" + BytesToHex(frame) + " encoded_bits=" + (frame.Length * 9).ToString());
         }
 
-        private static void EmitDiseqcPositionerTransmitResult(int reqId, string source, byte[] positionerFrame)
+        private static void EmitDiseqcPositionerTransmitResult(
+            int reqId,
+            string source,
+            byte[] positionerFrame,
+            string motionOperation,
+            int motionDurationMs)
         {
             string error;
             byte[][] prefixFrames;
@@ -224,7 +298,21 @@ namespace CubleyControl
 
             if (prefixFrames.Length == 0)
             {
-                EmitDiseqcTransmitResult(reqId, source, positionerFrame);
+                if (!TryTransmitDiseqcFrame(positionerFrame, out error))
+                {
+                    WriteCommandResult(reqId, false, "hw_fault", source + " failed", "reason=" + SanitizeToken(error));
+                    return;
+                }
+
+                CompleteOrBeginDiseqcMotion(motionOperation, motionDurationMs);
+                WriteCommandResult(
+                    reqId,
+                    true,
+                    "ok",
+                    source,
+                    "bytes=" + BytesToHex(positionerFrame) +
+                    " encoded_bits=" + DiseqcFrameCodec.GetEncodedBitCount(positionerFrame).ToString() +
+                    BuildDiseqcMotionResultData());
                 return;
             }
 
@@ -242,6 +330,8 @@ namespace CubleyControl
                 return;
             }
 
+            CompleteOrBeginDiseqcMotion(motionOperation, motionDurationMs);
+
             WriteCommandResult(
                 reqId,
                 true,
@@ -249,7 +339,202 @@ namespace CubleyControl
                 source,
                 "preset=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) +
                 " bytes=" + BytesToHex(positionerFrame) +
-                " encoded_bits=" + DiseqcFrameCodec.GetEncodedBitCount(positionerFrame).ToString());
+                " encoded_bits=" + DiseqcFrameCodec.GetEncodedBitCount(positionerFrame).ToString() +
+                BuildDiseqcMotionResultData());
+        }
+
+        private static bool EnsureDiseqcMotionIdle(int reqId)
+        {
+            bool busy;
+            int motionId;
+            string operation;
+            int remainingMs;
+            string completionSource;
+            GetDiseqcMotionSnapshot(out busy, out motionId, out operation, out remainingMs, out completionSource);
+            if (!busy)
+            {
+                return true;
+            }
+
+            WriteCommandResult(
+                reqId,
+                false,
+                "busy",
+                "diseqc motion busy",
+                "motion_id=" + motionId.ToString() +
+                " operation=" + operation +
+                " remaining_ms=" + remainingMs.ToString());
+            return false;
+        }
+
+        private static void HandleDiseqcCompleteCommand(string[] tokens, int reqId)
+        {
+            int requestedMotionId;
+            if (tokens.Length != 3 || !TryParsePositiveInt(tokens[2], out requestedMotionId))
+            {
+                WriteCommandResult(reqId, false, "validation_error", "diseqc complete usage", "usage=diseqc complete <motion_id>");
+                return;
+            }
+
+            lock (_diseqcMotionLock)
+            {
+                if (!_diseqcMotionBusy)
+                {
+                    WriteCommandResult(reqId, false, "validation_error", "no diseqc motion", "motion_id=0");
+                    return;
+                }
+
+                if (_diseqcMotionId != requestedMotionId)
+                {
+                    WriteCommandResult(
+                        reqId,
+                        false,
+                        "validation_error",
+                        "diseqc motion id mismatch",
+                        "motion_id=" + _diseqcMotionId.ToString());
+                    return;
+                }
+
+                ClearDiseqcMotionLocked("external");
+            }
+
+            PublishMqttDiseqcMotionTransition("complete");
+            WriteCommandResult(reqId, true, "ok", "diseqc complete", "motion_id=" + requestedMotionId.ToString());
+        }
+
+        private static void CompleteOrBeginDiseqcMotion(string operation, int durationMs)
+        {
+            if (operation == null)
+            {
+                bool wasBusy;
+                lock (_diseqcMotionLock)
+                {
+                    wasBusy = _diseqcMotionBusy;
+                    ClearDiseqcMotionLocked("halt");
+                }
+
+                if (wasBusy)
+                {
+                    PublishMqttDiseqcMotionTransition("complete");
+                }
+                return;
+            }
+
+            lock (_diseqcMotionLock)
+            {
+                _diseqcNextMotionId++;
+                if (_diseqcNextMotionId <= 0)
+                {
+                    _diseqcNextMotionId = 1;
+                }
+
+                long nowMs = Environment.TickCount64;
+                _diseqcMotionBusy = true;
+                _diseqcMotionId = _diseqcNextMotionId;
+                _diseqcMotionOperation = operation;
+                _diseqcMotionDeadlineMs = nowMs +
+                    (durationMs < DiseqcMotionWorstCaseMs ? durationMs : DiseqcMotionWorstCaseMs);
+                _diseqcMotionCompletionSource = "pending";
+            }
+
+            PublishMqttDiseqcMotionTransition("start");
+        }
+
+        private static void ClearDiseqcMotionLocked(string completionSource)
+        {
+            _diseqcMotionBusy = false;
+            _diseqcMotionOperation = "idle";
+            _diseqcMotionDeadlineMs = 0;
+            _diseqcMotionCompletionSource = completionSource;
+        }
+
+        private static void GetDiseqcMotionSnapshot(
+            out bool busy,
+            out int motionId,
+            out string operation,
+            out int remainingMs,
+            out string completionSource)
+        {
+            lock (_diseqcMotionLock)
+            {
+                busy = _diseqcMotionBusy;
+                motionId = _diseqcMotionId;
+                operation = _diseqcMotionOperation;
+                completionSource = _diseqcMotionCompletionSource;
+                long remaining = busy ? _diseqcMotionDeadlineMs - Environment.TickCount64 : 0;
+                remainingMs = remaining <= 0 ? 0 : (remaining > int.MaxValue ? int.MaxValue : (int)remaining);
+            }
+        }
+
+        private static string BuildDiseqcMotionResultData()
+        {
+            bool busy;
+            int motionId;
+            string operation;
+            int remainingMs;
+            string completionSource;
+            GetDiseqcMotionSnapshot(out busy, out motionId, out operation, out remainingMs, out completionSource);
+            return " motion_busy=" + (busy ? "1" : "0") +
+                " motion_id=" + motionId.ToString() +
+                " motion_remaining_ms=" + remainingMs.ToString();
+        }
+
+        private static void DiseqcMotionMonitorLoop()
+        {
+            while (true)
+            {
+                Thread.Sleep(DiseqcMotionPollIntervalMs);
+
+                int expiredMotionId = 0;
+                lock (_diseqcMotionLock)
+                {
+                    if (_diseqcMotionBusy && Environment.TickCount64 >= _diseqcMotionDeadlineMs)
+                    {
+                        expiredMotionId = _diseqcMotionId;
+                    }
+                }
+
+                if (expiredMotionId == 0)
+                {
+                    continue;
+                }
+
+                lock (_commandLock)
+                {
+                    lock (_diseqcMotionLock)
+                    {
+                        if (!_diseqcMotionBusy || _diseqcMotionId != expiredMotionId ||
+                            Environment.TickCount64 < _diseqcMotionDeadlineMs)
+                        {
+                            continue;
+                        }
+                    }
+
+                    string error;
+                    BeginLnbIoOperation();
+                    try
+                    {
+                        lock (_lnbIoLock)
+                        {
+                            TryTransmitDiseqcFrame(DiseqcCommandBuilder.BuildHalt(), out error);
+                        }
+                    }
+                    finally
+                    {
+                        EndLnbIoOperation();
+                    }
+
+                    lock (_diseqcMotionLock)
+                    {
+                        if (_diseqcMotionBusy && _diseqcMotionId == expiredMotionId)
+                        {
+                            ClearDiseqcMotionLocked(error.Length == 0 ? "timeout" : "timeout_halt_failed");
+                        }
+                    }
+                }
+
+                PublishMqttDiseqcMotionTransition("complete");
+            }
         }
 
         private static bool TryBuildPresetPrefixFrames(out byte[][] frames, out string error)
