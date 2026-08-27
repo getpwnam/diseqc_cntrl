@@ -1,5 +1,4 @@
 using Cubley.Interop;
-using Cubley.Lnbh26;
 
 namespace CubleyControl
 {
@@ -56,60 +55,21 @@ namespace CubleyControl
             if (tokens[1] == "lnb")
             {
                 int channel = LnbChannelA;
-                bool detail = false;
-                bool channelSet = false;
-
-                for (int i = 2; i < tokens.Length; i++)
+                if (tokens.Length > 3 || (tokens.Length == 3 && !TryParseLnbChannelToken(tokens[2], out channel)))
                 {
-                    if (tokens[i] == "detail")
-                    {
-                        detail = true;
-                        continue;
-                    }
-
-                    if (!channelSet)
-                    {
-                        int parsedChannel;
-                        if (!TryParseLnbChannelToken(tokens[i], out parsedChannel))
-                        {
-                            WriteCommandResult(reqId, false, "validation_error", "show lnb token invalid", "token=" + tokens[i]);
-                            return;
-                        }
-
-                        channel = parsedChannel;
-                        channelSet = true;
-                        continue;
-                    }
-
-                    WriteCommandResult(reqId, false, "validation_error", "show lnb usage", "usage=show lnb [a|b] [detail]");
+                    WriteCommandResult(reqId, false, "validation_error", "show lnb usage", "usage=show lnb [a|b]");
                     return;
                 }
 
-                if (detail)
+                if (tokens.Length == 3)
                 {
-                    if (channelSet)
-                    {
-                        EmitLnbShowDetailJson(channel);
-                    }
-                    else
-                    {
-                        EmitLnbShowDetailJson(LnbChannelA);
-                        EmitLnbShowDetailJson(1);
-                    }
+                    EmitLnbShowSummaryLine(channel);
                 }
                 else
                 {
-                    if (channelSet)
-                    {
-                        EmitLnbShowSummaryLine(channel);
-                    }
-                    else
-                    {
-                        EmitLnbShowSummaryLine(LnbChannelA);
-                        EmitLnbShowSummaryLine(1);
-                    }
+                    EmitLnbShowSummaryLine(LnbChannelA);
+                    EmitLnbShowSummaryLine(1);
                 }
-
                 return;
             }
 
@@ -397,77 +357,6 @@ namespace CubleyControl
                 " s1=" + ToHexU8(s1) +
                 " s2=" + ToHexU8(s2) +
                 "\r\n");
-        }
-
-        private static void EmitLnbShowDetailJson(int channel)
-        {
-            if (!EnsureLnbInitialized())
-            {
-                if (_activeCommandTransport == CommandTransport.Usb)
-                {
-                    WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper() + " details");
-                    WriteHumanField("State", BuildLnbInitFailureText());
-                }
-                else
-                {
-                    _activeOutputSink("{\"schema\":\"cubley/v1/lnbh26\",\"channel\":\"" + LnbChannelToSchemaName(channel) + "\",\"error\":\"init_failed\",\"rc\":" + _lnbInitStatus.ToString() + "}\r\n");
-                }
-                return;
-            }
-
-            int s1;
-            int s2;
-            int rc = ReadLnbStatusPairSafe(out s1, out s2);
-            if (rc != (int)LNBH26.Status.Ok)
-            {
-                if (_activeCommandTransport == CommandTransport.Usb)
-                {
-                    WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper() + " details");
-                    WriteHumanField("Status", "Read failed (code " + rc.ToString() + ")");
-                }
-                else
-                {
-                    _activeOutputSink(
-                        "{\"schema\":\"cubley/v1/lnbh26\",\"channel\":\"" + LnbChannelToSchemaName(channel) +
-                        "\",\"error\":\"status_read_failed\",\"rc\":" + rc.ToString() + "}\r\n");
-                }
-                return;
-            }
-
-            int d1;
-            int d2;
-            int d3;
-            int d4;
-            rc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
-            if (rc != (int)LNBH26.Status.Ok)
-            {
-                if (_activeCommandTransport == CommandTransport.Usb)
-                {
-                    WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper() + " details");
-                    WriteHumanField("Configuration", "Read failed (code " + rc.ToString() + ")");
-                }
-                else
-                {
-                    _activeOutputSink(
-                        "{\"schema\":\"cubley/v1/lnbh26\",\"channel\":\"" + LnbChannelToSchemaName(channel) +
-                        "\",\"error\":\"data_read_failed\",\"rc\":" + rc.ToString() + "}\r\n");
-                }
-                return;
-            }
-
-            if (_activeCommandTransport == CommandTransport.Usb)
-            {
-                WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper() + " details");
-                WriteHumanField("Status 1", ToHexU8(s1));
-                WriteHumanField("Status 2", ToHexU8(s2));
-                WriteHumanField("Data 1", ToHexU8(d1));
-                WriteHumanField("Data 2", ToHexU8(d2));
-                WriteHumanField("Data 3", ToHexU8(d3));
-                WriteHumanField("Data 4", ToHexU8(d4));
-                return;
-            }
-
-            _activeOutputSink(BuildLnbRegisterJson(channel, s1, s2, d1, d2, d3, d4) + "\r\n");
         }
 
         private static bool HasFaultStatus(int status1)
@@ -766,12 +655,6 @@ namespace CubleyControl
             }
 
             return rc;
-        }
-
-        private static string BuildLnbRegisterJson(int channel, int s1, int s2, int d1, int d2, int d3, int d4)
-        {
-            Lnbh26ParsedPayload parsed = LNBH26RegisterParser.Parse(LnbChannelToSchemaName(channel), s1, s2, d1, d2, d3, d4);
-            return LNBH26JsonRenderer.Render(parsed);
         }
 
         private static bool EnsureLnbInitialized()

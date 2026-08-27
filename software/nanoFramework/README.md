@@ -27,7 +27,7 @@ Default behavior:
 - Targets `CubleyControl/CubleyControl.nfproj`
 - Runs package bootstrap/restore
 - Runs compile or build via nanoFramework MSBuild toolchain
-- Skips interop guard/checksum preflight by default in this wrapper
+- Runs interop guard/checksum preflight by default in this wrapper
 
 Enable interop preflight checks when needed:
 
@@ -72,10 +72,6 @@ Typical artifacts:
 ## Firmware Build
 
 Firmware and managed build are separate workflows.
-
-Use native build wrapper from this folder:
-
-- `./toolchain/build-native.sh build --profile cubley-base`
 
 ## Notes
 

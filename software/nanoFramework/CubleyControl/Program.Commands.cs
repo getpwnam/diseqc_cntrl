@@ -186,7 +186,7 @@ namespace CubleyControl
             if (topic == "lnb" || topic == "l")
             {
                 WriteHumanHeading("LNB commands");
-                WriteHelpCommand("show lnb [a|b] [detail]", "Display LNB state or registers");
+                WriteHelpCommand("show lnb [a|b]", "Display LNB state");
                 WriteHelpCommand("lnb <a|b> enable", "Enable LNB output");
                 WriteHelpCommand("lnb <a|b> disable", "Disable LNB output");
                 WriteHelpCommand("lnb <a|b> polarization <value>", "Set vertical or horizontal polarization");
@@ -200,7 +200,7 @@ namespace CubleyControl
             {
                 WriteHumanHeading("Show commands");
                 WriteHelpCommand("show", "Display a device summary");
-                WriteHelpCommand("show lnb [a|b] [detail]", "Display LNB state");
+                WriteHelpCommand("show lnb [a|b]", "Display LNB state");
                 WriteHelpCommand("show diseqc", "Display DiSEqC state");
                 WriteHelpCommand("show network", "Display live network state");
                 WriteHelpCommand("show mqtt", "Display live MQTT state");

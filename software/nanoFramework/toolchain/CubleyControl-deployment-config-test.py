@@ -7,7 +7,6 @@ from pathlib import Path
 REQUIRED_ASSEMBLIES = [
     "CubleyControl.pe",
     "CubleyNative.pe",
-    "CubleyLnbh26Managed.pe",
     "CubleyDiseqcManaged.pe",
     "System.Device.Gpio.pe",
     "System.Device.Pwm.pe",
@@ -17,7 +16,6 @@ REQUIRED_ASSEMBLIES = [
     "nanoFramework.Runtime.Native.pe",
     "nanoFramework.System.Collections.pe",
     "System.IO.Streams.pe",
-    "nanoFramework.System.Text.pe",
     "System.Net.pe",
     "nanoFramework.M2Mqtt.Core.pe",
     "nanoFramework.M2Mqtt.pe",
@@ -27,7 +25,6 @@ REQUIRED_ASSEMBLIES = [
 EXPECTED_BUILD_MANIFEST = [
     "$PRIMARY_PE",
     "$CUBLEY_INTEROP_PE",
-    "$CUBLEY_LNBH26_MANAGED_PE",
     "$CUBLEY_DISEQC_MANAGED_PE",
     "$OUTPUT_DIR/System.Device.Gpio.pe",
     "$OUTPUT_DIR/System.Device.Pwm.pe",
@@ -37,7 +34,6 @@ EXPECTED_BUILD_MANIFEST = [
     "$OUTPUT_DIR/nanoFramework.Runtime.Native.pe",
     "$OUTPUT_DIR/nanoFramework.System.Collections.pe",
     "$OUTPUT_DIR/System.IO.Streams.pe",
-    "$OUTPUT_DIR/nanoFramework.System.Text.pe",
     "$OUTPUT_DIR/System.Net.pe",
     "$OUTPUT_DIR/nanoFramework.M2Mqtt.Core.pe",
     "$OUTPUT_DIR/nanoFramework.M2Mqtt.pe",

@@ -23,10 +23,6 @@
     <Compile Include="ApplicationConfigurationStorage.cs" />
     <Compile Include="BuildInfo.cs" Condition=" '$(BuildInfoSource)' == '' " />
     <Compile Include="$(BuildInfoSource)" Condition=" '$(BuildInfoSource)' != '' " />
-    <Compile Include="Contracts\CapabilityRegistry.cs" />
-    <Compile Include="Contracts\CommandIds.cs" />
-    <Compile Include="Contracts\ResultCodes.cs" />
-    <Compile Include="Contracts\ResultEnvelope.cs" />
     <Compile Include="Program.Commands.Configuration.cs" />
     <Compile Include="Program.Commands.Diseqc.cs" />
     <Compile Include="Program.Commands.Lnb.cs" />
@@ -37,11 +33,11 @@
     <Compile Include="Program.LnbHealth.cs" />
     <Compile Include="Program.Network.cs" />
     <Compile Include="Program.MqttConfiguration.cs" />
+    <Compile Include="Program.Infrastructure.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="InternalNetworkConfigurationStorage.cs" />
     <Compile Include="MqttConfiguration.cs" />
     <Compile Include="NetworkConfiguration.cs" />
-    <Compile Include="NetworkConfigurationStorage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -81,18 +77,11 @@
     <Reference Include="System.Net">
       <HintPath>..\packages\nanoFramework.System.Net.1.11.60\lib\System.Net.dll</HintPath>
     </Reference>
-    <Reference Include="nanoFramework.System.Text">
-      <HintPath>..\packages\nanoFramework.System.Text.1.3.42\lib\nanoFramework.System.Text.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CubleyNative.Interop\Cubley.Interop.nfproj">
       <Project>{E65B3A56-704A-4E42-88E3-9E3A2E35B641}</Project>
       <Name>CubleyNative</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\CubleyLnbh26.Managed\CubleyLnbh26.Managed.nfproj">
-      <Project>{32F4C8B6-E861-4133-9A8B-4D47C87EECC5}</Project>
-      <Name>CubleyLnbh26Managed</Name>
     </ProjectReference>
     <ProjectReference Include="..\CubleyDiseqc.Managed\CubleyDiseqc.Managed.nfproj">
       <Project>{6FA51AE4-D707-4E7A-AFA0-111A1B8B8B42}</Project>

@@ -612,7 +612,6 @@ else
   fi
   PRIMARY_PE="$OUTPUT_DIR/$ASSEMBLY_NAME.pe"
   CUBLEY_INTEROP_PE="$OUTPUT_DIR/CubleyNative.pe"
-  CUBLEY_LNBH26_MANAGED_PE="$OUTPUT_DIR/CubleyLnbh26Managed.pe"
   CUBLEY_DISEQC_MANAGED_PE="$OUTPUT_DIR/CubleyDiseqcManaged.pe"
   RUNTIME_EVENTS_PE=""
 
@@ -641,7 +640,6 @@ else
     required_pe_paths=(
       "$PRIMARY_PE"
       "$CUBLEY_INTEROP_PE"
-      "$CUBLEY_LNBH26_MANAGED_PE"
       "$CUBLEY_DISEQC_MANAGED_PE"
       "$OUTPUT_DIR/System.Device.Gpio.pe"
       "$OUTPUT_DIR/System.Device.Pwm.pe"
@@ -651,7 +649,6 @@ else
       "$OUTPUT_DIR/nanoFramework.Runtime.Native.pe"
       "$OUTPUT_DIR/nanoFramework.System.Collections.pe"
       "$OUTPUT_DIR/System.IO.Streams.pe"
-      "$OUTPUT_DIR/nanoFramework.System.Text.pe"
       "$OUTPUT_DIR/System.Net.pe"
       "$OUTPUT_DIR/nanoFramework.M2Mqtt.Core.pe"
       "$OUTPUT_DIR/nanoFramework.M2Mqtt.pe"

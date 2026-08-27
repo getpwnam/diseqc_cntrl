@@ -3,6 +3,14 @@ using System.Net.NetworkInformation;
 
 namespace CubleyControl
 {
+    internal interface INetworkConfigurationStorage
+    {
+        string Source { get; }
+        bool RequiresApplyAfterLoad { get; }
+        bool TryLoad(out NetworkConfiguration configuration, out string error);
+        bool TrySave(NetworkConfiguration configuration, out string error);
+    }
+
     internal sealed class InternalNetworkConfigurationStorage : INetworkConfigurationStorage
     {
         public string Source
