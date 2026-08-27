@@ -1,6 +1,6 @@
 # CubleyControl Command Map
 
-Status: implemented command set as of 2026-08-26
+Status: implemented command set as of 2026-08-27
 
 ## Purpose
 
@@ -14,7 +14,22 @@ identifiers and are not accepted as external command text.
 
 ## USB CDC Transport
 
-Enter commands directly at the USB CDC prompt. There is no `cubley v1` CLI prefix.
+Opening the USB CDC transport displays the product banner followed by `Console
+inactive. Press Enter to activate.` Press Enter to acquire the interactive console
+lease and display the prompt. There is no `cubley v1` CLI prefix.
+
+Only one interactive console may hold the lease at a time. A later USB, SSH, or
+other interactive transport must wait until the owner runs `quit` or `logout`,
+disconnects, or remains inactive for ten minutes. The console warns after nine
+minutes of inactivity. Only input received from the operator refreshes the lease;
+periodic `watch` output and other asynchronous output do not. MQTT commands are
+stateless and do not acquire the interactive console lease.
+
+In operational mode, empty-line `Ctrl+D` also releases the console. In
+configuration mode, `Ctrl+D` retains its existing meaning of leaving configuration
+mode when the candidate is clean. `quit` and `logout` release the console from
+either mode only when the candidate is clean. Disconnect and inactivity timeout
+discard an uncommitted candidate before releasing ownership.
 
 USB `show` commands render labeled, human-readable text. Successful setter and
 action commands are silent by default; the changed prompt or subsequent `show`
@@ -45,6 +60,177 @@ The USB CDC console supports both responsibilities through separate command mode
 MQTT supports only self-contained operational commands. Configuration mode is
 session state and must never be shared between USB CDC and MQTT.
 
+### Console Command Tree
+
+This tree is the compact index of the accepted USB console grammar. Angle brackets
+denote required values, square brackets denote optional values, and `|` separates
+alternatives. Keep it synchronized with `Program.Commands.cs` and the owning
+`Program.Commands.*.cs` handlers whenever command parsing changes.
+
+```text
+CubleyControl console
+|
+|-- Operational mode
+|   |
+|   |-- help|h|? [topic]
+|   |     Show command help.
+|   |
+|   |-- show
+|   |   |-- show
+|   |   |     Display system, both LNB channels, and DiSEqC summary.
+|   |   |-- lnb [a|b] [detail]
+|   |   |     Display LNB state; "detail" includes register details.
+|   |   |-- diseqc
+|   |   |     Display routing preset, carrier, transmitter, and motion state.
+|   |   |-- network|net
+|   |   |     Display live network interface state.
+|   |   |-- mqtt
+|   |   |     Display live MQTT service state.
+|   |   |-- running-config|run [network|net|mqtt|mq]
+|   |   |     Display active configuration.
+|   |   |-- startup-config|start [network|net|mqtt|mq]
+|   |   |     Display persisted configuration.
+|   |   |-- status
+|   |   |     Display USB console and status LED health.
+|   |   |-- capabilities|caps
+|   |   |     Display supported transports and configuration capabilities.
+|   |   `-- version|ver
+|   |         Display product, firmware, Git, interface, and shell versions.
+|   |
+|   |-- status|st
+|   |     Short form of "show status".
+|   |-- capabilities|caps
+|   |     Short form of "show capabilities".
+|   |-- version|ver
+|   |     Short form of "show version".
+|   |
+|   |-- lnb|l <a|b>
+|   |   |-- enable
+|   |   |     Enable the selected LNB output.
+|   |   |-- disable
+|   |   |     Disable the selected LNB output.
+|   |   |-- polarization|pol|p <vertical|v|horizontal|h>
+|   |   |     Set LNB polarization.
+|   |   |-- band|b <low|l|high|h>
+|   |   |     Set LNB frequency band.
+|   |   |-- iset <default|normal|high|0|low|reduced|1>
+|   |   |     Set the LNB current range.
+|   |   `-- isw <4a|4|default|high|0|2.5a|2p5a|2_5a|low|reduced|1>
+|   |         Set the switch current limit.
+|   |
+|   |-- diseqc
+|   |   |-- goto <0..255>
+|   |   |     Move to a stored position.
+|   |   |-- step <east|west> <1..128>
+|   |   |     Move a fixed number of steps.
+|   |   |-- drive <east|west>
+|   |   |     Start continuous movement.
+|   |   |-- stop
+|   |   |     Transmit the positioner halt command.
+|   |   |-- complete <motion_id>
+|   |   |     Mark the matching active motion complete.
+|   |   |-- preset status
+|   |   |     Display the selected routing preset.
+|   |   |-- preset <off|direct|aa|ab|ba|bb>
+|   |   |     Select the routing prefix for positioner commands.
+|   |   |-- tx <hex_byte> <hex_byte> [hex_byte ...]
+|   |   |     Transmit a raw frame of 2 through 7 bytes.
+|   |   |-- tone on [frequency_hz] [duty_percent]
+|   |   |     Start the carrier; defaults to 22000 Hz and 50%.
+|   |   |-- tone off|status
+|   |   |     Stop or inspect the carrier.
+|   |   `-- listen <on|off|1|0|true|false>
+|   |         Control the channel-A external modulation input.
+|   |
+|   |-- dns lookup <hostname>
+|   |     Resolve a hostname.
+|   |-- watch|w [on|off|1|0]
+|   |     Control periodic status output; omitted value means on.
+|   |-- led <on|off>
+|   |     Set the status LED.
+|   |-- pulse
+|   |     Pulse the status LED for 100 ms.
+|   |-- configure|config|conf [terminal|t]
+|   |     Enter USB configuration mode.
+|   `-- quit|logout
+|         Release the console when configuration is clean.
+|
+`-- Configuration mode
+	|
+	|-- help|h|? [topic]
+	|     Show configuration command help.
+	|-- hostname <name|auto>
+	|     Set the hostname or derive it from the STM32 unique ID.
+	|
+	|-- network|net
+	|   |-- mode <dhcp|static>
+	|   |     Set address assignment mode.
+	|   |-- address|addr|ip <ipv4>
+	|   |     Set the static IPv4 address.
+	|   |-- mask <mask>
+	|   |     Set the static subnet mask.
+	|   |-- gateway|gw <ipv4>
+	|   |     Set the static gateway.
+	|   |-- dns auto
+	|   |     Use automatic DNS.
+	|   |-- dns static <dns1> [dns2]
+	|   |     Set static DNS servers.
+	|   `-- default|defaults
+	|         Stage network defaults.
+	|
+	|-- mqtt|mq
+	|   |-- enabled|enable <on|off|1|0|true|false>
+	|   |     Enable or disable MQTT.
+	|   |-- broker|host <host|clear>
+	|   |     Set or clear the broker address.
+	|   |-- port <1..65535>
+	|   |     Set the broker port.
+	|   |-- client-id|client <id|auto>
+	|   |     Set the client identifier.
+	|   |-- username|user <value|clear>
+	|   |     Set or clear the username.
+	|   |-- password|pass <value|clear>
+	|   |     Set or clear the password.
+	|   |-- topic-prefix|topic <prefix>
+	|   |     Set the MQTT base topic prefix.
+	|   |-- keepalive|keep-alive <15..3600>
+	|   |     Set keepalive seconds.
+	|   |-- reconnect <1..60>
+	|   |     Set reconnect delay seconds.
+	|   `-- default|defaults
+	|         Stage MQTT defaults.
+	|
+	|-- show
+	|   |-- candidate-config|candidate|cand [network|net|mqtt|mq]
+	|   |     Display the staged candidate.
+	|   |-- diff | config diff
+	|   |     Compare candidate and running configuration.
+	|   |-- running-config|run [network|net|mqtt|mq]
+	|   |     Display active configuration.
+	|   |-- startup-config|start [network|net|mqtt|mq]
+	|   |     Display persisted configuration.
+	|   `-- storage|configuration-storage|config-storage
+	|         Display storage backend and loading status.
+	|
+	|-- debug <on|off>
+	|     Control successful setter output.
+	|-- commit|apply
+	|     Validate, persist, and activate changes.
+	|-- discard|abort
+	|     Abandon candidate changes.
+	|-- load defaults [network|net|mqtt|mq|all]
+	|     Stage defaults without committing.
+	|-- defaults [network|net|mqtt|mq|all]
+	|     Short form of "load defaults".
+	|-- exit|end
+	|     Return to operational mode when the candidate is clean.
+	`-- quit|logout
+		  Release the console when the candidate is clean.
+```
+
+`Ctrl+D` releases a clean operational session. In configuration mode it behaves
+like `exit`. Blank lines and lines beginning with `!` are ignored.
+
 ### Transport And Mode Matrix
 
 | Interface | Operational mode | Configuration mode | Notes |
@@ -58,10 +244,10 @@ authorization boundary.
 
 ### Operational Mode
 
-The initial USB prompt is `<hostname>> `. Operational mode contains normal LNB and
-DiSEqC control, runtime status, and local diagnostics. Read-only administrative
-views remain available at this prompt; entering configuration mode is required
-only to mutate configuration.
+After console activation, the initial USB prompt is `<hostname>> `. Operational
+mode contains normal LNB and DiSEqC control, runtime status, and local diagnostics.
+Read-only administrative views remain available at this prompt; entering
+configuration mode is required only to mutate configuration.
 
 On connection, the console emits `Cubley Rotation Control v<VERSION>`. Wrapper
 builds encode the three-part product version from `AssemblyVersion`, the first
@@ -75,7 +261,7 @@ that commit, for example `1.0.0+g1a2b3c4d.dirty`. Direct project builds use
 | `show capabilities` | yes | yes | Show supported operational capabilities. |
 | `show version` | yes | yes | Show firmware and interface versions. |
 | `show lnb [a\|b] [detail]` | yes | yes | Inspect both channels or one selected channel. |
-| `lnb <a\|b> <field> <value>` | yes | yes | Perform one LNB state assignment. |
+| `lnb <a\|b> <action> [value]` | yes | yes | Perform one LNB state change. |
 | `show diseqc`, `diseqc ...` | yes | yes | Inspect or perform one DiSEqC operation. |
 | `help [topic]` | yes | no | Show context-sensitive console help. |
 | `watch [on\|off]` | yes | no | Control the USB periodic status display. |
@@ -85,6 +271,7 @@ that commit, for example `1.0.0+g1a2b3c4d.dirty`. Direct project builds use
 | `dns lookup <hostname>` | yes | no | Run a local DNS diagnostic. |
 | `led on`, `led off`, `pulse` | yes | no | Run local status LED diagnostics. |
 | `configure` | yes | no | Enter configuration mode. |
+| `quit`, `logout` | yes | no | Release the interactive console lease. |
 
 The `MQTT` column above is the complete command allowlist for that transport.
 The MQTT dispatcher must reject every other command as `unsupported` before it
@@ -236,6 +423,7 @@ a new device requires entering the password separately before `commit`.
 | `led off` | none | Drive the status LED low. |
 | `pulse` | none | Pulse the status LED for 100 ms. |
 | `configure` | `config`, `conf`, `configure terminal`, `config terminal`, `conf t` | Enter USB configuration mode. |
+| `quit` | `logout`; empty-line `Ctrl+D` in operational mode | Release the interactive console lease. |
 
 ## LNB Commands
 
@@ -252,21 +440,22 @@ alias for the `lnb` command family.
 | `show lnb [a\|b] detail` | Emit LNBH26 register JSON for both or one selected channel. |
 | `show diseqc` | Emit routing preset, tone, carrier settings, and transmit-busy state. |
 
-Each LNB summary includes polarization, band, ISET range, ISW limit, voltage,
-tone, low-power mode, external DiSEqC input, and fault registers.
+Each LNB summary includes enabled state, polarization, band, ISET range, ISW
+limit, voltage, tone, low-power mode, external DiSEqC input, and fault registers.
 
-### State Assignments
+### State Changes
 
 | Command | Aliases | Accepted values |
 |---|---|---|
-| `lnb <a\|b> enable <value>` | `enabled`, `e`; root `l` | `on\|off`, `1\|0`, `true\|false` |
+| `lnb <a\|b> enable` | root `l` | none |
+| `lnb <a\|b> disable` | root `l` | none |
 | `lnb <a\|b> polarization <value>` | `pol`, `p`; root `l` | `vertical\|horizontal`, `v\|h` |
 | `lnb <a\|b> band <value>` | `b`; root `l` | `low\|high`, `l\|h` |
 | `lnb <a\|b> iset <value>` | root `l` | `default\|normal\|high\|0` or `low\|reduced\|1` |
 | `lnb <a\|b> isw <value>` | root `l` | `4a\|4\|default\|high\|0` or `2.5a\|2p5a\|2_5a\|low\|reduced\|1` |
 
-Enabling either logical channel calls the current global native enable operation.
-An LNB command without a value is an error; all reads begin with `show`.
+Enabling or disabling a logical channel updates that channel's native LNB output
+state. Assignment commands require a value; all reads begin with `show`.
 
 ## Network And MQTT Configuration
 
@@ -295,6 +484,7 @@ mutations are accepted only after entering configuration mode.
 | `diseqc step <east\|west> <steps>` | Move `1..128` steps. |
 | `diseqc drive <east\|west>` | Start continuous movement. |
 | `diseqc stop` | Transmit the positioner halt command. |
+| `diseqc complete <motion_id>` | Release the matching motion lock after external completion detection. |
 | `diseqc preset <off\|direct\|aa\|ab\|ba\|bb>` | Select the routing prefix applied to positioner commands. |
 | `diseqc preset status` | Show the selected routing preset. |
 | `diseqc tx <hex_byte> <hex_byte> [hex_byte ...]` | Transmit 2 to 7 hexadecimal bytes. |
@@ -304,7 +494,12 @@ mutations are accepted only after entering configuration mode.
 | `diseqc listen <on\|off>` | Enable or disable the channel-A LNBH26 external DiSEqC input; boolean aliases are accepted. |
 
 The selected preset prefixes `goto`, `step`, `drive`, and `stop`. Raw `diseqc tx`
-frames are transmitted unchanged.
+frames are transmitted unchanged. Successful `goto`, `step`, and `drive` commands
+hold a motion lock that rejects further movement and raw frames. Step commands use
+a step-derived deadline; goto and drive use the 90-second worst-case deadline.
+`diseqc stop` is always accepted and clears the lock after transmitting Halt. An
+external completion command must include the current motion ID so a delayed signal
+cannot release a newer movement.
 
 ## Canonical Command IDs
 

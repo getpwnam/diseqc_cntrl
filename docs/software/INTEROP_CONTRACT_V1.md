@@ -48,7 +48,7 @@ The current type order is:
 | 4 | `Fram24C128.NativeWrite` | `int NativeWrite(int address, byte[] buffer, int offset, int count)` |
 | 5 | `Fram24C128.NativeRead` | `int NativeRead(int address, byte[] buffer, int offset, int count)` |
 | 6 | `LNBH26.NativeInit` | `int NativeInit()` |
-| 7 | `LNBH26.NativeSetEnable` | `int NativeSetEnable(bool enable)` |
+| 7 | `LNBH26.NativeSetEnable` | `int NativeSetEnable(int channel, bool enable)` |
 | 8 | `LNBH26.NativeReadStatus` | `int NativeReadStatus(out int statusRegister)` |
 | 9 | `LNBH26.NativeReadStatusPair` | `int NativeReadStatusPair(out int status1, out int status2)` |
 | 10 | `LNBH26.NativeSetPolarizationForChannel` | `int NativeSetPolarizationForChannel(int channel, int polarization)` |

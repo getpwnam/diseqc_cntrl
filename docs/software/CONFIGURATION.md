@@ -79,12 +79,13 @@ with `/` or contain MQTT wildcards (`#` or `+`).
 `show candidate-config` renders the complete candidate except for secret material.
 `show running-config` and `show startup-config` are available from either USB mode.
 `show storage` reports network and application configuration backend status
-separately from live network and MQTT service state. Successful setters are silent by default;
-`debug on` enables result details for the current USB session and `debug off`
-restores quiet output.
-`show mqtt` reports service state, connection state, effective hostname, client ID
-and topic root, reconnect attempts, and a sanitized last error. MQTT command
-messages cannot enter configuration mode or inspect configuration.
+separately from live network and MQTT service state. `show network` reports the
+active interface plus the network configuration source and load status.
+Successful setters are silent by default; `debug on` enables result details for
+the current USB session and `debug off` restores quiet output. `show mqtt` reports
+service state, connection state, effective hostname, client ID and topic root,
+reconnect attempts, and a sanitized last error. MQTT command messages cannot enter
+configuration mode or inspect configuration.
 
 ## Save And Recovery
 

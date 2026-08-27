@@ -114,7 +114,7 @@ Method slot map (native `method_lookup`):
 | 4 | `Fram24C128.NativeWrite(int, byte[], int, int)` |
 | 5 | `Fram24C128.NativeRead(int, byte[], int, int)` |
 | 6 | `LNBH26.NativeInit()` |
-| 7 | `LNBH26.NativeSetEnable(bool)` |
+| 7 | `LNBH26.NativeSetEnable(int, bool)` |
 | 8 | `LNBH26.NativeReadStatus(out int)` |
 | 9 | `LNBH26.NativeReadStatusPair(out int, out int)` |
 | 10 | `LNBH26.NativeSetPolarizationForChannel(int, int)` |

@@ -107,7 +107,7 @@ namespace Cubley.Interop
         public static extern int NativeInit();
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern int NativeSetEnable(bool enable);
+        public static extern int NativeSetEnable(int channel, bool enable);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeReadStatus(out int statusRegister);

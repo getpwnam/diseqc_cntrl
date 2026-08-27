@@ -21,6 +21,8 @@ namespace CubleyControl
         private static string _mqttResponseTopic = string.Empty;
         private static string _mqttEventTopic = string.Empty;
         private static string _mqttStateTopic = string.Empty;
+        private static string _mqttDiseqcEventTopic = string.Empty;
+        private static string _mqttDiseqcStateTopic = string.Empty;
         private static string _mqttRuntimeState = "disabled";
         private static string _mqttLastError = string.Empty;
         private static int _mqttReconnectAttempts;
@@ -97,6 +99,8 @@ namespace CubleyControl
             _mqttResponseTopic = topicRoot + "/response";
             _mqttEventTopic = topicRoot + "/event/lnb";
             _mqttStateTopic = topicRoot + "/state/lnb";
+            _mqttDiseqcEventTopic = topicRoot + "/event/diseqc";
+            _mqttDiseqcStateTopic = topicRoot + "/state/diseqc";
             _mqttReconnectAttempts++;
             _mqttRuntimeState = "connecting";
 
@@ -142,6 +146,7 @@ namespace CubleyControl
 
                 PublishLine(availabilityTopic, "online", MqttQoSLevel.AtMostOnce, true);
                 PublishMqttState();
+                PublishMqttDiseqcState();
                 _mqttRuntimeState = "subscribing";
                 ushort subscriptionMessageId = _mqttClient.Subscribe(
                     new string[] { _mqttCommandTopic },
@@ -172,6 +177,8 @@ namespace CubleyControl
                 _mqttResponseTopic = string.Empty;
                 _mqttEventTopic = string.Empty;
                 _mqttStateTopic = string.Empty;
+                _mqttDiseqcEventTopic = string.Empty;
+                _mqttDiseqcStateTopic = string.Empty;
                 if (client != null)
                 {
                     client.MqttMsgPublishReceived -= OnMqttMessageReceived;
@@ -330,6 +337,7 @@ namespace CubleyControl
             ExecuteCommand(command, MqttOutputSink, CommandTransport.Mqtt);
             CacheMqttCommandResponses(commandId, command);
             PublishMqttState();
+            PublishMqttDiseqcState();
             WriteStructuredDebug(
                 "COMMAND",
                 "schema=1 sub=command comp=dispatch operation=complete stat=ok" +
@@ -513,6 +521,61 @@ namespace CubleyControl
             }
 
             PublishLine(_mqttStateTopic, payload, MqttQoSLevel.AtLeastOnce, true);
+        }
+
+        private static void PublishMqttDiseqcMotionTransition(string transition)
+        {
+            bool busy;
+            int motionId;
+            string operation;
+            int remainingMs;
+            string completionSource;
+            GetDiseqcMotionSnapshot(out busy, out motionId, out operation, out remainingMs, out completionSource);
+
+            string payload =
+                "schema=1 sub=diseqc comp=motion" +
+                " operation=" + transition +
+                " stat=" + (busy ? "busy" : "idle") +
+                " event_id=" + NextMqttEventId().ToString() +
+                " motion_id=" + motionId.ToString() +
+                " motion_operation=" + operation +
+                " remaining_ms=" + remainingMs.ToString() +
+                " completion=" + completionSource;
+
+            WriteStructuredDebug("DISEQC", payload);
+            if (_mqttClient != null && _mqttClient.IsConnected && !string.IsNullOrEmpty(_mqttDiseqcEventTopic))
+            {
+                PublishLine(_mqttDiseqcEventTopic, payload, MqttQoSLevel.AtLeastOnce, false);
+            }
+
+            PublishMqttDiseqcState();
+        }
+
+        private static void PublishMqttDiseqcState()
+        {
+            bool busy;
+            int motionId;
+            string operation;
+            int remainingMs;
+            string completionSource;
+            GetDiseqcMotionSnapshot(out busy, out motionId, out operation, out remainingMs, out completionSource);
+
+            string payload =
+                "schema=1 sub=diseqc comp=state" +
+                " stat=" + (busy ? "busy" : "idle") +
+                " motion_id=" + motionId.ToString() +
+                " operation=" + operation +
+                " remaining_ms=" + remainingMs.ToString() +
+                " completion=" + completionSource +
+                " timeout_ms=" + DiseqcMotionWorstCaseMs.ToString();
+
+            WriteStructuredDebug("DISEQC", payload);
+            if (_mqttClient == null || !_mqttClient.IsConnected || string.IsNullOrEmpty(_mqttDiseqcStateTopic))
+            {
+                return;
+            }
+
+            PublishLine(_mqttDiseqcStateTopic, payload, MqttQoSLevel.AtLeastOnce, true);
         }
 
         private static void OnMqttConnectionClosed(object sender, EventArgs e)

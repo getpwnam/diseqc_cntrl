@@ -15,7 +15,7 @@ namespace CubleyControl
                 return;
             }
 
-            int setEnableRc = LNBH26.NativeSetEnable(false);
+            int setEnableRc = LNBH26.NativeSetEnable(LnbChannelA, false);
             int setPolRc = LNBH26.NativeSetPolarizationForChannel(LnbChannelA, (int)LNBH26.Polarization.Vertical);
             int setBandRc = LNBH26.NativeSetBandForChannel(LnbChannelA, (int)LNBH26.Band.Low);
 
@@ -37,11 +37,15 @@ namespace CubleyControl
                 {
                     WriteHumanHeading("System");
                     WriteHumanField("Serial", "Up");
-                    WriteHumanField("USB console", enabled != 0 ? "Connected" : "Disconnected");
+                    WriteHumanField(
+                        "USB console",
+                        enabled == 0 ? "Disconnected" : IsConsoleLeaseActive(ConsoleTransport.Usb) ? "Active" : "Inactive");
                 }
                 else
                 {
-                    _activeOutputSink("system serial=up cdc_enabled=" + enabled.ToString() + "\r\n");
+                    _activeOutputSink(
+                        "system serial=up cdc_enabled=" + enabled.ToString() +
+                        " console_active=" + (IsConsoleLeaseActive(ConsoleTransport.Usb) ? "1" : "0") + "\r\n");
                 }
                 EmitLnbShowSummaryLine(LnbChannelA);
                 EmitLnbShowSummaryLine(1);
@@ -168,9 +172,9 @@ namespace CubleyControl
                 return;
             }
 
-            if (tokens.Length != 4)
+            if (tokens.Length < 3 || tokens.Length > 4)
             {
-                WriteCommandResult(reqId, false, "validation_error", "lnb usage", "usage=lnb <a|b> <enable|polarization|band|iset|isw> <value>");
+                WriteCommandResult(reqId, false, "validation_error", "lnb usage", "usage=lnb <a|b> <enable|disable|polarization|band|iset|isw> [value]");
                 return;
             }
 
@@ -182,29 +186,36 @@ namespace CubleyControl
             }
 
             string field = tokens[2];
-            string value = tokens[3];
 
-            if (field == "enable" || field == "enabled" || field == "e")
+            if (field == "enable" || field == "disable")
             {
-                bool enable;
-                if (!TryParseOnOff(value, out enable))
+                if (tokens.Length != 3)
                 {
-                    WriteCommandResult(reqId, false, "validation_error", "lnb enable invalid", "value=" + value);
+                    WriteCommandResult(reqId, false, "validation_error", "lnb " + field + " usage", "usage=lnb <a|b> " + field);
                     return;
                 }
 
-                int rc = LNBH26.NativeSetEnable(enable);
+                bool enable = field == "enable";
+                int rc = LNBH26.NativeSetEnable(channel, enable);
                 if (rc == (int)LNBH26.Status.Ok)
                 {
-                    WriteCommandResult(reqId, true, "ok", "lnb enable", "channel=" + LnbChannelToSchemaName(channel) + " value=" + (enable ? "on" : "off") + " scope=global");
+                    WriteCommandResult(reqId, true, "ok", "lnb " + field, "channel=" + LnbChannelToSchemaName(channel) + " value=" + (enable ? "on" : "off"));
                 }
                 else
                 {
-                    WriteCommandResult(reqId, false, "hw_fault", "lnb enable failed", "channel=" + LnbChannelToSchemaName(channel) + " rc=" + rc.ToString());
+                    WriteCommandResult(reqId, false, "hw_fault", "lnb " + field + " failed", "channel=" + LnbChannelToSchemaName(channel) + " rc=" + rc.ToString());
                 }
 
                 return;
             }
+
+            if (tokens.Length != 4)
+            {
+                WriteCommandResult(reqId, false, "validation_error", "lnb field requires value", "field=" + field);
+                return;
+            }
+
+            string value = tokens[3];
 
             if (field == "polarization" || field == "pol" || field == "p")
             {
@@ -357,6 +368,7 @@ namespace CubleyControl
             if (_activeCommandTransport == CommandTransport.Usb)
             {
                 WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper());
+                WriteHumanField("Enabled", IsLnbChannelEnabled(channel, d1) ? "Yes" : "No");
                 WriteHumanField("Polarization", PolarizationToText(pol));
                 WriteHumanField("Band", BandToText(band));
                 WriteHumanField("Current range", IsetToText(isetLow));
@@ -372,6 +384,7 @@ namespace CubleyControl
 
             _activeOutputSink(
                 "lnb." + LnbChannelToSchemaName(channel) +
+                " enabled=" + (IsLnbChannelEnabled(channel, d1) ? "on" : "off") +
                 " pol=" + PolarizationToText(pol) +
                 " band=" + BandToText(band) +
                 " iset=" + IsetToText(isetLow) +
@@ -475,6 +488,12 @@ namespace CubleyControl
             return channel == LnbChannelA
                 ? (data2 & (int)LNBH26.Data2Flags.TenA) != 0
                 : (data2 & (int)LNBH26.Data2Flags.TenB) != 0;
+        }
+
+        private static bool IsLnbChannelEnabled(int channel, int data1)
+        {
+            int voltageSelect = channel == LnbChannelA ? (data1 & 0x0F) : ((data1 >> 4) & 0x0F);
+            return voltageSelect != 0;
         }
 
         private static bool IsLowPowerEnabledForChannel(int channel, int data2)

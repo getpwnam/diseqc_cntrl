@@ -22,6 +22,8 @@ configuration commands.
 | Response from device | `<prefix>/<hostname>/response` | `id=<id> OK`, `id=<id> Fail: ...`, or requested query output | 1 | No |
 | LNB asynchronous transition | `<prefix>/<hostname>/event/lnb` | Schema-1 LNB event fields | 1 | No |
 | Current LNB state | `<prefix>/<hostname>/state/lnb` | Schema-1 LNB state fields | 1 | Yes |
+| DiSEqC motion transition | `<prefix>/<hostname>/event/diseqc` | Schema-1 motion event fields | 1 | No |
+| Current DiSEqC state | `<prefix>/<hostname>/state/diseqc` | Schema-1 motion state fields | 1 | Yes |
 | Device availability | `<prefix>/<hostname>/availability` | `online` or `offline` | 0/1 | Yes |
 
 The broker receives a retained `online` message after connection. The configured
@@ -78,6 +80,13 @@ command, and after each fault transition. It begins with
 fault, monitor and initialization state, register values, and channel polarization
 and band when available. Consumers should use `event/lnb` for live transitions
 and `state/lnb` to establish or recover current state.
+
+`event/diseqc` reports motion start and completion transitions. The retained
+`state/diseqc` snapshot reports `stat`, `motion_id`, `operation`, `remaining_ms`,
+`completion`, and `timeout_ms`. Successful goto, step, and drive commands set the
+state busy. Further movement and raw transmit commands fail as busy until Halt,
+timeout, or `diseqc complete <motion_id>` releases the lock. The ID check prevents
+a stale external completion message from releasing a newer movement.
 
 The compact schema uses `sub`, `comp`, `stat`, and `comm` for subsystem,
 component, status, and communication condition. Local diagnostic sequences use
