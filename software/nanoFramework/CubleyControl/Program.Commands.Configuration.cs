@@ -8,12 +8,13 @@ namespace CubleyControl
 
         private static string GetUsbPrompt()
         {
+            string hostname = ResolveHostname(_mqttConfiguration.Hostname);
             if (!_usbConfigurationMode)
             {
-                return "cubley> ";
+                return hostname + "> ";
             }
 
-            return IsConfigurationDirty() ? "cubley(config*)# " : "cubley(config)# ";
+            return IsConfigurationDirty() ? hostname + "(config*)# " : hostname + "(config)# ";
         }
 
         private static bool IsConfigureCommand(string[] tokens)
@@ -62,6 +63,12 @@ namespace CubleyControl
             if (head == "network" || head == "net")
             {
                 HandleSetNetworkCommand(PrefixConfigurationTokens(tokens, "network"), reqId);
+                return;
+            }
+
+            if (head == "hostname")
+            {
+                HandleSetHostnameCommand(tokens, reqId);
                 return;
             }
 
@@ -184,6 +191,7 @@ namespace CubleyControl
             if (tokens.Length == 1)
             {
                 WriteHumanHeading("Configuration commands");
+                WriteHelpCommand("hostname <name|auto>", "Set the device hostname");
                 WriteHelpCommand("network <setting> <value>", "Stage network configuration");
                 WriteHelpCommand("mqtt <setting> <value>", "Stage MQTT configuration");
                 WriteHelpCommand("show <topic>", "Display configuration and storage state");
@@ -217,6 +225,13 @@ namespace CubleyControl
                 return;
             }
 
+            if (topic == "hostname")
+            {
+                WriteHumanHeading("Device hostname");
+                WriteHelpCommand("hostname <name|auto>", "Set a DNS-label hostname or derive one from the STM32 unique ID");
+                return;
+            }
+
             if (topic == "mqtt" || topic == "mq")
             {
                 WriteHumanHeading("MQTT configuration");
@@ -226,7 +241,7 @@ namespace CubleyControl
                 WriteHelpCommand("mqtt client-id <id|auto>", "Set client identifier");
                 WriteHelpCommand("mqtt username <value|clear>", "Set or clear username");
                 WriteHelpCommand("mqtt password <value|clear>", "Set or clear password");
-                WriteHelpCommand("mqtt topic-prefix <prefix>", "Set MQTT topic root");
+                WriteHelpCommand("mqtt topic-prefix <prefix>", "Set MQTT base topic prefix");
                 WriteHelpCommand("mqtt keepalive <15..3600>", "Set keepalive seconds");
                 WriteHelpCommand("mqtt reconnect <1..60>", "Set reconnect delay seconds");
                 WriteHelpCommand("mqtt defaults", "Stage MQTT defaults");
@@ -293,8 +308,8 @@ namespace CubleyControl
             WriteHumanHeading("Configuration storage");
             WriteHumanField("Network backend", string.IsNullOrEmpty(_networkConfigurationSource) ? "Unknown" : _networkConfigurationSource);
             WriteHumanField("Network status", string.IsNullOrEmpty(_networkConfigurationError) ? "OK" : _networkConfigurationError);
-            WriteHumanField("MQTT backend", string.IsNullOrEmpty(_mqttConfigurationSource) ? "Unknown" : _mqttConfigurationSource);
-            WriteHumanField("MQTT status", string.IsNullOrEmpty(_mqttConfigurationError) ? "OK" : _mqttConfigurationError);
+            WriteHumanField("Application backend", string.IsNullOrEmpty(_mqttConfigurationSource) ? "Unknown" : _mqttConfigurationSource);
+            WriteHumanField("Application status", string.IsNullOrEmpty(_mqttConfigurationError) ? "OK" : _mqttConfigurationError);
         }
 
         private static void HandleLoadDefaults(string[] tokens, int reqId)
@@ -316,7 +331,12 @@ namespace CubleyControl
 
             if (domain == "mqtt" || domain == "mq" || domain == "all")
             {
+                string hostname = _pendingMqttConfiguration.Hostname;
                 _pendingMqttConfiguration = MqttConfiguration.CreateDefaults();
+                if (domain != "all")
+                {
+                    _pendingMqttConfiguration.Hostname = hostname;
+                }
                 _mqttConfigurationDirty = _pendingMqttConfiguration.ToPayload() != _mqttConfiguration.ToPayload();
             }
 
@@ -430,7 +450,11 @@ namespace CubleyControl
                 return;
             }
 
-            _activeOutputSink("! cubley-config v1 " + source + "\r\n");
+            _activeOutputSink("! cubley-config v2 " + source + "\r\n");
+            if (domain == "all" || domain == "mqtt")
+            {
+                _activeOutputSink("hostname " + (string.IsNullOrEmpty(mqtt.Hostname) ? "auto" : mqtt.Hostname) + "\r\n");
+            }
             if (domain == "all" || domain == "network")
             {
                 _activeOutputSink("network mode " + network.Mode + "\r\n");
@@ -461,6 +485,7 @@ namespace CubleyControl
         private static void EmitConfigurationDiff(int reqId)
         {
             bool changed = false;
+            changed |= EmitConfigurationDiffLine("hostname ", string.IsNullOrEmpty(_mqttConfiguration.Hostname) ? "auto" : _mqttConfiguration.Hostname, string.IsNullOrEmpty(_pendingMqttConfiguration.Hostname) ? "auto" : _pendingMqttConfiguration.Hostname);
             changed |= EmitConfigurationDiffLine("network mode ", _networkConfiguration.Mode, _pendingNetworkConfiguration.Mode);
             changed |= EmitConfigurationDiffLine("network address ", _networkConfiguration.Address, _pendingNetworkConfiguration.Address);
             changed |= EmitConfigurationDiffLine("network mask ", _networkConfiguration.SubnetMask, _pendingNetworkConfiguration.SubnetMask);

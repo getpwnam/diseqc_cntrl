@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Net.NetworkInformation;
 
 namespace CubleyControl
@@ -54,10 +53,15 @@ namespace CubleyControl
                 TryApplyNetworkConfiguration(_networkConfiguration, out error);
             }
 
-            Debug.WriteLine(
-                "[NETWORK-CONFIG] source=" + _networkConfigurationSource +
+            WriteStructuredDebug(
+                "CONFIG",
+                "schema=1 sub=config comp=storage domain=network operation=load" +
+                " stat=" + (string.IsNullOrEmpty(_networkConfigurationError) ? "ok" : "error") +
+                " source=" + SanitizeToken(_networkConfigurationSource) +
                 " mode=" + _networkConfiguration.Mode +
-                " error=" + (string.IsNullOrEmpty(_networkConfigurationError) ? "none" : _networkConfigurationError));
+                (string.IsNullOrEmpty(_networkConfigurationError)
+                    ? string.Empty
+                    : " code=" + SanitizeToken(_networkConfigurationError)));
 
             _pendingNetworkConfiguration = _networkConfiguration.Clone();
             _networkConfigurationDirty = false;
@@ -108,7 +112,10 @@ namespace CubleyControl
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("[NETWORK-CONFIG] apply failed: " + ex.Message);
+                WriteStructuredDebug(
+                    "CONFIG",
+                    "schema=1 sub=config comp=apply domain=network operation=apply stat=error" +
+                    " code=apply_failed detail=" + SanitizeToken(ex.Message));
                 error = "apply_failed";
                 return false;
             }

@@ -6,6 +6,7 @@ namespace CubleyControl
     {
         public const int MaximumBrokerLength = 63;
         public const int MaximumClientIdLength = 64;
+        public const int MaximumHostnameLength = 63;
         public const int MaximumUsernameLength = 48;
         public const int MaximumPasswordLength = 96;
         public const int MaximumTopicPrefixLength = 64;
@@ -14,6 +15,7 @@ namespace CubleyControl
         public string Broker = string.Empty;
         public int Port = 1883;
         public string ClientId = string.Empty;
+        public string Hostname = string.Empty;
         public string Username = string.Empty;
         public string Password = string.Empty;
         public string TopicPrefix = "diseqc";
@@ -33,6 +35,7 @@ namespace CubleyControl
                 Broker = Broker,
                 Port = Port,
                 ClientId = ClientId,
+                Hostname = Hostname,
                 Username = Username,
                 Password = Password,
                 TopicPrefix = TopicPrefix,
@@ -64,6 +67,12 @@ namespace CubleyControl
             if (!IsValidToken(ClientId, MaximumClientIdLength, true))
             {
                 error = "client_id_invalid";
+                return false;
+            }
+
+            if (!IsValidHostname(Hostname))
+            {
+                error = "hostname_invalid";
                 return false;
             }
 
@@ -99,6 +108,12 @@ namespace CubleyControl
                 return false;
             }
 
+            if (ToPayload().Length > ApplicationConfigurationRecord.RecordSize - ApplicationConfigurationRecord.HeaderSize)
+            {
+                error = "payload_too_large";
+                return false;
+            }
+
             error = null;
             return true;
         }
@@ -110,6 +125,7 @@ namespace CubleyControl
                 "broker=" + Broker + "\n" +
                 "port=" + Port.ToString() + "\n" +
                 "client_id=" + ClientId + "\n" +
+                "hostname=" + Hostname + "\n" +
                 "username=" + Username + "\n" +
                 "password=" + Password + "\n" +
                 "topic_prefix=" + TopicPrefix + "\n" +
@@ -171,6 +187,10 @@ namespace CubleyControl
                 {
                     configuration.ClientId = value;
                 }
+                else if (key == "hostname")
+                {
+                    configuration.Hostname = value;
+                }
                 else if (key == "username")
                 {
                     configuration.Username = value;
@@ -209,6 +229,31 @@ namespace CubleyControl
             }
 
             return configuration.TryValidate(out error);
+        }
+
+        private static bool IsValidHostname(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return true;
+            }
+
+            if (value.Length > MaximumHostnameLength || value[0] == '-' || value[value.Length - 1] == '-')
+            {
+                return false;
+            }
+
+            for (int index = 0; index < value.Length; index++)
+            {
+                char character = value[index];
+                if ((character < 'a' || character > 'z') &&
+                    (character < '0' || character > '9') && character != '-')
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static bool IsValidToken(string value, int maximumLength, bool allowEmpty)

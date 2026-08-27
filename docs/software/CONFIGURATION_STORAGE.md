@@ -6,7 +6,8 @@ Define the portable Cubley application configuration record and its physical
 storage backends. The record format is independent of internal flash or FRAM.
 
 Network interface addressing remains in the standard nanoFramework network
-configuration block. The application record initially stores MQTT settings.
+configuration block. The application record stores the device hostname and MQTT
+settings.
 
 ## Portable Record
 
@@ -15,7 +16,7 @@ The record is exactly 512 bytes. Integer fields are little-endian.
 | Offset | Size | Field | Description |
 |---:|---:|---|---|
 | `0x000` | 4 | Magic | ASCII `CCFG` |
-| `0x004` | 1 | Schema version | Currently `1` |
+| `0x004` | 1 | Schema version | Currently `2` |
 | `0x005` | 1 | Flags | Reserved, currently `0` |
 | `0x006` | 2 | Payload length | Used bytes from the payload area |
 | `0x008` | 4 | Generation | Monotonic save generation |
@@ -25,8 +26,10 @@ The record is exactly 512 bytes. Integer fields are little-endian.
 The CRC polynomial is the reflected `0xEDB88320` form with initial value
 `0xFFFFFFFF` and final inversion.
 
-Schema v1 keys are `enabled`, `broker`, `port`, `client_id`, `username`,
-`password`, `topic_prefix`, `keepalive_seconds`, and `reconnect_seconds`.
+Schema v2 keys are `hostname`, `enabled`, `broker`, `port`, `client_id`,
+`username`, `password`, `topic_prefix`, `keepalive_seconds`, and
+`reconnect_seconds`. Schema v1 records are not migrated; they are rejected and
+the application starts with disabled defaults.
 
 ## Active Internal Flash Backend
 
@@ -55,6 +58,6 @@ must not initialize or probe FRAM while the internal flash backend is selected.
 
 ## Credential Handling
 
-The v1 password is stored as cleartext inside the record. Commands and debug
+The v2 password is stored as cleartext inside the record. Commands and debug
 logs must redact it, and configuration output may expose only whether a password
 is configured. TLS and encrypted-at-rest credentials are outside the v1 scope.

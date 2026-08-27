@@ -1,0 +1,176 @@
+# Observability Contract V1
+
+## Purpose
+
+This contract defines one structured message model for retained state, asynchronous
+events, and `Debug.WriteLine` diagnostics. MQTT and debug output for structured
+domain data must be projections of the same canonical payload rather than
+independently formatted descriptions of the same operation.
+
+This is the target contract. LNB state and events plus LNB, command, and MQTT debug
+diagnostics use the schema-1 contract. Other subsystem diagnostics still use
+historical formats; see [Migration](#migration). MQTT command responses deliberately
+use the compact acknowledgement format defined under [MQTT Topics](#mqtt-topics).
+
+## Subsystems
+
+Every structured message must contain exactly one `subsystem` value from this
+stable set:
+
+| Subsystem | Ownership |
+|---|---|
+| `main` | Boot, reset cause, heartbeat, worker lifecycle, and process-level health |
+| `config` | Configuration parsing, validation, persistence, staging, and application |
+| `command` | Shared command parsing, dispatch, correlation, and completion |
+| `mqtt` | Broker connection, subscription, receive, publish, and reconnect lifecycle |
+| `lnb` | LNBH26 initialization, control, register state, health, and faults |
+| `diseqc` | DiSEqC framing, carrier, transmission, switching, and motor operations |
+| `network` | Interface state, addressing, DHCP, and DNS |
+| `cdc` | USB CDC connection, console input, output, and transport errors |
+
+Transport direction and implementation mechanism are not subsystems. Use fields
+such as `comp=subscribe`, `operation=publish`, `transport=mqtt`, or
+`source=irq` instead of creating `mqtt-sub`, `mqtt-pub`, or interrupt subsystems.
+
+Configuration messages use `sub=config` with a `domain` field such as
+`domain=mqtt` or `domain=network`. Messages about the live MQTT or network service
+remain owned by `sub=mqtt` or `sub=network`.
+
+## Payload Format
+
+Payloads are space-separated `key=value` fields encoded as ASCII. This avoids a
+JSON parser and allocator on the device while remaining readable and easy to
+consume on the broker.
+
+Every message begins with these fields in this order:
+
+```text
+schema=1 sub=<name> comp=<name>
+```
+
+Additional common fields are:
+
+| Field | Meaning |
+|---|---|
+| `sub` | Owning subsystem |
+| `comp` | Component within the owning subsystem |
+| `operation` | Action being attempted or reported |
+| `stat` | `ok`, `error`, `busy`, `unavailable`, or a domain state |
+| `comm` | Communication condition when distinct from overall state |
+| `code` | Stable machine-readable result or error code |
+| `id` | Requester-assigned 16-bit command ID in command diagnostics |
+| `event_id` | Device-assigned event sequence |
+| `seq` | Local diagnostic sequence, such as the LNB health-check count |
+| `source` | Origin such as `irq`, `poll`, `health`, or `command` |
+| `transport` | `mqtt` or `cdc` when transport is relevant |
+| `level` | `info`, `warning`, `error`, or `debug` |
+
+Keys and enumerated values use lowercase ASCII with underscores. Boolean values
+are `0` or `1`, decimal integers have no leading sign unless negative values are
+meaningful, and register bytes use `0xNN`. Free-form text is not part of the
+machine contract; use stable `code` values and additional structured fields.
+Values that cannot satisfy this token grammar must be sanitized before emission.
+
+Examples:
+
+```text
+schema=1 sub=lnb comp=health stat=ok seq=187 s1=0x00 s2=0x00
+schema=1 sub=lnb comp=fault stat=active source=irq event_id=731 fault=overcurrent
+schema=1 sub=mqtt comp=subscribe stat=ok qos=1 message_id=14
+schema=1 sub=config comp=storage domain=mqtt operation=load stat=ok generation=6
+schema=1 sub=command comp=completion transport=mqtt id=42 stat=ok code=ok
+```
+
+## MQTT Topics
+
+The effective root remains `<prefix>/<hostname>`.
+
+| Purpose | Topic | Retained | QoS |
+|---|---|---:|---:|
+| Command input | `<root>/command` | No | 1 |
+| Correlated response | `<root>/response` | No | 1 |
+| Subsystem transition | `<root>/event/<subsystem>` | No | 1 |
+| Subsystem snapshot | `<root>/state/<subsystem>` | Yes | 1 |
+| Availability | `<root>/availability` | Yes | 0/1 |
+
+`response` remains unified because the command ID is the correlation key. A
+state-changing or action command publishes one terminal `id=<id> OK` response on
+success or one `id=<id> Fail: ...` response on failure. Queries may publish their
+requested output lines before the terminal response. Responses intentionally stay
+compact and are not schema-1 payloads; state and health details belong on subsystem
+state and event topics.
+
+Each retained `state/<subsystem>` payload is a complete snapshot owned by that
+subsystem. Splitting retained state prevents an LNB update from replacing network
+or MQTT state. Events are deltas and must never be used as the sole source of
+current state.
+
+## Debug Alignment
+
+Structured state and event payloads are built once. The exact payload is published
+to MQTT when applicable and appended unchanged to the debug prefix. Structured
+diagnostics use the same schema and ownership rules but are not command responses:
+
+```text
+[LNB] schema=1 sub=lnb comp=health stat=ok seq=187 s1=0x00 s2=0x00
+```
+
+The bracketed prefix is for human scanning only. Consumers must parse the payload,
+not the prefix. Prefixes use the uppercase subsystem name: `[MAIN]`, `[CONFIG]`,
+`[COMMAND]`, `[MQTT]`, `[LNB]`, `[DISEQC]`, `[NETWORK]`, and `[CDC]`.
+
+Messages that are only useful for local diagnostics still use the same schema and
+include `level=debug`. A future MQTT verbosity setting may suppress publication of
+`level=debug` messages, but it must not change payload shape or suppress retained
+state, warnings, errors, or safety events. Compact command responses are never
+controlled by diagnostic verbosity.
+
+Secrets must be redacted before the canonical payload is passed to either sink.
+
+## Interrupt And Worker Boundary
+
+Interrupt callbacks do not format messages, call `Debug.WriteLine`, read LNBH26
+registers, or publish MQTT data. They acknowledge or latch the hardware condition
+and signal the owning subsystem worker.
+
+The worker performs register access and emits the canonical message. Interrupt
+provenance is retained as a field:
+
+```text
+schema=1 sub=lnb comp=fault source=irq stat=active event_id=731
+```
+
+Faults discovered by another path use the same component and fields with a
+different source, such as `source=health`. This keeps fault ownership in `lnb`
+without hiding how the condition was detected.
+
+## Migration
+
+Current debug prefixes map to the contract as follows:
+
+| Current prefix | Target subsystem/component |
+|---|---|
+| `BOOT`, `HEARTBEAT` | `main` with `comp=boot` or `comp=heartbeat` |
+| `CDC` | `cdc` |
+| `CDC-CMD` | `command` with `transport=cdc` or `transport=mqtt` |
+| `CDC-LNB`, `LNB-FAULT`, `LNB-HEALTH` | `lnb` with the appropriate component |
+| `MQTT`, `MQTT-CMD`, `MQTT-EVENT`, `MQTT-STATE` | `mqtt` for transport lifecycle; owning subsystem for domain payloads |
+| `MQTT-CONFIG`, `NETWORK-CONFIG` | `config` with `domain=mqtt` or `domain=network` |
+| `NETWORK`, `DNS` | `network` with `comp=interface` or `comp=dns` |
+
+Migration should introduce one payload formatter/sink boundary first, then convert
+subsystems incrementally. During migration, documentation and implementation must
+clearly distinguish legacy lines from schema-1 payloads.
+
+Current migration status:
+
+| Subsystem | Status |
+|---|---|
+| `lnb` | State, events, health, fault, initialization, and register diagnostics migrated |
+| `command` | Shared dispatch/completion and MQTT receive/deduplication diagnostics migrated |
+| `mqtt` | Connection, subscription, publication, and reconnect diagnostics migrated |
+| `main` | Boot and heartbeat diagnostics migrated |
+| `config` | MQTT/network storage-load and network-apply diagnostics migrated |
+| `network` | Interface-read and DNS diagnostics migrated |
+| `cdc` | Worker, connection, and output diagnostics migrated |
+| `diseqc` | No standalone legacy diagnostics; command outcomes use `sub=command` |

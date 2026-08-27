@@ -14,7 +14,6 @@ namespace CubleyControl
         private const int UsbConsoleReadTimeoutMs = 50;
         private const int UsbConsoleIdleSleepMs = 100;
         private const int UsbConsoleStatusIntervalMs = 1000;
-        private const int UsbConsoleHealthLogIntervalLoops = 50;
         private const int UsbConsoleLineMaxLength = 192;
         private const int MqttCommandMaxLength = 64;
         private const int UsbWriteLogEveryNEvents = 20;
@@ -43,6 +42,8 @@ namespace CubleyControl
         private static bool _lnbFaultInterruptEnabled;
         private static bool _lnbFaultAsserted;
         private static int _lnbFaultSequence;
+        private static bool _lnbFaultCheckPending;
+        private static readonly object _lnbFaultTransitionLock = new object();
         // Shared command execution across transports (serial + MQTT). All
         // commands funnel through ExecuteCommand -> HandleConsoleCommand ->
         // WriteCommandResult, which writes through whichever OutputSink is
@@ -61,19 +62,29 @@ namespace CubleyControl
         private static OutputSink _activeOutputSink;
         private static CommandTransport _activeCommandTransport;
 
+        private static void WriteStructuredDebug(string subsystem, string payload)
+        {
+            Debug.WriteLine("[" + subsystem + "] " + payload);
+        }
+
         private static void ExecuteCommand(string command, OutputSink outputSink, CommandTransport transport)
         {
             lock (_commandLock)
             {
+                BeginLnbIoOperation();
                 _activeOutputSink = outputSink;
                 _activeCommandTransport = transport;
                 try
                 {
-                    HandleConsoleCommand(command);
+                    lock (_lnbIoLock)
+                    {
+                        HandleConsoleCommand(command);
+                    }
                 }
                 finally
                 {
                     _activeOutputSink = null;
+                    EndLnbIoOperation();
                 }
             }
         }
@@ -106,7 +117,7 @@ namespace CubleyControl
             var usbConsoleThread = new Thread(UsbConsoleLoop);
             usbConsoleThread.Start();
 
-            if (_lnbFaultReady && !_lnbFaultInterruptEnabled)
+            if (_lnbFaultReady)
             {
                 var lnbFaultPollThread = new Thread(LnbFaultPollLoop);
                 lnbFaultPollThread.Start();
@@ -114,6 +125,9 @@ namespace CubleyControl
 
             var mqttThread = new Thread(MqttLoop);
             mqttThread.Start();
+
+            var lnbHealthThread = new Thread(LnbHealthLoop);
+            lnbHealthThread.Start();
 
             while (true)
             {
@@ -125,14 +139,6 @@ namespace CubleyControl
         {
             while (true)
             {
-                Debug.WriteLine("alive");
-                Debug.WriteLine(
-                    "[CDC-MON] pre=" + _cdcPreEnabledCount.ToString() +
-                    " post=" + _cdcPostEnabledCount.ToString() +
-                    " fail=" + _usbWriteFailureCount.ToString() +
-                    " partial=" + _usbWritePartialCount.ToString() +
-                    " ex=" + _usbWriteExceptionCount.ToString());
-
                 if (_ledReady)
                 {
                     try
@@ -151,7 +157,10 @@ namespace CubleyControl
                         {
                         }
 
-                        Debug.WriteLine("[HEARTBEAT] LED disabled: " + ex.Message);
+                        WriteStructuredDebug(
+                            "MAIN",
+                            "schema=1 sub=main comp=heartbeat operation=led stat=error" +
+                            " code=led_disabled detail=" + SanitizeToken(ex.Message));
                         _ledReady = false;
                     }
                 }
@@ -167,11 +176,26 @@ namespace CubleyControl
 
         private static void LnbFaultPollLoop()
         {
-            Debug.WriteLine("[LNB-FAULT] poll loop started pin=" + _lnbFaultPin.ToString());
+            WriteStructuredDebug(
+                "LNB",
+                "schema=1 sub=lnb comp=fault operation=worker_start stat=ok" +
+                " pin=" + _lnbFaultPin.ToString() +
+                " level=debug");
 
             while (true)
             {
-                TryProcessLnbFaultPin("poll");
+                bool processFault;
+                lock (_lnbFaultTransitionLock)
+                {
+                    processFault = !_lnbFaultInterruptEnabled || _lnbFaultCheckPending || _lnbFaultAsserted;
+                    _lnbFaultCheckPending = false;
+                }
+
+                if (processFault)
+                {
+                    TryProcessLnbFaultPin(_lnbFaultInterruptEnabled ? "worker" : "poll");
+                }
+
                 Thread.Sleep(LnbFaultPollIntervalMs);
             }
         }
@@ -182,15 +206,20 @@ namespace CubleyControl
 
             if ((diagWord & ResetCauseMarkerMask) != ResetCauseMarkerValue)
             {
-                Debug.WriteLine("[BOOT] reset cause unavailable diag=0x" + diagWord.ToString("X8"));
+                WriteStructuredDebug(
+                    "MAIN",
+                    "schema=1 sub=main comp=boot operation=reset_cause stat=unavailable" +
+                    " diag=0x" + diagWord.ToString("X8"));
                 return;
             }
 
             int flags = (int)((diagWord >> 16) & 0xFFu);
             int csrLow = (int)(diagWord & 0xFFFFu);
 
-            Debug.WriteLine(
-                "[BOOT] reset flags=" + ResetFlagsToText(flags) +
+            WriteStructuredDebug(
+                "MAIN",
+                "schema=1 sub=main comp=boot operation=reset_cause stat=ok" +
+                " flags=" + ResetFlagsToText(flags).ToLower() +
                 " csr_low=0x" + csrLow.ToString("X4"));
         }
 
@@ -231,37 +260,31 @@ namespace CubleyControl
 
         private static void UsbConsoleLoop()
         {
-            Debug.WriteLine("[CDC] thread started");
+            WriteStructuredDebug(
+                "CDC",
+                "schema=1 sub=cdc comp=worker operation=start stat=ok");
             try
             {
                 UsbConsoleLoopBody();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("[CDC] FATAL thread exception: " + ex.Message);
+                WriteStructuredDebug(
+                    "CDC",
+                    "schema=1 sub=cdc comp=worker operation=run stat=error" +
+                    " code=worker_exception detail=" + SanitizeToken(ex.Message));
             }
         }
 
         private static void UsbConsoleLoopBody()
         {
             bool wasEnabled = false;
-            int healthLoop = 0;
 
             while (true)
             {
-                healthLoop++;
                 _cdcPreEnabledCount++;
                 int enabled = UsbCdcConsole.NativeIsEnabled();
                 _cdcPostEnabledCount++;
-
-                if ((healthLoop % UsbConsoleHealthLogIntervalLoops) == 0)
-                {
-                    Debug.WriteLine(
-                        "[CDC] health enabled=" + enabled.ToString() +
-                        " fail=" + _usbWriteFailureCount.ToString() +
-                        " partial=" + _usbWritePartialCount.ToString() +
-                        " ex=" + _usbWriteExceptionCount.ToString());
-                }
 
                 if (enabled == 0)
                 {
@@ -284,10 +307,14 @@ namespace CubleyControl
                     // queue may not be draining yet, so a single write can return 0
                     // and the banner/prompt would be lost forever. Retry each loop
                     // iteration until the write succeeds.
-                    string banner = "\r\nCubley USB CDC console ready. Type 'help'.\r\n" + GetUsbPrompt();
+                    string banner = "\r\nCubley Rotation Control v" + BuildInfo.Version + "\r\n" + GetUsbPrompt();
                     int rc = SafeUsbWrite(banner);
                     uint diag = DiagMailbox.NativeGet();
-                    Debug.WriteLine("[CDC] connected, banner rc=" + rc.ToString() +
+                    WriteStructuredDebug(
+                        "CDC",
+                        "schema=1 sub=cdc comp=connection operation=banner" +
+                        " stat=" + (rc >= banner.Length ? "ok" : "busy") +
+                        " rc=" + rc.ToString() +
                         " diag=0x" + diag.ToString("X8"));
 
                     if (rc < banner.Length)
@@ -438,8 +465,11 @@ namespace CubleyControl
                 int eventCount = _usbWriteFailureCount + _usbWritePartialCount + _usbWriteExceptionCount;
                 if (eventCount == 1 || (eventCount % UsbWriteLogEveryNEvents) == 0)
                 {
-                    Debug.WriteLine(
-                        "[CDC] write issue rc=" + written.ToString() +
+                    WriteStructuredDebug(
+                        "CDC",
+                        "schema=1 sub=cdc comp=output operation=write stat=error" +
+                        " code=" + (written < 0 ? "write_failed" : "partial_write") +
+                        " rc=" + written.ToString() +
                         " len=" + expected.ToString() +
                         " fail=" + _usbWriteFailureCount.ToString() +
                         " partial=" + _usbWritePartialCount.ToString() +
@@ -454,7 +484,11 @@ namespace CubleyControl
 
                 if (_usbWriteExceptionCount == 1 || (_usbWriteExceptionCount % UsbWriteLogEveryNEvents) == 0)
                 {
-                    Debug.WriteLine("[CDC] write exception: " + ex.Message);
+                    WriteStructuredDebug(
+                        "CDC",
+                        "schema=1 sub=cdc comp=output operation=write stat=error" +
+                        " code=write_exception detail=" + SanitizeToken(ex.Message) +
+                        " exceptions=" + _usbWriteExceptionCount.ToString());
                 }
 
                 return -1;
@@ -557,7 +591,10 @@ namespace CubleyControl
 
                 if (!_lnbFaultReady)
                 {
-                    Debug.WriteLine("[LNB-FAULT] monitor disabled; unable to open PC8 candidate pins");
+                    WriteStructuredDebug(
+                        "LNB",
+                        "schema=1 sub=lnb comp=fault operation=monitor_init stat=unavailable" +
+                        " code=pin_open_failed");
                     return;
                 }
 
@@ -571,8 +608,10 @@ namespace CubleyControl
                     _lnbFaultInterruptEnabled = false;
                 }
 
-                Debug.WriteLine(
-                    "[LNB-FAULT] monitor ready pin=" + _lnbFaultPin.ToString() +
+                WriteStructuredDebug(
+                    "LNB",
+                    "schema=1 sub=lnb comp=fault operation=monitor_init stat=ok" +
+                    " pin=" + _lnbFaultPin.ToString() +
                     " mode=" + (_lnbFaultInterruptEnabled ? "interrupt" : "poll"));
 
                 // Capture startup asserted state if fault is already active.
@@ -582,7 +621,10 @@ namespace CubleyControl
             {
                 _lnbFaultReady = false;
                 _lnbFaultInterruptEnabled = false;
-                Debug.WriteLine("[LNB-FAULT] monitor initialization failed");
+                WriteStructuredDebug(
+                    "LNB",
+                    "schema=1 sub=lnb comp=fault operation=monitor_init stat=error" +
+                    " code=exception");
             }
         }
 
@@ -598,7 +640,10 @@ namespace CubleyControl
                 return;
             }
 
-            TryProcessLnbFaultPin("irq");
+            lock (_lnbFaultTransitionLock)
+            {
+                _lnbFaultCheckPending = true;
+            }
         }
 
         private static void TryProcessLnbFaultPin(string source)
@@ -619,19 +664,38 @@ namespace CubleyControl
             }
 
             bool asserted = value == PinValue.Low;
-            if (asserted)
+            bool changed;
+            int sequence;
+            lock (_lnbFaultTransitionLock)
             {
-                if (!_lnbFaultAsserted)
+                changed = asserted != _lnbFaultAsserted;
+                if (!changed)
                 {
-                    _lnbFaultAsserted = true;
-                    _lnbFaultSequence++;
-                    EmitLnbFaultSnapshot(source, _lnbFaultSequence);
+                    return;
                 }
 
-                return;
+                _lnbFaultAsserted = asserted;
+                _lnbFaultSequence++;
+                sequence = _lnbFaultSequence;
             }
 
-            _lnbFaultAsserted = false;
+            if (asserted)
+            {
+                BeginLnbIoOperation();
+                try
+                {
+                    lock (_lnbIoLock)
+                    {
+                        EmitLnbFaultSnapshot(source, sequence);
+                    }
+                }
+                finally
+                {
+                    EndLnbIoOperation();
+                }
+            }
+
+            PublishMqttLnbFaultTransition(asserted, source);
         }
     }
 }

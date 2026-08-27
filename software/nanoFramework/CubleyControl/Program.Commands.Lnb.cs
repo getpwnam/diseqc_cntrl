@@ -1,6 +1,5 @@
 using Cubley.Interop;
 using Cubley.Lnbh26;
-using System.Diagnostics;
 
 namespace CubleyControl
 {
@@ -13,7 +12,6 @@ namespace CubleyControl
         {
             if (!EnsureLnbInitialized())
             {
-                Debug.WriteLine("[CDC-LNB] boot safe defaults skipped; init rc=" + _lnbInitStatus.ToString());
                 return;
             }
 
@@ -21,10 +19,13 @@ namespace CubleyControl
             int setPolRc = LNBH26.NativeSetPolarizationForChannel(LnbChannelA, (int)LNBH26.Polarization.Vertical);
             int setBandRc = LNBH26.NativeSetBandForChannel(LnbChannelA, (int)LNBH26.Band.Low);
 
-            Debug.WriteLine(
-                "[CDC-LNB] boot safe profile rc enable=" + setEnableRc.ToString() +
-                " pol=" + setPolRc.ToString() +
-                " band=" + setBandRc.ToString());
+            WriteStructuredDebug(
+                "LNB",
+                "schema=1 sub=lnb comp=control operation=safe_defaults" +
+                " stat=" + (setEnableRc == 0 && setPolRc == 0 && setBandRc == 0 ? "ok" : "error") +
+                " enable_rc=" + setEnableRc.ToString() +
+                " pol_rc=" + setPolRc.ToString() +
+                " band_rc=" + setBandRc.ToString());
         }
 
         private static void HandleShowCommand(string[] tokens, int reqId)
@@ -163,7 +164,7 @@ namespace CubleyControl
         {
             if (!EnsureLnbInitialized())
             {
-                WriteCommandResult(reqId, false, "hw_fault", "lnb init failed", "lnb_init_rc=" + _lnbInitStatus.ToString());
+                WriteCommandResult(reqId, false, "hw_fault", "lnb init failed", BuildLnbInitDiagnosticData());
                 return;
             }
 
@@ -303,11 +304,11 @@ namespace CubleyControl
                 if (_activeCommandTransport == CommandTransport.Usb)
                 {
                     WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper());
-                    WriteHumanField("State", "Initialization failed (code " + _lnbInitStatus.ToString() + ")");
+                    WriteHumanField("State", BuildLnbInitFailureText());
                 }
                 else
                 {
-                    _activeOutputSink("lnb." + LnbChannelToSchemaName(channel) + " state=init_failed rc=" + _lnbInitStatus.ToString() + "\r\n");
+                    _activeOutputSink("lnb." + LnbChannelToSchemaName(channel) + " state=init_failed " + BuildLnbInitDiagnosticData() + "\r\n");
                 }
                 return;
             }
@@ -392,7 +393,7 @@ namespace CubleyControl
                 if (_activeCommandTransport == CommandTransport.Usb)
                 {
                     WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper() + " details");
-                    WriteHumanField("State", "Initialization failed (code " + _lnbInitStatus.ToString() + ")");
+                    WriteHumanField("State", BuildLnbInitFailureText());
                 }
                 else
                 {
@@ -516,14 +517,115 @@ namespace CubleyControl
             return "0x" + (value & 0xFF).ToString("X2");
         }
 
+        private static string BuildLnbInitDiagnosticData()
+        {
+            int lastError = LNBH26.NativeGetLastError();
+            int lastDetail = LNBH26.NativeGetLastErrorDetail();
+            string data =
+                "lnb_init_rc=" + _lnbInitStatus.ToString() +
+                " lnb_init_status=" + LnbStatusToToken(_lnbInitStatus);
+
+            if (lastError == (int)LNBH26.Status.IoError)
+            {
+                data +=
+                    " i2c_error=" + LnbI2cDetailToToken(lastDetail) +
+                    " i2c_detail=" + ToHexU8(lastDetail);
+            }
+
+            return data;
+        }
+
+        private static string BuildLnbInitFailureText()
+        {
+            int lastError = LNBH26.NativeGetLastError();
+            int lastDetail = LNBH26.NativeGetLastErrorDetail();
+
+            if (lastError == (int)LNBH26.Status.IoError)
+            {
+                return "Initialization failed: I2C " + LnbI2cDetailToToken(lastDetail) + " (" + ToHexU8(lastDetail) + ")";
+            }
+
+            return "Initialization failed: " + LnbStatusToToken(_lnbInitStatus) + " (code " + _lnbInitStatus.ToString() + ")";
+        }
+
+        private static string LnbStatusToToken(int status)
+        {
+            if (status == (int)LNBH26.Status.Ok)
+            {
+                return "ok";
+            }
+
+            if (status == (int)LNBH26.Status.InvalidParam)
+            {
+                return "invalid_param";
+            }
+
+            if (status == (int)LNBH26.Status.NotInitialized)
+            {
+                return "not_initialized";
+            }
+
+            if (status == (int)LNBH26.Status.IoError)
+            {
+                return "io_error";
+            }
+
+            return "unknown";
+        }
+
+        private static string LnbI2cDetailToToken(int detail)
+        {
+            if (detail == -1)
+            {
+                return "timeout";
+            }
+
+            if (detail == -2)
+            {
+                return "peripheral_error_unspecified";
+            }
+
+            if (detail == 0)
+            {
+                return "unspecified";
+            }
+
+            string text = string.Empty;
+            AppendLnbI2cFlag(ref text, detail, 0x01, "bus_error");
+            AppendLnbI2cFlag(ref text, detail, 0x02, "arbitration_lost");
+            AppendLnbI2cFlag(ref text, detail, 0x04, "ack_failure");
+            AppendLnbI2cFlag(ref text, detail, 0x08, "overrun");
+            AppendLnbI2cFlag(ref text, detail, 0x10, "pec_error");
+            AppendLnbI2cFlag(ref text, detail, 0x20, "hardware_timeout");
+            AppendLnbI2cFlag(ref text, detail, 0x40, "smbus_alert");
+            return text.Length > 0 ? text : "unknown";
+        }
+
+        private static void AppendLnbI2cFlag(ref string text, int detail, int mask, string label)
+        {
+            if ((detail & mask) == 0)
+            {
+                return;
+            }
+
+            if (text.Length > 0)
+            {
+                text += "+";
+            }
+
+            text += label;
+        }
+
         private static void EmitLnbFaultSnapshot(string source, int sequence)
         {
             if (!EnsureLnbInitialized())
             {
-                Debug.WriteLine(
-                    "[LNB-FAULT] seq=" + sequence.ToString() +
-                    " src=" + source +
-                    " init_failed rc=" + _lnbInitStatus.ToString());
+                WriteStructuredDebug(
+                    "LNB",
+                    "schema=1 sub=lnb comp=fault operation=snapshot stat=error" +
+                    " code=init_failed seq=" + sequence.ToString() +
+                    " source=" + source +
+                    " rc=" + _lnbInitStatus.ToString());
                 return;
             }
 
@@ -534,10 +636,12 @@ namespace CubleyControl
             {
                 int statusLastError = LNBH26.NativeGetLastError();
                 int statusLastDetail = LNBH26.NativeGetLastErrorDetail();
-                Debug.WriteLine(
-                    "[LNB-FAULT] seq=" + sequence.ToString() +
-                    " src=" + source +
-                    " status_read_failed rc=" + statusRc.ToString() +
+                WriteStructuredDebug(
+                    "LNB",
+                    "schema=1 sub=lnb comp=fault operation=snapshot stat=error" +
+                    " code=status_read_failed seq=" + sequence.ToString() +
+                    " source=" + source +
+                    " rc=" + statusRc.ToString() +
                     " last=" + statusLastError.ToString() +
                     " detail=" + statusLastDetail.ToString());
                 return;
@@ -552,10 +656,12 @@ namespace CubleyControl
             {
                 int dataLastError = LNBH26.NativeGetLastError();
                 int dataLastDetail = LNBH26.NativeGetLastErrorDetail();
-                Debug.WriteLine(
-                    "[LNB-FAULT] seq=" + sequence.ToString() +
-                    " src=" + source +
-                    " data_read_failed rc=" + dataRc.ToString() +
+                WriteStructuredDebug(
+                    "LNB",
+                    "schema=1 sub=lnb comp=fault operation=snapshot stat=error" +
+                    " code=data_read_failed seq=" + sequence.ToString() +
+                    " source=" + source +
+                    " rc=" + dataRc.ToString() +
                     " s1=" + ToHexU8(s1) +
                     " s2=" + ToHexU8(s2) +
                     " last=" + dataLastError.ToString() +
@@ -568,17 +674,19 @@ namespace CubleyControl
             int lastError = LNBH26.NativeGetLastError();
             int lastDetail = LNBH26.NativeGetLastErrorDetail();
 
-            Debug.WriteLine(
-                "[LNB-FAULT] seq=" + sequence.ToString() +
-                " src=" + source +
-                " ch=a" +
+            WriteStructuredDebug(
+                "LNB",
+                "schema=1 sub=lnb comp=fault operation=snapshot" +
+                " stat=" + (HasFaultStatus(s1) ? "fault" : "ok") +
+                " seq=" + sequence.ToString() +
+                " source=" + source +
+                " channel=a" +
                 " pol=" + PolarizationToText(pol) +
                 " band=" + BandToText(band) +
                 " voltage=" + VoltageSelectForChannelToText(LnbChannelA, d1) +
                 " tone=" + (IsToneEnabledForChannel(LnbChannelA, d2) ? "on" : "off") +
                 " lpm=" + (IsLowPowerEnabledForChannel(LnbChannelA, d2) ? "on" : "off") +
                 " extm=" + (IsExtmEnabledForChannel(LnbChannelA, d2) ? "on" : "off") +
-                " status=" + (HasFaultStatus(s1) ? "fault" : "ok") +
                 " s1=" + ToHexU8(s1) +
                 " s2=" + ToHexU8(s2) +
                 " d1=" + ToHexU8(d1) +
@@ -656,12 +764,14 @@ namespace CubleyControl
 
             _lnbInitAttempted = true;
             _lnbInitStatus = LNBH26.NativeInit();
-            int lastError = LNBH26.NativeGetLastError();
-            int lastDetail = LNBH26.NativeGetLastErrorDetail();
-            Debug.WriteLine(
-                "[CDC-LNB] init rc=" + _lnbInitStatus.ToString() +
-                " last=" + lastError.ToString() +
-                " detail=" + lastDetail.ToString());
+
+            if (_lnbInitStatus != (int)LNBH26.Status.Ok)
+            {
+                WriteStructuredDebug(
+                    "LNB",
+                    "schema=1 sub=lnb comp=initialize operation=init stat=error " +
+                    BuildLnbInitDiagnosticData());
+            }
 
             return _lnbInitStatus == (int)LNBH26.Status.Ok;
         }
@@ -676,8 +786,10 @@ namespace CubleyControl
             {
                 int lastError = LNBH26.NativeGetLastError();
                 int lastDetail = LNBH26.NativeGetLastErrorDetail();
-                Debug.WriteLine(
-                    "[CDC-LNB] status_pair rc=" + rc.ToString() +
+                WriteStructuredDebug(
+                    "LNB",
+                    "schema=1 sub=lnb comp=register operation=read_status stat=error" +
+                    " rc=" + rc.ToString() +
                     " s1=0x" + (s1 & 0xFF).ToString("X2") +
                     " s2=0x" + (s2 & 0xFF).ToString("X2") +
                     " last=" + lastError.ToString() +
@@ -694,8 +806,10 @@ namespace CubleyControl
                     {
                         int retryLastError = LNBH26.NativeGetLastError();
                         int retryLastDetail = LNBH26.NativeGetLastErrorDetail();
-                        Debug.WriteLine(
-                            "[CDC-LNB] status_pair retry rc=" + rc.ToString() +
+                        WriteStructuredDebug(
+                            "LNB",
+                            "schema=1 sub=lnb comp=register operation=read_status_retry stat=error" +
+                            " rc=" + rc.ToString() +
                             " s1=0x" + (s1 & 0xFF).ToString("X2") +
                             " s2=0x" + (s2 & 0xFF).ToString("X2") +
                             " last=" + retryLastError.ToString() +

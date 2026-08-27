@@ -58,10 +58,16 @@ authorization boundary.
 
 ### Operational Mode
 
-The initial USB prompt is `cubley>`. Operational mode contains normal LNB and
+The initial USB prompt is `<hostname>> `. Operational mode contains normal LNB and
 DiSEqC control, runtime status, and local diagnostics. Read-only administrative
 views remain available at this prompt; entering configuration mode is required
 only to mutate configuration.
+
+On connection, the console emits `Cubley Rotation Control v<VERSION>`. Wrapper
+builds encode the three-part product version from `AssemblyVersion`, the first
+eight Git commit characters, and a `.dirty` suffix when the worktree differs from
+that commit, for example `1.0.0+g1a2b3c4d.dirty`. Direct project builds use
+`1.0.0+unknown`. `show version` reports the same build version and Git commit.
 
 | Command family | USB CDC | MQTT | Purpose |
 |---|---:|---:|---|
@@ -87,9 +93,16 @@ transaction between messages.
 
 ### Configuration Mode
 
-`configure` takes a snapshot of the committed network and MQTT configuration and
-changes the USB prompt to `cubley(config)#`. Configuration commands update only
-that candidate until `commit` succeeds.
+`configure` takes a snapshot of the committed network and application
+configuration and changes the USB prompt to `<hostname>(config)#`. Configuration
+commands update only that candidate until `commit` succeeds. The prompt continues
+to use the committed hostname while a different hostname is staged.
+
+#### Device Identity
+
+| Command | Candidate change |
+|---|---|
+| `hostname <name\|auto>` | Set a DNS-label hostname or derive it from a 24-bit hash of the STM32 unique device ID. |
 
 #### Network Configuration
 
@@ -110,10 +123,10 @@ that candidate until `commit` succeeds.
 | `mqtt enabled <on\|off>` | Enable or disable MQTT at the next commit. |
 | `mqtt broker <host\|clear>` | Set or clear the broker hostname or IPv4 address. |
 | `mqtt port <1..65535>` | Set the broker port. |
-| `mqtt client-id <id\|auto>` | Set an explicit or MAC-derived client ID. |
+| `mqtt client-id <id\|auto>` | Set an explicit client ID or use the effective hostname. |
 | `mqtt username <value\|clear>` | Set or clear the username. |
 | `mqtt password <value\|clear>` | Set or clear the password without echoing it. |
-| `mqtt topic-prefix <prefix>` | Set the topic root. |
+| `mqtt topic-prefix <prefix>` | Set the base topic prefix. |
 | `mqtt keepalive <15..3600>` | Set the keepalive interval in seconds. |
 | `mqtt reconnect <1..60>` | Set the reconnect interval in seconds. |
 | `mqtt defaults` | Stage disabled MQTT defaults. |
@@ -122,7 +135,7 @@ that candidate until `commit` succeeds.
 
 | Command | Behavior |
 |---|---|
-| `show storage` | Show the network and MQTT configuration backends and load status. |
+| `show storage` | Show the network and application configuration backends and load status. |
 | `show candidate-config [network\|mqtt]` | Render the candidate with secrets redacted. |
 | `show config diff` | Show canonical lines added, removed, or changed relative to the committed configuration. |
 | `debug <on\|off>` | Show or suppress successful setter results for the current USB session. |
@@ -133,8 +146,8 @@ that candidate until `commit` succeeds.
 
 Only one configuration session may own the candidate. `exit` refuses dirty state
 to prevent an intentional console action from silently losing work. The prompt is
-`cubley(config)#` when clean and `cubley(config*)#` when the candidate differs from
-the running configuration. A dirty exit remains in configuration mode and tells
+`<hostname>(config)#` when clean and `<hostname>(config*)#` when the candidate
+differs from the running configuration. A dirty exit remains in configuration mode and tells
 the operator to use `commit` or `discard`; a second exit never implies discard. A USB
 disconnect discards uncommitted changes and releases configuration mode so stale
 changes cannot be committed by a later session. A future network console must use
@@ -182,7 +195,8 @@ The output uses canonical commands only, includes explicit defaults, and has a
 version header. Blank lines and lines beginning with `!` are ignored on input.
 
 ```text
-! cubley-config v1
+! cubley-config v2
+hostname cubley-dish-01
 network mode static
 network address 192.168.1.40
 network mask 255.255.255.0
@@ -217,7 +231,7 @@ a new device requires entering the password separately before `commit`.
 | `show status` | `status`, `st` | Show USB CDC and status LED health. |
 | `watch [on\|off]` | `w`, values `1\|0`; omitted value means `on` | Enable or disable the periodic serial status line. |
 | `show capabilities` | `capabilities`, `caps`, `show caps` | Show the current capability summary. |
-| `show version` | `version`, `ver`, `show ver` | Show the interface and shell version identifiers. |
+| `show version` | `version`, `ver`, `show ver` | Show product, build, Git, interface, and shell identifiers. |
 | `led on` | none | Drive the status LED high. |
 | `led off` | none | Drive the status LED low. |
 | `pulse` | none | Pulse the status LED for 100 ms. |
@@ -302,19 +316,29 @@ commands use the operational grammar documented above.
 
 MQTT uses the active LAN8742A IPv4/DHCP/DNS implementation. It starts only after
 MQTT is enabled in saved configuration and the interface has a usable IPv4 address.
+The target subsystem-owned message schema and state/event subtopics are specified
+in [OBSERVABILITY_CONTRACT_V1.md](OBSERVABILITY_CONTRACT_V1.md); the table below
+records the currently implemented binding.
 
 When enabled, the current binding is:
 
 | Direction | Topic | Payload |
 |---|---|---|
-| Command to device | `<prefix>/command` | One non-retained command from the MQTT operational allowlist. |
-| Result from device | `<prefix>/status` | One published message for each output line. |
-| Device availability | `<prefix>/availability` | Retained `online` or last-will `offline`. |
+| Command to device | `<prefix>/<hostname>/command` | `<uint16-id> <command>` from the MQTT operational allowlist. |
+| Response from device | `<prefix>/<hostname>/response` | Terminal `id=<id> OK` or `id=<id> Fail: ...`; queries may first emit requested output lines. |
+| LNB asynchronous transition | `<prefix>/<hostname>/event/lnb` | Non-retained schema-1 LNB event fields. |
+| Current LNB state | `<prefix>/<hostname>/state/lnb` | Retained schema-1 LNB state fields. |
+| Device availability | `<prefix>/<hostname>/availability` | Retained `online` or last-will `offline`. |
 
-Retained, empty, and greater-than-64-byte command payloads are rejected. The topic
-prefix defaults to `diseqc` and is configurable from USB configuration mode with
-`mqtt topic-prefix`.
+Retained, empty, malformed-ID, and greater-than-64-byte command lines are rejected.
+QoS 1 duplicate commands among the eight most recent IDs replay cached responses
+without executing again; reuse of a cached ID with different command text fails.
+State and health details are carried by subsystem state and event topics rather
+than repeated in successful command acknowledgements.
+The topic prefix defaults to `diseqc` and is configurable from USB configuration
+mode with `mqtt topic-prefix`.
 
-The per-command `cubley/v1/...` topics and JSON request/result envelopes described
+The effective device root is `<prefix>/<hostname>`. The hostname and MQTT client ID
+are configured independently. The per-command `cubley/v1/...` topics and JSON request/result envelopes described
 by the interface schema files are design contracts and are not implemented by the
 current MQTT transport.

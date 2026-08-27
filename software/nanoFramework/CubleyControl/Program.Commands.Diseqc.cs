@@ -614,7 +614,7 @@ namespace CubleyControl
 
             if (!EnsureLnbInitialized())
             {
-                WriteCommandResult(reqId, false, "hw_fault", "diseqc listen", "lnb_init_rc=" + _lnbInitStatus.ToString());
+                WriteCommandResult(reqId, false, "hw_fault", "diseqc listen", BuildLnbInitDiagnosticData());
                 return;
             }
 

@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Device.Gpio;
 using System.Threading;
 using Cubley.Interop;
@@ -25,7 +24,11 @@ namespace CubleyControl
             }
 
             _activeCommand = RedactCommandForLog(normalized);
-            Debug.WriteLine("[CDC-CMD] cmd=" + _activeCommand);
+            WriteStructuredDebug(
+                "COMMAND",
+                "schema=1 sub=command comp=dispatch operation=receive stat=ok" +
+                " transport=" + (_activeCommandTransport == CommandTransport.Mqtt ? "mqtt" : "cdc") +
+                " command=" + SanitizeToken(_activeCommand));
 
             string[] tokens = SplitTokens(lower);
             string[] valueTokens = SplitTokens(normalized);
@@ -308,12 +311,15 @@ namespace CubleyControl
             if (_activeCommandTransport == CommandTransport.Usb)
             {
                 WriteHumanHeading("Version");
+                WriteHumanField("Product", "Cubley Rotation Control");
+                WriteHumanField("Version", BuildInfo.Version);
+                WriteHumanField("Git commit", BuildInfo.GitCommit);
                 WriteHumanField("Interface", "cubley/v1 serial");
                 WriteHumanField("Shell", "main");
                 return;
             }
 
-            WriteCommandResult(reqId, true, "ok", "version", "iface=cubley_v1_serial shell=main");
+            WriteCommandResult(reqId, true, "ok", "version", "version=" + BuildInfo.Version + " git=" + BuildInfo.GitCommit + " iface=cubley_v1_serial shell=main");
         }
 
         private static bool HandleOperatorCommand(string[] tokens, int reqId)
@@ -428,13 +434,30 @@ namespace CubleyControl
                 " req_id=" + reqId.ToString() +
                 (payload.Length > 0 ? " " + payload : string.Empty);
 
-            Debug.WriteLine("[CDC-CMD] cmd=" + _activeCommand + " " + kvLine);
+            WriteStructuredDebug(
+                "COMMAND",
+                "schema=1 sub=command comp=completion" +
+                " operation=execute" +
+                " stat=" + (ok ? "ok" : "error") +
+                " code=" + code +
+                " transport=" + (_activeCommandTransport == CommandTransport.Mqtt ? "mqtt" : "cdc") +
+                (_activeCommandTransport == CommandTransport.Mqtt ? " id=" + _mqttActiveCommandId.ToString() : string.Empty) +
+                " request_id=" + reqId.ToString() +
+                " command=" + SanitizeToken(_activeCommand) +
+                " detail=" + safeMsg +
+                (payload.Length > 0 ? " " + payload : string.Empty));
 
             if (ok &&
                 _activeCommandTransport == CommandTransport.Usb &&
                 _activeCommandIsSetter &&
                 !_usbDebugEnabled)
             {
+                return;
+            }
+
+            if (ok && _activeCommandTransport == CommandTransport.Mqtt)
+            {
+                _activeOutputSink("OK\r\n");
                 return;
             }
 
