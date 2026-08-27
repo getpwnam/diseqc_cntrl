@@ -421,7 +421,6 @@ namespace CubleyControl
                         continue;
                     }
 
-                    bannerWriteOffset = 0;
                     wasEnabled = true;
                     _watchElapsedMs = 0;
                     _consoleLine = string.Empty;
