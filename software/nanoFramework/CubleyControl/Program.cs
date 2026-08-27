@@ -15,6 +15,7 @@ namespace CubleyControl
         private const int UsbConsoleIdleSleepMs = 100;
         private const int UsbConsoleStatusIntervalMs = 1000;
         private const int UsbConsoleLineMaxLength = 192;
+        private const int UsbConsoleHistoryDepth = 4;
         private const int ConsoleIdleTimeoutMs = 10 * 60 * 1000;
         private const int ConsoleIdleWarningMs = 60 * 1000;
         private const int MqttCommandMaxLength = 64;
@@ -191,6 +192,9 @@ namespace CubleyControl
         }
 
         private static string _consoleLine = string.Empty;
+        private static readonly string[] _consoleHistory = new string[UsbConsoleHistoryDepth];
+        private static int _consoleHistoryCount;
+        private static int _consoleHistoryIndex;
         private static int _usbWriteFailureCount;
         private static int _usbWritePartialCount;
         private static int _usbWriteExceptionCount;
@@ -382,6 +386,7 @@ namespace CubleyControl
             bool wasEnabled = false;
             bool idleWarningSent = false;
             bool suppressNextLineFeed = false;
+            int escapeSequenceState = 0;
             int sessionId = 0;
 
             while (true)
@@ -404,6 +409,7 @@ namespace CubleyControl
                     sessionId = 0;
                     _watchElapsedMs = 0;
                     _consoleLine = string.Empty;
+                    ClearConsoleHistory();
                     Thread.Sleep(UsbConsoleIdleSleepMs);
                     continue;
                 }
@@ -442,6 +448,7 @@ namespace CubleyControl
                 int value = UsbCdcConsole.NativeReadByte(UsbConsoleReadTimeoutMs);
                 if (value < 0)
                 {
+                    escapeSequenceState = 0;
                     if (sessionId != 0)
                     {
                         long idleMs;
@@ -503,6 +510,7 @@ namespace CubleyControl
                         {
                             idleWarningSent = false;
                             suppressNextLineFeed = c == '\r';
+                            ClearConsoleHistory();
                             SafeUsbWrite("\r\nConsole active. Type 'quit' to release.\r\n" + GetUsbPrompt());
                             WriteStructuredDebug(
                                 "CDC",
@@ -538,6 +546,33 @@ namespace CubleyControl
                 }
 
                 idleWarningSent = false;
+
+                if (escapeSequenceState != 0 || c == '\x1b')
+                {
+                    if (c == '\x1b')
+                    {
+                        escapeSequenceState = 1;
+                    }
+                    else if (escapeSequenceState == 1 && c == '[')
+                    {
+                        escapeSequenceState = 2;
+                    }
+                    else
+                    {
+                        if (escapeSequenceState == 2 && c == 'A')
+                        {
+                            RecallPreviousConsoleCommand();
+                        }
+                        else if (escapeSequenceState == 2 && c == 'B')
+                        {
+                            RecallNextConsoleCommand();
+                        }
+
+                        escapeSequenceState = 0;
+                    }
+
+                    continue;
+                }
 
                 if (c == '\x04')
                 {
@@ -585,8 +620,10 @@ namespace CubleyControl
                         continue;
                     }
 
+                    StoreConsoleHistory(_consoleLine);
                     ExecuteCommand(_consoleLine, WriteSerialLine, CommandTransport.Usb);
                     _consoleLine = string.Empty;
+                    _consoleHistoryIndex = _consoleHistoryCount;
                     SafeUsbWrite(GetUsbPrompt());
                     continue;
                 }
@@ -595,6 +632,7 @@ namespace CubleyControl
                 {
                     if (_consoleLine.Length > 0)
                     {
+                        _consoleHistoryIndex = _consoleHistoryCount;
                         bool sensitive = IsSensitiveConsoleInput(_consoleLine);
                         _consoleLine = _consoleLine.Substring(0, _consoleLine.Length - 1);
                         if (!sensitive)
@@ -612,6 +650,7 @@ namespace CubleyControl
 
                 if (c >= ' ' && c <= '~')
                 {
+                    _consoleHistoryIndex = _consoleHistoryCount;
                     _consoleLine += c.ToString();
                     if (!IsSensitiveConsoleInput(_consoleLine))
                     {
@@ -619,6 +658,82 @@ namespace CubleyControl
                     }
                 }
             }
+        }
+
+        private static void StoreConsoleHistory(string line)
+        {
+            string command = NormalizeCommandInput(line);
+            if (command.Length == 0 || command[0] == '!' || IsSensitiveConsoleInput(command))
+            {
+                return;
+            }
+
+            if (_consoleHistoryCount > 0 && _consoleHistory[_consoleHistoryCount - 1] == command)
+            {
+                _consoleHistoryIndex = _consoleHistoryCount;
+                return;
+            }
+
+            if (_consoleHistoryCount == UsbConsoleHistoryDepth)
+            {
+                for (int i = 1; i < UsbConsoleHistoryDepth; i++)
+                {
+                    _consoleHistory[i - 1] = _consoleHistory[i];
+                }
+
+                _consoleHistoryCount--;
+            }
+
+            _consoleHistory[_consoleHistoryCount++] = command;
+            _consoleHistoryIndex = _consoleHistoryCount;
+        }
+
+        private static void RecallPreviousConsoleCommand()
+        {
+            if (_consoleHistoryIndex == 0)
+            {
+                return;
+            }
+
+            _consoleHistoryIndex--;
+            ReplaceConsoleLine(_consoleHistory[_consoleHistoryIndex]);
+        }
+
+        private static void RecallNextConsoleCommand()
+        {
+            if (_consoleHistoryIndex >= _consoleHistoryCount)
+            {
+                return;
+            }
+
+            _consoleHistoryIndex++;
+            ReplaceConsoleLine(
+                _consoleHistoryIndex < _consoleHistoryCount
+                    ? _consoleHistory[_consoleHistoryIndex]
+                    : string.Empty);
+        }
+
+        private static void ReplaceConsoleLine(string line)
+        {
+            int previousLength = _consoleLine.Length;
+            _consoleLine = line;
+            SafeUsbWrite("\r" + GetUsbPrompt() + _consoleLine);
+            if (previousLength > _consoleLine.Length)
+            {
+                SafeUsbWrite(new string(' ', previousLength - _consoleLine.Length) +
+                    new string('\b', previousLength - _consoleLine.Length));
+            }
+        }
+
+        private static void ClearConsoleHistory()
+        {
+            for (int i = 0; i < _consoleHistoryCount; i++)
+            {
+                _consoleHistory[i] = null;
+            }
+
+            _consoleHistoryCount = 0;
+            _consoleHistoryIndex = 0;
         }
 
         private static bool IsSensitiveConsoleInput(string line)
