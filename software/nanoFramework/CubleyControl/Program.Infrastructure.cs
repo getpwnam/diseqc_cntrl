@@ -391,7 +391,9 @@ namespace CubleyControl
                     // queue may not be draining yet, so a single write can return 0
                     // and the banner/prompt would be lost forever. Retry each loop
                     // iteration from the first unwritten byte until it succeeds.
-                    string remainingBanner = banner.Substring(bannerWriteOffset);
+                    string remainingBanner = bannerWriteOffset == 0
+                        ? banner
+                        : banner.Substring(bannerWriteOffset);
                     int rc = SafeUsbWrite(remainingBanner);
                     if (rc > 0)
                     {
