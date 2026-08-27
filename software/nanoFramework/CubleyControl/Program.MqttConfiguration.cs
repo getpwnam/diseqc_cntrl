@@ -38,8 +38,8 @@ namespace CubleyControl
             _mqttConfigurationRevision = 1;
             WriteStructuredDebug(
                 "CONFIG",
-                "schema=1 subsystem=config component=storage domain=mqtt operation=load" +
-                " status=" + (string.IsNullOrEmpty(_mqttConfigurationError) ? "ok" : "error") +
+                "schema=1 sub=config comp=storage domain=mqtt operation=load" +
+                " stat=" + (string.IsNullOrEmpty(_mqttConfigurationError) ? "ok" : "error") +
                 " source=" + SanitizeToken(_mqttConfigurationSource) +
                 " generation=" + _mqttConfigurationGeneration.ToString() +
                 " enabled=" + (_mqttConfiguration.Enabled ? "1" : "0") +

@@ -29,12 +29,12 @@ stable set:
 | `cdc` | USB CDC connection, console input, output, and transport errors |
 
 Transport direction and implementation mechanism are not subsystems. Use fields
-such as `component=subscribe`, `operation=publish`, `transport=mqtt`, or
+such as `comp=subscribe`, `operation=publish`, `transport=mqtt`, or
 `source=irq` instead of creating `mqtt-sub`, `mqtt-pub`, or interrupt subsystems.
 
-Configuration messages use `subsystem=config` with a `domain` field such as
+Configuration messages use `sub=config` with a `domain` field such as
 `domain=mqtt` or `domain=network`. Messages about the live MQTT or network service
-remain owned by `subsystem=mqtt` or `subsystem=network`.
+remain owned by `sub=mqtt` or `sub=network`.
 
 ## Payload Format
 
@@ -45,18 +45,22 @@ consume on the broker.
 Every message begins with these fields in this order:
 
 ```text
-schema=1 subsystem=<name> component=<name>
+schema=1 sub=<name> comp=<name>
 ```
 
 Additional common fields are:
 
 | Field | Meaning |
 |---|---|
+| `sub` | Owning subsystem |
+| `comp` | Component within the owning subsystem |
 | `operation` | Action being attempted or reported |
-| `status` | `ok`, `error`, `busy`, `unavailable`, or a domain state |
+| `stat` | `ok`, `error`, `busy`, `unavailable`, or a domain state |
+| `comm` | Communication condition when distinct from overall state |
 | `code` | Stable machine-readable result or error code |
 | `id` | Requester-assigned 16-bit command ID in command diagnostics |
 | `event_id` | Device-assigned event sequence |
+| `seq` | Local diagnostic sequence, such as the LNB health-check count |
 | `source` | Origin such as `irq`, `poll`, `health`, or `command` |
 | `transport` | `mqtt` or `cdc` when transport is relevant |
 | `level` | `info`, `warning`, `error`, or `debug` |
@@ -70,11 +74,11 @@ Values that cannot satisfy this token grammar must be sanitized before emission.
 Examples:
 
 ```text
-schema=1 subsystem=lnb component=health status=ok sequence=187 s1=0x00 s2=0x00
-schema=1 subsystem=lnb component=fault status=active source=irq event_id=731 fault=overcurrent
-schema=1 subsystem=mqtt component=subscribe status=ok qos=1 message_id=14
-schema=1 subsystem=config component=storage domain=mqtt operation=load status=ok generation=6
-schema=1 subsystem=command component=completion transport=mqtt id=42 status=ok code=ok
+schema=1 sub=lnb comp=health stat=ok seq=187 s1=0x00 s2=0x00
+schema=1 sub=lnb comp=fault stat=active source=irq event_id=731 fault=overcurrent
+schema=1 sub=mqtt comp=subscribe stat=ok qos=1 message_id=14
+schema=1 sub=config comp=storage domain=mqtt operation=load stat=ok generation=6
+schema=1 sub=command comp=completion transport=mqtt id=42 stat=ok code=ok
 ```
 
 ## MQTT Topics
@@ -108,7 +112,7 @@ to MQTT when applicable and appended unchanged to the debug prefix. Structured
 diagnostics use the same schema and ownership rules but are not command responses:
 
 ```text
-[LNB] schema=1 subsystem=lnb component=health status=ok sequence=187 s1=0x00 s2=0x00
+[LNB] schema=1 sub=lnb comp=health stat=ok seq=187 s1=0x00 s2=0x00
 ```
 
 The bracketed prefix is for human scanning only. Consumers must parse the payload,
@@ -133,7 +137,7 @@ The worker performs register access and emits the canonical message. Interrupt
 provenance is retained as a field:
 
 ```text
-schema=1 subsystem=lnb component=fault source=irq status=active event_id=731
+schema=1 sub=lnb comp=fault source=irq stat=active event_id=731
 ```
 
 Faults discovered by another path use the same component and fields with a
@@ -146,13 +150,13 @@ Current debug prefixes map to the contract as follows:
 
 | Current prefix | Target subsystem/component |
 |---|---|
-| `BOOT`, `HEARTBEAT` | `main` with `component=boot` or `component=heartbeat` |
+| `BOOT`, `HEARTBEAT` | `main` with `comp=boot` or `comp=heartbeat` |
 | `CDC` | `cdc` |
 | `CDC-CMD` | `command` with `transport=cdc` or `transport=mqtt` |
 | `CDC-LNB`, `LNB-FAULT`, `LNB-HEALTH` | `lnb` with the appropriate component |
 | `MQTT`, `MQTT-CMD`, `MQTT-EVENT`, `MQTT-STATE` | `mqtt` for transport lifecycle; owning subsystem for domain payloads |
 | `MQTT-CONFIG`, `NETWORK-CONFIG` | `config` with `domain=mqtt` or `domain=network` |
-| `NETWORK`, `DNS` | `network` with `component=interface` or `component=dns` |
+| `NETWORK`, `DNS` | `network` with `comp=interface` or `comp=dns` |
 
 Migration should introduce one payload formatter/sink boundary first, then convert
 subsystems incrementally. During migration, documentation and implementation must
@@ -169,4 +173,4 @@ Current migration status:
 | `config` | MQTT/network storage-load and network-apply diagnostics migrated |
 | `network` | Interface-read and DNS diagnostics migrated |
 | `cdc` | Worker, connection, and output diagnostics migrated |
-| `diseqc` | No standalone legacy diagnostics; command outcomes use `subsystem=command` |
+| `diseqc` | No standalone legacy diagnostics; command outcomes use `sub=command` |

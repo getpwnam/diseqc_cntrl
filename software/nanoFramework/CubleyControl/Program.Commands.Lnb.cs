@@ -1,6 +1,5 @@
 using Cubley.Interop;
 using Cubley.Lnbh26;
-using System.Diagnostics;
 
 namespace CubleyControl
 {
@@ -22,8 +21,8 @@ namespace CubleyControl
 
             WriteStructuredDebug(
                 "LNB",
-                "schema=1 subsystem=lnb component=control operation=safe_defaults" +
-                " status=" + (setEnableRc == 0 && setPolRc == 0 && setBandRc == 0 ? "ok" : "error") +
+                "schema=1 sub=lnb comp=control operation=safe_defaults" +
+                " stat=" + (setEnableRc == 0 && setPolRc == 0 && setBandRc == 0 ? "ok" : "error") +
                 " enable_rc=" + setEnableRc.ToString() +
                 " pol_rc=" + setPolRc.ToString() +
                 " band_rc=" + setBandRc.ToString());
@@ -623,8 +622,8 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "LNB",
-                    "schema=1 subsystem=lnb component=fault operation=snapshot status=error" +
-                    " code=init_failed sequence=" + sequence.ToString() +
+                    "schema=1 sub=lnb comp=fault operation=snapshot stat=error" +
+                    " code=init_failed seq=" + sequence.ToString() +
                     " source=" + source +
                     " rc=" + _lnbInitStatus.ToString());
                 return;
@@ -639,8 +638,8 @@ namespace CubleyControl
                 int statusLastDetail = LNBH26.NativeGetLastErrorDetail();
                 WriteStructuredDebug(
                     "LNB",
-                    "schema=1 subsystem=lnb component=fault operation=snapshot status=error" +
-                    " code=status_read_failed sequence=" + sequence.ToString() +
+                    "schema=1 sub=lnb comp=fault operation=snapshot stat=error" +
+                    " code=status_read_failed seq=" + sequence.ToString() +
                     " source=" + source +
                     " rc=" + statusRc.ToString() +
                     " last=" + statusLastError.ToString() +
@@ -659,8 +658,8 @@ namespace CubleyControl
                 int dataLastDetail = LNBH26.NativeGetLastErrorDetail();
                 WriteStructuredDebug(
                     "LNB",
-                    "schema=1 subsystem=lnb component=fault operation=snapshot status=error" +
-                    " code=data_read_failed sequence=" + sequence.ToString() +
+                    "schema=1 sub=lnb comp=fault operation=snapshot stat=error" +
+                    " code=data_read_failed seq=" + sequence.ToString() +
                     " source=" + source +
                     " rc=" + dataRc.ToString() +
                     " s1=" + ToHexU8(s1) +
@@ -677,9 +676,9 @@ namespace CubleyControl
 
             WriteStructuredDebug(
                 "LNB",
-                "schema=1 subsystem=lnb component=fault operation=snapshot" +
-                " status=" + (HasFaultStatus(s1) ? "fault" : "ok") +
-                " sequence=" + sequence.ToString() +
+                "schema=1 sub=lnb comp=fault operation=snapshot" +
+                " stat=" + (HasFaultStatus(s1) ? "fault" : "ok") +
+                " seq=" + sequence.ToString() +
                 " source=" + source +
                 " channel=a" +
                 " pol=" + PolarizationToText(pol) +
@@ -770,7 +769,7 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "LNB",
-                    "schema=1 subsystem=lnb component=initialize operation=init status=error " +
+                    "schema=1 sub=lnb comp=initialize operation=init stat=error " +
                     BuildLnbInitDiagnosticData());
             }
 
@@ -789,7 +788,7 @@ namespace CubleyControl
                 int lastDetail = LNBH26.NativeGetLastErrorDetail();
                 WriteStructuredDebug(
                     "LNB",
-                    "schema=1 subsystem=lnb component=register operation=read_status status=error" +
+                    "schema=1 sub=lnb comp=register operation=read_status stat=error" +
                     " rc=" + rc.ToString() +
                     " s1=0x" + (s1 & 0xFF).ToString("X2") +
                     " s2=0x" + (s2 & 0xFF).ToString("X2") +
@@ -809,7 +808,7 @@ namespace CubleyControl
                         int retryLastDetail = LNBH26.NativeGetLastErrorDetail();
                         WriteStructuredDebug(
                             "LNB",
-                            "schema=1 subsystem=lnb component=register operation=read_status_retry status=error" +
+                            "schema=1 sub=lnb comp=register operation=read_status_retry stat=error" +
                             " rc=" + rc.ToString() +
                             " s1=0x" + (s1 & 0xFF).ToString("X2") +
                             " s2=0x" + (s2 & 0xFF).ToString("X2") +

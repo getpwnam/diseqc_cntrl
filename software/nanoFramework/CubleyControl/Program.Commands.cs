@@ -26,7 +26,7 @@ namespace CubleyControl
             _activeCommand = RedactCommandForLog(normalized);
             WriteStructuredDebug(
                 "COMMAND",
-                "schema=1 subsystem=command component=dispatch operation=receive status=ok" +
+                "schema=1 sub=command comp=dispatch operation=receive stat=ok" +
                 " transport=" + (_activeCommandTransport == CommandTransport.Mqtt ? "mqtt" : "cdc") +
                 " command=" + SanitizeToken(_activeCommand));
 
@@ -436,9 +436,9 @@ namespace CubleyControl
 
             WriteStructuredDebug(
                 "COMMAND",
-                "schema=1 subsystem=command component=completion" +
+                "schema=1 sub=command comp=completion" +
                 " operation=execute" +
-                " status=" + (ok ? "ok" : "error") +
+                " stat=" + (ok ? "ok" : "error") +
                 " code=" + code +
                 " transport=" + (_activeCommandTransport == CommandTransport.Mqtt ? "mqtt" : "cdc") +
                 (_activeCommandTransport == CommandTransport.Mqtt ? " id=" + _mqttActiveCommandId.ToString() : string.Empty) +

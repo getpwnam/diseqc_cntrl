@@ -73,7 +73,7 @@ namespace CubleyControl
                     _mqttRuntimeState = "error";
                     WriteStructuredDebug(
                         "MQTT",
-                        "schema=1 subsystem=mqtt component=session operation=run status=error code=" + _mqttLastError);
+                        "schema=1 sub=mqtt comp=session operation=run stat=error code=" + _mqttLastError);
                 }
                 catch (Exception ex)
                 {
@@ -81,7 +81,7 @@ namespace CubleyControl
                     _mqttRuntimeState = "error";
                     WriteStructuredDebug(
                         "MQTT",
-                        "schema=1 subsystem=mqtt component=session operation=run status=error" +
+                        "schema=1 sub=mqtt comp=session operation=run stat=error" +
                         " code=session_exception detail=" + _mqttLastError);
                 }
 
@@ -126,7 +126,7 @@ namespace CubleyControl
                     _mqttRuntimeState = "error";
                     WriteStructuredDebug(
                         "MQTT",
-                        "schema=1 subsystem=mqtt component=connection operation=connect status=error" +
+                        "schema=1 sub=mqtt comp=connection operation=connect stat=error" +
                         " code=" + SanitizeToken(_mqttLastError));
                     return;
                 }
@@ -136,7 +136,7 @@ namespace CubleyControl
                 _mqttRuntimeState = "connected";
                 WriteStructuredDebug(
                     "MQTT",
-                    "schema=1 subsystem=mqtt component=connection operation=connect status=ok" +
+                    "schema=1 sub=mqtt comp=connection operation=connect stat=ok" +
                     " broker=" + SanitizeToken(configuration.Broker) +
                     " port=" + configuration.Port.ToString());
 
@@ -148,7 +148,7 @@ namespace CubleyControl
                     new MqttQoSLevel[] { MqttQoSLevel.AtLeastOnce });
                 WriteStructuredDebug(
                     "MQTT",
-                    "schema=1 subsystem=mqtt component=subscribe operation=request status=pending" +
+                    "schema=1 sub=mqtt comp=subscribe operation=request stat=pending" +
                     " topic=" + _mqttCommandTopic +
                     " qos=1 message_id=" + subscriptionMessageId.ToString());
 
@@ -186,7 +186,7 @@ namespace CubleyControl
                     {
                         WriteStructuredDebug(
                             "MQTT",
-                            "schema=1 subsystem=mqtt component=session operation=close status=error" +
+                            "schema=1 sub=mqtt comp=session operation=close stat=error" +
                             " code=close_exception detail=" + SanitizeToken(ex.Message));
                     }
                 }
@@ -204,7 +204,7 @@ namespace CubleyControl
                 _mqttRuntimeState = "error";
                 WriteStructuredDebug(
                     "MQTT",
-                    "schema=1 subsystem=mqtt component=subscribe operation=ack status=error" +
+                    "schema=1 sub=mqtt comp=subscribe operation=ack stat=error" +
                     " code=subscribe_rejected message_id=" + e.MessageId.ToString());
                 return;
             }
@@ -213,7 +213,7 @@ namespace CubleyControl
             _mqttRuntimeState = "connected";
             WriteStructuredDebug(
                 "MQTT",
-                "schema=1 subsystem=mqtt component=subscribe operation=ack status=ok" +
+                "schema=1 sub=mqtt comp=subscribe operation=ack stat=ok" +
                 " topic=" + _mqttCommandTopic +
                 " qos=" + ((int)grantedQosLevels[0]).ToString() +
                 " message_id=" + e.MessageId.ToString());
@@ -234,7 +234,7 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "MQTT",
-                    "schema=1 subsystem=mqtt component=connection operation=disconnect status=error" +
+                    "schema=1 sub=mqtt comp=connection operation=disconnect stat=error" +
                     " code=disconnect_exception detail=" + SanitizeToken(ex.Message));
             }
         }
@@ -244,7 +244,7 @@ namespace CubleyControl
             int payloadLength = e.Message == null ? 0 : e.Message.Length;
             WriteStructuredDebug(
                 "COMMAND",
-                "schema=1 subsystem=command component=receive operation=decode status=ok transport=mqtt" +
+                "schema=1 sub=command comp=receive operation=decode stat=ok transport=mqtt" +
                 " topic=" + e.Topic +
                 " qos=" + ((int)e.QosLevel).ToString() +
                 " retained=" + (e.Retain ? "1" : "0") +
@@ -254,7 +254,7 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "COMMAND",
-                    "schema=1 subsystem=command component=receive operation=reject status=error" +
+                    "schema=1 sub=command comp=receive operation=reject stat=error" +
                     " transport=mqtt code=unexpected_topic topic=" + e.Topic);
                 return;
             }
@@ -263,7 +263,7 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "COMMAND",
-                    "schema=1 subsystem=command component=receive operation=reject status=error" +
+                    "schema=1 sub=command comp=receive operation=reject stat=error" +
                     " transport=mqtt code=retained_command");
                 return;
             }
@@ -272,7 +272,7 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "COMMAND",
-                    "schema=1 subsystem=command component=receive operation=reject status=error" +
+                    "schema=1 sub=command comp=receive operation=reject stat=error" +
                     " transport=mqtt code=invalid_length length=" + payloadLength.ToString());
                 return;
             }
@@ -292,7 +292,7 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "COMMAND",
-                    "schema=1 subsystem=command component=envelope operation=parse status=error" +
+                    "schema=1 sub=command comp=envelope operation=parse stat=error" +
                     " transport=mqtt code=invalid_envelope");
                 PublishMqttResponse("id=none Fail: invalid command envelope", false);
                 return;
@@ -305,7 +305,7 @@ namespace CubleyControl
                 {
                     WriteStructuredDebug(
                         "COMMAND",
-                        "schema=1 subsystem=command component=deduplicate operation=reject status=error" +
+                        "schema=1 sub=command comp=deduplicate operation=reject stat=error" +
                         " transport=mqtt code=id_conflict id=" + commandId.ToString());
                     PublishMqttResponse("id=" + commandId.ToString() + " Fail: command id conflict", false);
                     return;
@@ -313,7 +313,7 @@ namespace CubleyControl
 
                 WriteStructuredDebug(
                     "COMMAND",
-                    "schema=1 subsystem=command component=deduplicate operation=replay status=ok" +
+                    "schema=1 sub=command comp=deduplicate operation=replay stat=ok" +
                     " transport=mqtt id=" + commandId.ToString());
                 ReplayCachedMqttResponses(cachedIndex);
                 return;
@@ -323,7 +323,7 @@ namespace CubleyControl
             _mqttActiveResponseCount = 0;
             WriteStructuredDebug(
                 "COMMAND",
-                "schema=1 subsystem=command component=dispatch operation=start status=ok" +
+                "schema=1 sub=command comp=dispatch operation=start stat=ok" +
                 " transport=mqtt id=" + commandId.ToString() +
                 " command=" + SanitizeToken(RedactCommandForLog(command)));
 
@@ -332,7 +332,7 @@ namespace CubleyControl
             PublishMqttState();
             WriteStructuredDebug(
                 "COMMAND",
-                "schema=1 subsystem=command component=dispatch operation=complete status=ok" +
+                "schema=1 sub=command comp=dispatch operation=complete stat=ok" +
                 " transport=mqtt id=" + commandId.ToString());
         }
 
@@ -420,20 +420,19 @@ namespace CubleyControl
         {
             WriteStructuredDebug(
                 "COMMAND",
-                "schema=1 subsystem=command component=response operation=publish status=ok" +
+                "schema=1 sub=command comp=response operation=publish stat=ok" +
                 " transport=mqtt topic=" + _mqttResponseTopic +
                 " duplicate=" + (duplicate ? "1" : "0") +
                 " payload=" + SanitizeToken(payload));
             PublishLine(_mqttResponseTopic, payload, MqttQoSLevel.AtLeastOnce, false);
         }
 
-        private static void PublishMqttLnbFaultTransition(bool active, string source, int sequence)
+        private static void PublishMqttLnbFaultTransition(bool active, string source)
         {
             string payload =
-                "schema=1 subsystem=lnb component=fault" +
-                " status=" + (active ? "active" : "clear") +
+                "schema=1 sub=lnb comp=fault" +
+                " stat=" + (active ? "active" : "clear") +
                 " event_id=" + NextMqttEventId().ToString() +
-                " fault_sequence=" + sequence.ToString() +
                 " source=" + source;
             PublishMqttLnbEvent(payload);
             PublishMqttState();
@@ -442,11 +441,11 @@ namespace CubleyControl
         private static void PublishMqttLnbHealthEvent(string status, int sequence, int result)
         {
             string payload =
-                "schema=1 subsystem=lnb component=health" +
+                "schema=1 sub=lnb comp=health" +
                 " operation=comms" +
-                " status=" + status +
+                " stat=" + status +
                 " event_id=" + NextMqttEventId().ToString() +
-                " health_sequence=" + sequence.ToString() +
+                " seq=" + sequence.ToString() +
                 " rc=" + result.ToString();
             PublishMqttLnbEvent(payload);
         }
@@ -482,10 +481,9 @@ namespace CubleyControl
             lock (_lnbIoLock)
             {
                 payload =
-                    "schema=1 subsystem=lnb component=state" +
-                    " status=" + _lnbHealthState +
-                    " comms=" + (!_lnbHealthHasResult ? "unknown" : (_lnbHealthCommsOk ? "ok" : "error")) +
-                    " health_sequence=" + _lnbHealthCheckSequence.ToString() +
+                    "schema=1 sub=lnb comp=state" +
+                    " stat=" + _lnbHealthState +
+                    " comm=" + (!_lnbHealthHasResult ? "unknown" : (_lnbHealthCommsOk ? "ok" : "error")) +
                     " health_failures=" + _lnbHealthConsecutiveFailures.ToString() +
                     " health_rc=" + _lnbHealthResult.ToString() +
                     " s1=" + ToHexU8(_lnbHealthS1) +
@@ -496,7 +494,6 @@ namespace CubleyControl
                     " d4=" + ToHexU8(_lnbHealthD4) +
                     " fault=" + (_lnbFaultAsserted ? "1" : "0") +
                     " monitor=" + (_lnbFaultReady ? "ready" : "unavailable") +
-                    " fault_sequence=" + _lnbFaultSequence.ToString() +
                     " init=" + LnbStatusToToken(_lnbInitStatus);
 
                 if (_lnbInitStatus == (int)Cubley.Interop.LNBH26.Status.Ok)
@@ -523,7 +520,7 @@ namespace CubleyControl
             _mqttRuntimeState = "disconnected";
             WriteStructuredDebug(
                 "MQTT",
-                "schema=1 subsystem=mqtt component=connection operation=close status=error" +
+                "schema=1 sub=mqtt comp=connection operation=close stat=error" +
                 " code=connection_closed reconnect=1");
         }
 
@@ -607,7 +604,7 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "MQTT",
-                    "schema=1 subsystem=mqtt component=publish operation=send status=error" +
+                    "schema=1 sub=mqtt comp=publish operation=send stat=error" +
                     " code=publish_exception topic=" + topic +
                     " detail=" + SanitizeToken(ex.Message));
             }

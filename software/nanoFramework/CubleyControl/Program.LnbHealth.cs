@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Threading;
 using Cubley.Interop;
 
@@ -32,7 +31,7 @@ namespace CubleyControl
             int delayMs = LnbHealthIntervalMs;
             WriteStructuredDebug(
                 "LNB",
-                "schema=1 subsystem=lnb component=health operation=start status=ok" +
+                "schema=1 sub=lnb comp=health operation=start stat=ok" +
                 " interval_ms=" + LnbHealthIntervalMs.ToString() +
                 " level=debug");
 
@@ -45,7 +44,7 @@ namespace CubleyControl
                 {
                     WriteStructuredDebug(
                         "LNB",
-                        "schema=1 subsystem=lnb component=health operation=check status=busy level=debug");
+                        "schema=1 sub=lnb comp=health operation=check stat=busy level=debug");
                     delayMs = LnbHealthIntervalMs;
                     continue;
                 }
@@ -67,7 +66,7 @@ namespace CubleyControl
 
                     if (faultAssertion)
                     {
-                        PublishMqttLnbFaultTransition(true, "health", faultSequence);
+                        PublishMqttLnbFaultTransition(true, "health");
                         _lnbHealthPublishElapsedMs = 0;
                     }
 
@@ -91,7 +90,7 @@ namespace CubleyControl
                 {
                     WriteStructuredDebug(
                         "LNB",
-                        "schema=1 subsystem=lnb component=health operation=check status=error" +
+                        "schema=1 sub=lnb comp=health operation=check stat=error" +
                         " code=worker_exception detail=" + SanitizeToken(ex.Message) +
                         " level=error");
                     delayMs = LnbHealthMaximumBackoffMs;
@@ -168,9 +167,9 @@ namespace CubleyControl
 
             WriteStructuredDebug(
                 "LNB",
-                "schema=1 subsystem=lnb component=health operation=check" +
-                " status=" + _lnbHealthState +
-                " sequence=" + _lnbHealthCheckSequence.ToString() +
+                "schema=1 sub=lnb comp=health operation=check" +
+                " stat=" + _lnbHealthState +
+                " seq=" + _lnbHealthCheckSequence.ToString() +
                 " rc=" + result.ToString() +
                 " failures=" + _lnbHealthConsecutiveFailures.ToString() +
                 " s1=" + ToHexU8(s1) +

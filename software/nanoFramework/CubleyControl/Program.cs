@@ -159,7 +159,7 @@ namespace CubleyControl
 
                         WriteStructuredDebug(
                             "MAIN",
-                            "schema=1 subsystem=main component=heartbeat operation=led status=error" +
+                            "schema=1 sub=main comp=heartbeat operation=led stat=error" +
                             " code=led_disabled detail=" + SanitizeToken(ex.Message));
                         _ledReady = false;
                     }
@@ -178,7 +178,7 @@ namespace CubleyControl
         {
             WriteStructuredDebug(
                 "LNB",
-                "schema=1 subsystem=lnb component=fault operation=worker_start status=ok" +
+                "schema=1 sub=lnb comp=fault operation=worker_start stat=ok" +
                 " pin=" + _lnbFaultPin.ToString() +
                 " level=debug");
 
@@ -208,7 +208,7 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "MAIN",
-                    "schema=1 subsystem=main component=boot operation=reset_cause status=unavailable" +
+                    "schema=1 sub=main comp=boot operation=reset_cause stat=unavailable" +
                     " diag=0x" + diagWord.ToString("X8"));
                 return;
             }
@@ -218,7 +218,7 @@ namespace CubleyControl
 
             WriteStructuredDebug(
                 "MAIN",
-                "schema=1 subsystem=main component=boot operation=reset_cause status=ok" +
+                "schema=1 sub=main comp=boot operation=reset_cause stat=ok" +
                 " flags=" + ResetFlagsToText(flags).ToLower() +
                 " csr_low=0x" + csrLow.ToString("X4"));
         }
@@ -262,7 +262,7 @@ namespace CubleyControl
         {
             WriteStructuredDebug(
                 "CDC",
-                "schema=1 subsystem=cdc component=worker operation=start status=ok");
+                "schema=1 sub=cdc comp=worker operation=start stat=ok");
             try
             {
                 UsbConsoleLoopBody();
@@ -271,7 +271,7 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "CDC",
-                    "schema=1 subsystem=cdc component=worker operation=run status=error" +
+                    "schema=1 sub=cdc comp=worker operation=run stat=error" +
                     " code=worker_exception detail=" + SanitizeToken(ex.Message));
             }
         }
@@ -312,8 +312,8 @@ namespace CubleyControl
                     uint diag = DiagMailbox.NativeGet();
                     WriteStructuredDebug(
                         "CDC",
-                        "schema=1 subsystem=cdc component=connection operation=banner" +
-                        " status=" + (rc >= banner.Length ? "ok" : "busy") +
+                        "schema=1 sub=cdc comp=connection operation=banner" +
+                        " stat=" + (rc >= banner.Length ? "ok" : "busy") +
                         " rc=" + rc.ToString() +
                         " diag=0x" + diag.ToString("X8"));
 
@@ -467,7 +467,7 @@ namespace CubleyControl
                 {
                     WriteStructuredDebug(
                         "CDC",
-                        "schema=1 subsystem=cdc component=output operation=write status=error" +
+                        "schema=1 sub=cdc comp=output operation=write stat=error" +
                         " code=" + (written < 0 ? "write_failed" : "partial_write") +
                         " rc=" + written.ToString() +
                         " len=" + expected.ToString() +
@@ -486,7 +486,7 @@ namespace CubleyControl
                 {
                     WriteStructuredDebug(
                         "CDC",
-                        "schema=1 subsystem=cdc component=output operation=write status=error" +
+                        "schema=1 sub=cdc comp=output operation=write stat=error" +
                         " code=write_exception detail=" + SanitizeToken(ex.Message) +
                         " exceptions=" + _usbWriteExceptionCount.ToString());
                 }
@@ -593,7 +593,7 @@ namespace CubleyControl
                 {
                     WriteStructuredDebug(
                         "LNB",
-                        "schema=1 subsystem=lnb component=fault operation=monitor_init status=unavailable" +
+                        "schema=1 sub=lnb comp=fault operation=monitor_init stat=unavailable" +
                         " code=pin_open_failed");
                     return;
                 }
@@ -610,7 +610,7 @@ namespace CubleyControl
 
                 WriteStructuredDebug(
                     "LNB",
-                    "schema=1 subsystem=lnb component=fault operation=monitor_init status=ok" +
+                    "schema=1 sub=lnb comp=fault operation=monitor_init stat=ok" +
                     " pin=" + _lnbFaultPin.ToString() +
                     " mode=" + (_lnbFaultInterruptEnabled ? "interrupt" : "poll"));
 
@@ -623,7 +623,7 @@ namespace CubleyControl
                 _lnbFaultInterruptEnabled = false;
                 WriteStructuredDebug(
                     "LNB",
-                    "schema=1 subsystem=lnb component=fault operation=monitor_init status=error" +
+                    "schema=1 sub=lnb comp=fault operation=monitor_init stat=error" +
                     " code=exception");
             }
         }
@@ -695,7 +695,7 @@ namespace CubleyControl
                 }
             }
 
-            PublishMqttLnbFaultTransition(asserted, source, sequence);
+            PublishMqttLnbFaultTransition(asserted, source);
         }
     }
 }

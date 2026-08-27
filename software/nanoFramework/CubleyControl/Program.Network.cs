@@ -55,8 +55,8 @@ namespace CubleyControl
 
             WriteStructuredDebug(
                 "CONFIG",
-                "schema=1 subsystem=config component=storage domain=network operation=load" +
-                " status=" + (string.IsNullOrEmpty(_networkConfigurationError) ? "ok" : "error") +
+                "schema=1 sub=config comp=storage domain=network operation=load" +
+                " stat=" + (string.IsNullOrEmpty(_networkConfigurationError) ? "ok" : "error") +
                 " source=" + SanitizeToken(_networkConfigurationSource) +
                 " mode=" + _networkConfiguration.Mode +
                 (string.IsNullOrEmpty(_networkConfigurationError)
@@ -114,7 +114,7 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "CONFIG",
-                    "schema=1 subsystem=config component=apply domain=network operation=apply status=error" +
+                    "schema=1 sub=config comp=apply domain=network operation=apply stat=error" +
                     " code=apply_failed detail=" + SanitizeToken(ex.Message));
                 error = "apply_failed";
                 return false;

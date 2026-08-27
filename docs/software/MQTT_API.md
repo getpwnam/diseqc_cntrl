@@ -66,17 +66,23 @@ must therefore coordinate IDs when more than one publisher controls a device.
 ## Events And State
 
 `event/lnb` reports non-retained asynchronous LNB transitions. LNB fault assertion
-and clearing events include `schema=1 subsystem=lnb component=fault`, `event_id`,
-`status`, `fault_sequence`, and `source` fields.
+and clearing events include `schema=1 sub=lnb comp=fault`, `event_id`, `stat`, and
+`source` fields. `event_id` provides event ordering; a second fault sequence is not
+published.
 The GPIO callback only signals a worker; register inspection and MQTT publication
 run outside the interrupt callback.
 
 `state/lnb` is a retained snapshot published on connection, after each MQTT
 command, and after each fault transition. It begins with
-`schema=1 subsystem=lnb component=state` and includes health, communication,
+`schema=1 sub=lnb comp=state` and includes health, communication,
 fault, monitor and initialization state, register values, and channel polarization
 and band when available. Consumers should use `event/lnb` for live transitions
 and `state/lnb` to establish or recover current state.
+
+The compact schema uses `sub`, `comp`, `stat`, and `comm` for subsystem,
+component, status, and communication condition. Local diagnostic sequences use
+`seq`. Retained state omits health and fault sequence counters because they do not
+describe current condition.
 
 The exact LNB schema-1 payload is also emitted through `Debug.WriteLine` with an
 `[LNB]` prefix. Debug output remains available while MQTT is disconnected; MQTT
@@ -91,10 +97,10 @@ already active, so monitoring cannot interrupt operational traffic.
 
 The worker maintains health even while MQTT is disconnected. When connected, a
 changed health result updates retained `state/lnb`; unchanged state is refreshed
-at least every 60 seconds. The snapshot includes `status`, `comms`,
-`health_sequence`, `health_failures`, `health_rc`, and raw `s1`, `s2`, `d1` through
+at least every 60 seconds. The snapshot includes `stat`, `comm`,
+`health_failures`, `health_rc`, and raw `s1`, `s2`, `d1` through
 `d4` register values. Communication loss and restoration publish non-retained
-`component=health operation=comms` messages to `event/lnb`.
+`comp=health operation=comms` messages with health-check `seq` to `event/lnb`.
 
 After failed register access, checks back off from 10 to 20, 40, and at most 60
 seconds. A successful check restores the normal 10-second interval and clears the

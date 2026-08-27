@@ -50,7 +50,7 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "NETWORK",
-                    "schema=1 subsystem=network component=interface operation=read status=error" +
+                    "schema=1 sub=network comp=interface operation=read stat=error" +
                     " code=read_failed detail=" + SanitizeToken(ex.Message));
                 WriteCommandResult(reqId, false, "unavailable", "network unavailable", "reason=read_failed");
             }
@@ -101,7 +101,7 @@ namespace CubleyControl
             {
                 WriteStructuredDebug(
                     "NETWORK",
-                    "schema=1 subsystem=network component=dns operation=lookup status=error" +
+                    "schema=1 sub=network comp=dns operation=lookup stat=error" +
                     " code=lookup_failed host=" + SanitizeToken(host) +
                     " detail=" + SanitizeToken(ex.Message));
                 WriteCommandResult(reqId, false, "unavailable", "dns lookup failed", "host=" + host);
