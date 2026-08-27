@@ -399,10 +399,6 @@ namespace CubleyControl
                         // directly to managed string character positions.
                         int accepted = rc > remainingBanner.Length ? remainingBanner.Length : rc;
                         bannerWriteOffset += accepted;
-                        if (bannerWriteOffset > banner.Length)
-                        {
-                            bannerWriteOffset = banner.Length;
-                        }
                     }
 
                     bool bannerWritten = bannerWriteOffset >= banner.Length;
