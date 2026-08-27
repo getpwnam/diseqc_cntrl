@@ -355,7 +355,7 @@ namespace CubleyControl
             int escapeSequenceState = 0;
             int sessionId = 0;
             int bannerWriteOffset = 0;
-            string banner = "\r\nCubley Rotation Control v" + BuildInfo.Version +
+            string banner = "\r\nCubley Rotation Control v" + ToAsciiUsbText(BuildInfo.Version) +
                 "\r\nConsole inactive. Press Enter to activate.\r\n";
 
             while (true)
@@ -750,6 +750,27 @@ namespace CubleyControl
         private static void WriteSerialLine(string line)
         {
             SafeUsbWrite(line);
+        }
+
+        private static string ToAsciiUsbText(string text)
+        {
+            if (text == null || text.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            char[] chars = text.ToCharArray();
+            bool changed = false;
+            for (int i = 0; i < chars.Length; i++)
+            {
+                if (chars[i] > 0x7F)
+                {
+                    chars[i] = '?';
+                    changed = true;
+                }
+            }
+
+            return changed ? new string(chars) : text;
         }
 
         private static int SafeUsbWrite(string text)
