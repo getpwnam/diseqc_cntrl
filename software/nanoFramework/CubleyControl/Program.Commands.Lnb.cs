@@ -172,9 +172,9 @@ namespace CubleyControl
                 return;
             }
 
-            if (tokens.Length != 4)
+            if (tokens.Length < 3 || tokens.Length > 4)
             {
-                WriteCommandResult(reqId, false, "validation_error", "lnb usage", "usage=lnb <a|b> <enable|polarization|band|iset|isw> <value>");
+                WriteCommandResult(reqId, false, "validation_error", "lnb usage", "usage=lnb <a|b> <enable|disable|polarization|band|iset|isw> [value]");
                 return;
             }
 
@@ -186,29 +186,36 @@ namespace CubleyControl
             }
 
             string field = tokens[2];
-            string value = tokens[3];
 
-            if (field == "enable" || field == "enabled" || field == "e")
+            if (field == "enable" || field == "disable")
             {
-                bool enable;
-                if (!TryParseOnOff(value, out enable))
+                if (tokens.Length != 3)
                 {
-                    WriteCommandResult(reqId, false, "validation_error", "lnb enable invalid", "value=" + value);
+                    WriteCommandResult(reqId, false, "validation_error", "lnb " + field + " usage", "usage=lnb <a|b> " + field);
                     return;
                 }
 
+                bool enable = field == "enable";
                 int rc = LNBH26.NativeSetEnable(channel, enable);
                 if (rc == (int)LNBH26.Status.Ok)
                 {
-                    WriteCommandResult(reqId, true, "ok", "lnb enable", "channel=" + LnbChannelToSchemaName(channel) + " value=" + (enable ? "on" : "off"));
+                    WriteCommandResult(reqId, true, "ok", "lnb " + field, "channel=" + LnbChannelToSchemaName(channel) + " value=" + (enable ? "on" : "off"));
                 }
                 else
                 {
-                    WriteCommandResult(reqId, false, "hw_fault", "lnb enable failed", "channel=" + LnbChannelToSchemaName(channel) + " rc=" + rc.ToString());
+                    WriteCommandResult(reqId, false, "hw_fault", "lnb " + field + " failed", "channel=" + LnbChannelToSchemaName(channel) + " rc=" + rc.ToString());
                 }
 
                 return;
             }
+
+            if (tokens.Length != 4)
+            {
+                WriteCommandResult(reqId, false, "validation_error", "lnb field requires value", "field=" + field);
+                return;
+            }
+
+            string value = tokens[3];
 
             if (field == "polarization" || field == "pol" || field == "p")
             {

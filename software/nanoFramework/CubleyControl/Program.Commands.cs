@@ -164,7 +164,7 @@ namespace CubleyControl
             {
                 WriteHumanHeading("Available commands");
                 WriteHelpCommand("show [topic]", "Display device and service state");
-                WriteHelpCommand("lnb <a|b> <field> <value>", "Set LNB channel state");
+                WriteHelpCommand("lnb <a|b> <action> [value]", "Control LNB channel state");
                 WriteHelpCommand("diseqc <action> ...", "Control switches and positioners");
                 WriteHelpCommand("dns lookup <hostname>", "Resolve a host name");
                 WriteHelpCommand("configure", "Enter configuration mode");
@@ -187,7 +187,8 @@ namespace CubleyControl
             {
                 WriteHumanHeading("LNB commands");
                 WriteHelpCommand("show lnb [a|b] [detail]", "Display LNB state or registers");
-                WriteHelpCommand("lnb <a|b> enable <value>", "Enable or disable LNB output");
+                WriteHelpCommand("lnb <a|b> enable", "Enable LNB output");
+                WriteHelpCommand("lnb <a|b> disable", "Disable LNB output");
                 WriteHelpCommand("lnb <a|b> polarization <value>", "Set vertical or horizontal polarization");
                 WriteHelpCommand("lnb <a|b> band <value>", "Set low or high band");
                 WriteHelpCommand("lnb <a|b> iset <value>", "Set current range");

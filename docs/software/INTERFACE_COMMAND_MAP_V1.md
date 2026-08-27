@@ -90,7 +90,7 @@ that commit, for example `1.0.0+g1a2b3c4d.dirty`. Direct project builds use
 | `show capabilities` | yes | yes | Show supported operational capabilities. |
 | `show version` | yes | yes | Show firmware and interface versions. |
 | `show lnb [a\|b] [detail]` | yes | yes | Inspect both channels or one selected channel. |
-| `lnb <a\|b> <field> <value>` | yes | yes | Perform one LNB state assignment. |
+| `lnb <a\|b> <action> [value]` | yes | yes | Perform one LNB state change. |
 | `show diseqc`, `diseqc ...` | yes | yes | Inspect or perform one DiSEqC operation. |
 | `help [topic]` | yes | no | Show context-sensitive console help. |
 | `watch [on\|off]` | yes | no | Control the USB periodic status display. |
@@ -272,18 +272,19 @@ alias for the `lnb` command family.
 Each LNB summary includes enabled state, polarization, band, ISET range, ISW
 limit, voltage, tone, low-power mode, external DiSEqC input, and fault registers.
 
-### State Assignments
+### State Changes
 
 | Command | Aliases | Accepted values |
 |---|---|---|
-| `lnb <a\|b> enable <value>` | `enabled`, `e`; root `l` | `on\|off`, `1\|0`, `true\|false` |
+| `lnb <a\|b> enable` | root `l` | none |
+| `lnb <a\|b> disable` | root `l` | none |
 | `lnb <a\|b> polarization <value>` | `pol`, `p`; root `l` | `vertical\|horizontal`, `v\|h` |
 | `lnb <a\|b> band <value>` | `b`; root `l` | `low\|high`, `l\|h` |
 | `lnb <a\|b> iset <value>` | root `l` | `default\|normal\|high\|0` or `low\|reduced\|1` |
 | `lnb <a\|b> isw <value>` | root `l` | `4a\|4\|default\|high\|0` or `2.5a\|2p5a\|2_5a\|low\|reduced\|1` |
 
-Enabling a logical channel updates that channel's native LNB output state.
-An LNB command without a value is an error; all reads begin with `show`.
+Enabling or disabling a logical channel updates that channel's native LNB output
+state. Assignment commands require a value; all reads begin with `show`.
 
 ## Network And MQTT Configuration
 
