@@ -100,7 +100,7 @@ Notes:
 Native assembly export in `nanoCLR/cubley_interop.cpp`:
 
 - Assembly: `CubleyNative`
-- Native checksum: `0x55A991DA`
+- Native checksum: `0x0A4353F9`
 - Version tuple: `{ 1, 0, 0, 0 }`
 
 Method slot map (native `method_lookup`):
@@ -133,6 +133,10 @@ Method slot map (native `method_lookup`):
 | 23 | `UsbCdcConsole.NativeIsEnabled()` |
 | 24 | `UsbCdcConsole.NativeReadByte(int)` |
 | 25 | `UsbCdcConsole.NativeWrite(string)` |
+| 26 | `ZPersistentConfiguration.NativeRead(byte[], int, int)` |
+| 27 | `ZPersistentConfiguration.NativeWrite(byte[], int, int)` |
+| 28 | `ZZDiseqcTransmitter.NativeTransmit(byte[], int, int)` |
+| 29 | `ZZDiseqcTransmitter.NativeSetTone(int, int, bool)` |
 
 ### Interop ownership and update rules
 
@@ -142,6 +146,20 @@ Method slot map (native `method_lookup`):
 - Recompute and validate checksum after interop changes.
 
 See `docs/software/INTEROP_CONTRACT_V1.md` for policy and process.
+
+## DiSEqC timer ownership
+
+- TIM4 and PD12/TIM4_CH1 are owned by the native DiSEqC transmitter for the
+	continuous 22 kHz tone and frame carrier. Other code must not reconfigure
+	TIM4 while DiSEqC support is active because its period is shared by all
+	TIM4 channels.
+- TIM6 is owned by the native DiSEqC transmitter as a 1 MHz one-shot
+	mark/space boundary scheduler. It has no external pin requirement.
+- TIM2 remains reserved for the ChibiOS system timer and must not be used by
+	the DiSEqC transmitter.
+- A frame call blocks its calling managed thread with a bounded 250 ms wait;
+	carrier gating and completion are interrupt-driven. Continuous tone is
+	restored only after the managed 15 ms post-frame quiet interval.
 
 ## Diagnostics Words
 

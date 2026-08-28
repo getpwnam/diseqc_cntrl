@@ -134,8 +134,8 @@ CubleyControl console
 |   |   |     Display the configured motion watchdog timeout.
 |   |   |-- timeout <5..300>
 |   |   |     Set the motion watchdog timeout in seconds.
-|   |   |-- tx <hex_byte> <hex_byte> [hex_byte ...]
-|   |   |     Transmit a raw frame of 2 through 7 bytes.
+|   |   |-- tx <framing> <address> <command> [data_byte ...]
+|   |   |     Transmit a raw frame of 3 through 6 bytes.
 |   |   |-- tone on [frequency_hz] [duty_percent]
 |   |   |     Start the carrier; defaults to 22000 Hz and 50%.
 |   |   |-- tone off|status
@@ -267,7 +267,7 @@ that commit, for example `1.0.0+g1a2b3c4d.dirty`. Direct project builds use
 | `help [topic]` | yes | no | Show context-sensitive console help. |
 | `watch [on\|off]` | yes | no | Control the USB periodic status display. |
 | `show network`, `show mqtt` | yes | no | Inspect local service health. |
-| `show running-config [network\|mqtt]` | yes | no | Render active configuration with secrets redacted. |
+| `show running-config [network\|mqtt]` | yes | no | Render active non-default configuration with secrets redacted. |
 | `show startup-config [network\|mqtt]` | yes | no | Render persisted configuration with secrets redacted. |
 | `dns lookup <hostname>` | yes | no | Run a local DNS diagnostic. |
 | `led on`, `led off`, `pulse` | yes | no | Run local status LED diagnostics. |
@@ -489,7 +489,7 @@ mutations are accepted only after entering configuration mode.
 | `diseqc preset status` | Show the selected routing preset. |
 | `diseqc timeout <5..300>` | Set the motion watchdog auto-stop timeout, in seconds. Rejected while a motion is in progress. |
 | `diseqc timeout status` | Show the configured motion watchdog timeout, in seconds. |
-| `diseqc tx <hex_byte> <hex_byte> [hex_byte ...]` | Transmit 2 to 7 hexadecimal bytes. |
+| `diseqc tx <framing> <address> <command> [data_byte ...]` | Transmit 3 to 6 hexadecimal bytes. |
 | `diseqc tone on [frequency_hz] [duty_percent]` | Start the carrier; defaults to 22000 Hz and 50%. Frequency range is 1000..100000 Hz and duty range is 1..99%. |
 | `diseqc tone off` | Stop the carrier. |
 | `diseqc tone status` | Show carrier state and settings. |

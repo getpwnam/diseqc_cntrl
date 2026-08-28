@@ -19,8 +19,9 @@ The corresponding community-target tree is generated during the firmware build a
 
 - Assembly name: `CubleyNative`
 - Managed and native assembly version: `1.0.0.0`
-- Native methods checksum: `0x55A991DA`
+- Native methods checksum: `0x0A4353F9`
 - Frozen slot count: 26 (`0..25`)
+- Current slot count: 30 (`0..29`)
 
 ## PE Ordering
 
@@ -36,6 +37,8 @@ The current type order is:
 4. `LNBH26Registers`
 5. `LNBH26Tweaks`
 6. `UsbCdcConsole`
+7. `ZPersistentConfiguration`
+8. `ZZDiseqcTransmitter`
 
 ## Canonical Slot Map
 
@@ -67,6 +70,10 @@ The current type order is:
 | 23 | `UsbCdcConsole.NativeIsEnabled` | `int NativeIsEnabled()` |
 | 24 | `UsbCdcConsole.NativeReadByte` | `int NativeReadByte(int timeoutMs)` |
 | 25 | `UsbCdcConsole.NativeWrite` | `int NativeWrite(string text)` |
+| 26 | `ZPersistentConfiguration.NativeRead` | `int NativeRead(byte[] buffer, int offset, int count)` |
+| 27 | `ZPersistentConfiguration.NativeWrite` | `int NativeWrite(byte[] buffer, int offset, int count)` |
+| 28 | `ZZDiseqcTransmitter.NativeTransmit` | `int NativeTransmit(byte[] frame, int offset, int count)` |
+| 29 | `ZZDiseqcTransmitter.NativeSetTone` | `int NativeSetTone(int frequencyHz, int dutyPercent, bool enabled)` |
 
 `UsbCdcConsole.NativeIsEnabled` intentionally returns `int` because a Boolean
 InternalCall return can trigger a nanoFramework CLR eval-stack assertion.
@@ -88,6 +95,13 @@ Slots `0..25` are immutable. A v1 addition is compatible only when the emitted
 PE order preserves all 26 existing slots as an exact prefix and places new slots
 after slot 25. Generic source-level "append-only" edits are not sufficient:
 adding a method to an earlier alphabetically ordered type shifts later slots.
+
+Slots 28 and 29 were appended on 2026-08-28 to move DiSEqC carrier and
+symbol-envelope timing from managed scheduling into native hardware timers.
+`ZZDiseqcTransmitter` is deliberately named to sort after the existing frozen
+and appended types. `NativeTransmit` copies and encodes the supplied 3-to-6-byte
+frame before waiting for completion; no managed-array pointer is retained by
+the timer ISR.
 
 Any change that renames, reorders, removes, repurposes, or shifts a frozen slot
 requires a coordinated new contract version and matching managed/native deployment.

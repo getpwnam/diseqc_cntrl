@@ -4,6 +4,7 @@
 #include <hal.h>
 #include <string.h>
 #include "app_config_native.h"
+#include "diseqc_transmitter.h"
 #include "fram_native.h"
 
 #if (HAL_USE_SERIAL_USB == TRUE) || (defined(CUBLEY_ENABLE_USB_CDC_CONSOLE) && (CUBLEY_ENABLE_USB_CDC_CONSOLE == TRUE))
@@ -39,6 +40,8 @@ HRESULT Library_cubley_interop_Fram24C128_NativeWrite___STATIC__I4__I4__SZARRAY_
 HRESULT Library_cubley_interop_Fram24C128_NativeRead___STATIC__I4__I4__SZARRAY_U1__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_ZPersistentConfiguration_NativeRead___STATIC__I4__SZARRAY_U1__I4__I4(CLR_RT_StackFrame& stack);
 HRESULT Library_cubley_interop_ZPersistentConfiguration_NativeWrite___STATIC__I4__SZARRAY_U1__I4__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_ZZDiseqcTransmitter_NativeTransmit___STATIC__I4__SZARRAY_U1__I4__I4(CLR_RT_StackFrame& stack);
+HRESULT Library_cubley_interop_ZZDiseqcTransmitter_NativeSetTone___STATIC__I4__I4__I4__BOOLEAN(CLR_RT_StackFrame& stack);
 
 // Diagnostics words used by managed bring-up code.
 //
@@ -158,7 +161,7 @@ static const CLR_RT_MethodHandler method_lookup[] =
     // InternalCall dispatch index is the PE MethodDef index, so this native table
     // MUST follow that alphabetical order, NOT managed source/append order.
     // Type order: DiagMailbox, Fram24C128, LNBH26, LNBH26Registers, LNBH26Tweaks,
-    // UsbCdcConsole, ZPersistentConfiguration.
+    // UsbCdcConsole, ZPersistentConfiguration, ZZDiseqcTransmitter.
     Library_cubley_interop_LNBH26Tweaks_NativeSetIsetLowForChannel___STATIC__I4__I4__BOOLEAN,              // [19] LNBH26Tweaks.NativeSetIsetLowForChannel
     Library_cubley_interop_LNBH26Tweaks_NativeSetIswLowForChannel___STATIC__I4__I4__BOOLEAN,               // [20] LNBH26Tweaks.NativeSetIswLowForChannel
     Library_cubley_interop_LNBH26Tweaks_NativeGetIsetLowForChannel___STATIC__I4__I4,                        // [21] LNBH26Tweaks.NativeGetIsetLowForChannel
@@ -168,12 +171,14 @@ static const CLR_RT_MethodHandler method_lookup[] =
     Library_cubley_interop_UsbCdcConsole_NativeWrite___STATIC__I4__STRING,                                  // [25] UsbCdcConsole.NativeWrite
     Library_cubley_interop_ZPersistentConfiguration_NativeRead___STATIC__I4__SZARRAY_U1__I4__I4,           // [26] ZPersistentConfiguration.NativeRead
     Library_cubley_interop_ZPersistentConfiguration_NativeWrite___STATIC__I4__SZARRAY_U1__I4__I4,          // [27] ZPersistentConfiguration.NativeWrite
+    Library_cubley_interop_ZZDiseqcTransmitter_NativeTransmit___STATIC__I4__SZARRAY_U1__I4__I4,             // [28] ZZDiseqcTransmitter.NativeTransmit
+    Library_cubley_interop_ZZDiseqcTransmitter_NativeSetTone___STATIC__I4__I4__I4__BOOLEAN,                 // [29] ZZDiseqcTransmitter.NativeSetTone
 };
 
 extern const CLR_RT_NativeAssemblyData g_CLR_AssemblyNative_CubleyNative =
 {
     "CubleyNative",
-    0xB2D08F16,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
+    0x0A4353F9,  // nativeMethodsChecksum from CubleyNative.pe (computed by MetaDataProcessor)
     method_lookup,
     { 1, 0, 0, 0 }
 };
@@ -249,6 +254,66 @@ HRESULT Library_cubley_interop_ZPersistentConfiguration_NativeWrite___STATIC__I4
 
     const uint8_t* source = (const uint8_t*)buffer->GetFirstElement() + offset;
     stack.SetResult_I4((int32_t)cubley_app_config_write(source, (size_t)count));
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_ZZDiseqcTransmitter_NativeTransmit___STATIC__I4__SZARRAY_U1__I4__I4(
+    CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    CLR_RT_HeapBlock_Array* frame = stack.Arg0().DereferenceArray();
+    const int32_t offset = stack.Arg1().NumericByRef().s4;
+    const int32_t count = stack.Arg2().NumericByRef().s4;
+
+    if (frame == NULL || offset < 0 || count <= 0 || offset > (int32_t)frame->m_numOfElements - count)
+    {
+        stack.SetResult_I4((int32_t)DISEQC_TX_INVALID_PARAM);
+        NANOCLR_NOCLEANUP_NOLABEL();
+    }
+
+    const uint8_t* source = (const uint8_t*)frame->GetFirstElement() + offset;
+    const diseqc_tx_status_t status = diseqc_transmit_frame(source, (size_t)count);
+
+    // 0xE3 D0 SS NN: DiSEqC transmit result and requested frame byte count.
+    g_cubley_diag_last_error =
+        ((uint32_t)0xE3 << 24) |
+        ((uint32_t)0xD0 << 16) |
+        ((uint32_t)((uint8_t)status) << 8) |
+        (uint32_t)((uint8_t)count);
+
+    stack.SetResult_I4((int32_t)status);
+    NANOCLR_NOCLEANUP_NOLABEL();
+}
+
+HRESULT Library_cubley_interop_ZZDiseqcTransmitter_NativeSetTone___STATIC__I4__I4__I4__BOOLEAN(
+    CLR_RT_StackFrame& stack)
+{
+    NANOCLR_HEADER();
+
+    const int32_t frequencyHz = stack.Arg0().NumericByRef().s4;
+    const int32_t dutyPercent = stack.Arg1().NumericByRef().s4;
+    const bool enabled = stack.Arg2().NumericByRef().u1 != 0;
+
+    if (frequencyHz < 0 || dutyPercent < 0)
+    {
+        stack.SetResult_I4((int32_t)DISEQC_TX_INVALID_PARAM);
+        NANOCLR_NOCLEANUP_NOLABEL();
+    }
+
+    const diseqc_tx_status_t status = diseqc_set_tone(
+        (uint32_t)frequencyHz,
+        (uint32_t)dutyPercent,
+        enabled);
+
+    // 0xE3 D1 SS EE: DiSEqC tone result and requested enabled state.
+    g_cubley_diag_last_error =
+        ((uint32_t)0xE3 << 24) |
+        ((uint32_t)0xD1 << 16) |
+        ((uint32_t)((uint8_t)status) << 8) |
+        (enabled ? 1U : 0U);
+
+    stack.SetResult_I4((int32_t)status);
     NANOCLR_NOCLEANUP_NOLABEL();
 }
 
