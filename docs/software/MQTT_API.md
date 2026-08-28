@@ -83,13 +83,14 @@ and `state/lnb` to establish or recover current state.
 
 `event/diseqc` reports motion start and completion transitions. The retained
 `state/diseqc` snapshot reports `stat`, `motion_id`, `operation`, `remaining_ms`,
-`completion`, and `timeout_ms`. Successful goto, step, and drive commands set the
-state busy. Further movement and raw transmit commands fail as busy until Halt,
-timeout, or `diseqc complete <motion_id>` releases the lock. The ID check prevents
-a stale external completion message from releasing a newer movement. `timeout_ms`
-reflects the configured motion watchdog auto-stop duration, adjustable from the
-USB console with `diseqc timeout <5..300>` (seconds, default 90); it is not yet
-exposed as an MQTT command.
+`completion`, `timeout_ms`, and DiSEqC path fields (`channel`, `output_enabled`,
+`extm`, and `ten`) so prerequisite visibility is explicit. Successful goto, step,
+and drive commands set the state busy. Further movement and raw transmit commands
+fail as busy until Halt, timeout, or `diseqc complete <motion_id>` releases the
+lock. The ID check prevents a stale external completion message from releasing a
+newer movement. `timeout_ms` reflects the configured motion watchdog auto-stop
+duration, adjustable from the USB console with `diseqc timeout <5..300>` (seconds,
+default 90); it is not yet exposed as an MQTT command.
 
 The compact schema uses `sub`, `comp`, `stat`, and `comm` for subsystem,
 component, status, and communication condition. Local diagnostic sequences use
