@@ -130,8 +130,8 @@ CubleyControl console
 |   |   |     Display the selected routing preset.
 |   |   |-- preset <off|direct|aa|ab|ba|bb>
 |   |   |     Select the routing prefix for positioner commands.
-|   |   |-- tx <hex_byte> <hex_byte> [hex_byte ...]
-|   |   |     Transmit a raw frame of 2 through 7 bytes.
+|   |   |-- tx <framing> <address> <command> [data_byte ...]
+|   |   |     Transmit a raw frame of 3 through 6 bytes.
 |   |   |-- tone on [frequency_hz] [duty_percent]
 |   |   |     Start the carrier; defaults to 22000 Hz and 50%.
 |   |   |-- tone off|status
@@ -483,7 +483,7 @@ mutations are accepted only after entering configuration mode.
 | `diseqc complete <motion_id>` | Release the matching motion lock after external completion detection. |
 | `diseqc preset <off\|direct\|aa\|ab\|ba\|bb>` | Select the routing prefix applied to positioner commands. |
 | `diseqc preset status` | Show the selected routing preset. |
-| `diseqc tx <hex_byte> <hex_byte> [hex_byte ...]` | Transmit 2 to 7 hexadecimal bytes. |
+| `diseqc tx <framing> <address> <command> [data_byte ...]` | Transmit 3 to 6 hexadecimal bytes. |
 | `diseqc tone on [frequency_hz] [duty_percent]` | Start the carrier; defaults to 22000 Hz and 50%. Frequency range is 1000..100000 Hz and duty range is 1..99%. |
 | `diseqc tone off` | Stop the carrier. |
 | `diseqc tone status` | Show carrier state and settings. |
