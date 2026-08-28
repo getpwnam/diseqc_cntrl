@@ -452,17 +452,23 @@ namespace CubleyControl
             }
 
             _activeOutputSink("! cubley-config v2 " + source + "\r\n");
+            bool hideDefaults = source == "running";
+            NetworkConfiguration defaultNetwork = NetworkConfiguration.CreateDefaults();
+            MqttConfiguration defaultMqtt = MqttConfiguration.CreateDefaults();
             if (domain == "all" || domain == "mqtt")
             {
-                _activeOutputSink("hostname " + (string.IsNullOrEmpty(mqtt.Hostname) ? "auto" : mqtt.Hostname) + "\r\n");
+                EmitConfigurationLine(hideDefaults, mqtt.Hostname != defaultMqtt.Hostname,
+                    "hostname " + (string.IsNullOrEmpty(mqtt.Hostname) ? "auto" : mqtt.Hostname) + "\r\n");
             }
             if (domain == "all" || domain == "network")
             {
-                _activeOutputSink("network mode " + network.Mode + "\r\n");
-                _activeOutputSink("network address " + network.Address + "\r\n");
-                _activeOutputSink("network mask " + network.SubnetMask + "\r\n");
-                _activeOutputSink("network gateway " + network.Gateway + "\r\n");
-                _activeOutputSink(
+                EmitConfigurationLine(hideDefaults, network.Mode != defaultNetwork.Mode, "network mode " + network.Mode + "\r\n");
+                EmitConfigurationLine(hideDefaults, network.Address != defaultNetwork.Address, "network address " + network.Address + "\r\n");
+                EmitConfigurationLine(hideDefaults, network.SubnetMask != defaultNetwork.SubnetMask, "network mask " + network.SubnetMask + "\r\n");
+                EmitConfigurationLine(hideDefaults, network.Gateway != defaultNetwork.Gateway, "network gateway " + network.Gateway + "\r\n");
+                EmitConfigurationLine(hideDefaults,
+                    network.AutomaticDns != defaultNetwork.AutomaticDns ||
+                    network.Dns1 != defaultNetwork.Dns1 || network.Dns2 != defaultNetwork.Dns2,
                     network.AutomaticDns
                         ? "network dns auto\r\n"
                         : "network dns static " + network.Dns1 +
@@ -471,15 +477,23 @@ namespace CubleyControl
 
             if (domain == "all" || domain == "mqtt")
             {
-                _activeOutputSink("mqtt enabled " + (mqtt.Enabled ? "on" : "off") + "\r\n");
-                _activeOutputSink("mqtt broker " + (string.IsNullOrEmpty(mqtt.Broker) ? "clear" : mqtt.Broker) + "\r\n");
-                _activeOutputSink("mqtt port " + mqtt.Port.ToString() + "\r\n");
-                _activeOutputSink("mqtt client-id " + (string.IsNullOrEmpty(mqtt.ClientId) ? "auto" : mqtt.ClientId) + "\r\n");
-                _activeOutputSink("mqtt username " + (string.IsNullOrEmpty(mqtt.Username) ? "clear" : mqtt.Username) + "\r\n");
-                _activeOutputSink(string.IsNullOrEmpty(mqtt.Password) ? "mqtt password clear\r\n" : "! mqtt password configured\r\n");
-                _activeOutputSink("mqtt topic-prefix " + mqtt.TopicPrefix + "\r\n");
-                _activeOutputSink("mqtt keepalive " + mqtt.KeepAliveSeconds.ToString() + "\r\n");
-                _activeOutputSink("mqtt reconnect " + mqtt.ReconnectSeconds.ToString() + "\r\n");
+                EmitConfigurationLine(hideDefaults, mqtt.Enabled != defaultMqtt.Enabled, "mqtt enabled " + (mqtt.Enabled ? "on" : "off") + "\r\n");
+                EmitConfigurationLine(hideDefaults, mqtt.Broker != defaultMqtt.Broker, "mqtt broker " + (string.IsNullOrEmpty(mqtt.Broker) ? "clear" : mqtt.Broker) + "\r\n");
+                EmitConfigurationLine(hideDefaults, mqtt.Port != defaultMqtt.Port, "mqtt port " + mqtt.Port.ToString() + "\r\n");
+                EmitConfigurationLine(hideDefaults, mqtt.ClientId != defaultMqtt.ClientId, "mqtt client-id " + (string.IsNullOrEmpty(mqtt.ClientId) ? "auto" : mqtt.ClientId) + "\r\n");
+                EmitConfigurationLine(hideDefaults, mqtt.Username != defaultMqtt.Username, "mqtt username " + (string.IsNullOrEmpty(mqtt.Username) ? "clear" : mqtt.Username) + "\r\n");
+                EmitConfigurationLine(hideDefaults, mqtt.Password != defaultMqtt.Password, string.IsNullOrEmpty(mqtt.Password) ? "mqtt password clear\r\n" : "! mqtt password configured\r\n");
+                EmitConfigurationLine(hideDefaults, mqtt.TopicPrefix != defaultMqtt.TopicPrefix, "mqtt topic-prefix " + mqtt.TopicPrefix + "\r\n");
+                EmitConfigurationLine(hideDefaults, mqtt.KeepAliveSeconds != defaultMqtt.KeepAliveSeconds, "mqtt keepalive " + mqtt.KeepAliveSeconds.ToString() + "\r\n");
+                EmitConfigurationLine(hideDefaults, mqtt.ReconnectSeconds != defaultMqtt.ReconnectSeconds, "mqtt reconnect " + mqtt.ReconnectSeconds.ToString() + "\r\n");
+            }
+        }
+
+        private static void EmitConfigurationLine(bool hideDefaults, bool differsFromDefault, string line)
+        {
+            if (!hideDefaults || differsFromDefault)
+            {
+                _activeOutputSink(line);
             }
         }
 
