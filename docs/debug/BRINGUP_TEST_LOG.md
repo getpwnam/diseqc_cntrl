@@ -1645,3 +1645,27 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: docs/debug/artifacts/20260828-insertion_loss.png
 - Conclusion: USB CDC interface responded after deployment of the corrected 16-assembly CubleyControl bundle; calibrated J7-to-J8 insertion-loss sweep was captured from 950 MHz to 2.1 GHz.
 - Note: Sweep captured 2026-08-28 16:31:32 with TG enabled at -20 dBm, normalization enabled, RBW/VBW 1 MHz, and 950 MHz to 2.1 GHz span. Trace is retained as measured evidence; no numeric acceptance limit was supplied.
+
+### 2026-08-28 16:12:34 UTC [PASS] [NON-BASELINE]
+- Git rev: ba4e1cc
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Cubley USB CDC: diseqc tone off; lnb a polarization vertical; lnb a enable; diseqc listen on; lnb a band high; diseqc tone on 22000 50; diseqc tone status; Siglent SDS814X-HD read-only measurements and screenshot at J8
+- Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260828-scope-j8-diseqc-22khz.png
+- Conclusion: J8 produced a stable 22.12 kHz DiSEqC carrier at approximately 0.76 Vpp after LNB A output, external modulation, and tone-enable path were enabled.
+- Note: The same tone test previously showed no coherent carrier when only diseqc tone on was used; continuous-tone control does not currently establish all required LNBH26 state. Scope: C1 AC-coupled, 10x, 1 Mohm, 500 mV/div, 20 us/div.
+
+### 2026-08-28 16:17:48 UTC [PASS] [NON-BASELINE]
+- Git rev: ba4e1cc
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Cubley USB CDC: diseqc tone off; diseqc tx e0 10 38 f0; Siglent SDS814X-HD C1 SINGLE capture at J8, AC-coupled 10x/1Mohm, 500 mV/div, 20 ms/div
+- Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260828-scope-j8-diseqc-frame-e0-10-38-f0.png
+- Conclusion: A single DiSEqC transmission produced a finite approximately 0.78 Vpp carrier burst at J8 for raw frame E0 10 38 F0.
+- Note: Scope stopped after the trigger and retained the complete burst overview. The displayed automatic 19.835 kHz frequency and 50.416 us period are packet-wide/undersampled measurements and are not used as carrier-frequency evidence; the prior continuous-tone capture measured 22.12 kHz.
+
+### 2026-08-28 17:02:52 UTC [FAIL] [NON-BASELINE]
+- Git rev: ba4e1cc
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Cubley USB CDC: diseqc tx e0 10 38 f0; Siglent SDS814X-HD C1 stopped waveform and raw-data analysis at J8, AC-coupled 10x/1Mohm, 500 mV/div
+- Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260828-scope-j8-diseqc-symbol-timing.png
+- Conclusion: Raw waveform analysis confirms correct 22.107 kHz carrier but out-of-tolerance logical-zero timing: 1.110-1.140 ms marks followed by 0.670-0.720 ms spaces, for 1.810-1.830 ms symbols instead of 1.500 ms.
+- Note: Analysis used 5,000,000 raw C1 samples at 1 ns intervals with 10 us envelope bins; two complete long-mark symbols were measured with approximately +/-10 us edge quantization. This is a firmware/protocol timing failure, not an oscilloscope automatic-measurement error.
