@@ -263,7 +263,7 @@ that commit, for example `1.0.0+g1a2b3c4d.dirty`. Direct project builds use
 | `help [topic]` | yes | no | Show context-sensitive console help. |
 | `watch [on\|off]` | yes | no | Control the USB periodic status display. |
 | `show network`, `show mqtt` | yes | no | Inspect local service health. |
-| `show running-config [network\|mqtt]` | yes | no | Render active configuration with secrets redacted. |
+| `show running-config [network\|mqtt]` | yes | no | Render active non-default configuration with secrets redacted. |
 | `show startup-config [network\|mqtt]` | yes | no | Render persisted configuration with secrets redacted. |
 | `dns lookup <hostname>` | yes | no | Run a local DNS diagnostic. |
 | `led on`, `led off`, `pulse` | yes | no | Run local status LED diagnostics. |

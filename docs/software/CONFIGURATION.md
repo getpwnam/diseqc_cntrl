@@ -76,8 +76,9 @@ containing only `a-z`, `0-9`, and internal hyphens. The broker is required befor
 an enabled configuration can be committed. The topic prefix cannot start or end
 with `/` or contain MQTT wildcards (`#` or `+`).
 
-`show candidate-config` renders the complete candidate except for secret material.
-`show running-config` and `show startup-config` are available from either USB mode.
+`show candidate-config` and `show startup-config` render complete configurations
+except for secret material. `show running-config` omits settings at their default
+values. All three commands are available from either USB mode.
 `show storage` reports network and application configuration backend status
 separately from live network and MQTT service state. `show network` reports the
 active interface plus the network configuration source and load status.
