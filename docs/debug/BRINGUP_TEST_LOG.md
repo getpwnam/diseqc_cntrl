@@ -1669,3 +1669,11 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260828-scope-j8-diseqc-symbol-timing.png
 - Conclusion: Raw waveform analysis confirms correct 22.107 kHz carrier but out-of-tolerance logical-zero timing: 1.110-1.140 ms marks followed by 0.670-0.720 ms spaces, for 1.810-1.830 ms symbols instead of 1.500 ms.
 - Note: Analysis used 5,000,000 raw C1 samples at 1 ns intervals with 10 us envelope bins; two complete long-mark symbols were measured with approximately +/-10 us edge quantization. This is a firmware/protocol timing failure, not an oscilloscope automatic-measurement error.
+
+### 2026-08-28 17:53:50 UTC [PASS]
+- Git rev: a2150db
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./firmware/build-flash-cubley.sh build; artifact-derived map/ELF layout cross-check; ./firmware/build-flash-cubley.sh flash --bootaddr 0x08000000 --clraddr 0x08010000 --deployaddr 0x080C0000 --deploysize 0x00040000 --reset; build-CubleyControl.sh Debug; deploy-CubleyControl.sh --reset; nanoff devicedetails
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin; software/nanoFramework/build/CubleyControl/CubleyControl_bundle_20260828-175228.bin
+- Conclusion: Hardware-timed DiSEqC firmware flashed and matching CubleyControl deployed; runtime identity and CubleyNative checksum 0A4353F9 verified.
+- Note: Derived layout: nanoBooter 0x08000000 size 34156; nanoCLR 0x08010000 size 696080; deployment 0x080C0000 size 0x00040000. Firmware writes verified; deployment reports 16 managed assemblies and no resolver errors.
