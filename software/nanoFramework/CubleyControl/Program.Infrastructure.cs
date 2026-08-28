@@ -354,6 +354,9 @@ namespace CubleyControl
             bool suppressNextLineFeed = false;
             int escapeSequenceState = 0;
             int sessionId = 0;
+            int bannerWriteOffset = 0;
+            string banner = "\r\nCubley Rotation Control v" + ToAsciiUsbText(BuildInfo.Version) +
+                "\r\nConsole inactive. Press Enter to activate.\r\n";
 
             while (true)
             {
@@ -373,6 +376,7 @@ namespace CubleyControl
                     idleWarningSent = false;
                     suppressNextLineFeed = false;
                     sessionId = 0;
+                    bannerWriteOffset = 0;
                     _watchElapsedMs = 0;
                     _consoleLine = string.Empty;
                     ClearConsoleHistory();
@@ -386,19 +390,30 @@ namespace CubleyControl
                     // actually been written. On a fresh USB connection the output
                     // queue may not be draining yet, so a single write can return 0
                     // and the banner/prompt would be lost forever. Retry each loop
-                    // iteration until the write succeeds.
-                    string banner = "\r\nCubley Rotation Control v" + BuildInfo.Version +
-                        "\r\nConsole inactive. Press Enter to activate.\r\n";
-                    int rc = SafeUsbWrite(banner);
+                    // iteration from the first unwritten byte until it succeeds.
+                    string remainingBanner = bannerWriteOffset == 0
+                        ? banner
+                        : banner.Substring(bannerWriteOffset);
+                    int rc = SafeUsbWrite(remainingBanner);
+                    if (rc > 0)
+                    {
+                        // The banner is ASCII-only, so the native byte count maps
+                        // directly to managed string character positions.
+                        int accepted = rc > remainingBanner.Length ? remainingBanner.Length : rc;
+                        bannerWriteOffset += accepted;
+                    }
+
+                    bool bannerWritten = bannerWriteOffset >= banner.Length;
                     uint diag = DiagMailbox.NativeGet();
                     WriteStructuredDebug(
                         "CDC",
                         "schema=1 sub=cdc comp=connection operation=banner" +
-                        " stat=" + (rc >= banner.Length ? "ok" : "busy") +
+                        " stat=" + (bannerWritten ? "ok" : "busy") +
                         " rc=" + rc.ToString() +
+                        " off=" + bannerWriteOffset.ToString() +
                         " diag=0x" + diag.ToString("X8"));
 
-                    if (rc < banner.Length)
+                    if (!bannerWritten)
                     {
                         // Banner not fully written yet; keep wasEnabled false so we
                         // retry on the next iteration once the queue can drain.
@@ -733,6 +748,27 @@ namespace CubleyControl
         private static void WriteSerialLine(string line)
         {
             SafeUsbWrite(line);
+        }
+
+        private static string ToAsciiUsbText(string text)
+        {
+            if (text == null || text.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            char[] chars = text.ToCharArray();
+            bool changed = false;
+            for (int i = 0; i < chars.Length; i++)
+            {
+                if (chars[i] > 0x7F)
+                {
+                    chars[i] = '?';
+                    changed = true;
+                }
+            }
+
+            return changed ? new string(chars) : text;
         }
 
         private static int SafeUsbWrite(string text)
