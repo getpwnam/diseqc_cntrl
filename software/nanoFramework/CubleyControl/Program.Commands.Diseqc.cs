@@ -21,6 +21,8 @@ namespace CubleyControl
         private const int DiseqcQuietGapUs = 15000;
         private const int DiseqcMotionPollIntervalMs = 250;
         private const int DiseqcMotionWorstCaseMs = 90_000;
+        private const int DiseqcMotionTimeoutMinS = 5;
+        private const int DiseqcMotionTimeoutMaxS = 300;
         private const int DiseqcStepBaseTimeMs = 1000;
         private const int DiseqcStepTimePerStepMs = 250;
 
@@ -36,12 +38,13 @@ namespace CubleyControl
         private static string _diseqcMotionOperation = "idle";
         private static long _diseqcMotionDeadlineMs;
         private static string _diseqcMotionCompletionSource = "none";
+        private static int _diseqcMotionTimeoutMs = DiseqcMotionWorstCaseMs;
 
         private static void HandleDiseqcCommand(string[] tokens, int reqId)
         {
             if (tokens.Length < 2)
             {
-                WriteCommandResult(reqId, false, "validation_error", "diseqc usage", "usage=diseqc <goto|step|drive|stop|preset|tx|tone|listen> ...");
+                WriteCommandResult(reqId, false, "validation_error", "diseqc usage", "usage=diseqc <goto|step|drive|stop|preset|timeout|tx|tone|listen> ...");
                 return;
             }
 
@@ -49,6 +52,12 @@ namespace CubleyControl
             if (verb == "tone")
             {
                 HandleDiseqcToneCommand(tokens, reqId);
+                return;
+            }
+
+            if (verb == "timeout")
+            {
+                HandleDiseqcTimeoutCommand(tokens, reqId);
                 return;
             }
 
@@ -101,7 +110,7 @@ namespace CubleyControl
                     "diseqc goto",
                     frame,
                     "goto",
-                    DiseqcMotionWorstCaseMs);
+                    _diseqcMotionTimeoutMs);
                 return;
             }
 
@@ -156,7 +165,7 @@ namespace CubleyControl
                     "diseqc drive",
                     frame,
                     "drive_" + dir,
-                    DiseqcMotionWorstCaseMs);
+                    _diseqcMotionTimeoutMs);
                 return;
             }
 
@@ -197,6 +206,7 @@ namespace CubleyControl
                 WriteHumanField("Operation", motionOperation);
                 WriteHumanField("Remaining", motionBusy ? ((motionRemainingMs + 999) / 1000).ToString() + " s" : "0 s");
                 WriteHumanField("Completion source", motionCompletionSource);
+                WriteHumanField("Watchdog timeout", (_diseqcMotionTimeoutMs / 1000).ToString() + " s");
                 return;
             }
 
@@ -211,7 +221,52 @@ namespace CubleyControl
                 " motion_operation=" + motionOperation +
                 " motion_remaining_ms=" + motionRemainingMs.ToString() +
                 " motion_completion=" + motionCompletionSource +
+                " motion_timeout_ms=" + _diseqcMotionTimeoutMs.ToString() +
                 "\r\n");
+        }
+
+        private static void HandleDiseqcTimeoutCommand(string[] tokens, int reqId)
+        {
+            if (tokens.Length != 3)
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "diseqc timeout usage",
+                    "usage=diseqc timeout <status|" + DiseqcMotionTimeoutMinS.ToString() + ".." + DiseqcMotionTimeoutMaxS.ToString() + ">");
+                return;
+            }
+
+            if (tokens[2] == "status")
+            {
+                WriteCommandResult(reqId, true, "ok", "diseqc timeout", "value_s=" + (_diseqcMotionTimeoutMs / 1000).ToString());
+                return;
+            }
+
+            int seconds;
+            if (!TryParsePositiveInt(tokens[2], out seconds) ||
+                seconds < DiseqcMotionTimeoutMinS ||
+                seconds > DiseqcMotionTimeoutMaxS)
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "diseqc timeout invalid",
+                    "value=" + tokens[2] +
+                    " min_s=" + DiseqcMotionTimeoutMinS.ToString() +
+                    " max_s=" + DiseqcMotionTimeoutMaxS.ToString());
+                return;
+            }
+
+            if (!EnsureDiseqcMotionIdle(reqId))
+            {
+                return;
+            }
+
+            _diseqcMotionTimeoutMs = seconds * 1000;
+            WriteCommandResult(reqId, true, "ok", "diseqc timeout", "value_s=" + (_diseqcMotionTimeoutMs / 1000).ToString());
         }
 
         private static void HandleDiseqcPresetCommand(string[] tokens, int reqId)
@@ -433,7 +488,7 @@ namespace CubleyControl
                 _diseqcMotionId = _diseqcNextMotionId;
                 _diseqcMotionOperation = operation;
                 _diseqcMotionDeadlineMs = nowMs +
-                    (durationMs < DiseqcMotionWorstCaseMs ? durationMs : DiseqcMotionWorstCaseMs);
+                    (durationMs < _diseqcMotionTimeoutMs ? durationMs : _diseqcMotionTimeoutMs);
                 _diseqcMotionCompletionSource = "pending";
             }
 

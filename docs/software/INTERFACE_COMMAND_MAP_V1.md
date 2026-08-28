@@ -130,6 +130,10 @@ CubleyControl console
 |   |   |     Display the selected routing preset.
 |   |   |-- preset <off|direct|aa|ab|ba|bb>
 |   |   |     Select the routing prefix for positioner commands.
+|   |   |-- timeout status
+|   |   |     Display the configured motion watchdog timeout.
+|   |   |-- timeout <5..300>
+|   |   |     Set the motion watchdog timeout in seconds.
 |   |   |-- tx <hex_byte> <hex_byte> [hex_byte ...]
 |   |   |     Transmit a raw frame of 2 through 7 bytes.
 |   |   |-- tone on [frequency_hz] [duty_percent]
@@ -483,6 +487,8 @@ mutations are accepted only after entering configuration mode.
 | `diseqc complete <motion_id>` | Release the matching motion lock after external completion detection. |
 | `diseqc preset <off\|direct\|aa\|ab\|ba\|bb>` | Select the routing prefix applied to positioner commands. |
 | `diseqc preset status` | Show the selected routing preset. |
+| `diseqc timeout <5..300>` | Set the motion watchdog auto-stop timeout, in seconds. Rejected while a motion is in progress. |
+| `diseqc timeout status` | Show the configured motion watchdog timeout, in seconds. |
 | `diseqc tx <hex_byte> <hex_byte> [hex_byte ...]` | Transmit 2 to 7 hexadecimal bytes. |
 | `diseqc tone on [frequency_hz] [duty_percent]` | Start the carrier; defaults to 22000 Hz and 50%. Frequency range is 1000..100000 Hz and duty range is 1..99%. |
 | `diseqc tone off` | Stop the carrier. |
@@ -492,10 +498,13 @@ mutations are accepted only after entering configuration mode.
 The selected preset prefixes `goto`, `step`, `drive`, and `stop`. Raw `diseqc tx`
 frames are transmitted unchanged. Successful `goto`, `step`, and `drive` commands
 hold a motion lock that rejects further movement and raw frames. Step commands use
-a step-derived deadline; goto and drive use the 90-second worst-case deadline.
-`diseqc stop` is always accepted and clears the lock after transmitting Halt. An
-external completion command must include the current motion ID so a delayed signal
-cannot release a newer movement.
+a step-derived deadline capped by the configured motion watchdog timeout; goto and
+drive use the configured motion watchdog timeout directly. The timeout defaults to
+90 seconds and is adjustable from 5 to 300 seconds with `diseqc timeout <seconds>`.
+When the timeout elapses, the firmware transmits Halt automatically and marks the
+motion complete with `completion=timeout`. `diseqc stop` is always accepted and
+clears the lock after transmitting Halt. An external completion command must
+include the current motion ID so a delayed signal cannot release a newer movement.
 
 ## Canonical Command IDs
 

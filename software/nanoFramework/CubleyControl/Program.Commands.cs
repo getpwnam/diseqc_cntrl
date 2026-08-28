@@ -218,6 +218,7 @@ namespace CubleyControl
                 WriteHelpCommand("diseqc drive <east|west>", "Start continuous movement");
                 WriteHelpCommand("diseqc stop", "Stop movement");
                 WriteHelpCommand("diseqc preset <value>", "Select or inspect routing preset");
+                WriteHelpCommand("diseqc timeout <5..300|status>", "Set or inspect the motion watchdog timeout (seconds)");
                 WriteHelpCommand("diseqc tx <hex bytes>", "Transmit a raw frame");
                 WriteHelpCommand("diseqc tone <on|off|status>", "Control or inspect the carrier tone");
                 WriteHelpCommand("diseqc listen <on|off>", "Control external modulation input");
