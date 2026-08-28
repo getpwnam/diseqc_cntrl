@@ -1,0 +1,245 @@
+{
+  "descriptor": {
+    "comm_type": 0,
+    "comm_order": 0,
+    "descriptor_bytes": 346,
+    "declared_waveform_bytes": 10000000,
+    "declared_sample_count": 10000000,
+    "vertical_gain": 0.05000000074505806,
+    "vertical_offset": 0.0,
+    "sample_interval_seconds": 1.999999987845058e-08,
+    "horizontal_offset_seconds": 0.05,
+    "probe_attenuation": 10.0
+  },
+  "actual_sample_count": 5000000,
+  "declared_count_matches": false,
+  "record_span_seconds": 0.0999999993922529,
+  "voltage_extrema": {
+    "minimum_v": -1.1500000171363354,
+    "maximum_v": 1.2000000178813934,
+    "raw_peak_to_peak_v": 2.350000035017729,
+    "warning": "Raw extrema can include isolated acquisition spikes; use the scope measurement or robust statistics for amplitude acceptance."
+  },
+  "envelope": {
+    "bin_us": 9.99999993922529,
+    "edge_uncertainty_us": 9.99999993922529,
+    "low_cluster_vpp": 0.15000000223517418,
+    "high_cluster_vpp": 0.9500000141561031,
+    "threshold_vpp": 0.5500000081956387
+  },
+  "carrier": {
+    "frequency_hz": 22107.362120583635,
+    "period_us": 45.23380014972134,
+    "accepted_period_count": 471
+  },
+  "complete_mark_space_pairs": [
+    {
+      "symbol": "1",
+      "mark_ms": 0.47999999708281393,
+      "space_ms": 1.0099999938617543,
+      "total_ms": 1.4899999909445683
+    },
+    {
+      "symbol": "1",
+      "mark_ms": 0.46999999714358864,
+      "space_ms": 1.0599999935578808,
+      "total_ms": 1.5299999907014694
+    },
+    {
+      "symbol": "1",
+      "mark_ms": 0.4399999973259128,
+      "space_ms": 1.0199999938009796,
+      "total_ms": 1.4599999911268924
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 1.0099999938617543,
+      "space_ms": 0.5399999967181657,
+      "total_ms": 1.54999999057992
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9399999942871773,
+      "space_ms": 0.5399999967181657,
+      "total_ms": 1.479999991005343
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9699999941048532,
+      "space_ms": 0.5199999968397151,
+      "total_ms": 1.4899999909445683
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9799999940440784,
+      "space_ms": 0.5599999965966163,
+      "total_ms": 1.5399999906406947
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9699999941048532,
+      "space_ms": 0.5599999965966163,
+      "total_ms": 1.5299999907014694
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9399999942871773,
+      "space_ms": 0.549999996657391,
+      "total_ms": 1.4899999909445683
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.929999994347952,
+      "space_ms": 0.5299999967789404,
+      "total_ms": 1.4599999911268924
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 1.0099999938617543,
+      "space_ms": 0.5399999967181657,
+      "total_ms": 1.54999999057992
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9499999942264026,
+      "space_ms": 0.5299999967789404,
+      "total_ms": 1.479999991005343
+    },
+    {
+      "symbol": "1",
+      "mark_ms": 0.47999999708281393,
+      "space_ms": 1.0099999938617543,
+      "total_ms": 1.4899999909445683
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9799999940440784,
+      "space_ms": 0.5599999965966163,
+      "total_ms": 1.5399999906406947
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9699999941048532,
+      "space_ms": 0.5199999968397151,
+      "total_ms": 1.4899999909445683
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9799999940440784,
+      "space_ms": 0.549999996657391,
+      "total_ms": 1.5299999907014694
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.929999994347952,
+      "space_ms": 0.5299999967789404,
+      "total_ms": 1.4599999911268924
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 1.0099999938617543,
+      "space_ms": 0.5199999968397151,
+      "total_ms": 1.5299999907014694
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9699999941048532,
+      "space_ms": 0.5299999967789404,
+      "total_ms": 1.4999999908837935
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9699999941048532,
+      "space_ms": 0.5199999968397151,
+      "total_ms": 1.4899999909445683
+    },
+    {
+      "symbol": "1",
+      "mark_ms": 0.46999999714358864,
+      "space_ms": 1.069999993497106,
+      "total_ms": 1.5399999906406947
+    },
+    {
+      "symbol": "1",
+      "mark_ms": 0.47999999708281393,
+      "space_ms": 1.0099999938617543,
+      "total_ms": 1.4899999909445683
+    },
+    {
+      "symbol": "1",
+      "mark_ms": 0.46999999714358864,
+      "space_ms": 1.0599999935578808,
+      "total_ms": 1.5299999907014694
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.929999994347952,
+      "space_ms": 0.5299999967789404,
+      "total_ms": 1.4599999911268924
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 1.0099999938617543,
+      "space_ms": 0.5599999965966163,
+      "total_ms": 1.5699999904583706
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.929999994347952,
+      "space_ms": 0.5299999967789404,
+      "total_ms": 1.4599999911268924
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9699999941048532,
+      "space_ms": 0.5199999968397151,
+      "total_ms": 1.4899999909445683
+    },
+    {
+      "symbol": "1",
+      "mark_ms": 0.46999999714358864,
+      "space_ms": 1.0599999935578808,
+      "total_ms": 1.5299999907014694
+    },
+    {
+      "symbol": "1",
+      "mark_ms": 0.4899999970220392,
+      "space_ms": 1.0099999938617543,
+      "total_ms": 1.4999999908837935
+    },
+    {
+      "symbol": "1",
+      "mark_ms": 0.46999999714358864,
+      "space_ms": 1.0599999935578808,
+      "total_ms": 1.5299999907014694
+    },
+    {
+      "symbol": "1",
+      "mark_ms": 0.4199999974474622,
+      "space_ms": 1.0399999936794302,
+      "total_ms": 1.4599999911268924
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.9699999941048532,
+      "space_ms": 0.5999999963535174,
+      "total_ms": 1.5699999904583706
+    },
+    {
+      "symbol": "0",
+      "mark_ms": 0.929999994347952,
+      "space_ms": 0.5299999967789404,
+      "total_ms": 1.4599999911268924
+    }
+  ],
+  "expected_symbols": {
+    "one": {
+      "mark_ms": 0.5,
+      "space_ms": 1.0
+    },
+    "zero": {
+      "mark_ms": 1.0,
+      "space_ms": 0.5
+    }
+  }
+}
