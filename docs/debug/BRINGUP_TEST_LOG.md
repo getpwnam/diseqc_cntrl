@@ -1605,3 +1605,43 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin
 - Conclusion: Rebuilt and flashed nanoBooter and nanoCLR; nanoCLR runtime identity and CubleyNative checksum B2D08F16 verified.
 - Note: Managed deployment intentionally not performed; user will deploy the matching managed bundle.
+
+### 2026-08-28 13:03:18 UTC [PASS]
+- Git rev: 72c8a32
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): firmware build, explicit-address firmware flash, CubleyControl Debug build, interop checksum check, deploy-CubleyControl.sh --reset, and nanoff devicedetails
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin, firmware/nf-interpreter/build/nanoCLR.bin, and software/nanoFramework/build/CubleyControl/CubleyControl.bin
+- Conclusion: Firmware flashed and CubleyControl deployed successfully; CUBLEY_F407_0_5 reported the expected assemblies and CubleyNative checksum B2D08F16.
+- Note: Initial nanoff deployment connection failed; one bounded retry succeeded. Mailbox script was not present.
+
+### 2026-08-28 13:09:16 UTC [PASS]
+- Git rev: 72c8a32
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): build-CubleyControl.sh build; deploy-CubleyControl.sh --reset; nanoff devicedetails
+- Artifact: software/nanoFramework/build/CubleyControl/CubleyControl_bundle_20260828-130808.bin (SHA256 9e6b5e17fc117c9909ed0d27d7b08f521622761a6086f555d02aa313af331fa3)
+- Conclusion: CubleyControl rebuilt and redeployed successfully; CUBLEY_F407_0_5 reports CubleyControl and CubleyNative with checksum B2D08F16.
+- Note: Managed-only rebuild and wire-protocol deployment over /dev/ttyUSB0 at 921600 baud.
+
+### 2026-08-28 15:20:31 UTC [INFO]
+- Git rev: 72c8a32
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): CubleyControl-deployment-config-test.py; build+prepare Debug task; inspect_deploy_bundle.py; staged/source PE comparison
+- Artifact: software/nanoFramework/build/CubleyControl/CubleyControl_bundle_20260828-151946.bin (16 records); software/nanoFramework/build/CubleyControl/.debug-assemblies (16 PE files)
+- Conclusion: Audit found manual nanoff bundles had 15 assemblies while VS Code Launch+Deploy used 16; nanoFramework.System.Text was missing from the manual bundle and has been restored to both validated manifests.
+- Note: No deployment, reset, or flash was performed during this audit. VS Code DebugBridge clean-deploys individual PE files then starts execution with CLR-only reboot; nanoff --reset uses a normal target reset, so transport lifecycle remains tool-specific.
+
+### 2026-08-28 15:28:06 UTC [PASS] [NON-BASELINE]
+- Git rev: 72c8a32
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): build-CubleyControl.sh Debug; deploy-CubleyControl.sh --reset; inspect_deploy_bundle.py; nanoff devicedetails
+- Artifact: software/nanoFramework/build/CubleyControl/CubleyControl_bundle_20260828-152715.bin (16 records)
+- Conclusion: Corrected 16-assembly CubleyControl bundle deployed successfully; target reports CubleyControl 1.0.0.0 and nanoFramework.System.Text 1.3.42.0.
+- Note: CUBLEY_F407_0_5 reported 16 managed assemblies and CubleyNative checksum B2D08F16; USB CDC console validation pending user test.
+
+### 2026-08-28 15:36:06 UTC [PASS] [NON-BASELINE]
+- Git rev: 72c8a32
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): User USB CDC functional test; calibrated tracking-generator/spectrum-analyser sweep of J7/J8
+- Artifact: docs/debug/artifacts/20260828-insertion_loss.png
+- Conclusion: USB CDC interface responded after deployment of the corrected 16-assembly CubleyControl bundle; calibrated J7-to-J8 insertion-loss sweep was captured from 950 MHz to 2.1 GHz.
+- Note: Sweep captured 2026-08-28 16:31:32 with TG enabled at -20 dBm, normalization enabled, RBW/VBW 1 MHz, and 950 MHz to 2.1 GHz span. Trace is retained as measured evidence; no numeric acceptance limit was supplied.
