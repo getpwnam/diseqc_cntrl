@@ -24,7 +24,7 @@ configuration commands.
 | Current LNB state | `<prefix>/<hostname>/state/lnb` | Schema-1 LNB state fields | 1 | Yes |
 | DiSEqC motion transition | `<prefix>/<hostname>/event/diseqc` | Schema-1 motion event fields | 1 | No |
 | Current DiSEqC state | `<prefix>/<hostname>/state/diseqc` | Schema-1 motion state fields | 1 | Yes |
-| Device availability | `<prefix>/<hostname>/availability` | `online` or `offline` | 0/1 | Yes |
+| Device availability | `<prefix>/<hostname>/availability` | `online` or `offline` | 1 | Yes |
 
 The broker receives a retained `online` message after connection. The configured
 last will is retained `offline` at QoS 1.

@@ -16,6 +16,8 @@ namespace CubleyControl
         private const int MqttCommandEnvelopeMaxLength = MqttCommandMaxLength + MqttCommandIdMaxLength + 1;
         private const int MqttDuplicateCacheSize = 8;
         private const int MqttCachedResponseLimit = 32;
+        private const string MqttAvailabilityOnline = "online";
+        private const string MqttAvailabilityOffline = "offline";
         private static MqttClient _mqttClient;
         private static string _mqttCommandTopic = string.Empty;
         private static string _mqttResponseTopic = string.Empty;
@@ -120,7 +122,7 @@ namespace CubleyControl
                     MqttQoSLevel.AtLeastOnce,
                     true,
                     availabilityTopic,
-                    "offline",
+                    MqttAvailabilityOffline,
                     true,
                     (ushort)configuration.KeepAliveSeconds);
 
@@ -144,7 +146,7 @@ namespace CubleyControl
                     " broker=" + SanitizeToken(configuration.Broker) +
                     " port=" + configuration.Port.ToString());
 
-                PublishLine(availabilityTopic, "online", MqttQoSLevel.AtMostOnce, true);
+                PublishLine(availabilityTopic, MqttAvailabilityOnline, MqttQoSLevel.AtLeastOnce, true);
                 PublishMqttState();
                 PublishMqttDiseqcState();
                 _mqttRuntimeState = "subscribing";
