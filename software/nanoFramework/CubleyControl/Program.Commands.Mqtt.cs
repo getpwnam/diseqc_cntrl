@@ -569,7 +569,7 @@ namespace CubleyControl
                 " operation=" + operation +
                 " remaining_ms=" + remainingMs.ToString() +
                 " completion=" + completionSource +
-                " timeout_ms=" + DiseqcMotionWorstCaseMs.ToString();
+                " timeout_ms=" + _diseqcMotionTimeoutMs.ToString();
 
             WriteStructuredDebug("DISEQC", payload);
             if (_mqttClient == null || !_mqttClient.IsConnected || string.IsNullOrEmpty(_mqttDiseqcStateTopic))
