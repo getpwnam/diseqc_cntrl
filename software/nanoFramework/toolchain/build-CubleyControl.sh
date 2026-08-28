@@ -649,6 +649,7 @@ else
       "$OUTPUT_DIR/nanoFramework.Runtime.Native.pe"
       "$OUTPUT_DIR/nanoFramework.System.Collections.pe"
       "$OUTPUT_DIR/System.IO.Streams.pe"
+      "$OUTPUT_DIR/nanoFramework.System.Text.pe"
       "$OUTPUT_DIR/System.Net.pe"
       "$OUTPUT_DIR/nanoFramework.M2Mqtt.Core.pe"
       "$OUTPUT_DIR/nanoFramework.M2Mqtt.pe"
