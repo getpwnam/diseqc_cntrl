@@ -199,4 +199,25 @@ namespace Cubley.Interop
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int NativeWrite(byte[] buffer, int offset, int count);
     }
+
+    // The leading ZZ keeps this new type after the frozen v1 interop types in
+    // nanoFramework's alphabetical PE MethodDef ordering.
+    public static class ZZDiseqcTransmitter
+    {
+        public enum Status
+        {
+            Ok = 0,
+            InvalidParam = 1,
+            Busy = 2,
+            TimerUnavailable = 3,
+            CarrierUnavailable = 4,
+            Timeout = 5
+        }
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeTransmit(byte[] frame, int offset, int count);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int NativeSetTone(int frequencyHz, int dutyPercent, bool enabled);
+    }
 }

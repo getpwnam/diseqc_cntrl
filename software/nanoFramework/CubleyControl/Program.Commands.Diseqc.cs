@@ -1,5 +1,4 @@
 using System;
-using System.Device.Pwm;
 using System.Threading;
 using Cubley.Interop;
 using Cubley.Diseqc;
@@ -14,17 +13,13 @@ namespace CubleyControl
         private const int DiseqcDefaultDutyPercent = 50;
         private const int LnbDiseqcInputDisabled = 0;
         private const int LnbDiseqcInputEnabled = 1;
-        private const int DiseqcBitOneMarkUs = 500;
-        private const int DiseqcBitOneSpaceUs = 1000;
-        private const int DiseqcBitZeroMarkUs = 1000;
-        private const int DiseqcBitZeroSpaceUs = 500;
         private const int DiseqcQuietGapUs = 15000;
         private const int DiseqcMotionPollIntervalMs = 250;
         private const int DiseqcMotionWorstCaseMs = 90_000;
         private const int DiseqcStepBaseTimeMs = 1000;
         private const int DiseqcStepTimePerStepMs = 250;
 
-        private static PwmChannel _diseqcCarrier;
+        private static bool _diseqcCarrierEnabled;
         private static int _diseqcCarrierFrequencyHz;
         private static int _diseqcCarrierDutyPercent;
         private static bool _diseqcTxBusy;
@@ -172,7 +167,7 @@ namespace CubleyControl
 
         private static void EmitDiseqcShowSummaryLine()
         {
-            bool toneEnabled = _diseqcCarrier != null;
+            bool toneEnabled = _diseqcCarrierEnabled;
             bool motionBusy;
             int motionId;
             string motionOperation;
@@ -241,15 +236,15 @@ namespace CubleyControl
 
         private static void HandleDiseqcTxCommand(string[] tokens, int reqId)
         {
-            if (tokens.Length < 4)
+            if (tokens.Length < 5)
             {
-                WriteCommandResult(reqId, false, "validation_error", "diseqc tx usage", "usage=diseqc tx <hex_byte> <hex_byte> [hex_byte]...");
+                WriteCommandResult(reqId, false, "validation_error", "diseqc tx usage", "usage=diseqc tx <framing> <address> <command> [data_byte]...");
                 return;
             }
 
-            if (tokens.Length > 9)
+            if (tokens.Length > 8)
             {
-                WriteCommandResult(reqId, false, "validation_error", "diseqc tx length invalid", "max_bytes=7");
+                WriteCommandResult(reqId, false, "validation_error", "diseqc tx length invalid", "max_bytes=6");
                 return;
             }
 
@@ -623,6 +618,10 @@ namespace CubleyControl
             }
 
             _diseqcTxBusy = true;
+            bool resumeTone = _diseqcCarrierEnabled;
+            int resumeFrequencyHz = _diseqcCarrierFrequencyHz;
+            int resumeDutyPercent = _diseqcCarrierDutyPercent;
+            bool toneRestored = false;
 
             try
             {
@@ -657,7 +656,6 @@ namespace CubleyControl
                 }
 
                 // Guard gap before transmit.
-                SetDiseqcCarrierGate(false);
                 DelayMicroseconds(DiseqcQuietGapUs);
 
                 for (int frameIndex = 0; frameIndex < sequence.Length; frameIndex++)
@@ -668,14 +666,30 @@ namespace CubleyControl
                         return false;
                     }
 
-                    bool[] bits = DiseqcFrameCodec.EncodeBits(frame);
-                    for (int j = 0; j < bits.Length; j++)
+                    int txStatus = ZZDiseqcTransmitter.NativeTransmit(frame, 0, frame.Length);
+                    if (txStatus != (int)ZZDiseqcTransmitter.Status.Ok)
                     {
-                        EmitDiseqcBit(bits[j]);
+                        error = "native_tx_" + txStatus.ToString();
+                        return false;
                     }
 
-                    SetDiseqcCarrierGate(false);
                     DelayMicroseconds(DiseqcQuietGapUs);
+                }
+
+                if (resumeTone)
+                {
+                    int restoreStatus = ZZDiseqcTransmitter.NativeSetTone(
+                        resumeFrequencyHz,
+                        resumeDutyPercent,
+                        true);
+                    if (restoreStatus != (int)ZZDiseqcTransmitter.Status.Ok)
+                    {
+                        _diseqcCarrierEnabled = false;
+                        error = "tone_restore_" + restoreStatus.ToString();
+                        return false;
+                    }
+
+                    toneRestored = true;
                 }
 
                 return true;
@@ -687,20 +701,27 @@ namespace CubleyControl
             }
             finally
             {
-                SetDiseqcCarrierGate(false);
+                if (resumeTone && !toneRestored)
+                {
+                    int restoreStatus = ZZDiseqcTransmitter.NativeSetTone(
+                        resumeFrequencyHz,
+                        resumeDutyPercent,
+                        true);
+                    if (restoreStatus != (int)ZZDiseqcTransmitter.Status.Ok)
+                    {
+                        _diseqcCarrierEnabled = false;
+                    }
+                }
+                else if (!resumeTone)
+                {
+                    ZZDiseqcTransmitter.NativeSetTone(
+                        DiseqcDefaultFrequencyHz,
+                        DiseqcDefaultDutyPercent,
+                        false);
+                }
+
                 _diseqcTxBusy = false;
             }
-        }
-
-        private static void EmitDiseqcBit(bool one)
-        {
-            int markUs = one ? DiseqcBitOneMarkUs : DiseqcBitZeroMarkUs;
-            int spaceUs = one ? DiseqcBitOneSpaceUs : DiseqcBitZeroSpaceUs;
-
-            SetDiseqcCarrierGate(true);
-            DelayMicroseconds(markUs);
-            SetDiseqcCarrierGate(false);
-            DelayMicroseconds(spaceUs);
         }
 
         private static void DelayMicroseconds(int microseconds)
@@ -727,50 +748,17 @@ namespace CubleyControl
             }
         }
 
-        private static void SetDiseqcCarrierGate(bool on)
-        {
-            if (_diseqcCarrier == null)
-            {
-                return;
-            }
-
-            try
-            {
-                if (on)
-                {
-                    _diseqcCarrier.Start();
-                }
-                else
-                {
-                    _diseqcCarrier.Stop();
-                }
-            }
-            catch
-            {
-            }
-        }
-
         private static bool EnsureDiseqcCarrierChannel(int frequencyHz, int dutyPercent, out string error)
         {
             error = string.Empty;
 
-            if (_diseqcCarrier != null && _diseqcCarrierFrequencyHz == frequencyHz && _diseqcCarrierDutyPercent == dutyPercent)
+            int status = ZZDiseqcTransmitter.NativeSetTone(frequencyHz, dutyPercent, false);
+            if (status != (int)ZZDiseqcTransmitter.Status.Ok)
             {
-                return true;
-            }
-
-            StopDiseqcCarrier();
-
-            PwmChannel channel = PwmChannel.CreateFromPin(DiseqcCarrierPin, frequencyHz, dutyPercent / 100.0d);
-            if (channel == null)
-            {
-                error = "pwm_channel_unavailable";
+                error = "native_tone_" + status.ToString();
                 return false;
             }
 
-            _diseqcCarrier = channel;
-            _diseqcCarrierFrequencyHz = frequencyHz;
-            _diseqcCarrierDutyPercent = dutyPercent;
             return true;
         }
 
@@ -812,7 +800,18 @@ namespace CubleyControl
 
             if (action == "off")
             {
-                StopDiseqcCarrier();
+                int stopStatus = StopDiseqcCarrier();
+                if (stopStatus != (int)ZZDiseqcTransmitter.Status.Ok)
+                {
+                    WriteCommandResult(
+                        reqId,
+                        false,
+                        "hw_fault",
+                        "diseqc tone off failed",
+                        "reason=native_tone_" + stopStatus.ToString() + " pin_id=" + DiseqcCarrierPin.ToString());
+                    return;
+                }
+
                 WriteCommandResult(reqId, true, "ok", "diseqc tone off", "tone=off pin=pd12 pin_id=" + DiseqcCarrierPin.ToString());
                 return;
             }
@@ -850,34 +849,21 @@ namespace CubleyControl
                 return;
             }
 
-            PwmChannel channel = PwmChannel.CreateFromPin(DiseqcCarrierPin, frequencyHz, dutyPercent / 100.0d);
-            if (channel == null)
+            int toneStatus = ZZDiseqcTransmitter.NativeSetTone(frequencyHz, dutyPercent, true);
+            if (toneStatus != (int)ZZDiseqcTransmitter.Status.Ok)
             {
-                WriteCommandResult(reqId, false, "hw_fault", "diseqc tone start failed", "reason=pwm_channel_unavailable pin_id=" + DiseqcCarrierPin.ToString());
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "hw_fault",
+                    "diseqc tone start failed",
+                    "reason=native_tone_" + toneStatus.ToString() + " pin_id=" + DiseqcCarrierPin.ToString());
                 return;
             }
 
-            try
-            {
-                StopDiseqcCarrier();
-                _diseqcCarrier = channel;
-                _diseqcCarrierFrequencyHz = frequencyHz;
-                _diseqcCarrierDutyPercent = dutyPercent;
-                _diseqcCarrier.Start();
-            }
-            catch (Exception ex)
-            {
-                try
-                {
-                    channel.Dispose();
-                }
-                catch
-                {
-                }
-
-                WriteCommandResult(reqId, false, "hw_fault", "diseqc tone start exception", "msg=" + SanitizeToken(ex.Message));
-                return;
-            }
+            _diseqcCarrierEnabled = true;
+            _diseqcCarrierFrequencyHz = frequencyHz;
+            _diseqcCarrierDutyPercent = dutyPercent;
 
             WriteCommandResult(
                 reqId,
@@ -923,13 +909,13 @@ namespace CubleyControl
 
         private static void EmitDiseqcToneStatus(int reqId)
         {
-            string tone = _diseqcCarrier == null ? "off" : "on";
+            string tone = _diseqcCarrierEnabled ? "on" : "off";
             string payload =
                 "tone=" + tone +
                 " pin=pd12" +
                 " pin_id=" + DiseqcCarrierPin.ToString() +
-                " freq_hz=" + (_diseqcCarrier == null ? "0" : _diseqcCarrierFrequencyHz.ToString()) +
-                " duty_pct=" + (_diseqcCarrier == null ? "0" : _diseqcCarrierDutyPercent.ToString());
+                " freq_hz=" + (_diseqcCarrierEnabled ? _diseqcCarrierFrequencyHz.ToString() : "0") +
+                " duty_pct=" + (_diseqcCarrierEnabled ? _diseqcCarrierDutyPercent.ToString() : "0");
 
             if (EnsureLnbInitialized())
             {
@@ -951,32 +937,24 @@ namespace CubleyControl
             WriteCommandResult(reqId, true, "ok", "diseqc tone status", payload);
         }
 
-        private static void StopDiseqcCarrier()
+        private static int StopDiseqcCarrier()
         {
-            if (_diseqcCarrier == null)
+            int frequencyHz = _diseqcCarrierFrequencyHz > 0
+                ? _diseqcCarrierFrequencyHz
+                : DiseqcDefaultFrequencyHz;
+            int dutyPercent = _diseqcCarrierDutyPercent > 0
+                ? _diseqcCarrierDutyPercent
+                : DiseqcDefaultDutyPercent;
+            int status = ZZDiseqcTransmitter.NativeSetTone(frequencyHz, dutyPercent, false);
+            if (status != (int)ZZDiseqcTransmitter.Status.Ok)
             {
-                return;
+                return status;
             }
 
-            try
-            {
-                _diseqcCarrier.Stop();
-            }
-            catch
-            {
-            }
-
-            try
-            {
-                _diseqcCarrier.Dispose();
-            }
-            catch
-            {
-            }
-
-            _diseqcCarrier = null;
+            _diseqcCarrierEnabled = false;
             _diseqcCarrierFrequencyHz = 0;
             _diseqcCarrierDutyPercent = 0;
+            return status;
         }
 
         private static bool TryParsePositiveInt(string value, out int number)

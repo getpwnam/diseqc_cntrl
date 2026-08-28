@@ -1,0 +1,20 @@
+{
+  "identity": "Siglent Technologies,SDS814X HD,SDS08A0CA00490,4.8.12.1.1.6.5",
+  "trigger_status": "Stop",
+  "waveform_source": "C1",
+  "preamble_file": "/tmp/diseqc-hardware-timing-fixed.preamble.bin",
+  "waveform_file": "/tmp/diseqc-hardware-timing-fixed.waveform.bin",
+  "waveform_payload_bytes": 5000000,
+  "descriptor": {
+    "comm_type": 0,
+    "comm_order": 0,
+    "descriptor_bytes": 346,
+    "declared_waveform_bytes": 10000000,
+    "declared_sample_count": 10000000,
+    "vertical_gain": 0.05000000074505806,
+    "vertical_offset": 0.0,
+    "sample_interval_seconds": 1.999999987845058e-08,
+    "horizontal_offset_seconds": 0.05,
+    "probe_attenuation": 10.0
+  }
+}

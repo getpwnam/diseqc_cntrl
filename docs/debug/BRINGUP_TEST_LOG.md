@@ -1669,3 +1669,19 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260828-scope-j8-diseqc-symbol-timing.png
 - Conclusion: Raw waveform analysis confirms correct 22.107 kHz carrier but out-of-tolerance logical-zero timing: 1.110-1.140 ms marks followed by 0.670-0.720 ms spaces, for 1.810-1.830 ms symbols instead of 1.500 ms.
 - Note: Analysis used 5,000,000 raw C1 samples at 1 ns intervals with 10 us envelope bins; two complete long-mark symbols were measured with approximately +/-10 us edge quantization. This is a firmware/protocol timing failure, not an oscilloscope automatic-measurement error.
+
+### 2026-08-28 17:53:50 UTC [PASS]
+- Git rev: a2150db
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./firmware/build-flash-cubley.sh build; artifact-derived map/ELF layout cross-check; ./firmware/build-flash-cubley.sh flash --bootaddr 0x08000000 --clraddr 0x08010000 --deployaddr 0x080C0000 --deploysize 0x00040000 --reset; build-CubleyControl.sh Debug; deploy-CubleyControl.sh --reset; nanoff devicedetails
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin; software/nanoFramework/build/CubleyControl/CubleyControl_bundle_20260828-175228.bin
+- Conclusion: Hardware-timed DiSEqC firmware flashed and matching CubleyControl deployed; runtime identity and CubleyNative checksum 0A4353F9 verified.
+- Note: Derived layout: nanoBooter 0x08000000 size 34156; nanoCLR 0x08010000 size 696080; deployment 0x080C0000 size 0x00040000. Firmware writes verified; deployment reports 16 managed assemblies and no resolver errors.
+
+### 2026-08-28 18:03:47 UTC [PASS]
+- Git rev: eea4969
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): Cubley USB CDC: lnb a enable on; lnb a polarization vertical; diseqc tx e0 10 38 f0; Siglent SDS814X-HD C1 SINGLE capture and raw-data analysis at J8
+- Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260828-scope-j8-diseqc-hardware-timing-fixed.png; docs/debug/artifacts/rf-interface-2026-08-27/20260828-scope-j8-diseqc-hardware-timing-fixed.analysis.json; docs/debug/artifacts/rf-interface-2026-08-27/20260828-scope-j8-diseqc-hardware-timing-fixed.metadata.json
+- Conclusion: TIM4/TIM6 native transmission fixes the recorded DiSEqC symbol-timing fault: all 33 complete analyzed symbols satisfy mark, space, and total-duration limits.
+- Note: Observed sequence matches the first 33 bits of E0 10 38 F0 with odd parity; three right-edge bits were excluded. Ones: mark 0.420-0.490 ms, space 1.010-1.070 ms, total 1.460-1.540 ms. Zeros: mark 0.930-1.010 ms, space 0.520-0.600 ms, total 1.460-1.570 ms. Carrier 22.107 kHz from 471 periods; screenshot 780.208 mVpp. Raw transfer returned 5,000,000 of 10,000,000 declared samples at 20 ns intervals; edge uncertainty approximately 10 us.
