@@ -817,7 +817,7 @@ namespace CubleyControl
                 int readStateRc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
                 if (readStateRc != (int)LNBH26.Status.Ok)
                 {
-                    error = "lnb_state_read_" + readStateRc.ToString();
+                    error = "lnb_state_read_" + LnbStatusToToken(readStateRc);
                     return false;
                 }
 

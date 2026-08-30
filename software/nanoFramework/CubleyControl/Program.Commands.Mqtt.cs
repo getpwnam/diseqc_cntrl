@@ -773,6 +773,7 @@ namespace CubleyControl
                 {
                     _mqttPublishTopics[index] = null;
                     _mqttPublishPayloads[index] = null;
+                    _mqttPublishQosLevels[index] = MqttQoSLevel.AtMostOnce;
                     _mqttPublishRetainFlags[index] = false;
                 }
 
