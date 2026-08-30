@@ -779,6 +779,7 @@ namespace CubleyControl
 
                 _mqttPublishQueueHead = 0;
                 _mqttPublishQueueCount = 0;
+                _mqttPublishDropCount = 0;
             }
         }
 
