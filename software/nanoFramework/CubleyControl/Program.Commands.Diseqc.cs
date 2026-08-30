@@ -25,6 +25,7 @@ namespace CubleyControl
         private static int _diseqcCarrierFrequencyHz;
         private static int _diseqcCarrierDutyPercent;
         private static bool _diseqcTxBusy;
+        private static int _diseqcBoundLnbChannel = LnbChannelA;
         private static DiseqcV1RoutePreset _diseqcRoutePreset = DiseqcV1RoutePreset.Direct;
         private static readonly object _diseqcMotionLock = new object();
         private static bool _diseqcMotionBusy;
@@ -39,7 +40,7 @@ namespace CubleyControl
         {
             if (tokens.Length < 2)
             {
-                WriteCommandResult(reqId, false, "validation_error", "diseqc usage", "usage=diseqc <goto|step|drive|stop|preset|timeout|tx|tone|listen> ...");
+                WriteCommandResult(reqId, false, "validation_error", "diseqc usage", "usage=diseqc <goto|step|drive|stop|preset|timeout|tx|tone|listen|lnb> ...");
                 return;
             }
 
@@ -65,6 +66,12 @@ namespace CubleyControl
             if (verb == "preset")
             {
                 HandleDiseqcPresetCommand(tokens, reqId);
+                return;
+            }
+
+            if (verb == "lnb")
+            {
+                HandleDiseqcLnbBindingCommand(tokens, reqId);
                 return;
             }
 
@@ -177,6 +184,7 @@ namespace CubleyControl
         private static void EmitDiseqcShowSummaryLine()
         {
             bool toneEnabled = _diseqcCarrierEnabled;
+            int channel = GetDiseqcBoundLnbChannel();
             bool motionBusy;
             int motionId;
             string motionOperation;
@@ -188,9 +196,23 @@ namespace CubleyControl
                 out motionOperation,
                 out motionRemainingMs,
                 out motionCompletionSource);
+
+            bool outputEnabled;
+            bool extmEnabled;
+            bool tenEnabled;
+            bool prereqKnown = TryReadDiseqcPrerequisites(
+                channel,
+                out outputEnabled,
+                out extmEnabled,
+                out tenEnabled);
+
             if (_activeCommandTransport == CommandTransport.Usb)
             {
                 WriteHumanHeading("DiSEqC");
+                WriteHumanField("Bound LNB port", LnbChannelToSchemaName(channel).ToUpper());
+                WriteHumanField("Output enabled", prereqKnown ? (outputEnabled ? "Yes" : "No") : "Unknown");
+                WriteHumanField("External modulation", prereqKnown ? (extmEnabled ? "On" : "Off") : "Unknown");
+                WriteHumanField("Tone gate", prereqKnown ? (tenEnabled ? "On" : "Off") : "Unknown");
                 WriteHumanField("Preset", DiseqcV1Presets.ToText(_diseqcRoutePreset));
                 WriteHumanField("Tone", toneEnabled ? "On" : "Off");
                 WriteHumanField("Frequency", toneEnabled ? _diseqcCarrierFrequencyHz.ToString() + " Hz" : "Not active");
@@ -206,7 +228,11 @@ namespace CubleyControl
             }
 
             _activeOutputSink(
-                "diseqc preset=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) +
+                "diseqc channel=" + LnbChannelToSchemaName(channel) +
+                " output_enabled=" + (prereqKnown ? (outputEnabled ? "on" : "off") : "unknown") +
+                " extm=" + (prereqKnown ? (extmEnabled ? "on" : "off") : "unknown") +
+                " ten=" + (prereqKnown ? (tenEnabled ? "on" : "off") : "unknown") +
+                " preset=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) +
                 " tone=" + (toneEnabled ? "on" : "off") +
                 " frequency_hz=" + (toneEnabled ? _diseqcCarrierFrequencyHz.ToString() : "0") +
                 " duty_percent=" + (toneEnabled ? _diseqcCarrierDutyPercent.ToString() : "0") +
@@ -264,6 +290,53 @@ namespace CubleyControl
             WriteCommandResult(reqId, true, "ok", "diseqc timeout", "value_s=" + (_diseqcMotionTimeoutMs / 1000).ToString());
         }
 
+        private static void HandleDiseqcLnbBindingCommand(string[] tokens, int reqId)
+        {
+            if (tokens.Length != 3)
+            {
+                WriteCommandResult(reqId, false, "validation_error", "diseqc lnb usage", "usage=diseqc lnb <status|a|b>");
+                return;
+            }
+
+            if (tokens[2] == "status")
+            {
+                WriteCommandResult(
+                    reqId,
+                    true,
+                    "ok",
+                    "diseqc lnb",
+                    "channel=" + LnbChannelToSchemaName(GetDiseqcBoundLnbChannel()));
+                return;
+            }
+
+            if (!EnsureDiseqcMotionIdle(reqId))
+            {
+                return;
+            }
+
+            int channel;
+            if (!TryParseLnbChannelToken(tokens[2], out channel))
+            {
+                WriteCommandResult(reqId, false, "validation_error", "diseqc lnb invalid", "channel=" + tokens[2]);
+                return;
+            }
+
+            string error;
+            if (!TryPersistDiseqcBoundLnbChannel(channel, out error))
+            {
+                WriteCommandResult(reqId, false, "persist_failed", "diseqc lnb", "reason=" + SanitizeToken(error));
+                return;
+            }
+
+            WriteCommandResult(
+                reqId,
+                true,
+                "ok",
+                "diseqc lnb",
+                "channel=" + LnbChannelToSchemaName(channel) +
+                " persisted=1");
+        }
+
         private static void HandleDiseqcPresetCommand(string[] tokens, int reqId)
         {
             if (tokens.Length != 3)
@@ -274,7 +347,13 @@ namespace CubleyControl
 
             if (tokens[2] == "status")
             {
-                WriteCommandResult(reqId, true, "ok", "diseqc preset", "value=" + DiseqcV1Presets.ToText(_diseqcRoutePreset));
+                WriteCommandResult(
+                    reqId,
+                    true,
+                    "ok",
+                    "diseqc preset",
+                    "value=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) +
+                    " channel=" + LnbChannelToSchemaName(GetDiseqcBoundLnbChannel()));
                 return;
             }
 
@@ -286,7 +365,13 @@ namespace CubleyControl
             }
 
             _diseqcRoutePreset = preset;
-            WriteCommandResult(reqId, true, "ok", "diseqc preset", "value=" + DiseqcV1Presets.ToText(_diseqcRoutePreset));
+            WriteCommandResult(
+                reqId,
+                true,
+                "ok",
+                "diseqc preset",
+                "value=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) +
+                " channel=" + LnbChannelToSchemaName(GetDiseqcBoundLnbChannel()));
         }
 
         private static void HandleDiseqcTxCommand(string[] tokens, int reqId)
@@ -324,11 +409,24 @@ namespace CubleyControl
             string error;
             if (!TryTransmitDiseqcFrame(frame, out error))
             {
-                WriteCommandResult(reqId, false, "hw_fault", source + " failed", "reason=" + SanitizeToken(error));
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "hw_fault",
+                    source + " failed",
+                    "reason=" + SanitizeToken(error) +
+                    " channel=" + LnbChannelToSchemaName(GetDiseqcBoundLnbChannel()));
                 return;
             }
 
-            WriteCommandResult(reqId, true, "ok", source, "bytes=" + BytesToHex(frame) + " encoded_bits=" + (frame.Length * 9).ToString());
+            WriteCommandResult(
+                reqId,
+                true,
+                "ok",
+                source,
+                "channel=" + LnbChannelToSchemaName(GetDiseqcBoundLnbChannel()) +
+                " bytes=" + BytesToHex(frame) +
+                " encoded_bits=" + (frame.Length * 9).ToString());
         }
 
         private static void EmitDiseqcPositionerTransmitResult(
@@ -342,7 +440,13 @@ namespace CubleyControl
             byte[][] prefixFrames;
             if (!TryBuildPresetPrefixFrames(out prefixFrames, out error))
             {
-                WriteCommandResult(reqId, false, "hw_fault", source + " failed", "reason=" + SanitizeToken(error));
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "hw_fault",
+                    source + " failed",
+                    "reason=" + SanitizeToken(error) +
+                    " channel=" + LnbChannelToSchemaName(GetDiseqcBoundLnbChannel()));
                 return;
             }
 
@@ -350,7 +454,13 @@ namespace CubleyControl
             {
                 if (!TryTransmitDiseqcFrame(positionerFrame, out error))
                 {
-                    WriteCommandResult(reqId, false, "hw_fault", source + " failed", "reason=" + SanitizeToken(error));
+                    WriteCommandResult(
+                        reqId,
+                        false,
+                        "hw_fault",
+                        source + " failed",
+                        "reason=" + SanitizeToken(error) +
+                        " channel=" + LnbChannelToSchemaName(GetDiseqcBoundLnbChannel()));
                     return;
                 }
 
@@ -360,7 +470,8 @@ namespace CubleyControl
                     true,
                     "ok",
                     source,
-                    "bytes=" + BytesToHex(positionerFrame) +
+                    "channel=" + LnbChannelToSchemaName(GetDiseqcBoundLnbChannel()) +
+                    " bytes=" + BytesToHex(positionerFrame) +
                     " encoded_bits=" + DiseqcFrameCodec.GetEncodedBitCount(positionerFrame).ToString() +
                     BuildDiseqcMotionResultData());
                 return;
@@ -376,7 +487,13 @@ namespace CubleyControl
 
             if (!TryTransmitDiseqcSequence(sequence, out error))
             {
-                WriteCommandResult(reqId, false, "hw_fault", source + " failed", "reason=" + SanitizeToken(error));
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "hw_fault",
+                    source + " failed",
+                    "reason=" + SanitizeToken(error) +
+                    " channel=" + LnbChannelToSchemaName(GetDiseqcBoundLnbChannel()));
                 return;
             }
 
@@ -387,7 +504,8 @@ namespace CubleyControl
                 true,
                 "ok",
                 source,
-                "preset=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) +
+                "channel=" + LnbChannelToSchemaName(GetDiseqcBoundLnbChannel()) +
+                " preset=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) +
                 " bytes=" + BytesToHex(positionerFrame) +
                 " encoded_bits=" + DiseqcFrameCodec.GetEncodedBitCount(positionerFrame).ToString() +
                 BuildDiseqcMotionResultData());
@@ -610,8 +728,9 @@ namespace CubleyControl
                 return false;
             }
 
-            int pol = LNBH26.NativeGetPolarizationForChannel(LnbChannelA);
-            int band = LNBH26.NativeGetBandForChannel(LnbChannelA);
+            int channel = GetDiseqcBoundLnbChannel();
+            int pol = LNBH26.NativeGetPolarizationForChannel(channel);
+            int band = LNBH26.NativeGetBandForChannel(channel);
 
             DiseqcPolarization diseqcPol = pol == (int)LNBH26.Polarization.Horizontal
                 ? DiseqcPolarization.Horizontal
@@ -681,6 +800,7 @@ namespace CubleyControl
             bool lnbStateRestored = false;
             int resumeBand = (int)LNBH26.Band.Low;
             int resumeDiseqcInputMode = LnbDiseqcInputDisabled;
+            int channel = GetDiseqcBoundLnbChannel();
 
             try
             {
@@ -697,40 +817,26 @@ namespace CubleyControl
                 int readStateRc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
                 if (readStateRc != (int)LNBH26.Status.Ok)
                 {
-                    error = "lnb_state_read_" + readStateRc.ToString();
+                    error = "lnb_state_read_" + LnbStatusToToken(readStateRc);
                     return false;
                 }
 
-                // Motor power must be explicit and remain available for the
-                // full movement, not just while the DiSEqC frame is sent.
-                if (!IsLnbChannelEnabled(LnbChannelA, d1))
-                {
-                    error = "lnb_disabled";
-                    return false;
-                }
-
-                resumeBand = IsToneEnabledForChannel(LnbChannelA, d2)
+                resumeBand = IsToneEnabledForChannel(channel, d2)
                     ? (int)LNBH26.Band.High
                     : (int)LNBH26.Band.Low;
-                resumeDiseqcInputMode = IsExtmEnabledForChannel(LnbChannelA, d2)
+                resumeDiseqcInputMode = IsExtmEnabledForChannel(channel, d2)
                     ? LnbDiseqcInputEnabled
                     : LnbDiseqcInputDisabled;
                 lnbStateCaptured = true;
 
-                // Band selection first establishes a valid internal-tone state
-                // and a high DSQIN idle. DiSEqC then takes ownership of PD12 and
-                // switches the LNBH26 to accept the external 22 kHz waveform.
-                if (LNBH26.NativeSetBandForChannel(LnbChannelA, (int)LNBH26.Band.High) != (int)LNBH26.Status.Ok)
+                int activeChannel;
+                if (!EnsureDiseqcBoundPortReady(out activeChannel, out error))
                 {
-                    error = "lnb_ten_failed";
                     return false;
                 }
 
-                if (LNBH26.NativeSetDiseqcInputModeForChannel(LnbChannelA, LnbDiseqcInputEnabled) != (int)LNBH26.Status.Ok)
-                {
-                    error = "lnb_extm_failed";
-                    return false;
-                }
+                channel = activeChannel;
+                _diseqcBoundLnbChannel = channel;
 
                 if (!EnsureDiseqcCarrierChannel(DiseqcDefaultFrequencyHz, DiseqcDefaultDutyPercent, out error))
                 {
@@ -758,7 +864,7 @@ namespace CubleyControl
                     DelayMicroseconds(DiseqcQuietGapUs);
                 }
 
-                if (!TryRestoreDiseqcLnbState(resumeBand, resumeDiseqcInputMode, out error))
+                if (!TryRestoreDiseqcLnbState(channel, resumeBand, resumeDiseqcInputMode, out error))
                 {
                     return false;
                 }
@@ -803,7 +909,7 @@ namespace CubleyControl
                 if (lnbStateCaptured && !lnbStateRestored)
                 {
                     string restoreError;
-                    if (TryRestoreDiseqcLnbState(resumeBand, resumeDiseqcInputMode, out restoreError))
+                    if (TryRestoreDiseqcLnbState(channel, resumeBand, resumeDiseqcInputMode, out restoreError))
                     {
                         lnbStateRestored = true;
                     }
@@ -843,17 +949,17 @@ namespace CubleyControl
             }
         }
 
-        private static bool TryRestoreDiseqcLnbState(int band, int inputMode, out string error)
+        private static bool TryRestoreDiseqcLnbState(int channel, int band, int inputMode, out string error)
         {
-            int bandRc = LNBH26.NativeSetBandForChannel(LnbChannelA, band);
-            int inputRc = LNBH26.NativeSetDiseqcInputModeForChannel(LnbChannelA, inputMode);
+            int bandRc = LNBH26.NativeSetBandForChannel(channel, band);
+            int inputRc = LNBH26.NativeSetDiseqcInputModeForChannel(channel, inputMode);
             if (bandRc == (int)LNBH26.Status.Ok && inputRc == (int)LNBH26.Status.Ok)
             {
                 error = string.Empty;
                 return true;
             }
 
-            error = "lnb_restore_band_" + bandRc.ToString() + "_extm_" + inputRc.ToString();
+            error = "lnb_restore_band_" + LnbStatusToToken(bandRc) + "_extm_" + LnbStatusToToken(inputRc);
             return false;
         }
 
@@ -933,19 +1039,27 @@ namespace CubleyControl
 
             if (action == "off")
             {
-                int stopStatus = StopDiseqcCarrier();
-                if (stopStatus != (int)ZZDiseqcTransmitter.Status.Ok)
+                string error;
+                if (!TryStopDiseqcCarrierAndTearDown(out error))
                 {
                     WriteCommandResult(
                         reqId,
                         false,
                         "hw_fault",
                         "diseqc tone off failed",
-                        "reason=native_tone_" + stopStatus.ToString() + " pin_id=" + DiseqcCarrierPin.ToString());
+                        "reason=" + SanitizeToken(error) +
+                        " pin_id=" + DiseqcCarrierPin.ToString() +
+                        " channel=" + LnbChannelToSchemaName(GetDiseqcBoundLnbChannel()));
                     return;
                 }
 
-                WriteCommandResult(reqId, true, "ok", "diseqc tone off", "tone=off pin=pd12 pin_id=" + DiseqcCarrierPin.ToString());
+                WriteCommandResult(
+                    reqId,
+                    true,
+                    "ok",
+                    "diseqc tone off",
+                    "tone=off pin=pd12 pin_id=" + DiseqcCarrierPin.ToString() +
+                    " channel=" + LnbChannelToSchemaName(GetDiseqcBoundLnbChannel()));
                 return;
             }
 
@@ -982,6 +1096,19 @@ namespace CubleyControl
                 return;
             }
 
+            int channel;
+            string setupError;
+            if (!EnsureDiseqcBoundPortReady(out channel, out setupError))
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "hw_fault",
+                    "diseqc tone prerequisites failed",
+                    "reason=" + SanitizeToken(setupError));
+                return;
+            }
+
             int toneStatus = ZZDiseqcTransmitter.NativeSetTone(frequencyHz, dutyPercent, true);
             if (toneStatus != (int)ZZDiseqcTransmitter.Status.Ok)
             {
@@ -990,7 +1117,9 @@ namespace CubleyControl
                     false,
                     "hw_fault",
                     "diseqc tone start failed",
-                    "reason=native_tone_" + toneStatus.ToString() + " pin_id=" + DiseqcCarrierPin.ToString());
+                    "reason=native_tone_" + toneStatus.ToString() +
+                    " pin_id=" + DiseqcCarrierPin.ToString() +
+                    " channel=" + LnbChannelToSchemaName(channel));
                 return;
             }
 
@@ -1004,6 +1133,7 @@ namespace CubleyControl
                 "ok",
                 "diseqc tone on",
                 "tone=on pin=pd12 pin_id=" + DiseqcCarrierPin.ToString() +
+                " channel=" + LnbChannelToSchemaName(channel) +
                 " freq_hz=" + _diseqcCarrierFrequencyHz.ToString() +
                 " duty_pct=" + _diseqcCarrierDutyPercent.ToString());
         }
@@ -1016,12 +1146,6 @@ namespace CubleyControl
                 return;
             }
 
-            if (!EnsureLnbInitialized())
-            {
-                WriteCommandResult(reqId, false, "hw_fault", "diseqc listen", BuildLnbInitDiagnosticData());
-                return;
-            }
-
             bool enable;
             if (!TryParseOnOff(tokens[2], out enable))
             {
@@ -1029,45 +1153,221 @@ namespace CubleyControl
                 return;
             }
 
-            int mode = enable ? LnbDiseqcInputEnabled : LnbDiseqcInputDisabled;
-            int rc = LNBH26.NativeSetDiseqcInputModeForChannel(LnbChannelA, mode);
+            int channel = GetDiseqcBoundLnbChannel();
+            int rc = (int)LNBH26.Status.Ok;
+            string error = string.Empty;
+            if (enable)
+            {
+                if (!EnsureDiseqcBoundPortReady(out channel, out error))
+                {
+                    WriteCommandResult(
+                        reqId,
+                        false,
+                        "hw_fault",
+                        "diseqc listen failed",
+                        "reason=" + SanitizeToken(error));
+                    return;
+                }
+            }
+            else
+            {
+                if (!EnsureLnbInitialized())
+                {
+                    WriteCommandResult(reqId, false, "hw_fault", "diseqc listen", BuildLnbInitDiagnosticData());
+                    return;
+                }
+
+                rc = LNBH26.NativeSetDiseqcInputModeForChannel(channel, LnbDiseqcInputDisabled);
+            }
+
             if (rc != (int)LNBH26.Status.Ok)
             {
-                WriteCommandResult(reqId, false, "hw_fault", "diseqc listen failed", "rc=" + rc.ToString());
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "hw_fault",
+                    "diseqc listen failed",
+                    "rc=" + rc.ToString() + " channel=" + LnbChannelToSchemaName(channel));
                 return;
             }
 
-            WriteCommandResult(reqId, true, "ok", "diseqc listen", "extm=" + (enable ? "on" : "off") + " channel=a");
+            WriteCommandResult(
+                reqId,
+                true,
+                "ok",
+                "diseqc listen",
+                "extm=" + (enable ? "on" : "off") +
+                " channel=" + LnbChannelToSchemaName(channel));
         }
 
         private static void EmitDiseqcToneStatus(int reqId)
         {
+            int channel = GetDiseqcBoundLnbChannel();
             string tone = _diseqcCarrierEnabled ? "on" : "off";
             string payload =
                 "tone=" + tone +
                 " pin=pd12" +
                 " pin_id=" + DiseqcCarrierPin.ToString() +
+                " channel=" + LnbChannelToSchemaName(channel) +
                 " freq_hz=" + (_diseqcCarrierEnabled ? _diseqcCarrierFrequencyHz.ToString() : "0") +
                 " duty_pct=" + (_diseqcCarrierEnabled ? _diseqcCarrierDutyPercent.ToString() : "0");
 
-            if (EnsureLnbInitialized())
-            {
-                int d1;
-                int d2;
-                int d3;
-                int d4;
-                int rc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
-                if (rc == (int)LNBH26.Status.Ok)
-                {
-                    payload += " extm=" + (IsExtmEnabledForChannel(LnbChannelA, d2) ? "on" : "off");
-                }
-                else
-                {
-                    payload += " extm=unknown";
-                }
-            }
+            bool outputEnabled;
+            bool extmEnabled;
+            bool tenEnabled;
+            bool prereqKnown = TryReadDiseqcPrerequisites(channel, out outputEnabled, out extmEnabled, out tenEnabled);
+            payload +=
+                " output_enabled=" + (prereqKnown ? (outputEnabled ? "on" : "off") : "unknown") +
+                " extm=" + (prereqKnown ? (extmEnabled ? "on" : "off") : "unknown") +
+                " ten=" + (prereqKnown ? (tenEnabled ? "on" : "off") : "unknown");
 
             WriteCommandResult(reqId, true, "ok", "diseqc tone status", payload);
+        }
+
+        private static int GetDiseqcBoundLnbChannel()
+        {
+            return _diseqcBoundLnbChannel == 1 ? 1 : LnbChannelA;
+        }
+
+        private static bool TryPersistDiseqcBoundLnbChannel(int channel, out string error)
+        {
+            error = string.Empty;
+            if (channel != LnbChannelA && channel != 1)
+            {
+                error = "invalid_channel";
+                return false;
+            }
+
+            if (channel == GetDiseqcBoundLnbChannel())
+            {
+                return true;
+            }
+
+            MqttConfiguration candidate;
+            uint currentGeneration;
+            lock (_mqttConfigurationLock)
+            {
+                candidate = _mqttConfiguration.Clone();
+                currentGeneration = _mqttConfigurationGeneration;
+            }
+
+            candidate.DiseqcLnbChannel = channel;
+            if (!candidate.TryValidate(out error))
+            {
+                return false;
+            }
+
+            uint savedGeneration;
+            if (!TryPersistMqttConfiguration(candidate, currentGeneration, out savedGeneration, out error))
+            {
+                return false;
+            }
+
+            lock (_mqttConfigurationLock)
+            {
+                _mqttConfiguration = candidate;
+                _mqttConfigurationGeneration = savedGeneration;
+                _mqttConfigurationRevision++;
+            }
+            _pendingMqttConfiguration = _mqttConfiguration.Clone();
+            _mqttConfigurationDirty = false;
+            _mqttConfigurationSource = _applicationConfigurationStorage.Source;
+            _mqttConfigurationError = string.Empty;
+            _diseqcBoundLnbChannel = channel;
+            return true;
+        }
+
+        private static bool EnsureDiseqcBoundPortReady(out int channel, out string error)
+        {
+            channel = GetDiseqcBoundLnbChannel();
+            error = string.Empty;
+
+            if (!EnsureLnbInitialized())
+            {
+                error = "lnb_init_failed";
+                return false;
+            }
+
+            int rc = LNBH26.NativeSetEnable(channel, true);
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                error = "lnb_enable_failed_channel_" + LnbChannelToSchemaName(channel) + "_rc_" + rc.ToString();
+                return false;
+            }
+
+            rc = LNBH26.NativeSetDiseqcInputModeForChannel(channel, LnbDiseqcInputEnabled);
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                error = "lnb_extm_failed_channel_" + LnbChannelToSchemaName(channel) + "_rc_" + rc.ToString();
+                return false;
+            }
+
+            rc = LNBH26.NativeSetBandForChannel(channel, (int)LNBH26.Band.High);
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                error = "lnb_ten_failed_channel_" + LnbChannelToSchemaName(channel) + "_rc_" + rc.ToString();
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool TryReadDiseqcPrerequisites(
+            int channel,
+            out bool outputEnabled,
+            out bool extmEnabled,
+            out bool tenEnabled)
+        {
+            outputEnabled = false;
+            extmEnabled = false;
+            tenEnabled = false;
+
+            if (!EnsureLnbInitialized())
+            {
+                return false;
+            }
+
+            int d1;
+            int d2;
+            int d3;
+            int d4;
+            int rc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                return false;
+            }
+
+            outputEnabled = IsLnbChannelEnabled(channel, d1);
+            extmEnabled = IsExtmEnabledForChannel(channel, d2);
+            tenEnabled = IsToneEnabledForChannel(channel, d2);
+            return true;
+        }
+
+        private static bool TryStopDiseqcCarrierAndTearDown(out string error)
+        {
+            error = string.Empty;
+            int stopStatus = StopDiseqcCarrier();
+            if (stopStatus != (int)ZZDiseqcTransmitter.Status.Ok)
+            {
+                error = "native_tone_" + stopStatus.ToString();
+                return false;
+            }
+
+            int channel = GetDiseqcBoundLnbChannel();
+            if (!EnsureLnbInitialized())
+            {
+                error = "lnb_init_failed";
+                return false;
+            }
+
+            int rc = LNBH26.NativeSetDiseqcInputModeForChannel(channel, LnbDiseqcInputDisabled);
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                error = "lnb_extm_disable_failed_channel_" + LnbChannelToSchemaName(channel) + "_rc_" + rc.ToString();
+                return false;
+            }
+
+            return true;
         }
 
         private static int StopDiseqcCarrier()

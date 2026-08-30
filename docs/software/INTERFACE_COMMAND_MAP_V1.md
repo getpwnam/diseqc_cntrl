@@ -130,6 +130,10 @@ CubleyControl console
 |   |   |     Display the selected routing preset.
 |   |   |-- preset <off|direct|aa|ab|ba|bb>
 |   |   |     Select the routing prefix for positioner commands.
+|   |   |-- lnb status
+|   |   |     Display the LNB port currently bound to DiSEqC operations.
+|   |   |-- lnb <a|b>
+|   |   |     Bind DiSEqC operations to LNB port A or B and persist the selection.
 |   |   |-- timeout status
 |   |   |     Display the configured motion watchdog timeout.
 |   |   |-- timeout <5..300>
@@ -141,7 +145,7 @@ CubleyControl console
 |   |   |-- tone off|status
 |   |   |     Stop or inspect the carrier.
 |   |   `-- listen <on|off|1|0|true|false>
-|   |         Control the channel-A external modulation input.
+|   |         Control the bound-port external modulation input.
 |   |
 |   |-- dns lookup <hostname>
 |   |     Resolve a hostname.

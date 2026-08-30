@@ -14,17 +14,24 @@ namespace CubleyControl
                 return;
             }
 
-            int setEnableRc = LNBH26.NativeSetEnable(LnbChannelA, false);
-            int setPolRc = LNBH26.NativeSetPolarizationForChannel(LnbChannelA, (int)LNBH26.Polarization.Vertical);
-            int setBandRc = LNBH26.NativeSetBandForChannel(LnbChannelA, (int)LNBH26.Band.Low);
+            int setEnableRcA = LNBH26.NativeSetEnable(LnbChannelA, false);
+            int setPolRcA = LNBH26.NativeSetPolarizationForChannel(LnbChannelA, (int)LNBH26.Polarization.Vertical);
+            int setBandRcA = LNBH26.NativeSetBandForChannel(LnbChannelA, (int)LNBH26.Band.Low);
+            int setEnableRcB = LNBH26.NativeSetEnable(1, false);
+            int setPolRcB = LNBH26.NativeSetPolarizationForChannel(1, (int)LNBH26.Polarization.Vertical);
+            int setBandRcB = LNBH26.NativeSetBandForChannel(1, (int)LNBH26.Band.Low);
 
             WriteStructuredDebug(
                 "LNB",
                 "schema=1 sub=lnb comp=control operation=safe_defaults" +
-                " stat=" + (setEnableRc == 0 && setPolRc == 0 && setBandRc == 0 ? "ok" : "error") +
-                " enable_rc=" + setEnableRc.ToString() +
-                " pol_rc=" + setPolRc.ToString() +
-                " band_rc=" + setBandRc.ToString());
+                " stat=" + (setEnableRcA == 0 && setPolRcA == 0 && setBandRcA == 0 &&
+                            setEnableRcB == 0 && setPolRcB == 0 && setBandRcB == 0 ? "ok" : "error") +
+                " enable_a_rc=" + setEnableRcA.ToString() +
+                " pol_a_rc=" + setPolRcA.ToString() +
+                " band_a_rc=" + setBandRcA.ToString() +
+                " enable_b_rc=" + setEnableRcB.ToString() +
+                " pol_b_rc=" + setPolRcB.ToString() +
+                " band_b_rc=" + setBandRcB.ToString());
         }
 
         private static void HandleShowCommand(string[] tokens, int reqId)

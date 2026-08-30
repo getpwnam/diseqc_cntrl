@@ -21,6 +21,7 @@ namespace CubleyControl
         public string TopicPrefix = "diseqc";
         public int KeepAliveSeconds = 60;
         public int ReconnectSeconds = 5;
+        public int DiseqcLnbChannel;
 
         public static MqttConfiguration CreateDefaults()
         {
@@ -40,7 +41,8 @@ namespace CubleyControl
                 Password = Password,
                 TopicPrefix = TopicPrefix,
                 KeepAliveSeconds = KeepAliveSeconds,
-                ReconnectSeconds = ReconnectSeconds
+                ReconnectSeconds = ReconnectSeconds,
+                DiseqcLnbChannel = DiseqcLnbChannel
             };
         }
 
@@ -108,6 +110,12 @@ namespace CubleyControl
                 return false;
             }
 
+            if (DiseqcLnbChannel != 0 && DiseqcLnbChannel != 1)
+            {
+                error = "diseqc_lnb_channel_invalid";
+                return false;
+            }
+
             if (ToPayload().Length > ApplicationConfigurationRecord.RecordSize - ApplicationConfigurationRecord.HeaderSize)
             {
                 error = "payload_too_large";
@@ -130,7 +138,8 @@ namespace CubleyControl
                 "password=" + Password + "\n" +
                 "topic_prefix=" + TopicPrefix + "\n" +
                 "keepalive_seconds=" + KeepAliveSeconds.ToString() + "\n" +
-                "reconnect_seconds=" + ReconnectSeconds.ToString();
+                "reconnect_seconds=" + ReconnectSeconds.ToString() + "\n" +
+                "diseqc_lnb_channel=" + (DiseqcLnbChannel == 1 ? "b" : "a");
         }
 
         public static bool TryParsePayload(string payload, out MqttConfiguration configuration, out string error)
@@ -220,6 +229,22 @@ namespace CubleyControl
                         return false;
                     }
                     configuration.ReconnectSeconds = number;
+                }
+                else if (key == "diseqc_lnb_channel")
+                {
+                    if (value == "a")
+                    {
+                        configuration.DiseqcLnbChannel = 0;
+                    }
+                    else if (value == "b")
+                    {
+                        configuration.DiseqcLnbChannel = 1;
+                    }
+                    else
+                    {
+                        error = "diseqc_lnb_channel_invalid";
+                        return false;
+                    }
                 }
                 else
                 {

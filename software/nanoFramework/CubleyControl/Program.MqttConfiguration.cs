@@ -36,6 +36,7 @@ namespace CubleyControl
             _pendingMqttConfiguration = _mqttConfiguration.Clone();
             _mqttConfigurationDirty = false;
             _mqttConfigurationRevision = 1;
+            _diseqcBoundLnbChannel = _mqttConfiguration.DiseqcLnbChannel == 1 ? 1 : LnbChannelA;
             WriteStructuredDebug(
                 "CONFIG",
                 "schema=1 sub=config comp=storage domain=mqtt operation=load" +
@@ -43,6 +44,7 @@ namespace CubleyControl
                 " source=" + SanitizeToken(_mqttConfigurationSource) +
                 " generation=" + _mqttConfigurationGeneration.ToString() +
                 " enabled=" + (_mqttConfiguration.Enabled ? "1" : "0") +
+                " diseqc_lnb_channel=" + LnbChannelToSchemaName(_diseqcBoundLnbChannel) +
                 (string.IsNullOrEmpty(_mqttConfigurationError)
                     ? string.Empty
                     : " code=" + SanitizeToken(_mqttConfigurationError)));

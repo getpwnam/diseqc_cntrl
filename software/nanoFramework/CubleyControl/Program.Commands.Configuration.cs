@@ -459,6 +459,10 @@ namespace CubleyControl
             {
                 EmitConfigurationLine(hideDefaults, mqtt.Hostname != defaultMqtt.Hostname,
                     "hostname " + (string.IsNullOrEmpty(mqtt.Hostname) ? "auto" : mqtt.Hostname) + "\r\n");
+                EmitConfigurationLine(
+                    hideDefaults,
+                    mqtt.DiseqcLnbChannel != defaultMqtt.DiseqcLnbChannel,
+                    "diseqc lnb " + LnbChannelToSchemaName(mqtt.DiseqcLnbChannel) + "\r\n");
             }
             if (domain == "all" || domain == "network")
             {
@@ -519,6 +523,10 @@ namespace CubleyControl
             changed |= EmitConfigurationDiffLine("mqtt topic-prefix ", _mqttConfiguration.TopicPrefix, _pendingMqttConfiguration.TopicPrefix);
             changed |= EmitConfigurationDiffLine("mqtt keepalive ", _mqttConfiguration.KeepAliveSeconds.ToString(), _pendingMqttConfiguration.KeepAliveSeconds.ToString());
             changed |= EmitConfigurationDiffLine("mqtt reconnect ", _mqttConfiguration.ReconnectSeconds.ToString(), _pendingMqttConfiguration.ReconnectSeconds.ToString());
+            changed |= EmitConfigurationDiffLine(
+                "diseqc lnb ",
+                LnbChannelToSchemaName(_mqttConfiguration.DiseqcLnbChannel),
+                LnbChannelToSchemaName(_pendingMqttConfiguration.DiseqcLnbChannel));
 
             if (!changed)
             {

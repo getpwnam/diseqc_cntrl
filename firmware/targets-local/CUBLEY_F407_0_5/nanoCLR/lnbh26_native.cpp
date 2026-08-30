@@ -278,8 +278,8 @@ lnb_status_t lnb_set_enable_for_channel(lnb_handle_t *hlnb, lnb_channel_t channe
         hlnb->enabled[0] = (data1Readback & LNBH26_DATA1_VSEL_A_MASK) != 0;
         hlnb->enabled[1] = (data1Readback & LNBH26_DATA1_VSEL_B_MASK) != 0;
         g_lnb = *hlnb;
-        lnb_set_last_error(LNB_ERROR_I2C, -123);
-        return LNB_ERROR_I2C;
+        lnb_set_last_error(LNB_ERROR_HARDWARE, -123);
+        return LNB_ERROR_HARDWARE;
     }
 
     g_lnb = *hlnb;
@@ -475,8 +475,8 @@ lnb_status_t lnb_set_band_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel,
             (void)diseqc_set_envelope_idle(actualInternalTone);
         }
         g_lnb = *hlnb;
-        lnb_set_last_error(LNB_ERROR_I2C, -117);
-        return LNB_ERROR_I2C;
+        lnb_set_last_error(LNB_ERROR_HARDWARE, -124);
+        return LNB_ERROR_HARDWARE;
     }
 
     g_lnb = *hlnb;
