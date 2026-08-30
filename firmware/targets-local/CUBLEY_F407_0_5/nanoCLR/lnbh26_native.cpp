@@ -259,6 +259,29 @@ lnb_status_t lnb_set_enable_for_channel(lnb_handle_t *hlnb, lnb_channel_t channe
         return status;
     }
 
+    uint8_t data1Readback = 0;
+    status = lnb_read_register(hlnb, (uint8_t)LNBH26_REGISTER_DATA1, &data1Readback);
+    if (status != LNB_OK)
+    {
+        g_lnb = *hlnb;
+        return status;
+    }
+
+    const uint8_t channelMask =
+        (channel == LNB_CHANNEL_A) ? LNBH26_DATA1_VSEL_A_MASK : LNBH26_DATA1_VSEL_B_MASK;
+    if ((data1Readback & channelMask) != (hlnb->data1_reg & channelMask))
+    {
+        // The I2C transaction completed but the device did not retain the
+        // requested output state. Keep software state aligned with hardware and
+        // report failure instead of returning a false successful enable.
+        hlnb->data1_reg = data1Readback;
+        hlnb->enabled[0] = (data1Readback & LNBH26_DATA1_VSEL_A_MASK) != 0;
+        hlnb->enabled[1] = (data1Readback & LNBH26_DATA1_VSEL_B_MASK) != 0;
+        g_lnb = *hlnb;
+        lnb_set_last_error(LNB_ERROR_I2C, -123);
+        return LNB_ERROR_I2C;
+    }
+
     g_lnb = *hlnb;
     return LNB_OK;
 }
