@@ -959,7 +959,7 @@ namespace CubleyControl
                 return true;
             }
 
-            error = "lnb_restore_band_" + bandRc.ToString() + "_extm_" + inputRc.ToString();
+            error = "lnb_restore_band_" + LnbStatusToToken(bandRc) + "_extm_" + LnbStatusToToken(inputRc);
             return false;
         }
 
