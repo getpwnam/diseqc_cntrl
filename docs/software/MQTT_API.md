@@ -29,6 +29,11 @@ configuration commands.
 The broker receives a retained `online` message after connection. The configured
 last will is retained `offline` at QoS 1.
 
+LNB and DiSEqC execution does not perform socket I/O. Responses, events, and state
+updates are placed in a bounded queue and published only by the MQTT worker. A
+broker failure, blocked publish, or full publication queue can lose MQTT output,
+but cannot delay or change completion of a hardware command.
+
 ## Commands And Results
 
 Publish a command marked as MQTT-supported in

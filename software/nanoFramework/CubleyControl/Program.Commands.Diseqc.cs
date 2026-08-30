@@ -796,14 +796,46 @@ namespace CubleyControl
             int resumeFrequencyHz = _diseqcCarrierFrequencyHz;
             int resumeDutyPercent = _diseqcCarrierDutyPercent;
             bool toneRestored = false;
+            bool lnbStateCaptured = false;
+            bool lnbStateRestored = false;
+            int resumeBand = (int)LNBH26.Band.Low;
+            int resumeDiseqcInputMode = LnbDiseqcInputDisabled;
+            int channel = GetDiseqcBoundLnbChannel();
 
             try
             {
-                int channel;
-                if (!EnsureDiseqcBoundPortReady(out channel, out error))
+                if (!EnsureLnbInitialized())
+                {
+                    error = "lnb_init_failed";
+                    return false;
+                }
+
+                int d1;
+                int d2;
+                int d3;
+                int d4;
+                int readStateRc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
+                if (readStateRc != (int)LNBH26.Status.Ok)
+                {
+                    error = "lnb_state_read_" + readStateRc.ToString();
+                    return false;
+                }
+
+                resumeBand = IsToneEnabledForChannel(channel, d2)
+                    ? (int)LNBH26.Band.High
+                    : (int)LNBH26.Band.Low;
+                resumeDiseqcInputMode = IsExtmEnabledForChannel(channel, d2)
+                    ? LnbDiseqcInputEnabled
+                    : LnbDiseqcInputDisabled;
+                lnbStateCaptured = true;
+
+                int activeChannel;
+                if (!EnsureDiseqcBoundPortReady(out activeChannel, out error))
                 {
                     return false;
                 }
+
+                channel = activeChannel;
                 _diseqcBoundLnbChannel = channel;
 
                 if (!EnsureDiseqcCarrierChannel(DiseqcDefaultFrequencyHz, DiseqcDefaultDutyPercent, out error))
@@ -832,6 +864,13 @@ namespace CubleyControl
                     DelayMicroseconds(DiseqcQuietGapUs);
                 }
 
+                if (!TryRestoreDiseqcLnbState(channel, resumeBand, resumeDiseqcInputMode, out error))
+                {
+                    return false;
+                }
+
+                lnbStateRestored = true;
+
                 if (resumeTone)
                 {
                     int restoreStatus = ZZDiseqcTransmitter.NativeSetTone(
@@ -857,18 +896,9 @@ namespace CubleyControl
             }
             finally
             {
-                if (resumeTone && !toneRestored)
-                {
-                    int restoreStatus = ZZDiseqcTransmitter.NativeSetTone(
-                        resumeFrequencyHz,
-                        resumeDutyPercent,
-                        true);
-                    if (restoreStatus != (int)ZZDiseqcTransmitter.Status.Ok)
-                    {
-                        _diseqcCarrierEnabled = false;
-                    }
-                }
-                else if (!resumeTone)
+                // Stop any failed/incomplete external transmission before
+                // restoring the GPIO idle level for the requested LNB band.
+                if (!lnbStateRestored)
                 {
                     ZZDiseqcTransmitter.NativeSetTone(
                         DiseqcDefaultFrequencyHz,
@@ -876,8 +906,61 @@ namespace CubleyControl
                         false);
                 }
 
+                if (lnbStateCaptured && !lnbStateRestored)
+                {
+                    string restoreError;
+                    if (TryRestoreDiseqcLnbState(channel, resumeBand, resumeDiseqcInputMode, out restoreError))
+                    {
+                        lnbStateRestored = true;
+                    }
+                    else
+                    {
+                        WriteStructuredDebug(
+                            "DISEQC",
+                            "schema=1 sub=diseqc comp=control operation=restore_lnb" +
+                            " stat=error reason=" + SanitizeToken(restoreError) +
+                            " level=error");
+                    }
+                }
+
+                // External continuous tone must be enabled only after EXTM/TEN
+                // and the requested LNB state have been restored. Enabling it
+                // earlier would be undone when band restoration reclaims PD12.
+                if (resumeTone && !toneRestored)
+                {
+                    if (lnbStateRestored)
+                    {
+                        int restoreStatus = ZZDiseqcTransmitter.NativeSetTone(
+                            resumeFrequencyHz,
+                            resumeDutyPercent,
+                            true);
+                        if (restoreStatus != (int)ZZDiseqcTransmitter.Status.Ok)
+                        {
+                            _diseqcCarrierEnabled = false;
+                        }
+                    }
+                    else
+                    {
+                        _diseqcCarrierEnabled = false;
+                    }
+                }
+
                 _diseqcTxBusy = false;
             }
+        }
+
+        private static bool TryRestoreDiseqcLnbState(int channel, int band, int inputMode, out string error)
+        {
+            int bandRc = LNBH26.NativeSetBandForChannel(channel, band);
+            int inputRc = LNBH26.NativeSetDiseqcInputModeForChannel(channel, inputMode);
+            if (bandRc == (int)LNBH26.Status.Ok && inputRc == (int)LNBH26.Status.Ok)
+            {
+                error = string.Empty;
+                return true;
+            }
+
+            error = "lnb_restore_band_" + bandRc.ToString() + "_extm_" + inputRc.ToString();
+            return false;
         }
 
         private static void DelayMicroseconds(int microseconds)

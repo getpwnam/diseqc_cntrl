@@ -1685,3 +1685,34 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: docs/debug/artifacts/rf-interface-2026-08-27/20260828-scope-j8-diseqc-hardware-timing-fixed.png; docs/debug/artifacts/rf-interface-2026-08-27/20260828-scope-j8-diseqc-hardware-timing-fixed.analysis.json; docs/debug/artifacts/rf-interface-2026-08-27/20260828-scope-j8-diseqc-hardware-timing-fixed.metadata.json
 - Conclusion: TIM4/TIM6 native transmission fixes the recorded DiSEqC symbol-timing fault: all 33 complete analyzed symbols satisfy mark, space, and total-duration limits.
 - Note: Observed sequence matches the first 33 bits of E0 10 38 F0 with odd parity; three right-edge bits were excluded. Ones: mark 0.420-0.490 ms, space 1.010-1.070 ms, total 1.460-1.540 ms. Zeros: mark 0.930-1.010 ms, space 0.520-0.600 ms, total 1.460-1.570 ms. Carrier 22.107 kHz from 471 periods; screenshot 780.208 mVpp. Raw transfer returned 5,000,000 of 10,000,000 declared samples at 20 ns intervals; edge uncertainty approximately 10 us.
+
+### 2026-08-28 18:42:46 UTC [PASS]
+- Git rev: cb84aa8
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): git pull origin main --ff-only; ./software/nanoFramework/toolchain/build-CubleyControl.sh build --project CubleyControl/CubleyControl.nfproj --configuration Debug; interop-checksum.sh --check CubleyNative; ./firmware/build-flash-cubley.sh build; generated map/ELF layout validation; ./firmware/build-flash-cubley.sh flash --bootaddr 0x08000000 --clraddr 0x08010000 --deployaddr 0x080C0000 --deploysize 0x00040000 --reset; rebuild CubleyControl; deploy-CubleyControl.sh --reset; nanoff devicedetails
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin; software/nanoFramework/build/CubleyControl/CubleyControl_bundle_20260828-184102.bin
+- Conclusion: Merged main firmware rebuilt and verified at explicit generated addresses; CubleyControl rebuilt and redeployed successfully; target reports nanoCLR running on CUBLEY_F407_0_5 with CubleyControl and CubleyNative loaded.
+- Note: Interop guard PASS at checksum 0x0A4353F9. nanoBooter 34,156 bytes at 0x08000000 and nanoCLR 696,080 bytes at 0x08010000 both flashed and verified; deployment region 0x080C0000-0x08100000. nanoff version check warning was non-fatal. Optional SWD mailbox script is absent from the current tree, so mailbox verification was not performed.
+
+### 2026-08-29 17:17:23 UTC [PASS]
+- Git rev: cb84aa8
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): build-CubleyControl.sh Debug; firmware/build-flash-cubley.sh build; firmware/build-flash-cubley.sh flash --reset; nanoff devicedetails
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin; software/nanoFramework/build/CubleyControl/CubleyControl_bundle_20260829-171423.bin
+- Conclusion: Corrected LNB native firmware built, flashed, verified, and restarted; retained managed assemblies resolve against CubleyNative checksum 0x0A4353F9.
+- Note: LNB output behavior requires USB CDC validation; managed retry fix is built but intentionally not deployed outside the VS Code nanoFramework workflow.
+
+### 2026-08-29 19:08:43 UTC [PASS]
+- Git rev: cb84aa8
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): USB CDC: diseqc step east 10; diseqc step west 10
+- Artifact: none
+- Conclusion: On cubley-a02663, Astra 2 disappeared from the analyser after the east 10 command and returned after the west 10 command, confirming reversible DiSEqC motor movement.
+
+### 2026-08-30 15:16:29 UTC [PASS]
+- Git rev: 5869304
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./firmware/build-flash-cubley.sh build; st-info --probe; ./firmware/build-flash-cubley.sh flash --bootaddr 0x08000000 --clraddr 0x08010000 --deployaddr 0x080C0000 --deploysize 0x00040000 --reset; st-flash read + cmp
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin; /tmp/cubley-nanobooter-readback.bin; /tmp/cubley-nanoclr-readback.bin
+- Conclusion: Built and flashed nanoBooter and nanoCLR; both SWD readbacks matched the build artifacts byte-for-byte.
+- Note: Deployment region was preserved; software reset used AIRCR because NRST is not connected. Runtime mailbox verification script is absent from this checkout.

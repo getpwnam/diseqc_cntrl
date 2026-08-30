@@ -159,7 +159,10 @@ namespace Cubley.Diseqc
 
         private static byte NormalizeSteps(byte steps)
         {
-            return steps == 0 ? (byte)1 : steps;
+            // DiSEqC positioner step counts are negative 8-bit values: FF is
+            // one step, FE is two steps, ... and 80 is 128 steps.
+            int normalizedSteps = steps == 0 ? 1 : steps;
+            return (byte)(256 - normalizedSteps);
         }
     }
 }

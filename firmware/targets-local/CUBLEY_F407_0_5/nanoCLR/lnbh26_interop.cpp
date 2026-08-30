@@ -59,7 +59,7 @@ HRESULT Library_cubley_interop_LNBH26_NativeSetEnable___STATIC__I4__I4__BOOLEAN(
     lnb_status_t status = (lnb_status_t)lnb_native_set_enable_for_channel(channel, enable ? 1 : 0);
 
     // 0xE3 C2 SS DD: LNB set-enable result, DD=DATA1 readback on success or low I2C detail on failure.
-    uint8_t detail = (uint8_t)(lnb_get_last_i2c_msg() & 0xFF);
+    uint8_t detail = (uint8_t)(lnb_native_get_last_error_detail() & 0xFF);
     if (status == LNB_OK)
     {
         detail = lnb_try_read_reg_or_detail((int32_t)LNBH26_REGISTER_DATA1, detail);

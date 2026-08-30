@@ -164,13 +164,31 @@ namespace CubleyControl
 
                 bool enable = field == "enable";
                 int rc = LNBH26.NativeSetEnable(channel, enable);
+                uint nativeDiagnostic = DiagMailbox.NativeGetLastNativeError();
+
+                WriteStructuredDebug(
+                    "LNB",
+                    "schema=1 sub=lnb comp=control operation=set_enable" +
+                    " stat=" + (rc == (int)LNBH26.Status.Ok ? "ok" : "error") +
+                    " channel=" + LnbChannelToSchemaName(channel) +
+                    " requested=" + (enable ? "on" : "off") +
+                    " rc=" + rc.ToString() +
+                    " native_diag=0x" + nativeDiagnostic.ToString("X8"));
+
                 if (rc == (int)LNBH26.Status.Ok)
                 {
                     WriteCommandResult(reqId, true, "ok", "lnb " + field, "channel=" + LnbChannelToSchemaName(channel) + " value=" + (enable ? "on" : "off"));
                 }
                 else
                 {
-                    WriteCommandResult(reqId, false, "hw_fault", "lnb " + field + " failed", "channel=" + LnbChannelToSchemaName(channel) + " rc=" + rc.ToString());
+                    WriteCommandResult(
+                        reqId,
+                        false,
+                        "hw_fault",
+                        "lnb " + field + " failed",
+                        "channel=" + LnbChannelToSchemaName(channel) +
+                        " rc=" + rc.ToString() +
+                        " native_diag=0x" + nativeDiagnostic.ToString("X8"));
                 }
 
                 return;
@@ -218,6 +236,15 @@ namespace CubleyControl
                 int rc = LNBH26.NativeSetBandForChannel(channel, band);
                 if (rc == (int)LNBH26.Status.Ok)
                 {
+                    if (channel == LnbChannelA)
+                    {
+                        // Native band selection takes ownership of PD12 and
+                        // establishes the LNBH26 internal continuous-tone mode.
+                        _diseqcCarrierEnabled = false;
+                        _diseqcCarrierFrequencyHz = 0;
+                        _diseqcCarrierDutyPercent = 0;
+                    }
+
                     WriteCommandResult(reqId, true, "ok", "lnb band", "channel=" + LnbChannelToSchemaName(channel) + " value=" + BandToText(band));
                 }
                 else
@@ -485,6 +512,11 @@ namespace CubleyControl
                 return "io_error";
             }
 
+            if (status == (int)LNBH26.Status.HardwareError)
+            {
+                return "hardware_error";
+            }
+
             return "unknown";
         }
 
@@ -652,7 +684,13 @@ namespace CubleyControl
         {
             int rc = LNBH26Registers.NativeReadRegister((int)register, out value);
 
-            if (rc == (int)LNBH26.Status.IoError || rc == (int)LNBH26.Status.NotInitialized)
+            if (rc == (int)LNBH26.Status.IoError)
+            {
+                // NativeInit writes safe defaults, including disabling both outputs.
+                // A transient read failure must not erase an active LNB configuration.
+                rc = LNBH26Registers.NativeReadRegister((int)register, out value);
+            }
+            else if (rc == (int)LNBH26.Status.NotInitialized)
             {
                 _lnbInitAttempted = false;
                 if (EnsureLnbInitialized())
@@ -705,7 +743,13 @@ namespace CubleyControl
                     " detail=" + lastDetail.ToString());
             }
 
-            if (rc == (int)LNBH26.Status.IoError || rc == (int)LNBH26.Status.NotInitialized)
+            if (rc == (int)LNBH26.Status.IoError)
+            {
+                // Retry the non-mutating read. Reinitializing here would silently
+                // disable an output after an otherwise successful enable command.
+                rc = LNBH26.NativeReadStatusPair(out s1, out s2);
+            }
+            else if (rc == (int)LNBH26.Status.NotInitialized)
             {
                 _lnbInitAttempted = false;
                 if (EnsureLnbInitialized())

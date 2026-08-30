@@ -33,7 +33,7 @@ namespace Cubley.Interop
         public enum Voltage { V13 = 0, V18 = 1 }
         public enum Polarization { Vertical = 0, Horizontal = 1 }
         public enum Band { Low = 0, High = 1 }
-        public enum Status { Ok = 0, InvalidParam = 1, NotInitialized = 2, IoError = 3 }
+        public enum Status { Ok = 0, InvalidParam = 1, NotInitialized = 2, IoError = 3, HardwareError = 4 }
 
         public enum Register
         {
