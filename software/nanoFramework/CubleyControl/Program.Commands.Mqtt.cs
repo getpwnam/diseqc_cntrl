@@ -16,6 +16,7 @@ namespace CubleyControl
         private const int MqttCommandEnvelopeMaxLength = MqttCommandMaxLength + MqttCommandIdMaxLength + 1;
         private const int MqttDuplicateCacheSize = 8;
         private const int MqttCachedResponseLimit = 32;
+        private const int MqttPublishQueueCapacity = 64;
         private const string MqttAvailabilityOnline = "online";
         private const string MqttAvailabilityOffline = "offline";
         private static MqttClient _mqttClient;
@@ -36,10 +37,19 @@ namespace CubleyControl
         private static readonly string[] _mqttActiveResponses = new string[MqttCachedResponseLimit];
         private static readonly object _mqttCommandTransactionLock = new object();
         private static readonly object _mqttEventLock = new object();
+        private static readonly object _mqttPublishQueueLock = new object();
+        private static readonly string[] _mqttPublishTopics = new string[MqttPublishQueueCapacity];
+        private static readonly string[] _mqttPublishPayloads = new string[MqttPublishQueueCapacity];
+        private static readonly MqttQoSLevel[] _mqttPublishQosLevels = new MqttQoSLevel[MqttPublishQueueCapacity];
+        private static readonly bool[] _mqttPublishRetainFlags = new bool[MqttPublishQueueCapacity];
         private static int _mqttDuplicateCacheNext;
         private static int _mqttEventSequence;
         private static ushort _mqttActiveCommandId;
         private static int _mqttActiveResponseCount;
+        private static int _mqttPublishQueueHead;
+        private static int _mqttPublishQueueCount;
+        private static int _mqttPublishDropCount;
+        private static bool _mqttPublishAccepting;
 
         private static void MqttLoop()
         {
@@ -140,15 +150,21 @@ namespace CubleyControl
                 _mqttReconnectAttempts = 0;
                 _mqttLastError = string.Empty;
                 _mqttRuntimeState = "connected";
+                SetMqttPublishAccepting(true);
                 WriteStructuredDebug(
                     "MQTT",
                     "schema=1 sub=mqtt comp=connection operation=connect stat=ok" +
                     " broker=" + SanitizeToken(configuration.Broker) +
                     " port=" + configuration.Port.ToString());
 
-                PublishLine(availabilityTopic, MqttAvailabilityOnline, MqttQoSLevel.AtLeastOnce, true);
+                QueueMqttPublication(availabilityTopic, MqttAvailabilityOnline, MqttQoSLevel.AtLeastOnce, true);
                 PublishMqttState();
                 PublishMqttDiseqcState();
+                if (!DrainMqttPublicationQueue(_mqttClient))
+                {
+                    return;
+                }
+
                 _mqttRuntimeState = "subscribing";
                 ushort subscriptionMessageId = _mqttClient.Subscribe(
                     new string[] { _mqttCommandTopic },
@@ -163,7 +179,12 @@ namespace CubleyControl
                     revision == _mqttConfigurationRevision &&
                     _mqttRuntimeState != "error")
                 {
-                    Thread.Sleep(500);
+                    if (!DrainMqttPublicationQueue(_mqttClient))
+                    {
+                        break;
+                    }
+
+                    Thread.Sleep(100);
                 }
 
                 if (_mqttClient.IsConnected)
@@ -173,6 +194,7 @@ namespace CubleyControl
             }
             finally
             {
+                SetMqttPublishAccepting(false);
                 MqttClient client = _mqttClient;
                 _mqttClient = null;
                 _mqttCommandTopic = string.Empty;
@@ -434,7 +456,7 @@ namespace CubleyControl
                 " transport=mqtt topic=" + _mqttResponseTopic +
                 " duplicate=" + (duplicate ? "1" : "0") +
                 " payload=" + SanitizeToken(payload));
-            PublishLine(_mqttResponseTopic, payload, MqttQoSLevel.AtLeastOnce, false);
+            QueueMqttPublication(_mqttResponseTopic, payload, MqttQoSLevel.AtLeastOnce, false);
         }
 
         private static void PublishMqttLnbFaultTransition(bool active, string source)
@@ -477,12 +499,7 @@ namespace CubleyControl
         private static void PublishMqttLnbEvent(string payload)
         {
             WriteStructuredDebug("LNB", payload);
-            if (_mqttClient == null || !_mqttClient.IsConnected || string.IsNullOrEmpty(_mqttEventTopic))
-            {
-                return;
-            }
-
-            PublishLine(_mqttEventTopic, payload, MqttQoSLevel.AtLeastOnce, false);
+            QueueMqttPublication(_mqttEventTopic, payload, MqttQoSLevel.AtLeastOnce, false);
         }
 
         private static void PublishMqttState()
@@ -517,12 +534,7 @@ namespace CubleyControl
             }
 
             WriteStructuredDebug("LNB", payload);
-            if (_mqttClient == null || !_mqttClient.IsConnected || string.IsNullOrEmpty(_mqttStateTopic))
-            {
-                return;
-            }
-
-            PublishLine(_mqttStateTopic, payload, MqttQoSLevel.AtLeastOnce, true);
+            QueueMqttPublication(_mqttStateTopic, payload, MqttQoSLevel.AtLeastOnce, true);
         }
 
         private static void PublishMqttDiseqcMotionTransition(string transition)
@@ -545,10 +557,7 @@ namespace CubleyControl
                 " completion=" + completionSource;
 
             WriteStructuredDebug("DISEQC", payload);
-            if (_mqttClient != null && _mqttClient.IsConnected && !string.IsNullOrEmpty(_mqttDiseqcEventTopic))
-            {
-                PublishLine(_mqttDiseqcEventTopic, payload, MqttQoSLevel.AtLeastOnce, false);
-            }
+            QueueMqttPublication(_mqttDiseqcEventTopic, payload, MqttQoSLevel.AtLeastOnce, false);
 
             PublishMqttDiseqcState();
         }
@@ -572,16 +581,12 @@ namespace CubleyControl
                 " timeout_ms=" + _diseqcMotionTimeoutMs.ToString();
 
             WriteStructuredDebug("DISEQC", payload);
-            if (_mqttClient == null || !_mqttClient.IsConnected || string.IsNullOrEmpty(_mqttDiseqcStateTopic))
-            {
-                return;
-            }
-
-            PublishLine(_mqttDiseqcStateTopic, payload, MqttQoSLevel.AtLeastOnce, true);
+            QueueMqttPublication(_mqttDiseqcStateTopic, payload, MqttQoSLevel.AtLeastOnce, true);
         }
 
         private static void OnMqttConnectionClosed(object sender, EventArgs e)
         {
+            SetMqttPublishAccepting(false);
             _mqttRuntimeState = "disconnected";
             WriteStructuredDebug(
                 "MQTT",
@@ -648,30 +653,129 @@ namespace CubleyControl
             return new string(new char[] { digits[(value >> 4) & 0x0F], digits[value & 0x0F] });
         }
 
-        private static void PublishLine(string topic, string payload, MqttQoSLevel qosLevel, bool retain)
+        private static void QueueMqttPublication(string topic, string payload, MqttQoSLevel qosLevel, bool retain)
         {
-            if (_mqttClient == null || !_mqttClient.IsConnected)
+            bool dropped = false;
+            lock (_mqttPublishQueueLock)
             {
-                return;
+                if (!_mqttPublishAccepting || string.IsNullOrEmpty(topic))
+                {
+                    return;
+                }
+
+                if (_mqttPublishQueueCount >= MqttPublishQueueCapacity)
+                {
+                    _mqttPublishDropCount++;
+                    dropped = true;
+                }
+                else
+                {
+                    int queueIndex = (_mqttPublishQueueHead + _mqttPublishQueueCount) % MqttPublishQueueCapacity;
+                    _mqttPublishTopics[queueIndex] = topic;
+                    _mqttPublishPayloads[queueIndex] = payload;
+                    _mqttPublishQosLevels[queueIndex] = qosLevel;
+                    _mqttPublishRetainFlags[queueIndex] = retain;
+                    _mqttPublishQueueCount++;
+                }
             }
 
-            try
-            {
-                _mqttClient.Publish(
-                    topic,
-                    AsciiStringToBytes(payload),
-                    null,
-                    null,
-                    qosLevel,
-                    retain);
-            }
-            catch (Exception ex)
+            if (dropped)
             {
                 WriteStructuredDebug(
                     "MQTT",
-                    "schema=1 sub=mqtt comp=publish operation=send stat=error" +
-                    " code=publish_exception topic=" + topic +
-                    " detail=" + SanitizeToken(ex.Message));
+                    "schema=1 sub=mqtt comp=publish operation=queue stat=error" +
+                    " code=queue_full dropped=" + _mqttPublishDropCount.ToString());
+            }
+        }
+
+        private static bool DrainMqttPublicationQueue(MqttClient client)
+        {
+            while (true)
+            {
+                string topic;
+                string payload;
+                MqttQoSLevel qosLevel;
+                bool retain;
+                if (!TryDequeueMqttPublication(out topic, out payload, out qosLevel, out retain))
+                {
+                    return true;
+                }
+
+                try
+                {
+                    client.Publish(
+                        topic,
+                        AsciiStringToBytes(payload),
+                        null,
+                        null,
+                        qosLevel,
+                        retain);
+                }
+                catch (Exception ex)
+                {
+                    _mqttLastError = "publish_exception";
+                    _mqttRuntimeState = "error";
+                    WriteStructuredDebug(
+                        "MQTT",
+                        "schema=1 sub=mqtt comp=publish operation=send stat=error" +
+                        " code=publish_exception topic=" + topic +
+                        " detail=" + SanitizeToken(ex.Message));
+                    SetMqttPublishAccepting(false);
+                    return false;
+                }
+            }
+        }
+
+        private static bool TryDequeueMqttPublication(
+            out string topic,
+            out string payload,
+            out MqttQoSLevel qosLevel,
+            out bool retain)
+        {
+            lock (_mqttPublishQueueLock)
+            {
+                if (_mqttPublishQueueCount == 0)
+                {
+                    topic = null;
+                    payload = null;
+                    qosLevel = MqttQoSLevel.AtMostOnce;
+                    retain = false;
+                    return false;
+                }
+
+                int queueIndex = _mqttPublishQueueHead;
+                topic = _mqttPublishTopics[queueIndex];
+                payload = _mqttPublishPayloads[queueIndex];
+                qosLevel = _mqttPublishQosLevels[queueIndex];
+                retain = _mqttPublishRetainFlags[queueIndex];
+                _mqttPublishTopics[queueIndex] = null;
+                _mqttPublishPayloads[queueIndex] = null;
+                _mqttPublishRetainFlags[queueIndex] = false;
+                _mqttPublishQueueHead = (_mqttPublishQueueHead + 1) % MqttPublishQueueCapacity;
+                _mqttPublishQueueCount--;
+                return true;
+            }
+        }
+
+        private static void SetMqttPublishAccepting(bool accepting)
+        {
+            lock (_mqttPublishQueueLock)
+            {
+                _mqttPublishAccepting = accepting;
+                if (accepting)
+                {
+                    return;
+                }
+
+                for (int index = 0; index < MqttPublishQueueCapacity; index++)
+                {
+                    _mqttPublishTopics[index] = null;
+                    _mqttPublishPayloads[index] = null;
+                    _mqttPublishRetainFlags[index] = false;
+                }
+
+                _mqttPublishQueueHead = 0;
+                _mqttPublishQueueCount = 0;
             }
         }
 
