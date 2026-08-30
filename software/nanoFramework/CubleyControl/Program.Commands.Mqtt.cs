@@ -656,6 +656,7 @@ namespace CubleyControl
         private static void QueueMqttPublication(string topic, string payload, MqttQoSLevel qosLevel, bool retain)
         {
             bool dropped = false;
+            int droppedCount = 0;
             lock (_mqttPublishQueueLock)
             {
                 if (!_mqttPublishAccepting || string.IsNullOrEmpty(topic))
@@ -667,6 +668,7 @@ namespace CubleyControl
                 {
                     _mqttPublishDropCount++;
                     dropped = true;
+                    droppedCount = _mqttPublishDropCount;
                 }
                 else
                 {
@@ -684,7 +686,7 @@ namespace CubleyControl
                 WriteStructuredDebug(
                     "MQTT",
                     "schema=1 sub=mqtt comp=publish operation=queue stat=error" +
-                    " code=queue_full dropped=" + _mqttPublishDropCount.ToString());
+                    " code=queue_full dropped=" + droppedCount.ToString());
             }
         }
 
