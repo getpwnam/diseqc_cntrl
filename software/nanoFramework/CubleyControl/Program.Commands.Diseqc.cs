@@ -677,6 +677,10 @@ namespace CubleyControl
             int resumeFrequencyHz = _diseqcCarrierFrequencyHz;
             int resumeDutyPercent = _diseqcCarrierDutyPercent;
             bool toneRestored = false;
+            bool lnbStateCaptured = false;
+            bool lnbStateRestored = false;
+            int resumeBand = (int)LNBH26.Band.Low;
+            int resumeDiseqcInputMode = LnbDiseqcInputDisabled;
 
             try
             {
@@ -686,22 +690,45 @@ namespace CubleyControl
                     return false;
                 }
 
-                // For this board, EXTM + TEN yields the external DiSEqC gating path.
-                if (LNBH26.NativeSetEnable(LnbChannelA, true) != (int)LNBH26.Status.Ok)
+                int d1;
+                int d2;
+                int d3;
+                int d4;
+                int readStateRc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
+                if (readStateRc != (int)LNBH26.Status.Ok)
                 {
-                    error = "lnb_enable_failed";
+                    error = "lnb_state_read_" + readStateRc.ToString();
+                    return false;
+                }
+
+                // Motor power must be explicit and remain available for the
+                // full movement, not just while the DiSEqC frame is sent.
+                if (!IsLnbChannelEnabled(LnbChannelA, d1))
+                {
+                    error = "lnb_disabled";
+                    return false;
+                }
+
+                resumeBand = IsToneEnabledForChannel(LnbChannelA, d2)
+                    ? (int)LNBH26.Band.High
+                    : (int)LNBH26.Band.Low;
+                resumeDiseqcInputMode = IsExtmEnabledForChannel(LnbChannelA, d2)
+                    ? LnbDiseqcInputEnabled
+                    : LnbDiseqcInputDisabled;
+                lnbStateCaptured = true;
+
+                // Band selection first establishes a valid internal-tone state
+                // and a high DSQIN idle. DiSEqC then takes ownership of PD12 and
+                // switches the LNBH26 to accept the external 22 kHz waveform.
+                if (LNBH26.NativeSetBandForChannel(LnbChannelA, (int)LNBH26.Band.High) != (int)LNBH26.Status.Ok)
+                {
+                    error = "lnb_ten_failed";
                     return false;
                 }
 
                 if (LNBH26.NativeSetDiseqcInputModeForChannel(LnbChannelA, LnbDiseqcInputEnabled) != (int)LNBH26.Status.Ok)
                 {
                     error = "lnb_extm_failed";
-                    return false;
-                }
-
-                if (LNBH26.NativeSetBandForChannel(LnbChannelA, (int)LNBH26.Band.High) != (int)LNBH26.Status.Ok)
-                {
-                    error = "lnb_ten_failed";
                     return false;
                 }
 
@@ -731,6 +758,13 @@ namespace CubleyControl
                     DelayMicroseconds(DiseqcQuietGapUs);
                 }
 
+                if (!TryRestoreDiseqcLnbState(resumeBand, resumeDiseqcInputMode, out error))
+                {
+                    return false;
+                }
+
+                lnbStateRestored = true;
+
                 if (resumeTone)
                 {
                     int restoreStatus = ZZDiseqcTransmitter.NativeSetTone(
@@ -756,18 +790,9 @@ namespace CubleyControl
             }
             finally
             {
-                if (resumeTone && !toneRestored)
-                {
-                    int restoreStatus = ZZDiseqcTransmitter.NativeSetTone(
-                        resumeFrequencyHz,
-                        resumeDutyPercent,
-                        true);
-                    if (restoreStatus != (int)ZZDiseqcTransmitter.Status.Ok)
-                    {
-                        _diseqcCarrierEnabled = false;
-                    }
-                }
-                else if (!resumeTone)
+                // Stop any failed/incomplete external transmission before
+                // restoring the GPIO idle level for the requested LNB band.
+                if (!lnbStateRestored)
                 {
                     ZZDiseqcTransmitter.NativeSetTone(
                         DiseqcDefaultFrequencyHz,
@@ -775,8 +800,61 @@ namespace CubleyControl
                         false);
                 }
 
+                if (lnbStateCaptured && !lnbStateRestored)
+                {
+                    string restoreError;
+                    if (TryRestoreDiseqcLnbState(resumeBand, resumeDiseqcInputMode, out restoreError))
+                    {
+                        lnbStateRestored = true;
+                    }
+                    else
+                    {
+                        WriteStructuredDebug(
+                            "DISEQC",
+                            "schema=1 sub=diseqc comp=control operation=restore_lnb" +
+                            " stat=error reason=" + SanitizeToken(restoreError) +
+                            " level=error");
+                    }
+                }
+
+                // External continuous tone must be enabled only after EXTM/TEN
+                // and the requested LNB state have been restored. Enabling it
+                // earlier would be undone when band restoration reclaims PD12.
+                if (resumeTone && !toneRestored)
+                {
+                    if (lnbStateRestored)
+                    {
+                        int restoreStatus = ZZDiseqcTransmitter.NativeSetTone(
+                            resumeFrequencyHz,
+                            resumeDutyPercent,
+                            true);
+                        if (restoreStatus != (int)ZZDiseqcTransmitter.Status.Ok)
+                        {
+                            _diseqcCarrierEnabled = false;
+                        }
+                    }
+                    else
+                    {
+                        _diseqcCarrierEnabled = false;
+                    }
+                }
+
                 _diseqcTxBusy = false;
             }
+        }
+
+        private static bool TryRestoreDiseqcLnbState(int band, int inputMode, out string error)
+        {
+            int bandRc = LNBH26.NativeSetBandForChannel(LnbChannelA, band);
+            int inputRc = LNBH26.NativeSetDiseqcInputModeForChannel(LnbChannelA, inputMode);
+            if (bandRc == (int)LNBH26.Status.Ok && inputRc == (int)LNBH26.Status.Ok)
+            {
+                error = string.Empty;
+                return true;
+            }
+
+            error = "lnb_restore_band_" + bandRc.ToString() + "_extm_" + inputRc.ToString();
+            return false;
         }
 
         private static void DelayMicroseconds(int microseconds)

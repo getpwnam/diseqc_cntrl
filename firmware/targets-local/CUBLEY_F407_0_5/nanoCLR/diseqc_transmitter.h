@@ -21,6 +21,7 @@ typedef enum
 
 diseqc_tx_status_t diseqc_transmit_frame(const uint8_t *frame, size_t length);
 diseqc_tx_status_t diseqc_set_tone(uint32_t frequencyHz, uint32_t dutyPercent, bool enabled);
+diseqc_tx_status_t diseqc_set_envelope_idle(bool high);
 
 #ifdef __cplusplus
 }

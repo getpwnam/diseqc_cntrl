@@ -52,6 +52,7 @@ typedef enum
     LNB_ERROR_INVALID_PARAM = 1,
     LNB_ERROR_NOT_INITIALIZED = 2,
     LNB_ERROR_I2C = 3,
+    LNB_ERROR_HARDWARE = 4,
 } lnb_status_t;
 
 typedef enum
