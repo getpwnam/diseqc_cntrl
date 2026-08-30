@@ -1,4 +1,5 @@
 #include "lnbh26_native.h"
+#include "diseqc_transmitter.h"
 
 #include <string.h>
 
@@ -362,7 +363,22 @@ lnb_status_t lnb_set_polarization(lnb_handle_t *hlnb, lnb_polarization_t polariz
     return lnb_set_polarization_for_channel(hlnb, LNB_CHANNEL_A, polarization);
 }
 
-static lnb_status_t lnb_set_tone_for_channel_internal(lnb_handle_t *hlnb, lnb_channel_t channel, bool enable)
+static void lnb_sync_data2_shadow(lnb_handle_t *hlnb, uint8_t data2)
+{
+    hlnb->data2_reg = data2;
+    hlnb->tone_enabled[0] = (data2 & LNBH26_DATA2_TEN_A) != 0U;
+    hlnb->low_power_enabled[0] = (data2 & LNBH26_DATA2_LPM_A) != 0U;
+    hlnb->diseqc_input_mode[0] = (data2 & LNBH26_DATA2_EXTM_A) != 0U
+        ? LNB_DISEQC_INPUT_ENABLED
+        : LNB_DISEQC_INPUT_DISABLED;
+    hlnb->tone_enabled[1] = (data2 & LNBH26_DATA2_TEN_B) != 0U;
+    hlnb->low_power_enabled[1] = (data2 & LNBH26_DATA2_LPM_B) != 0U;
+    hlnb->diseqc_input_mode[1] = (data2 & LNBH26_DATA2_EXTM_B) != 0U
+        ? LNB_DISEQC_INPUT_ENABLED
+        : LNB_DISEQC_INPUT_DISABLED;
+}
+
+lnb_status_t lnb_set_band_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, lnb_band_t band)
 {
     if (hlnb == NULL || !g_lnb_initialized)
     {
@@ -375,30 +391,73 @@ static lnb_status_t lnb_set_tone_for_channel_internal(lnb_handle_t *hlnb, lnb_ch
         return LNB_ERROR_INVALID_PARAM;
     }
 
-    lnb_handle_t previous = *hlnb;
-    hlnb->tone_enabled[lnb_channel_to_index(channel)] = enable;
-    lnb_refresh_shadow_registers(hlnb);
-
-    lnb_status_t status = lnb_write_data_registers(hlnb);
-    if (status != LNB_OK)
-    {
-        *hlnb = previous;
-        return status;
-    }
-
-    g_lnb = *hlnb;
-    return LNB_OK;
-}
-
-lnb_status_t lnb_set_band_for_channel(lnb_handle_t *hlnb, lnb_channel_t channel, lnb_band_t band)
-{
     if (band != LNB_BAND_LOW && band != LNB_BAND_HIGH)
     {
         lnb_set_last_error(LNB_ERROR_INVALID_PARAM, (int32_t)band);
         return LNB_ERROR_INVALID_PARAM;
     }
 
-    return lnb_set_tone_for_channel_internal(hlnb, channel, band == LNB_BAND_HIGH);
+    const int index = lnb_channel_to_index(channel);
+    const bool highBand = band == LNB_BAND_HIGH;
+    lnb_handle_t previous = *hlnb;
+
+    if (channel == LNB_CHANNEL_A)
+    {
+        const diseqc_tx_status_t pinStatus = diseqc_set_envelope_idle(highBand);
+        if (pinStatus != DISEQC_TX_OK)
+        {
+            lnb_set_last_error(LNB_ERROR_HARDWARE, (int32_t)pinStatus);
+            return LNB_ERROR_HARDWARE;
+        }
+    }
+
+    // Band selection always establishes the LNBH26 internal-generator mode:
+    // EXTM=0, TEN=1 and DSQIN=high for high band; TEN=0 and DSQIN=low for low.
+    // DiSEqC transmission may subsequently select EXTM=1 while it owns PD12.
+    hlnb->tone_enabled[index] = highBand;
+    hlnb->diseqc_input_mode[index] = LNB_DISEQC_INPUT_DISABLED;
+    lnb_refresh_shadow_registers(hlnb);
+
+    lnb_status_t status = lnb_write_data_registers(hlnb);
+    if (status != LNB_OK)
+    {
+        *hlnb = previous;
+        if (channel == LNB_CHANNEL_A)
+        {
+            const bool previousInternalTone =
+                previous.tone_enabled[0] && previous.diseqc_input_mode[0] == LNB_DISEQC_INPUT_DISABLED;
+            (void)diseqc_set_envelope_idle(previousInternalTone);
+        }
+        return status;
+    }
+
+    uint8_t data2Readback = 0;
+    status = lnb_read_register(hlnb, (uint8_t)LNBH26_REGISTER_DATA2, &data2Readback);
+    if (status != LNB_OK)
+    {
+        g_lnb = *hlnb;
+        return status;
+    }
+
+    const uint8_t toneMask = channel == LNB_CHANNEL_A ? LNBH26_DATA2_TEN_A : LNBH26_DATA2_TEN_B;
+    const uint8_t extmMask = channel == LNB_CHANNEL_A ? LNBH26_DATA2_EXTM_A : LNBH26_DATA2_EXTM_B;
+    const uint8_t verifyMask = (uint8_t)(toneMask | extmMask);
+    if ((data2Readback & verifyMask) != (hlnb->data2_reg & verifyMask))
+    {
+        lnb_sync_data2_shadow(hlnb, data2Readback);
+        if (channel == LNB_CHANNEL_A)
+        {
+            const bool actualInternalTone =
+                (data2Readback & toneMask) != 0U && (data2Readback & extmMask) == 0U;
+            (void)diseqc_set_envelope_idle(actualInternalTone);
+        }
+        g_lnb = *hlnb;
+        lnb_set_last_error(LNB_ERROR_I2C, -117);
+        return LNB_ERROR_I2C;
+    }
+
+    g_lnb = *hlnb;
+    return LNB_OK;
 }
 
 lnb_status_t lnb_set_band(lnb_handle_t *hlnb, lnb_band_t band)

@@ -290,3 +290,38 @@ diseqc_tx_status_t diseqc_set_tone(uint32_t frequencyHz, uint32_t dutyPercent, b
     diseqc_release();
     return status;
 }
+
+diseqc_tx_status_t diseqc_set_envelope_idle(bool high)
+{
+    if (!diseqc_try_claim())
+    {
+        return DISEQC_TX_BUSY;
+    }
+
+    if (PWMD4.state == PWM_READY)
+    {
+        if (PWMD4.config != &g_diseqc_pwm_config)
+        {
+            diseqc_release();
+            return DISEQC_TX_CARRIER_UNAVAILABLE;
+        }
+
+        pwmDisableChannel(&PWMD4, DISEQC_TIM4_CHANNEL);
+        pwmStop(&PWMD4);
+    }
+    else if (PWMD4.state != PWM_STOP)
+    {
+        diseqc_release();
+        return DISEQC_TX_CARRIER_UNAVAILABLE;
+    }
+
+    // In LNBH26 internal-generator mode (EXTM=0, TEN=1), DSQIN is an
+    // envelope gate. High requests continuous 22 kHz; low suppresses it.
+    // Program the output latch before changing from the timer alternate
+    // function so the LNB never sees an unintended gate pulse.
+    palWritePad(GPIOD, DISEQC_CARRIER_PIN, high ? PAL_HIGH : PAL_LOW);
+    palSetPadMode(GPIOD, DISEQC_CARRIER_PIN, PAL_MODE_OUTPUT_PUSHPULL);
+
+    diseqc_release();
+    return DISEQC_TX_OK;
+}
