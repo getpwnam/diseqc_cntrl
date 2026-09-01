@@ -8356,10 +8356,6 @@
 		(uuid "9db0ddab-2e12-452a-93fa-b031d62a6df7")
 	)
 	(no_connect
-		(at 104.14 147.32)
-		(uuid "a677f18f-8780-4e45-ad34-a521f68a6a93")
-	)
-	(no_connect
 		(at 68.58 121.92)
 		(uuid "b28541ed-78b7-48bf-8e71-f6409f678257")
 	)
@@ -8593,6 +8589,16 @@
 			(type default)
 		)
 		(uuid "07df4032-bd01-4c55-b31f-555bb77f0b52")
+	)
+	(wire
+		(pts
+			(xy 261.62 86.36) (xy 264.16 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0848149d-66ca-48f3-bce2-43985ec9f1fe")
 	)
 	(wire
 		(pts
@@ -8876,6 +8882,16 @@
 	)
 	(wire
 		(pts
+			(xy 251.46 109.22) (xy 251.46 106.68)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "21718bb1-377f-4d09-9d9e-a4203ba1a771")
+	)
+	(wire
+		(pts
 			(xy 196.85 101.6) (xy 193.04 101.6)
 		)
 		(stroke
@@ -8903,6 +8919,16 @@
 			(type default)
 		)
 		(uuid "2801a14e-e712-451f-b83d-f10c16e17326")
+	)
+	(wire
+		(pts
+			(xy 248.92 109.22) (xy 251.46 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "282e6815-29fb-43f7-9385-e402ff9a8300")
 	)
 	(wire
 		(pts
@@ -9276,7 +9302,7 @@
 	)
 	(bus
 		(pts
-			(xy 100.33 167.64) (xy 101.6 167.64)
+			(xy 99.06 182.88) (xy 100.33 182.88)
 		)
 		(stroke
 			(width 0)
@@ -9303,6 +9329,16 @@
 			(type default)
 		)
 		(uuid "705c3c79-e4a9-45b4-9ff3-b91fe9b831cd")
+	)
+	(wire
+		(pts
+			(xy 241.3 97.79) (xy 241.3 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "71973cac-fec3-4fdb-a86e-32ef500f966b")
 	)
 	(wire
 		(pts
@@ -9566,7 +9602,7 @@
 	)
 	(bus
 		(pts
-			(xy 100.33 154.94) (xy 100.33 167.64)
+			(xy 99.06 154.94) (xy 99.06 182.88)
 		)
 		(stroke
 			(width 0)
@@ -9633,16 +9669,6 @@
 			(type default)
 		)
 		(uuid "957698ce-cb35-4088-8008-7d4fa79de41f")
-	)
-	(wire
-		(pts
-			(xy 261.62 86.36) (xy 265.43 86.36)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "95952ca1-60a3-4dab-a7f2-5149698c73bb")
 	)
 	(wire
 		(pts
@@ -10064,16 +10090,6 @@
 		)
 		(uuid "c6f12a58-c5bb-4dd4-97f4-24825b34bd38")
 	)
-	(bus
-		(pts
-			(xy 74.93 154.94) (xy 100.33 154.94)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c7300e95-75e8-45b5-bef6-c0ca67d6e2c0")
-	)
 	(wire
 		(pts
 			(xy 153.67 76.2) (xy 161.29 76.2)
@@ -10283,6 +10299,16 @@
 			(type default)
 		)
 		(uuid "da465833-b2fc-436a-aca8-eec32346c367")
+	)
+	(bus
+		(pts
+			(xy 99.06 154.94) (xy 74.93 154.94)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "da5d1d42-5245-4419-8d03-3990aaa86ca3")
 	)
 	(wire
 		(pts
@@ -10735,7 +10761,7 @@
 		(uuid "32a5be92-e063-40b2-bab7-2ac9cd37830c")
 	)
 	(label "TIM4_CH1"
-		(at 273.05 86.36 0)
+		(at 271.78 86.36 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -11024,6 +11050,16 @@
 		)
 		(uuid "9b054e44-87b7-4db5-90d9-cb3dba8c5189")
 	)
+	(label "MOTOR_ALERT"
+		(at 104.14 147.32 270)
+		(effects
+			(font
+				(size 0.762 0.762)
+			)
+			(justify right bottom)
+		)
+		(uuid "9d341e0a-98d4-4273-aa2f-f596956c38df")
+	)
 	(label "USART3_RX"
 		(at 68.58 96.52 180)
 		(effects
@@ -11053,6 +11089,16 @@
 			(justify left bottom)
 		)
 		(uuid "acf79c19-0ed0-4ae2-8151-55a40414e210")
+	)
+	(label "MOTOR_ALERT"
+		(at 241.3 102.87 180)
+		(effects
+			(font
+				(size 0.762 0.762)
+			)
+			(justify right bottom)
+		)
+		(uuid "adb860c4-8e87-42c7-97c8-60d088fede46")
 	)
 	(label "SWDIO"
 		(at 227.33 26.67 180)
@@ -11195,7 +11241,7 @@
 		(uuid "f30656ff-4307-414b-abeb-257f4aa4e961")
 	)
 	(label "{RMII}"
-		(at 100.33 160.02 180)
+		(at 99.06 175.26 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -14801,6 +14847,84 @@
 		)
 	)
 	(symbol
+		(lib_id "diseqc_cntrl:+3V3")
+		(at 251.46 106.68 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "438007d4-d8a2-494d-b4fb-7af93671552a")
+		(property "Reference" "#PWR083"
+			(at 251.46 110.49 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 251.46 101.6 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 251.46 106.68 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 251.46 106.68 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at 251.46 106.68 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "6d4106b3-ff02-4136-aa88-b5ba8274a066")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
+					(reference "#PWR083")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "#InvenTree:R_1k5_0603")
 		(at 200.66 101.6 90)
 		(unit 1)
@@ -15221,6 +15345,118 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
 					(reference "#PWR026")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "#InvenTree:R_1k_0603_5%")
+		(at 267.97 86.36 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "6005315c-4c8b-4efe-b070-b9b460e3d1e7")
+		(property "Reference" "R44"
+			(at 267.97 88.646 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "1k"
+			(at 267.97 90.17 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 267.97 88.138 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 267.97 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 267.97 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "176"
+			(at 267.97 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Part URL" "https://inventree.ebnx.net/web/part/176/"
+			(at 267.97 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Tolerance" "5%"
+			(at 267.97 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "e77c1805-19d0-49b2-94fe-a61011a3c7a4")
+		)
+		(pin "1"
+			(uuid "bb42b9b3-5712-43a1-baf9-5cb234c062cd")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
+					(reference "R44")
 					(unit 1)
 				)
 			)
@@ -16114,195 +16350,6 @@
 		)
 	)
 	(symbol
-		(lib_id "diseqc_cntrl:C")
-		(at 269.24 86.36 90)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "70bba528-4bd9-42f7-b2a9-215cd8bfb5d7")
-		(property "Reference" "C31"
-			(at 269.24 90.17 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "1n"
-			(at 269.494 92.456 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
-			(at 273.05 85.3948 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" "https://www.mouser.co.uk/datasheet/3/76/1/GRM188R71H102KA01-01.pdf"
-			(at 269.24 86.36 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Unpolarized capacitor"
-			(at 269.24 86.36 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Maufacturer_Part_Number" ""
-			(at 269.24 86.36 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer_Part_Code" ""
-			(at 269.24 86.36 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Mouser_Part_Number" ""
-			(at 269.24 86.36 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Mouser Part Number" "81-GRM39X102K050"
-			(at 269.24 86.36 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree Part" "C_1n_0603"
-			(at 269.24 86.36 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_3V3OUT" ""
-			(at 269.24 86.36 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "KLC_S4.2_VCC" ""
-			(at 269.24 86.36 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Tolerance" ""
-			(at 269.24 86.36 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "InvenTree" "73"
-			(at 269.24 86.36 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "VoltageRequirement" ""
-			(at 269.24 86.36 90)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 0.762 0.762)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "50a5932c-5083-491a-9fbb-8b7f274eabbd")
-		)
-		(pin "2"
-			(uuid "5afc07ad-2927-46c3-b040-9edbf37a4d91")
-		)
-		(instances
-			(project "diseqc_cntrl"
-				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
-					(reference "C31")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "diseqc_cntrl:R")
 		(at 132.08 22.86 0)
 		(unit 1)
@@ -16488,6 +16535,107 @@
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
 					(reference "R7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "#InvenTree:R_10k_0603")
+		(at 245.11 109.22 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "73671757-4ec2-4f07-b07d-b17aa41d6080")
+		(property "Reference" "R45"
+			(at 245.11 106.934 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "10k"
+			(at 245.11 111.76 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 245.11 110.998 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 245.11 109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "10k Resistor"
+			(at 245.11 109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "InvenTree" "106"
+			(at 245.11 109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Part URL" "https://inventree.ebnx.net/web/part/106/"
+			(at 245.11 109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "1fc97134-8ee7-46a5-80d6-77e359e6e443")
+		)
+		(pin "1"
+			(uuid "627d9f2f-0c8d-43fb-8d02-ee725c445846")
+		)
+		(instances
+			(project "diseqc_cntrl"
+				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
+					(reference "R45")
 					(unit 1)
 				)
 			)
@@ -22120,6 +22268,16 @@
 				(justify left)
 			)
 		)
+		(pin "MOTOR_ALERT" output
+			(at 241.3 97.79 270)
+			(uuid "2c6b2632-e58f-4cb5-a8f3-37c39f3d17d1")
+			(effects
+				(font
+					(size 0.762 0.762)
+				)
+				(justify left)
+			)
+		)
 		(instances
 			(project "diseqc_cntrl"
 				(path "/82a905d8-f1d7-4995-9c16-94cf3cdcaad9/65fcf1a0-d0f2-4bf0-9977-67dd9f84afa5"
@@ -22129,7 +22287,7 @@
 		)
 	)
 	(sheet
-		(at 101.6 162.56)
+		(at 100.33 177.8)
 		(size 26.67 17.78)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -22145,7 +22303,7 @@
 		)
 		(uuid "19866729-85b8-45e8-a5d9-f0fbe920199d")
 		(property "Sheetname" "Ethernet"
-			(at 101.6 161.8484 0)
+			(at 100.33 177.0884 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22156,7 +22314,7 @@
 			)
 		)
 		(property "Sheetfile" "ethernet.kicad_sch"
-			(at 101.6 180.9246 0)
+			(at 100.33 196.1646 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22167,7 +22325,7 @@
 			)
 		)
 		(pin "{RMII}" input
-			(at 101.6 167.64 180)
+			(at 100.33 182.88 180)
 			(uuid "c9b8ef19-0fd9-4a21-af8c-f5de099d44cc")
 			(effects
 				(font
