@@ -454,7 +454,7 @@ namespace CubleyControl
                 " stat=" + (ok ? "ok" : "error") +
                 " code=" + code +
                 " transport=" + (_activeCommandTransport == CommandTransport.Mqtt ? "mqtt" : "cdc") +
-                (_activeCommandTransport == CommandTransport.Mqtt ? " id=" + _mqttActiveCommandId.ToString() : string.Empty) +
+                (_activeCommandTransport == CommandTransport.Mqtt ? " id=" + SanitizeToken(_mqttActiveCommandKey) : string.Empty) +
                 " request_id=" + reqId.ToString() +
                 " command=" + SanitizeToken(_activeCommand) +
                 " detail=" + safeMsg +
@@ -468,9 +468,9 @@ namespace CubleyControl
                 return;
             }
 
-            if (ok && _activeCommandTransport == CommandTransport.Mqtt)
+            if (_activeCommandTransport == CommandTransport.Mqtt)
             {
-                _activeOutputSink("OK\r\n");
+                RecordMqttCommandOutcome(ok, code, safeMsg);
                 return;
             }
 

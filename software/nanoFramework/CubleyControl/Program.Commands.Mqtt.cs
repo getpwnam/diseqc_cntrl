@@ -12,10 +12,17 @@ namespace CubleyControl
     public static partial class Program
     {
         private const int MqttSubscriptionFailure = 0x80;
-        private const int MqttCommandIdMaxLength = 5;
-        private const int MqttCommandEnvelopeMaxLength = MqttCommandMaxLength + MqttCommandIdMaxLength + 1;
+        // Wire contract version; see docs/software/DEVICE_API_V2.md.
+        private const int DeviceContractVersion = 2;
+        private const int MqttCommandIdMaxLength = 32;
+        private const int MqttOpMaxLength = 40;
+        private const int MqttCommandEnvelopeMaxLength = 256;
         private const int MqttDuplicateCacheSize = 8;
-        private const int MqttCachedResponseLimit = 32;
+        // A time bound, not just a slot count: under a slot-only scheme
+        // whether a reused id replayed or conflicted depended on how many
+        // unrelated commands had happened since, which a client cannot see.
+        private const int MqttDedupTtlMs = 120_000;
+        private const int MqttBridgedLineLimit = 16;
         private const int MqttPublishQueueCapacity = 64;
         private const string MqttAvailabilityOnline = "online";
         private const string MqttAvailabilityOffline = "offline";
@@ -29,12 +36,10 @@ namespace CubleyControl
         private static string _mqttRuntimeState = "disabled";
         private static string _mqttLastError = string.Empty;
         private static int _mqttReconnectAttempts;
-        private static readonly ushort[] _mqttCachedCommandIds = new ushort[MqttDuplicateCacheSize];
-        private static readonly bool[] _mqttCachedCommandValid = new bool[MqttDuplicateCacheSize];
-        private static readonly string[] _mqttCachedCommands = new string[MqttDuplicateCacheSize];
-        private static readonly int[] _mqttCachedResponseCounts = new int[MqttDuplicateCacheSize];
-        private static readonly string[] _mqttCachedResponses = new string[MqttDuplicateCacheSize * MqttCachedResponseLimit];
-        private static readonly string[] _mqttActiveResponses = new string[MqttCachedResponseLimit];
+        private static readonly string[] _mqttCachedCommandIds = new string[MqttDuplicateCacheSize];
+        private static readonly string[] _mqttCachedPayloads = new string[MqttDuplicateCacheSize];
+        private static readonly string[] _mqttCachedResponseBodies = new string[MqttDuplicateCacheSize];
+        private static readonly long[] _mqttCachedAtMs = new long[MqttDuplicateCacheSize];
         private static readonly object _mqttCommandTransactionLock = new object();
         private static readonly object _mqttEventLock = new object();
         private static readonly object _mqttPublishQueueLock = new object();
@@ -44,8 +49,14 @@ namespace CubleyControl
         private static readonly bool[] _mqttPublishRetainFlags = new bool[MqttPublishQueueCapacity];
         private static int _mqttDuplicateCacheNext;
         private static int _mqttEventSequence;
-        private static ushort _mqttActiveCommandId;
-        private static int _mqttActiveResponseCount;
+        // Per-command scratch, written only under _commandLock.
+        private static string _mqttActiveCommandKey = "?";
+        private static string _mqttBridgedOutput = string.Empty;
+        private static int _mqttBridgedLineCount;
+        private static bool _mqttResultOk;
+        private static bool _mqttResultRecorded;
+        private static string _mqttResultCode = string.Empty;
+        private static string _mqttResultMsg = string.Empty;
         private static int _mqttPublishQueueHead;
         private static int _mqttPublishQueueCount;
         private static int _mqttPublishDropCount;
@@ -317,147 +328,697 @@ namespace CubleyControl
 
         private static void ProcessMqttCommand(string payload)
         {
-            ushort commandId;
-            string command;
-            if (!TryParseMqttCommandEnvelope(payload, out commandId, out command))
+            JsonObject command;
+            string parseError;
+            if (!Json.TryParseObject(payload, out command, out parseError))
             {
                 WriteStructuredDebug(
                     "COMMAND",
                     "schema=1 sub=command comp=envelope operation=parse stat=error" +
-                    " transport=mqtt code=invalid_envelope");
-                PublishMqttResponse("id=none Fail: invalid command envelope", false);
+                    " transport=mqtt code=invalid_envelope detail=" + SanitizeToken(parseError));
+                PublishMqttFailure("?", "validation_error", parseError);
+                return;
+            }
+
+            int version = DeviceContractVersion;
+            if (command.Has("v") &&
+                (!command.TryGetInt("v", out version) || version != DeviceContractVersion))
+            {
+                PublishMqttFailure(
+                    "?",
+                    "validation_error",
+                    "unsupported contract version; this device speaks v" + DeviceContractVersion.ToString());
+                return;
+            }
+
+            string commandId;
+            if (!command.TryGetString("id", out commandId) || !IsValidMqttCommandId(commandId))
+            {
+                PublishMqttFailure(
+                    "?",
+                    "validation_error",
+                    "id must be 1 to " + MqttCommandIdMaxLength.ToString() + " characters of A-Za-z0-9._:-");
+                return;
+            }
+
+            string op;
+            if (!command.TryGetString("op", out op) || !IsValidMqttOpName(op))
+            {
+                PublishMqttFailure(
+                    commandId,
+                    "validation_error",
+                    "op must be 1 to " + MqttOpMaxLength.ToString() + " characters of a-z0-9._");
                 return;
             }
 
             int cachedIndex = FindCachedMqttCommand(commandId);
             if (cachedIndex >= 0)
             {
-                if (_mqttCachedCommands[cachedIndex] != command)
+                if (_mqttCachedPayloads[cachedIndex] != payload)
                 {
                     WriteStructuredDebug(
                         "COMMAND",
                         "schema=1 sub=command comp=deduplicate operation=reject stat=error" +
-                        " transport=mqtt code=id_conflict id=" + commandId.ToString());
-                    PublishMqttResponse("id=" + commandId.ToString() + " Fail: command id conflict", false);
+                        " transport=mqtt code=id_conflict id=" + SanitizeToken(commandId));
+                    PublishMqttFailure(
+                        commandId,
+                        "id_conflict",
+                        "id reused within the deduplication window with a different payload");
                     return;
                 }
 
                 WriteStructuredDebug(
                     "COMMAND",
                     "schema=1 sub=command comp=deduplicate operation=replay stat=ok" +
-                    " transport=mqtt id=" + commandId.ToString());
-                ReplayCachedMqttResponses(cachedIndex);
+                    " transport=mqtt id=" + SanitizeToken(commandId));
+                PublishMqttResponseBody(_mqttCachedResponseBodies[cachedIndex], true);
                 return;
             }
 
-            _mqttActiveCommandId = commandId;
-            _mqttActiveResponseCount = 0;
+            _mqttActiveCommandKey = commandId;
             WriteStructuredDebug(
                 "COMMAND",
                 "schema=1 sub=command comp=dispatch operation=start stat=ok" +
-                " transport=mqtt id=" + commandId.ToString() +
-                " command=" + SanitizeToken(RedactCommandForLog(command)));
+                " transport=mqtt id=" + SanitizeToken(commandId) +
+                " op=" + SanitizeToken(op));
 
-            ExecuteCommand(command, MqttOutputSink, CommandTransport.Mqtt);
-            CacheMqttCommandResponses(commandId, command);
+            string responseBody = ExecuteMqttOperation(commandId, op, command);
+            CacheMqttCommandResponse(commandId, payload, responseBody);
+            PublishMqttResponseBody(responseBody, false);
             PublishMqttState();
             PublishMqttDiseqcState();
+
             WriteStructuredDebug(
                 "COMMAND",
                 "schema=1 sub=command comp=dispatch operation=complete stat=ok" +
-                " transport=mqtt id=" + commandId.ToString());
+                " transport=mqtt id=" + SanitizeToken(commandId));
+        }
+
+        private static string ExecuteMqttOperation(string commandId, string op, JsonObject command)
+        {
+            if (op == "positioner.goto" || op == "positioner.step" ||
+                op == "positioner.drive" || op == "positioner.halt")
+            {
+                return ExecuteMqttPositionerMotion(commandId, op, command);
+            }
+
+            if (op == "positioner.show" || op == "positioner.job" || op == "positioner.release")
+            {
+                return ExecuteMqttPositionerQuery(commandId, op, command);
+            }
+
+            return ExecuteMqttBridgedOperation(commandId, op, command);
+        }
+
+        /// <summary>
+        /// Motion operations are dispatched with typed parameters straight to
+        /// the shared hardware path -- they never build a console command
+        /// string. This is the parse/execute split described in
+        /// docs/software/DEVICE_API_V2.md; the bridged operations below are
+        /// the migration remainder.
+        /// </summary>
+        private static string ExecuteMqttPositionerMotion(string commandId, string op, JsonObject command)
+        {
+            int operation;
+            int value = 0;
+            string error;
+
+            if (op == "positioner.goto")
+            {
+                if (!TryValidateMqttMembers(command, "position", null, out error))
+                {
+                    return BuildMqttFailureBody(commandId, "validation_error", error, 0);
+                }
+
+                int position;
+                if (!command.TryGetInt("position", out position) || position < 0 || position > 255)
+                {
+                    return BuildMqttFailureBody(commandId, "validation_error", "position must be an integer 0 to 255", 0);
+                }
+
+                operation = PositionerOpGoto;
+                value = position;
+            }
+            else if (op == "positioner.step")
+            {
+                if (!TryValidateMqttMembers(command, "direction", "count", out error))
+                {
+                    return BuildMqttFailureBody(commandId, "validation_error", error, 0);
+                }
+
+                string direction;
+                if (!command.TryGetString("direction", out direction) ||
+                    (direction != "east" && direction != "west"))
+                {
+                    return BuildMqttFailureBody(commandId, "validation_error", "direction must be \"east\" or \"west\"", 0);
+                }
+
+                int count;
+                if (!command.TryGetInt("count", out count) || count < 1 || count > 128)
+                {
+                    return BuildMqttFailureBody(commandId, "validation_error", "count must be an integer 1 to 128", 0);
+                }
+
+                operation = direction == "east" ? PositionerOpStepEast : PositionerOpStepWest;
+                value = count;
+            }
+            else if (op == "positioner.drive")
+            {
+                if (!TryValidateMqttMembers(command, "direction", null, out error))
+                {
+                    return BuildMqttFailureBody(commandId, "validation_error", error, 0);
+                }
+
+                string direction;
+                if (!command.TryGetString("direction", out direction) ||
+                    (direction != "east" && direction != "west"))
+                {
+                    return BuildMqttFailureBody(commandId, "validation_error", "direction must be \"east\" or \"west\"", 0);
+                }
+
+                operation = direction == "east" ? PositionerOpDriveEast : PositionerOpDriveWest;
+            }
+            else
+            {
+                if (!TryValidateMqttMembers(command, null, null, out error))
+                {
+                    return BuildMqttFailureBody(commandId, "validation_error", error, 0);
+                }
+
+                operation = PositionerOpHalt;
+            }
+
+            ResetMqttCommandOutcome();
+            ExecutePositionerOperation(operation, value, MqttOutputSink);
+
+            if (!_mqttResultOk)
+            {
+                return BuildMqttFailureBody(
+                    commandId,
+                    _mqttResultCode.Length == 0 ? "hw_fault" : _mqttResultCode,
+                    _mqttResultMsg,
+                    _blockingDiseqcJobId);
+            }
+
+            int jobId = _lastStartedDiseqcJobId;
+            bool started = jobId != 0 && GetActiveDiseqcJobId() == jobId;
+            return BuildMqttResponseBody(
+                commandId,
+                true,
+                started ? "accepted" : "ok",
+                null,
+                started ? null : BuildDiseqcStateJson(),
+                jobId,
+                null);
+        }
+
+        private static string ExecuteMqttPositionerQuery(string commandId, string op, JsonObject command)
+        {
+            string error;
+
+            if (op == "positioner.show")
+            {
+                if (!TryValidateMqttMembers(command, null, null, out error))
+                {
+                    return BuildMqttFailureBody(commandId, "validation_error", error, 0);
+                }
+
+                return BuildMqttResponseBody(commandId, true, "ok", null, BuildDiseqcStateJson(), 0, null);
+            }
+
+            if (!TryValidateMqttMembers(command, "job", null, out error))
+            {
+                return BuildMqttFailureBody(commandId, "validation_error", error, 0);
+            }
+
+            int jobId;
+            if (!command.TryGetInt("job", out jobId) || jobId <= 0)
+            {
+                return BuildMqttFailureBody(commandId, "validation_error", "job must be a positive integer", 0);
+            }
+
+            string jobJson = BuildDiseqcJobJson(jobId);
+            if (jobJson == "null")
+            {
+                return BuildMqttFailureBody(commandId, "not_found", "unknown or evicted job", 0);
+            }
+
+            if (op == "positioner.job")
+            {
+                return BuildMqttResponseBody(commandId, true, "ok", null, jobJson, jobId, null);
+            }
+
+            // positioner.release: the identity check inside TryEndDiseqcJob is
+            // what stops a late release from ending a newer movement.
+            if (!TryEndDiseqcJob(jobId, JobStateReleased, string.Empty))
+            {
+                return BuildMqttFailureBody(commandId, "validation_error", "job is not the running job", GetActiveDiseqcJobId());
+            }
+
+            PublishMqttDiseqcJobTransition("end", jobId);
+            return BuildMqttResponseBody(commandId, true, "ok", null, BuildDiseqcJobJson(jobId), jobId, null);
+        }
+
+        /// <summary>
+        /// Migration path: these operations are still executed by the console
+        /// tokenizer and return console text in "lines". Every parameter is
+        /// charset-checked before it reaches the command string, so a value
+        /// can never introduce an extra token.
+        /// </summary>
+        private static string ExecuteMqttBridgedOperation(string commandId, string op, JsonObject command)
+        {
+            string consoleCommand;
+            string code;
+            string error;
+            if (!TryBuildBridgedConsoleCommand(op, command, out consoleCommand, out code, out error))
+            {
+                return BuildMqttFailureBody(commandId, code, error, 0);
+            }
+
+            ResetMqttCommandOutcome();
+            ExecuteCommand(consoleCommand, MqttOutputSink, CommandTransport.Mqtt);
+
+            if (!_mqttResultRecorded)
+            {
+                return BuildMqttResponseBody(commandId, true, "ok", null, null, 0, _mqttBridgedOutput);
+            }
+
+            return BuildMqttResponseBody(
+                commandId,
+                _mqttResultOk,
+                _mqttResultOk ? "ok" : (_mqttResultCode.Length == 0 ? "hw_fault" : _mqttResultCode),
+                _mqttResultOk ? null : _mqttResultMsg,
+                null,
+                0,
+                _mqttBridgedOutput);
+        }
+
+        private static bool TryBuildBridgedConsoleCommand(
+            string op,
+            JsonObject command,
+            out string consoleCommand,
+            out string code,
+            out string error)
+        {
+            consoleCommand = string.Empty;
+            code = "validation_error";
+            error = string.Empty;
+
+            if (op == "system.status" || op == "system.version" || op == "system.capabilities")
+            {
+                if (!TryValidateMqttMembers(command, null, null, out error))
+                {
+                    return false;
+                }
+
+                consoleCommand = op == "system.status" ? "status" : (op == "system.version" ? "version" : "capabilities");
+                return true;
+            }
+
+            if (op == "diseqc.show")
+            {
+                if (!TryValidateMqttMembers(command, null, null, out error))
+                {
+                    return false;
+                }
+
+                consoleCommand = "show diseqc";
+                return true;
+            }
+
+            if (op == "lnb.show")
+            {
+                if (!TryValidateMqttMembers(command, "channel", null, out error))
+                {
+                    return false;
+                }
+
+                consoleCommand = "show lnb";
+                if (command.Has("channel"))
+                {
+                    string channel;
+                    if (!TryReadLnbChannel(command, out channel, out error))
+                    {
+                        return false;
+                    }
+
+                    consoleCommand += " " + channel;
+                }
+
+                return true;
+            }
+
+            if (op == "lnb.enable" || op == "lnb.disable")
+            {
+                if (!TryValidateMqttMembers(command, "channel", null, out error))
+                {
+                    return false;
+                }
+
+                string channel;
+                if (!TryReadLnbChannel(command, out channel, out error))
+                {
+                    return false;
+                }
+
+                consoleCommand = "lnb " + channel + (op == "lnb.enable" ? " enable" : " disable");
+                return true;
+            }
+
+            if (op == "lnb.polarization" || op == "lnb.band")
+            {
+                if (!TryValidateMqttMembers(command, "channel", "value", out error))
+                {
+                    return false;
+                }
+
+                string channel;
+                if (!TryReadLnbChannel(command, out channel, out error))
+                {
+                    return false;
+                }
+
+                string value;
+                if (!command.TryGetString("value", out value) || !IsSafeConsoleToken(value))
+                {
+                    error = "value must be 1 to 16 characters of a-z0-9";
+                    return false;
+                }
+
+                consoleCommand = "lnb " + channel +
+                    (op == "lnb.polarization" ? " polarization " : " band ") + value;
+                return true;
+            }
+
+            if (op == "diseqc.preset" || op == "diseqc.tone")
+            {
+                if (!TryValidateMqttMembers(command, "value", null, out error))
+                {
+                    return false;
+                }
+
+                string value;
+                if (!command.TryGetString("value", out value) || !IsSafeConsoleToken(value))
+                {
+                    error = "value must be 1 to 16 characters of a-z0-9";
+                    return false;
+                }
+
+                consoleCommand = (op == "diseqc.preset" ? "diseqc preset " : "diseqc tone ") + value;
+                return true;
+            }
+
+            if (op == "diseqc.tx")
+            {
+                if (!TryValidateMqttMembers(command, "frame", null, out error))
+                {
+                    return false;
+                }
+
+                string frame;
+                if (!command.TryGetString("frame", out frame) ||
+                    frame.Length < 2 || frame.Length > 12 || (frame.Length % 2) != 0)
+                {
+                    error = "frame must be a hex string of 1 to 6 bytes";
+                    return false;
+                }
+
+                string spaced = string.Empty;
+                for (int index = 0; index < frame.Length; index += 2)
+                {
+                    int ignored;
+                    string pair = frame.Substring(index, 2);
+                    if (!TryParseByteHex(pair, out ignored))
+                    {
+                        error = "frame must be a hex string of 1 to 6 bytes";
+                        return false;
+                    }
+
+                    spaced += (index == 0 ? string.Empty : " ") + pair;
+                }
+
+                consoleCommand = "diseqc tx " + spaced;
+                return true;
+            }
+
+            code = "unsupported";
+            error = "unknown operation";
+            return false;
+        }
+
+        private static bool TryReadLnbChannel(JsonObject command, out string channel, out string error)
+        {
+            error = string.Empty;
+            if (!command.TryGetString("channel", out channel) ||
+                (channel != "a" && channel != "b"))
+            {
+                channel = string.Empty;
+                error = "channel must be \"a\" or \"b\"";
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Unknown members are rejected rather than ignored, so a typo fails
+        /// loudly instead of silently doing something else to a motor.
+        /// </summary>
+        private static bool TryValidateMqttMembers(JsonObject command, string first, string second, out string error)
+        {
+            for (int index = 0; index < command.Count; index++)
+            {
+                string key = command.KeyAt(index);
+                if (key == "v" || key == "id" || key == "op")
+                {
+                    continue;
+                }
+
+                if (first != null && key == first)
+                {
+                    continue;
+                }
+
+                if (second != null && key == second)
+                {
+                    continue;
+                }
+
+                error = "unknown member " + key;
+                return false;
+            }
+
+            error = string.Empty;
+            return true;
+        }
+
+        private static bool IsValidMqttCommandId(string value)
+        {
+            if (value == null || value.Length == 0 || value.Length > MqttCommandIdMaxLength)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < value.Length; index++)
+            {
+                char current = value[index];
+                bool allowed =
+                    (current >= 'a' && current <= 'z') ||
+                    (current >= 'A' && current <= 'Z') ||
+                    (current >= '0' && current <= '9') ||
+                    current == '.' || current == '_' || current == ':' || current == '-';
+                if (!allowed)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool IsValidMqttOpName(string value)
+        {
+            if (value == null || value.Length == 0 || value.Length > MqttOpMaxLength)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < value.Length; index++)
+            {
+                char current = value[index];
+                bool allowed =
+                    (current >= 'a' && current <= 'z') ||
+                    (current >= '0' && current <= '9') ||
+                    current == '.' || current == '_';
+                if (!allowed)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool IsSafeConsoleToken(string value)
+        {
+            if (value == null || value.Length == 0 || value.Length > 16)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < value.Length; index++)
+            {
+                char current = value[index];
+                if (!((current >= 'a' && current <= 'z') || (current >= '0' && current <= '9')))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static void ResetMqttCommandOutcome()
+        {
+            _mqttResultOk = false;
+            _mqttResultRecorded = false;
+            _mqttResultCode = string.Empty;
+            _mqttResultMsg = string.Empty;
+            _mqttBridgedOutput = string.Empty;
+            _mqttBridgedLineCount = 0;
+            ResetDiseqcJobCommandScratch();
+        }
+
+        /// <summary>
+        /// Captures a command outcome instead of writing it to the transport,
+        /// so the JSON layer can emit exactly one structured response per
+        /// command rather than one message per console line.
+        /// </summary>
+        private static void RecordMqttCommandOutcome(bool ok, string code, string msg)
+        {
+            _mqttResultOk = ok;
+            _mqttResultCode = code == null ? string.Empty : code;
+            _mqttResultMsg = msg == null ? string.Empty : msg;
+            _mqttResultRecorded = true;
         }
 
         private static void MqttOutputSink(string line)
         {
-            string payload = "id=" + _mqttActiveCommandId.ToString() + " " + line.TrimEnd('\r', '\n');
-            if (_mqttActiveResponseCount < MqttCachedResponseLimit)
+            if (line == null || _mqttBridgedLineCount >= MqttBridgedLineLimit)
             {
-                _mqttActiveResponses[_mqttActiveResponseCount++] = payload;
+                return;
             }
 
-            PublishMqttResponse(payload, false);
+            string trimmed = line.TrimEnd('\r', '\n');
+            if (trimmed.Length == 0)
+            {
+                return;
+            }
+
+            _mqttBridgedOutput = _mqttBridgedLineCount == 0
+                ? trimmed
+                : _mqttBridgedOutput + "\n" + trimmed;
+            _mqttBridgedLineCount++;
         }
 
-        private static bool TryParseMqttCommandEnvelope(string payload, out ushort commandId, out string command)
+        private static string BuildMqttFailureBody(string commandId, string code, string msg, int jobId)
         {
-            commandId = 0;
-            command = string.Empty;
-
-            int separator = payload.IndexOf(' ');
-            if (separator < 1 || separator > MqttCommandIdMaxLength || separator == payload.Length - 1)
-            {
-                return false;
-            }
-
-            int parsedId;
-            if (!int.TryParse(payload.Substring(0, separator), out parsedId) || parsedId < 0 || parsedId > ushort.MaxValue)
-            {
-                return false;
-            }
-
-            command = payload.Substring(separator + 1).Trim();
-            if (command.Length == 0 || command.Length > MqttCommandMaxLength)
-            {
-                return false;
-            }
-
-            commandId = (ushort)parsedId;
-            return true;
+            return BuildMqttResponseBody(commandId, false, code, msg, null, jobId, null);
         }
 
-        private static int FindCachedMqttCommand(ushort commandId)
+        private static string BuildMqttResponseBody(
+            string commandId,
+            bool ok,
+            string code,
+            string msg,
+            string dataRaw,
+            int jobId,
+            string lines)
         {
+            JsonBuilder builder = new JsonBuilder()
+                .AddInt("v", DeviceContractVersion)
+                .AddString("id", commandId)
+                .AddBool("ok", ok)
+                .AddString("code", code)
+                .AddLong("ts_ms", Environment.TickCount64);
+
+            if (msg != null && msg.Length > 0)
+            {
+                builder.AddString("msg", msg);
+            }
+
+            if (jobId != 0)
+            {
+                builder.AddInt("job", jobId);
+            }
+
+            if (dataRaw != null)
+            {
+                builder.AddRaw("data", dataRaw);
+            }
+
+            if (lines != null && lines.Length > 0)
+            {
+                builder.AddString("lines", lines);
+            }
+
+            return builder.BuildBody();
+        }
+
+        private static void PublishMqttFailure(string commandId, string code, string msg)
+        {
+            PublishMqttResponseBody(BuildMqttFailureBody(commandId, code, msg, 0), false);
+        }
+
+        private static void PublishMqttResponseBody(string responseBody, bool replayed)
+        {
+            string payload = replayed
+                ? "{" + responseBody + ",\"replayed\":true}"
+                : "{" + responseBody + "}";
+
+            WriteStructuredDebug(
+                "COMMAND",
+                "schema=1 sub=command comp=response operation=publish stat=ok" +
+                " transport=mqtt topic=" + _mqttResponseTopic +
+                " duplicate=" + (replayed ? "1" : "0") +
+                " payload=" + SanitizeToken(payload));
+            QueueMqttPublication(_mqttResponseTopic, payload, MqttQoSLevel.AtLeastOnce, false);
+        }
+
+        private static int FindCachedMqttCommand(string commandId)
+        {
+            long nowMs = Environment.TickCount64;
             for (int index = 0; index < MqttDuplicateCacheSize; index++)
             {
-                if (_mqttCachedCommandValid[index] && _mqttCachedCommandIds[index] == commandId)
+                if (_mqttCachedCommandIds[index] == null || _mqttCachedCommandIds[index] != commandId)
                 {
-                    return index;
+                    continue;
                 }
+
+                if (nowMs - _mqttCachedAtMs[index] > MqttDedupTtlMs)
+                {
+                    _mqttCachedCommandIds[index] = null;
+                    _mqttCachedPayloads[index] = null;
+                    _mqttCachedResponseBodies[index] = null;
+                    return -1;
+                }
+
+                return index;
             }
 
             return -1;
         }
 
-        private static void CacheMqttCommandResponses(ushort commandId, string command)
+        private static void CacheMqttCommandResponse(string commandId, string payload, string responseBody)
         {
-            int cacheIndex = _mqttDuplicateCacheNext;
-            int responseOffset = cacheIndex * MqttCachedResponseLimit;
-            int responseCount = _mqttActiveResponseCount;
-
-            for (int index = 0; index < MqttCachedResponseLimit; index++)
-            {
-                _mqttCachedResponses[responseOffset + index] = index < responseCount ? _mqttActiveResponses[index] : null;
-                _mqttActiveResponses[index] = null;
-            }
-
-            _mqttCachedCommandIds[cacheIndex] = commandId;
-            _mqttCachedCommands[cacheIndex] = command;
-            _mqttCachedResponseCounts[cacheIndex] = responseCount;
-            _mqttCachedCommandValid[cacheIndex] = true;
-            _mqttDuplicateCacheNext = (cacheIndex + 1) % MqttDuplicateCacheSize;
+            int slot = _mqttDuplicateCacheNext;
+            _mqttCachedCommandIds[slot] = commandId;
+            _mqttCachedPayloads[slot] = payload;
+            _mqttCachedResponseBodies[slot] = responseBody;
+            _mqttCachedAtMs[slot] = Environment.TickCount64;
+            _mqttDuplicateCacheNext = (slot + 1) % MqttDuplicateCacheSize;
         }
 
-        private static void ReplayCachedMqttResponses(int cacheIndex)
-        {
-            int responseOffset = cacheIndex * MqttCachedResponseLimit;
-            int responseCount = _mqttCachedResponseCounts[cacheIndex];
-            for (int index = 0; index < responseCount; index++)
-            {
-                PublishMqttResponse(_mqttCachedResponses[responseOffset + index], true);
-            }
-        }
-
-        private static void PublishMqttResponse(string payload, bool duplicate)
-        {
-            WriteStructuredDebug(
-                "COMMAND",
-                "schema=1 sub=command comp=response operation=publish stat=ok" +
-                " transport=mqtt topic=" + _mqttResponseTopic +
-                " duplicate=" + (duplicate ? "1" : "0") +
-                " payload=" + SanitizeToken(payload));
-            QueueMqttPublication(_mqttResponseTopic, payload, MqttQoSLevel.AtLeastOnce, false);
-        }
 
         private static void PublishMqttLnbFaultTransition(bool active, string source)
         {
@@ -537,49 +1098,17 @@ namespace CubleyControl
             QueueMqttPublication(_mqttStateTopic, payload, MqttQoSLevel.AtLeastOnce, true);
         }
 
-        private static void PublishMqttDiseqcMotionTransition(string transition)
+        private static void PublishMqttDiseqcJobTransition(string transition, int jobId)
         {
-            bool busy;
-            int motionId;
-            string operation;
-            int remainingMs;
-            string completionSource;
-            GetDiseqcMotionSnapshot(out busy, out motionId, out operation, out remainingMs, out completionSource);
-
-            string payload =
-                "schema=1 sub=diseqc comp=motion" +
-                " operation=" + transition +
-                " stat=" + (busy ? "busy" : "idle") +
-                " event_id=" + NextMqttEventId().ToString() +
-                " motion_id=" + motionId.ToString() +
-                " motion_operation=" + operation +
-                " remaining_ms=" + remainingMs.ToString() +
-                " completion=" + completionSource;
-
+            string payload = BuildDiseqcJobEventJson(transition, jobId);
             WriteStructuredDebug("DISEQC", payload);
             QueueMqttPublication(_mqttDiseqcEventTopic, payload, MqttQoSLevel.AtLeastOnce, false);
-
             PublishMqttDiseqcState();
         }
 
         private static void PublishMqttDiseqcState()
         {
-            bool busy;
-            int motionId;
-            string operation;
-            int remainingMs;
-            string completionSource;
-            GetDiseqcMotionSnapshot(out busy, out motionId, out operation, out remainingMs, out completionSource);
-
-            string payload =
-                "schema=1 sub=diseqc comp=state" +
-                " stat=" + (busy ? "busy" : "idle") +
-                " motion_id=" + motionId.ToString() +
-                " operation=" + operation +
-                " remaining_ms=" + remainingMs.ToString() +
-                " completion=" + completionSource +
-                " timeout_ms=" + _diseqcMotionTimeoutMs.ToString();
-
+            string payload = BuildDiseqcStateJson();
             WriteStructuredDebug("DISEQC", payload);
             QueueMqttPublication(_mqttDiseqcStateTopic, payload, MqttQoSLevel.AtLeastOnce, true);
         }
