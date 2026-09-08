@@ -21,18 +21,20 @@ namespace CubleyControl
         private const int DiseqcStepBaseTimeMs = 1000;
         private const int DiseqcStepTimePerStepMs = 250;
 
+        private const int PositionerOpGoto = 1;
+        private const int PositionerOpStepEast = 2;
+        private const int PositionerOpStepWest = 3;
+        private const int PositionerOpDriveEast = 4;
+        private const int PositionerOpDriveWest = 5;
+        private const int PositionerOpHalt = 6;
+
         private static bool _diseqcCarrierEnabled;
         private static int _diseqcCarrierFrequencyHz;
         private static int _diseqcCarrierDutyPercent;
         private static bool _diseqcTxBusy;
         private static DiseqcV1RoutePreset _diseqcRoutePreset = DiseqcV1RoutePreset.Direct;
-        private static readonly object _diseqcMotionLock = new object();
-        private static bool _diseqcMotionBusy;
-        private static int _diseqcMotionId;
-        private static int _diseqcNextMotionId;
-        private static string _diseqcMotionOperation = "idle";
-        private static long _diseqcMotionDeadlineMs;
-        private static string _diseqcMotionCompletionSource = "none";
+        // Motion state lives in the positioner job store (Program.Jobs.cs).
+        // Only the watchdog duration is configuration rather than job state.
         private static int _diseqcMotionTimeoutMs = DiseqcMotionWorstCaseMs;
 
         private static void HandleDiseqcCommand(string[] tokens, int reqId)
@@ -172,6 +174,76 @@ namespace CubleyControl
             }
 
             WriteCommandResult(reqId, false, "validation_error", "diseqc syntax invalid", "verb=" + verb);
+        }
+
+        /// <summary>
+        /// Typed entry point shared with the JSON transport. Mirrors the
+        /// console verbs in HandleDiseqcCommand without the tokenizing, so
+        /// both routes reach the same hardware path and the same job store.
+        /// </summary>
+        private static void RunPositionerOperation(int operation, int value)
+        {
+            int reqId = NextRequestId();
+            _activeCommandIsSetter = true;
+
+            if (operation == PositionerOpHalt)
+            {
+                _activeCommand = "positioner halt";
+                EmitDiseqcPositionerTransmitResult(reqId, "diseqc stop", DiseqcCommandBuilder.BuildHalt(), null, 0);
+                return;
+            }
+
+            if (!EnsureDiseqcMotionIdle(reqId))
+            {
+                return;
+            }
+
+            if (operation == PositionerOpGoto)
+            {
+                _activeCommand = "positioner goto";
+                EmitDiseqcPositionerTransmitResult(
+                    reqId,
+                    "diseqc goto",
+                    DiseqcCommandBuilder.BuildGotoStoredPosition((byte)value),
+                    "goto",
+                    _diseqcMotionTimeoutMs);
+                return;
+            }
+
+            if (operation == PositionerOpStepEast || operation == PositionerOpStepWest)
+            {
+                bool east = operation == PositionerOpStepEast;
+                _activeCommand = "positioner step";
+                EmitDiseqcPositionerTransmitResult(
+                    reqId,
+                    "diseqc step",
+                    east
+                        ? DiseqcCommandBuilder.BuildStepEast((byte)value)
+                        : DiseqcCommandBuilder.BuildStepWest((byte)value),
+                    east ? "step_east" : "step_west",
+                    DiseqcStepBaseTimeMs + (value * DiseqcStepTimePerStepMs));
+                return;
+            }
+
+            if (operation == PositionerOpDriveEast || operation == PositionerOpDriveWest)
+            {
+                bool east = operation == PositionerOpDriveEast;
+                _activeCommand = "positioner drive";
+                EmitDiseqcPositionerTransmitResult(
+                    reqId,
+                    "diseqc drive",
+                    east ? DiseqcCommandBuilder.BuildDriveEast() : DiseqcCommandBuilder.BuildDriveWest(),
+                    east ? "drive_east" : "drive_west",
+                    _diseqcMotionTimeoutMs);
+                return;
+            }
+
+            WriteCommandResult(
+                reqId,
+                false,
+                "unsupported",
+                "unknown positioner operation",
+                "operation=" + operation.ToString());
         }
 
         private static void EmitDiseqcShowSummaryLine()
@@ -395,23 +467,26 @@ namespace CubleyControl
 
         private static bool EnsureDiseqcMotionIdle(int reqId)
         {
-            bool busy;
-            int motionId;
-            string operation;
-            int remainingMs;
-            string completionSource;
-            GetDiseqcMotionSnapshot(out busy, out motionId, out operation, out remainingMs, out completionSource);
-            if (!busy)
+            int activeJobId = GetActiveDiseqcJobId();
+            if (activeJobId == 0)
             {
                 return true;
             }
 
+            string operation;
+            string state;
+            int remainingMs;
+            int timeoutMs;
+            string detail;
+            TryGetDiseqcJobSnapshot(activeJobId, out operation, out state, out remainingMs, out timeoutMs, out detail);
+
+            _blockingDiseqcJobId = activeJobId;
             WriteCommandResult(
                 reqId,
                 false,
                 "busy",
                 "diseqc motion busy",
-                "motion_id=" + motionId.ToString() +
+                "motion_id=" + activeJobId.ToString() +
                 " operation=" + operation +
                 " remaining_ms=" + remainingMs.ToString());
             return false;
@@ -426,94 +501,55 @@ namespace CubleyControl
                 return;
             }
 
-            lock (_diseqcMotionLock)
+            int activeJobId = GetActiveDiseqcJobId();
+            if (activeJobId == 0)
             {
-                if (!_diseqcMotionBusy)
-                {
-                    WriteCommandResult(reqId, false, "validation_error", "no diseqc motion", "motion_id=0");
-                    return;
-                }
-
-                if (_diseqcMotionId != requestedMotionId)
-                {
-                    WriteCommandResult(
-                        reqId,
-                        false,
-                        "validation_error",
-                        "diseqc motion id mismatch",
-                        "motion_id=" + _diseqcMotionId.ToString());
-                    return;
-                }
-
-                ClearDiseqcMotionLocked("external");
+                WriteCommandResult(reqId, false, "validation_error", "no diseqc motion", "motion_id=0");
+                return;
             }
 
-            PublishMqttDiseqcMotionTransition("complete");
+            if (activeJobId != requestedMotionId)
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "diseqc motion id mismatch",
+                    "motion_id=" + activeJobId.ToString());
+                return;
+            }
+
+            if (!TryEndDiseqcJob(requestedMotionId, JobStateReleased, string.Empty))
+            {
+                WriteCommandResult(reqId, false, "validation_error", "diseqc motion id mismatch", "motion_id=" + activeJobId.ToString());
+                return;
+            }
+
+            PublishMqttDiseqcJobTransition("end", requestedMotionId);
             WriteCommandResult(reqId, true, "ok", "diseqc complete", "motion_id=" + requestedMotionId.ToString());
         }
 
+        /// <summary>
+        /// A null <paramref name="operation"/> means the transmitted frame was
+        /// a Halt, which ends any running job rather than starting one.
+        /// </summary>
         private static void CompleteOrBeginDiseqcMotion(string operation, int durationMs)
         {
             if (operation == null)
             {
-                bool wasBusy;
-                lock (_diseqcMotionLock)
+                int haltedJobId = EndActiveDiseqcJob(JobStateHalted, string.Empty);
+                if (haltedJobId != 0)
                 {
-                    wasBusy = _diseqcMotionBusy;
-                    ClearDiseqcMotionLocked("halt");
+                    _lastStartedDiseqcJobId = haltedJobId;
+                    PublishMqttDiseqcJobTransition("end", haltedJobId);
                 }
 
-                if (wasBusy)
-                {
-                    PublishMqttDiseqcMotionTransition("complete");
-                }
                 return;
             }
 
-            lock (_diseqcMotionLock)
-            {
-                _diseqcNextMotionId++;
-                if (_diseqcNextMotionId <= 0)
-                {
-                    _diseqcNextMotionId = 1;
-                }
-
-                long nowMs = Environment.TickCount64;
-                _diseqcMotionBusy = true;
-                _diseqcMotionId = _diseqcNextMotionId;
-                _diseqcMotionOperation = operation;
-                _diseqcMotionDeadlineMs = nowMs +
-                    (durationMs < _diseqcMotionTimeoutMs ? durationMs : _diseqcMotionTimeoutMs);
-                _diseqcMotionCompletionSource = "pending";
-            }
-
-            PublishMqttDiseqcMotionTransition("start");
-        }
-
-        private static void ClearDiseqcMotionLocked(string completionSource)
-        {
-            _diseqcMotionBusy = false;
-            _diseqcMotionOperation = "idle";
-            _diseqcMotionDeadlineMs = 0;
-            _diseqcMotionCompletionSource = completionSource;
-        }
-
-        private static void GetDiseqcMotionSnapshot(
-            out bool busy,
-            out int motionId,
-            out string operation,
-            out int remainingMs,
-            out string completionSource)
-        {
-            lock (_diseqcMotionLock)
-            {
-                busy = _diseqcMotionBusy;
-                motionId = _diseqcMotionId;
-                operation = _diseqcMotionOperation;
-                completionSource = _diseqcMotionCompletionSource;
-                long remaining = busy ? _diseqcMotionDeadlineMs - Environment.TickCount64 : 0;
-                remainingMs = remaining <= 0 ? 0 : (remaining > int.MaxValue ? int.MaxValue : (int)remaining);
-            }
+            int jobId = BeginDiseqcJob(operation, durationMs);
+            _lastStartedDiseqcJobId = jobId;
+            PublishMqttDiseqcJobTransition("start", jobId);
         }
 
         private static string BuildDiseqcMotionResultData()
@@ -535,29 +571,20 @@ namespace CubleyControl
             {
                 Thread.Sleep(DiseqcMotionPollIntervalMs);
 
-                int expiredMotionId = 0;
-                lock (_diseqcMotionLock)
-                {
-                    if (_diseqcMotionBusy && Environment.TickCount64 >= _diseqcMotionDeadlineMs)
-                    {
-                        expiredMotionId = _diseqcMotionId;
-                    }
-                }
-
-                if (expiredMotionId == 0)
+                int expiredJobId = GetExpiredDiseqcJobId();
+                if (expiredJobId == 0)
                 {
                     continue;
                 }
 
+                bool ended;
                 lock (_commandLock)
                 {
-                    lock (_diseqcMotionLock)
+                    // Re-check under the command lock: the job may have been
+                    // halted or released while this loop was waiting for it.
+                    if (GetExpiredDiseqcJobId() != expiredJobId)
                     {
-                        if (!_diseqcMotionBusy || _diseqcMotionId != expiredMotionId ||
-                            Environment.TickCount64 < _diseqcMotionDeadlineMs)
-                        {
-                            continue;
-                        }
+                        continue;
                     }
 
                     string error;
@@ -574,16 +601,15 @@ namespace CubleyControl
                         EndLnbIoOperation();
                     }
 
-                    lock (_diseqcMotionLock)
-                    {
-                        if (_diseqcMotionBusy && _diseqcMotionId == expiredMotionId)
-                        {
-                            ClearDiseqcMotionLocked(error.Length == 0 ? "timeout" : "timeout_halt_failed");
-                        }
-                    }
+                    ended = error.Length == 0
+                        ? TryEndDiseqcJob(expiredJobId, JobStateTimeout, string.Empty)
+                        : TryEndDiseqcJob(expiredJobId, JobStateTimeoutHaltFailed, SanitizeToken(error));
                 }
 
-                PublishMqttDiseqcMotionTransition("complete");
+                if (ended)
+                {
+                    PublishMqttDiseqcJobTransition("end", expiredJobId);
+                }
             }
         }
 

@@ -29,6 +29,9 @@ namespace CubleyControl
             var mqttThread = new Thread(MqttLoop);
             mqttThread.Start();
 
+            var restThread = new Thread(RestLoop);
+            restThread.Start();
+
             var lnbHealthThread = new Thread(LnbHealthLoop);
             lnbHealthThread.Start();
 

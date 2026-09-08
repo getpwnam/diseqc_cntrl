@@ -18,7 +18,6 @@ namespace CubleyControl
         private const int UsbConsoleHistoryDepth = 4;
         private const int ConsoleIdleTimeoutMs = 10 * 60 * 1000;
         private const int ConsoleIdleWarningMs = 60 * 1000;
-        private const int MqttCommandMaxLength = 64;
         private const int UsbWriteLogEveryNEvents = 20;
         private const int LnbFaultPollIntervalMs = 25;
         private const int LnbChannelA = 0;
@@ -47,7 +46,7 @@ namespace CubleyControl
         private static int _lnbFaultSequence;
         private static bool _lnbFaultCheckPending;
         private static readonly object _lnbFaultTransitionLock = new object();
-        // Shared command execution across transports (serial + MQTT). All
+        // Shared command execution across transports (serial + REST). All
         // commands funnel through ExecuteCommand -> HandleConsoleCommand ->
         // WriteCommandResult, which writes through whichever OutputSink is
         // active for the calling transport. The lock serializes command
@@ -58,7 +57,7 @@ namespace CubleyControl
         private enum CommandTransport
         {
             Usb,
-            Mqtt
+            Rest
         }
 
         private enum ConsoleTransport
@@ -81,7 +80,31 @@ namespace CubleyControl
             Debug.WriteLine("[" + subsystem + "] " + payload);
         }
 
+        private const int CommandModeConsoleText = 0;
+        private const int CommandModePositioner = 1;
+
         private static void ExecuteCommand(string command, OutputSink outputSink, CommandTransport transport)
+        {
+            ExecuteCommandCore(CommandModeConsoleText, command, 0, 0, outputSink, transport);
+        }
+
+        /// <summary>
+        /// Runs a positioner operation from already-typed parameters, taking
+        /// the same locks and hardware path as the console route without
+        /// building a command string to re-parse.
+        /// </summary>
+        private static void ExecutePositionerOperation(int operation, int value, OutputSink outputSink)
+        {
+            ExecuteCommandCore(CommandModePositioner, null, operation, value, outputSink, CommandTransport.Rest);
+        }
+
+        private static void ExecuteCommandCore(
+            int mode,
+            string command,
+            int operation,
+            int value,
+            OutputSink outputSink,
+            CommandTransport transport)
         {
             lock (_commandLock)
             {
@@ -92,7 +115,14 @@ namespace CubleyControl
                 {
                     lock (_lnbIoLock)
                     {
-                        HandleConsoleCommand(command);
+                        if (mode == CommandModeConsoleText)
+                        {
+                            HandleConsoleCommand(command);
+                        }
+                        else
+                        {
+                            RunPositionerOperation(operation, value);
+                        }
                     }
                 }
                 finally

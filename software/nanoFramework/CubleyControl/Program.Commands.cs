@@ -27,18 +27,12 @@ namespace CubleyControl
             WriteStructuredDebug(
                 "COMMAND",
                 "schema=1 sub=command comp=dispatch operation=receive stat=ok" +
-                " transport=" + (_activeCommandTransport == CommandTransport.Mqtt ? "mqtt" : "cdc") +
+                " transport=" + (_activeCommandTransport == CommandTransport.Rest ? "rest" : "cdc") +
                 " command=" + SanitizeToken(_activeCommand));
 
             string[] tokens = SplitTokens(lower);
             string[] valueTokens = SplitTokens(normalized);
             _activeCommandIsSetter = IsSetterCommand(tokens);
-            if (_activeCommandTransport == CommandTransport.Mqtt && !IsMqttOperationalCommand(tokens))
-            {
-                WriteCommandResult(reqId, false, "unsupported", "command unavailable on mqtt", "transport=mqtt");
-                return;
-            }
-
             if (_activeCommandTransport == CommandTransport.Usb && _usbConfigurationMode)
             {
                 HandleConfigurationModeCommand(tokens, valueTokens, reqId);
@@ -237,7 +231,7 @@ namespace CubleyControl
 
             if (topic == "mqtt")
             {
-                WriteHumanHeading("MQTT commands");
+                WriteHumanHeading("MQTT state and configuration");
                 WriteHelpCommand("show mqtt", "Display live MQTT service state");
                 WriteHelpCommand("show running-config mqtt", "Display active MQTT configuration");
                 WriteHelpCommand("configure", "Change MQTT configuration");
@@ -303,7 +297,8 @@ namespace CubleyControl
             {
                 WriteHumanHeading("Capabilities");
                 WriteHumanField("Serial commands", "Available");
-                WriteHumanField("MQTT commands", "Available");
+                WriteHumanField("REST control", "Available");
+                WriteHumanField("MQTT state", "Available");
                 WriteHumanField("USB configuration", "Available");
                 WriteHumanField("MQTT configuration", "Unavailable");
                 return;
@@ -314,7 +309,7 @@ namespace CubleyControl
                 true,
                 "ok",
                 "capabilities",
-                "root=cubley/v1/diseqc serial_format=hybrid transport.serial=1 transport.mqtt=1 config_usb=1 config_mqtt=0");
+                "root=cubley/v2 serial_format=hybrid transport.serial=1 transport.rest=1 mqtt_state=1 config_usb=1 config_rest=0");
         }
 
         private static void EmitVersion(int reqId)
@@ -453,8 +448,8 @@ namespace CubleyControl
                 " operation=execute" +
                 " stat=" + (ok ? "ok" : "error") +
                 " code=" + code +
-                " transport=" + (_activeCommandTransport == CommandTransport.Mqtt ? "mqtt" : "cdc") +
-                (_activeCommandTransport == CommandTransport.Mqtt ? " id=" + _mqttActiveCommandId.ToString() : string.Empty) +
+                " transport=" + (_activeCommandTransport == CommandTransport.Rest ? "rest" : "cdc") +
+                (_activeCommandTransport == CommandTransport.Rest ? " id=" + SanitizeToken(_mqttActiveCommandKey) : string.Empty) +
                 " request_id=" + reqId.ToString() +
                 " command=" + SanitizeToken(_activeCommand) +
                 " detail=" + safeMsg +
@@ -468,9 +463,9 @@ namespace CubleyControl
                 return;
             }
 
-            if (ok && _activeCommandTransport == CommandTransport.Mqtt)
+            if (_activeCommandTransport == CommandTransport.Rest)
             {
-                _activeOutputSink("OK\r\n");
+                RecordMqttCommandOutcome(ok, code, safeMsg);
                 return;
             }
 

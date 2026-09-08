@@ -170,6 +170,7 @@ namespace CubleyControl
 
                 if (rc == (int)LNBH26.Status.Ok)
                 {
+                    PublishMqttState();
                     WriteCommandResult(reqId, true, "ok", "lnb " + field, "channel=" + LnbChannelToSchemaName(channel) + " value=" + (enable ? "on" : "off"));
                 }
                 else
@@ -207,6 +208,7 @@ namespace CubleyControl
                 int rc = LNBH26.NativeSetPolarizationForChannel(channel, polarization);
                 if (rc == (int)LNBH26.Status.Ok)
                 {
+                    PublishMqttState();
                     WriteCommandResult(reqId, true, "ok", "lnb polarization", "channel=" + LnbChannelToSchemaName(channel) + " value=" + PolarizationToText(polarization));
                 }
                 else
@@ -238,6 +240,7 @@ namespace CubleyControl
                         _diseqcCarrierDutyPercent = 0;
                     }
 
+                    PublishMqttState();
                     WriteCommandResult(reqId, true, "ok", "lnb band", "channel=" + LnbChannelToSchemaName(channel) + " value=" + BandToText(band));
                 }
                 else
@@ -260,6 +263,7 @@ namespace CubleyControl
                 int rc = LNBH26Tweaks.NativeSetIsetLowForChannel(channel, lowRange);
                 if (rc == (int)LNBH26.Status.Ok)
                 {
+                    PublishMqttState();
                     WriteCommandResult(reqId, true, "ok", "lnb iset", "channel=" + LnbChannelToSchemaName(channel) + " value=" + IsetToText(lowRange ? 1 : 0));
                 }
                 else
@@ -282,6 +286,7 @@ namespace CubleyControl
                 int rc = LNBH26Tweaks.NativeSetIswLowForChannel(channel, lowLimit);
                 if (rc == (int)LNBH26.Status.Ok)
                 {
+                    PublishMqttState();
                     WriteCommandResult(reqId, true, "ok", "lnb isw", "channel=" + LnbChannelToSchemaName(channel) + " value=" + IswToText(lowLimit ? 1 : 0));
                 }
                 else
