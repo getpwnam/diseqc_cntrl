@@ -43,6 +43,9 @@ namespace CubleyControl
         private static string _diseqcMotionEncodedAngle = "none";
         private static string _diseqcMotionDirection = "none";
         private static int _diseqcMotionVoltageV;
+        private static bool _diseqcMotionVoltageOverrideActive;
+        private static int _diseqcMotionRestorePolarization;
+        private static string _diseqcMotionVoltageRestoreError = string.Empty;
         private static readonly DiseqcPositionEstimate _diseqcPositionEstimate = new DiseqcPositionEstimate();
 
         private static void HandleDiseqcCommand(string[] tokens, int reqId)
@@ -866,14 +869,28 @@ namespace CubleyControl
                 return;
             }
 
+            int restorePolarization = (int)LNBH26.Polarization.Horizontal;
+            bool voltageOverridden = false;
+            if (motionOperation != null &&
+                !TryPrepareDiseqcMotionVoltage(out restorePolarization, out voltageOverridden, out error))
+            {
+                WriteCommandResult(reqId, false, "hw_fault", source + " failed", "reason=" + SanitizeToken(error));
+                return;
+            }
+
             if (prefixFrames.Length == 0)
             {
                 if (!TryTransmitDiseqcFrame(positionerFrame, out error))
                 {
+                    AppendDiseqcMotionVoltageRollbackError(
+                        restorePolarization,
+                        voltageOverridden,
+                        ref error);
                     WriteCommandResult(reqId, false, "hw_fault", source + " failed", "reason=" + SanitizeToken(error));
                     return;
                 }
 
+                CommitDiseqcMotionVoltageOverride(restorePolarization, voltageOverridden);
                 CompleteOrBeginDiseqcMotion(
                     motionOperation,
                     motionDurationMs,
@@ -904,10 +921,15 @@ namespace CubleyControl
 
             if (!TryTransmitDiseqcSequence(sequence, out error))
             {
+                AppendDiseqcMotionVoltageRollbackError(
+                    restorePolarization,
+                    voltageOverridden,
+                    ref error);
                 WriteCommandResult(reqId, false, "hw_fault", source + " failed", "reason=" + SanitizeToken(error));
                 return;
             }
 
+            CommitDiseqcMotionVoltageOverride(restorePolarization, voltageOverridden);
             CompleteOrBeginDiseqcMotion(
                 motionOperation,
                 motionDurationMs,
@@ -959,6 +981,120 @@ namespace CubleyControl
             return LNBH26.NativeGetPolarizationForChannel(LnbChannelA) == (int)LNBH26.Polarization.Horizontal
                 ? 18
                 : 13;
+        }
+
+        private static bool TryPrepareDiseqcMotionVoltage(
+            out int restorePolarization,
+            out bool voltageOverridden,
+            out string error)
+        {
+            voltageOverridden = false;
+            error = string.Empty;
+
+            lock (_lnbIoLock)
+            {
+                restorePolarization = LNBH26.NativeGetPolarizationForChannel(LnbChannelA);
+                if (restorePolarization != (int)LNBH26.Polarization.Vertical &&
+                    restorePolarization != (int)LNBH26.Polarization.Horizontal)
+                {
+                    error = "lnb_polarization_read_" + restorePolarization.ToString();
+                    return false;
+                }
+
+                if (restorePolarization == (int)LNBH26.Polarization.Horizontal)
+                {
+                    return true;
+                }
+
+                int rc = LNBH26.NativeSetPolarizationForChannel(
+                    LnbChannelA,
+                    (int)LNBH26.Polarization.Horizontal);
+                if (rc != (int)LNBH26.Status.Ok)
+                {
+                    error = "lnb_motor_voltage_" + rc.ToString();
+                    return false;
+                }
+            }
+
+            voltageOverridden = true;
+            return true;
+        }
+
+        private static void AppendDiseqcMotionVoltageRollbackError(
+            int restorePolarization,
+            bool voltageOverridden,
+            ref string error)
+        {
+            if (!voltageOverridden)
+            {
+                return;
+            }
+
+            int rc;
+            lock (_lnbIoLock)
+            {
+                rc = LNBH26.NativeSetPolarizationForChannel(LnbChannelA, restorePolarization);
+            }
+
+            if (rc != (int)LNBH26.Status.Ok)
+            {
+                error += "_voltage_restore_" + rc.ToString();
+            }
+        }
+
+        private static void CommitDiseqcMotionVoltageOverride(int restorePolarization, bool voltageOverridden)
+        {
+            if (!voltageOverridden)
+            {
+                return;
+            }
+
+            lock (_diseqcMotionLock)
+            {
+                _diseqcMotionRestorePolarization = restorePolarization;
+                _diseqcMotionVoltageOverrideActive = true;
+                _diseqcMotionVoltageRestoreError = string.Empty;
+            }
+        }
+
+        private static void RestoreDiseqcMotionVoltageAfterJob()
+        {
+            int restorePolarization;
+            lock (_diseqcMotionLock)
+            {
+                if (!_diseqcMotionVoltageOverrideActive)
+                {
+                    return;
+                }
+
+                restorePolarization = _diseqcMotionRestorePolarization;
+            }
+
+            int rc;
+            lock (_lnbIoLock)
+            {
+                rc = LNBH26.NativeSetPolarizationForChannel(LnbChannelA, restorePolarization);
+            }
+
+            if (rc == (int)LNBH26.Status.Ok)
+            {
+                lock (_diseqcMotionLock)
+                {
+                    _diseqcMotionVoltageOverrideActive = false;
+                    _diseqcMotionVoltageRestoreError = string.Empty;
+                }
+                return;
+            }
+
+            lock (_diseqcMotionLock)
+            {
+                _diseqcMotionVoltageRestoreError = "native_" + rc.ToString();
+            }
+
+            WriteStructuredDebug(
+                "DISEQC",
+                "schema=1 sub=diseqc comp=control operation=restore_motor_voltage" +
+                " stat=error rc=" + rc.ToString() + " level=error");
         }
 
         private static bool EnsureDiseqcMotionIdle(int reqId)
@@ -1099,6 +1235,10 @@ namespace CubleyControl
                     " encoded_angle_deg=" + _diseqcMotionEncodedAngle +
                     " direction=" + _diseqcMotionDirection +
                     " movement_voltage_v=" + (_diseqcMotionVoltageV == 0 ? "unknown" : _diseqcMotionVoltageV.ToString()) +
+                    " motor_voltage_override_active=" + (_diseqcMotionVoltageOverrideActive ? "1" : "0") +
+                    " motor_voltage_restore_error=" + (_diseqcMotionVoltageRestoreError.Length == 0
+                        ? "none"
+                        : _diseqcMotionVoltageRestoreError) +
                     " " + BuildDiseqcPositionEstimateDataLocked();
             }
         }

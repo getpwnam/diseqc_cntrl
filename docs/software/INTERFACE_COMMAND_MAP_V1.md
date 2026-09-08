@@ -532,6 +532,9 @@ Raw `diseqc tx` frames are transmitted unchanged. Successful `goto`, `goto-angle
 raw frames. Step commands use a step-derived deadline capped by the configured
 motion watchdog timeout; goto and drive use the configured motion watchdog timeout directly. The timeout defaults to
 90 seconds and is adjustable from 5 to 300 seconds with `diseqc timeout <seconds>`.
+First-class motor movement temporarily selects horizontal polarization so the
+positioner receives 18 V for the full motion. The previous polarization is
+restored when the motion is completed, halted, or timed out.
 When the timeout elapses, the firmware transmits Halt automatically and marks the
 motion complete with `completion=timeout`. `diseqc stop` is always accepted and
 clears the lock after transmitting Halt. An external completion command must
