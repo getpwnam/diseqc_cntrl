@@ -194,7 +194,7 @@ namespace CubleyControl
                 _activeOutputSink(
                     "hostname <name|auto>\r\n" +
                     "network <mode dhcp|static|address IP|mask MASK|gateway IP|dns auto|dns static DNS1 [DNS2]|defaults>\r\n" +
-                    "mqtt <enabled on|off|broker HOST|port PORT|client-id ID|username VALUE|password VALUE|topic-prefix PREFIX|keepalive SEC|reconnect SEC|defaults>\r\n" +
+                    "mqtt <enabled on|off|broker <HOST|clear>|port PORT|client-id <ID|auto>|username <VALUE|clear>|password <VALUE|clear>|topic-prefix PREFIX|keepalive SEC|reconnect SEC|default|defaults>\r\n" +
                     "show <running-config|run|startup-config|start|candidate-config|candidate|cand> [network|mqtt]\r\n" +
                     "show storage|configuration-storage|config-storage\r\n" +
                     "show diff | show config diff\r\n" +
