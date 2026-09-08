@@ -90,6 +90,7 @@ RUN apt-get install -y --no-install-recommends \
     xxd \
     jq \
     rsync \
+    fd-find \
     # poppler-utils (pdftotext)
     poppler-utils
 
@@ -140,9 +141,11 @@ RUN ln -sf /usr/bin/dotnet /usr/local/bin/msbuild \
     && ln -sf /usr/bin/dotnet /usr/local/bin/xbuild
 
 # ---- Install nanoFramework tools ----
+ARG NANOFF_VERSION=2.5.162
 RUN mkdir -p /usr/local/share/dotnet-tools \
-    && dotnet tool install --tool-path /usr/local/share/dotnet-tools nanoff \
-    && ln -sf /usr/local/share/dotnet-tools/nanoff /usr/local/bin/nanoff
+    && dotnet tool install --tool-path /usr/local/share/dotnet-tools nanoff --version ${NANOFF_VERSION} \
+    && ln -sf /usr/local/share/dotnet-tools/nanoff /usr/local/bin/nanoff \
+    && nanoff --version
 
 # ---- hex2dfu ----
 ENV HEX2DFU_PATH=/usr/local/bin/hex2dfu
