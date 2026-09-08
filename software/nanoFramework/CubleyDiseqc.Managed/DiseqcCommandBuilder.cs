@@ -5,22 +5,6 @@ namespace Cubley.Diseqc
         // Command byte high nibble for Write N0/N1 uses option bits in the low nibble.
         private const byte SwitchOptionBase = 0xF0;
 
-        public static byte[] BuildRaw(byte[] frame)
-        {
-            if (frame == null)
-            {
-                return new byte[0];
-            }
-
-            byte[] copy = new byte[frame.Length];
-            for (int i = 0; i < frame.Length; i++)
-            {
-                copy[i] = frame[i];
-            }
-
-            return copy;
-        }
-
         public static byte[] BuildFrame(DiseqcFraming framing, byte address, byte command)
         {
             return new byte[] { (byte)framing, address, command };
@@ -59,11 +43,6 @@ namespace Cubley.Diseqc
         public static byte[] BuildGotoStoredPosition(byte position)
         {
             return BuildFrame(DiseqcFraming.FirstTransmissionNoReply, DiseqcAddress.AnyPolarizerOrPositioner, DiseqcCommand.GotoStoredPosition, position);
-        }
-
-        public static byte[] BuildWritePortGroupN0(byte option)
-        {
-            return BuildFrame(DiseqcFraming.FirstTransmissionNoReply, DiseqcAddress.AnyLnbSwitchSmatv, DiseqcCommand.WriteN0, option);
         }
 
         // DiSEqC 1.0 committed switch control (port/pol/band matrix).
@@ -125,36 +104,6 @@ namespace Cubley.Diseqc
                 BuildUncommittedSwitch(uncommittedInputIndex),
                 BuildCommittedSwitch(position, option, polarization, band),
             };
-        }
-
-        public static byte[] BuildPositionerHalt()
-        {
-            return BuildHalt();
-        }
-
-        public static byte[] BuildPositionerDriveEast()
-        {
-            return BuildDriveEast();
-        }
-
-        public static byte[] BuildPositionerDriveWest()
-        {
-            return BuildDriveWest();
-        }
-
-        public static byte[] BuildPositionerStepEast(byte steps)
-        {
-            return BuildStepEast(steps);
-        }
-
-        public static byte[] BuildPositionerStepWest(byte steps)
-        {
-            return BuildStepWest(steps);
-        }
-
-        public static byte[] BuildPositionerGotoStoredPosition(byte position)
-        {
-            return BuildGotoStoredPosition(position);
         }
 
         private static byte NormalizeSteps(byte steps)

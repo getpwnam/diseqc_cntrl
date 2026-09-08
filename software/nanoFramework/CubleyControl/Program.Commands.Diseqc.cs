@@ -260,36 +260,18 @@ namespace CubleyControl
                 out motionOperation,
                 out motionRemainingMs,
                 out motionCompletionSource);
-            if (_activeCommandTransport == CommandTransport.Usb)
-            {
-                WriteHumanHeading("DiSEqC");
-                WriteHumanField("Preset", DiseqcV1Presets.ToText(_diseqcRoutePreset));
-                WriteHumanField("Tone", toneEnabled ? "On" : "Off");
-                WriteHumanField("Frequency", toneEnabled ? _diseqcCarrierFrequencyHz.ToString() + " Hz" : "Not active");
-                WriteHumanField("Duty cycle", toneEnabled ? _diseqcCarrierDutyPercent.ToString() + "%" : "Not active");
-                WriteHumanField("Transmitter", _diseqcTxBusy ? "Busy" : "Idle");
-                WriteHumanField("Motion", motionBusy ? "Busy" : "Idle");
-                WriteHumanField("Motion ID", motionId == 0 ? "None" : motionId.ToString());
-                WriteHumanField("Operation", motionOperation);
-                WriteHumanField("Remaining", motionBusy ? ((motionRemainingMs + 999) / 1000).ToString() + " s" : "0 s");
-                WriteHumanField("Completion source", motionCompletionSource);
-                WriteHumanField("Watchdog timeout", (_diseqcMotionTimeoutMs / 1000).ToString() + " s");
-                return;
-            }
-
-            _activeOutputSink(
-                "diseqc preset=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) +
-                " tone=" + (toneEnabled ? "on" : "off") +
-                " frequency_hz=" + (toneEnabled ? _diseqcCarrierFrequencyHz.ToString() : "0") +
-                " duty_percent=" + (toneEnabled ? _diseqcCarrierDutyPercent.ToString() : "0") +
-                " tx_busy=" + (_diseqcTxBusy ? "1" : "0") +
-                " motion_busy=" + (motionBusy ? "1" : "0") +
-                " motion_id=" + motionId.ToString() +
-                " motion_operation=" + motionOperation +
-                " motion_remaining_ms=" + motionRemainingMs.ToString() +
-                " motion_completion=" + motionCompletionSource +
-                " motion_timeout_ms=" + _diseqcMotionTimeoutMs.ToString() +
-                "\r\n");
+            WriteHumanHeading("DiSEqC");
+            WriteHumanField("Preset", DiseqcV1Presets.ToText(_diseqcRoutePreset));
+            WriteHumanField("Tone", toneEnabled ? "On" : "Off");
+            WriteHumanField("Frequency", toneEnabled ? _diseqcCarrierFrequencyHz.ToString() + " Hz" : "Not active");
+            WriteHumanField("Duty cycle", toneEnabled ? _diseqcCarrierDutyPercent.ToString() + "%" : "Not active");
+            WriteHumanField("Transmitter", _diseqcTxBusy ? "Busy" : "Idle");
+            WriteHumanField("Motion", motionBusy ? "Busy" : "Idle");
+            WriteHumanField("Motion ID", motionId == 0 ? "None" : motionId.ToString());
+            WriteHumanField("Operation", motionOperation);
+            WriteHumanField("Remaining", motionBusy ? ((motionRemainingMs + 999) / 1000).ToString() + " s" : "0 s");
+            WriteHumanField("Completion source", motionCompletionSource);
+            WriteHumanField("Watchdog timeout", (_diseqcMotionTimeoutMs / 1000).ToString() + " s");
         }
 
         private static void HandleDiseqcTimeoutCommand(string[] tokens, int reqId)

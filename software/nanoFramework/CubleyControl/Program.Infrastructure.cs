@@ -231,7 +231,6 @@ namespace CubleyControl
         private static int _cdcPreEnabledCount;
         private static int _cdcPostEnabledCount;
         private static int _requestId;
-        private static int _responseTick;
         private static string _activeCommand = string.Empty;
         private static bool _watchEnabled;
         private static int _watchElapsedMs;

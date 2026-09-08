@@ -6,7 +6,6 @@ namespace CubleyControl
     internal interface INetworkConfigurationStorage
     {
         string Source { get; }
-        bool RequiresApplyAfterLoad { get; }
         bool TryLoad(out NetworkConfiguration configuration, out string error);
         bool TrySave(NetworkConfiguration configuration, out string error);
     }
@@ -16,11 +15,6 @@ namespace CubleyControl
         public string Source
         {
             get { return "internal"; }
-        }
-
-        public bool RequiresApplyAfterLoad
-        {
-            get { return false; }
         }
 
         public bool TryLoad(out NetworkConfiguration configuration, out string error)
