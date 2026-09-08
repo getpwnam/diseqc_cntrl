@@ -20,6 +20,7 @@ namespace CubleyControl
         private const int DiseqcMotionTimeoutMaxS = 300;
         private const int DiseqcStepBaseTimeMs = 1000;
         private const int DiseqcStepTimePerStepMs = 250;
+        private const int DiseqcMotorStoredPositionMax = 60;
 
         private const int PositionerOpGoto = 1;
         private const int PositionerOpStepEast = 2;
@@ -33,15 +34,22 @@ namespace CubleyControl
         private static int _diseqcCarrierDutyPercent;
         private static bool _diseqcTxBusy;
         private static DiseqcV1RoutePreset _diseqcRoutePreset = DiseqcV1RoutePreset.Direct;
-        // Motion state lives in the positioner job store (Program.Jobs.cs).
-        // Only the watchdog duration is configuration rather than job state.
+        private static readonly object _diseqcMotionLock = new object();
         private static int _diseqcMotionTimeoutMs = DiseqcMotionWorstCaseMs;
+        private static int _diseqcEastTravelLimitMicrodegrees;
+        private static int _diseqcWestTravelLimitMicrodegrees;
+        private static string _diseqcMotionCommandMode = "none";
+        private static string _diseqcMotionRequestedAngle = "none";
+        private static string _diseqcMotionEncodedAngle = "none";
+        private static string _diseqcMotionDirection = "none";
+        private static int _diseqcMotionVoltageV;
+        private static readonly DiseqcPositionEstimate _diseqcPositionEstimate = new DiseqcPositionEstimate();
 
         private static void HandleDiseqcCommand(string[] tokens, int reqId)
         {
             if (tokens.Length < 2)
             {
-                WriteCommandResult(reqId, false, "validation_error", "diseqc usage", "usage=diseqc <goto|step|drive|stop|preset|timeout|tx|tone|listen> ...");
+                WriteCommandResult(reqId, false, "validation_error", "diseqc usage", "usage=diseqc <goto|goto-angle|reference|store|recalculate|motor-limit|angle-limits|step-calibration|step|drive|stop|preset|timeout|tx|tone|listen> ...");
                 return;
             }
 
@@ -55,6 +63,18 @@ namespace CubleyControl
             if (verb == "timeout")
             {
                 HandleDiseqcTimeoutCommand(tokens, reqId);
+                return;
+            }
+
+            if (verb == "angle-limits")
+            {
+                HandleDiseqcAngleLimitsCommand(tokens, reqId);
+                return;
+            }
+
+            if (verb == "step-calibration")
+            {
+                HandleDiseqcStepCalibrationCommand(tokens, reqId);
                 return;
             }
 
@@ -87,6 +107,87 @@ namespace CubleyControl
                 return;
             }
 
+            if (verb == "motor-limit" && tokens.Length == 3)
+            {
+                if (!EnsureDiseqcMotionIdle(reqId))
+                {
+                    return;
+                }
+
+                byte[] frame;
+                if (tokens[2] == "off")
+                {
+                    frame = DiseqcCommandBuilder.BuildLimitsOff();
+                }
+                else if (tokens[2] == "east")
+                {
+                    frame = DiseqcCommandBuilder.BuildSetEastLimit();
+                }
+                else if (tokens[2] == "west")
+                {
+                    frame = DiseqcCommandBuilder.BuildSetWestLimit();
+                }
+                else
+                {
+                    WriteCommandResult(reqId, false, "validation_error", "diseqc motor-limit invalid", "usage=diseqc motor-limit <east|west|off>");
+                    return;
+                }
+
+                EmitDiseqcPositionerSettingResult(reqId, "diseqc motor-limit", frame);
+                return;
+            }
+
+            if (verb == "store" && tokens.Length == 3)
+            {
+                if (!EnsureDiseqcMotionIdle(reqId))
+                {
+                    return;
+                }
+
+                int position;
+                if (!TryParseByteDec(tokens[2], out position) || position < 1 || position > DiseqcMotorStoredPositionMax)
+                {
+                    WriteCommandResult(reqId, false, "validation_error", "diseqc store invalid", "position=" + tokens[2] + " range=1..60");
+                    return;
+                }
+
+                EmitDiseqcPositionerSettingResult(
+                    reqId,
+                    "diseqc store",
+                    DiseqcCommandBuilder.BuildStorePosition((byte)position));
+                return;
+            }
+
+            if (verb == "recalculate" && tokens.Length == 2)
+            {
+                if (!EnsureDiseqcMotionIdle(reqId))
+                {
+                    return;
+                }
+
+                EmitDiseqcPositionerSettingResult(
+                    reqId,
+                    "diseqc recalculate",
+                    DiseqcCommandBuilder.BuildRecalculatePositions());
+                return;
+            }
+
+            if (verb == "reference" && tokens.Length == 2)
+            {
+                if (!EnsureDiseqcMotionIdle(reqId))
+                {
+                    return;
+                }
+
+                EmitDiseqcPositionerTransmitResult(
+                    reqId,
+                    "diseqc reference",
+                    DiseqcCommandBuilder.BuildGotoStoredPosition(0),
+                    "goto_reference",
+                    _diseqcMotionTimeoutMs);
+                return;
+            }
+
             if (verb == "goto" && tokens.Length == 3)
             {
                 if (!EnsureDiseqcMotionIdle(reqId))
@@ -95,9 +196,9 @@ namespace CubleyControl
                 }
 
                 int position;
-                if (!TryParseByteDec(tokens[2], out position))
+                if (!TryParseByteDec(tokens[2], out position) || position > DiseqcMotorStoredPositionMax)
                 {
-                    WriteCommandResult(reqId, false, "validation_error", "diseqc goto invalid", "pos=" + tokens[2]);
+                    WriteCommandResult(reqId, false, "validation_error", "diseqc goto invalid", "position=" + tokens[2] + " range=0..60");
                     return;
                 }
 
@@ -106,8 +207,92 @@ namespace CubleyControl
                     reqId,
                     "diseqc goto",
                     frame,
-                    "goto",
+                    "goto_stored",
                     _diseqcMotionTimeoutMs);
+                return;
+            }
+
+            if (verb == "goto-angle" && tokens.Length == 4)
+            {
+                if (!EnsureDiseqcMotionIdle(reqId))
+                {
+                    return;
+                }
+
+                DiseqcMotorDirection direction;
+                if (tokens[2] == "east")
+                {
+                    direction = DiseqcMotorDirection.East;
+                }
+                else if (tokens[2] == "west")
+                {
+                    direction = DiseqcMotorDirection.West;
+                }
+                else
+                {
+                    WriteCommandResult(reqId, false, "validation_error", "diseqc goto-angle direction invalid", "direction=" + tokens[2]);
+                    return;
+                }
+
+                byte[] frame;
+                int requestedMicrodegrees;
+                int encodedAngleTenths;
+                string error;
+                if (!DiseqcCommandBuilder.TryBuildGotoAngularPosition(
+                    direction,
+                    tokens[3],
+                    out frame,
+                    out requestedMicrodegrees,
+                    out encodedAngleTenths,
+                    out error))
+                {
+                    WriteCommandResult(
+                        reqId,
+                        false,
+                        "validation_error",
+                        "diseqc goto-angle invalid",
+                        "angle=" + SanitizeToken(tokens[3]) + " reason=" + SanitizeToken(error));
+                    return;
+                }
+
+                int travelLimit = direction == DiseqcMotorDirection.East
+                    ? _diseqcEastTravelLimitMicrodegrees
+                    : _diseqcWestTravelLimitMicrodegrees;
+                if (travelLimit <= 0)
+                {
+                    WriteCommandResult(
+                        reqId,
+                        false,
+                        "validation_error",
+                        "diseqc angle limits not configured",
+                        "usage=diseqc angle-limits <east_degrees> <west_degrees>");
+                    return;
+                }
+
+                if (!DiseqcGotoAngleEncoder.IsWithinTravelLimit(requestedMicrodegrees, travelLimit))
+                {
+                    WriteCommandResult(
+                        reqId,
+                        false,
+                        "validation_error",
+                        "diseqc goto-angle exceeds software limit",
+                        "direction=" + tokens[2] +
+                        " requested_angle_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(requestedMicrodegrees) +
+                        " limit_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(travelLimit));
+                    return;
+                }
+
+                EmitDiseqcPositionerTransmitResult(
+                    reqId,
+                    "diseqc goto-angle",
+                    frame,
+                    "goto_angle_" + tokens[2],
+                    _diseqcMotionTimeoutMs,
+                    "angular",
+                    DiseqcGotoAngleEncoder.FormatMicrodegrees(requestedMicrodegrees),
+                    DiseqcGotoAngleEncoder.FormatTenths(encodedAngleTenths),
+                    tokens[2],
+                    encodedAngleTenths * 100_000);
                 return;
             }
 
@@ -136,7 +321,17 @@ namespace CubleyControl
                     ? DiseqcCommandBuilder.BuildStepEast((byte)steps)
                     : DiseqcCommandBuilder.BuildStepWest((byte)steps);
                 int motionTimeMs = DiseqcStepBaseTimeMs + (steps * DiseqcStepTimePerStepMs);
-                EmitDiseqcPositionerTransmitResult(reqId, "diseqc step", frame, "step_" + dir, motionTimeMs);
+                EmitDiseqcPositionerTransmitResult(
+                    reqId,
+                    "diseqc step",
+                    frame,
+                    "step_" + dir,
+                    motionTimeMs,
+                    "step",
+                    "none",
+                    "none",
+                    dir,
+                    steps);
                 return;
             }
 
@@ -176,11 +371,68 @@ namespace CubleyControl
             WriteCommandResult(reqId, false, "validation_error", "diseqc syntax invalid", "verb=" + verb);
         }
 
-        /// <summary>
-        /// Typed entry point shared with the JSON transport. Mirrors the
-        /// console verbs in HandleDiseqcCommand without the tokenizing, so
-        /// both routes reach the same hardware path and the same job store.
-        /// </summary>
+        private static void HandleDiseqcStepCalibrationCommand(string[] tokens, int reqId)
+        {
+            if (tokens.Length == 3 && tokens[2] == "status")
+            {
+                WriteCommandResult(reqId, true, "ok", "diseqc step-calibration", BuildDiseqcPositionEstimateData());
+                return;
+            }
+
+            if (tokens.Length == 3 && tokens[2] == "off")
+            {
+                if (!EnsureDiseqcMotionIdle(reqId))
+                {
+                    return;
+                }
+
+                lock (_diseqcMotionLock)
+                {
+                    _diseqcPositionEstimate.ClearStepCalibration();
+                }
+
+                WriteCommandResult(reqId, true, "ok", "diseqc step-calibration disabled", BuildDiseqcPositionEstimateData());
+                return;
+            }
+
+            if (tokens.Length != 4)
+            {
+                WriteCommandResult(reqId, false, "validation_error", "diseqc step-calibration usage", "usage=diseqc step-calibration <status|off|east_deg west_deg>");
+                return;
+            }
+
+            int eastMicrodegrees;
+            int eastTenths;
+            string eastError;
+            int westMicrodegrees;
+            int westTenths;
+            string westError;
+            if (!DiseqcGotoAngleEncoder.TryParseDegrees(tokens[2], out eastMicrodegrees, out eastTenths, out eastError) ||
+                !DiseqcGotoAngleEncoder.TryParseDegrees(tokens[3], out westMicrodegrees, out westTenths, out westError) ||
+                eastMicrodegrees <= 0 || westMicrodegrees <= 0)
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "diseqc step-calibration invalid",
+                    "east_step_deg=" + SanitizeToken(tokens[2]) + " west_step_deg=" + SanitizeToken(tokens[3]));
+                return;
+            }
+
+            if (!EnsureDiseqcMotionIdle(reqId))
+            {
+                return;
+            }
+
+            lock (_diseqcMotionLock)
+            {
+                _diseqcPositionEstimate.ConfigureStepCalibration(eastMicrodegrees, westMicrodegrees);
+            }
+
+            WriteCommandResult(reqId, true, "ok", "diseqc step-calibration", BuildDiseqcPositionEstimateData());
+        }
+
         private static void RunPositionerOperation(int operation, int value)
         {
             int reqId = NextRequestId();
@@ -217,9 +469,7 @@ namespace CubleyControl
                 EmitDiseqcPositionerTransmitResult(
                     reqId,
                     "diseqc step",
-                    east
-                        ? DiseqcCommandBuilder.BuildStepEast((byte)value)
-                        : DiseqcCommandBuilder.BuildStepWest((byte)value),
+                    east ? DiseqcCommandBuilder.BuildStepEast((byte)value) : DiseqcCommandBuilder.BuildStepWest((byte)value),
                     east ? "step_east" : "step_west",
                     DiseqcStepBaseTimeMs + (value * DiseqcStepTimePerStepMs));
                 return;
@@ -238,12 +488,7 @@ namespace CubleyControl
                 return;
             }
 
-            WriteCommandResult(
-                reqId,
-                false,
-                "unsupported",
-                "unknown positioner operation",
-                "operation=" + operation.ToString());
+            WriteCommandResult(reqId, false, "unsupported", "unknown positioner operation", "operation=" + operation.ToString());
         }
 
         private static void EmitDiseqcShowSummaryLine()
@@ -260,18 +505,150 @@ namespace CubleyControl
                 out motionOperation,
                 out motionRemainingMs,
                 out motionCompletionSource);
-            WriteHumanHeading("DiSEqC");
-            WriteHumanField("Preset", DiseqcV1Presets.ToText(_diseqcRoutePreset));
-            WriteHumanField("Tone", toneEnabled ? "On" : "Off");
-            WriteHumanField("Frequency", toneEnabled ? _diseqcCarrierFrequencyHz.ToString() + " Hz" : "Not active");
-            WriteHumanField("Duty cycle", toneEnabled ? _diseqcCarrierDutyPercent.ToString() + "%" : "Not active");
-            WriteHumanField("Transmitter", _diseqcTxBusy ? "Busy" : "Idle");
-            WriteHumanField("Motion", motionBusy ? "Busy" : "Idle");
-            WriteHumanField("Motion ID", motionId == 0 ? "None" : motionId.ToString());
-            WriteHumanField("Operation", motionOperation);
-            WriteHumanField("Remaining", motionBusy ? ((motionRemainingMs + 999) / 1000).ToString() + " s" : "0 s");
-            WriteHumanField("Completion source", motionCompletionSource);
-            WriteHumanField("Watchdog timeout", (_diseqcMotionTimeoutMs / 1000).ToString() + " s");
+            string positionConfidence;
+            string estimatedAngle;
+            string positionSource;
+            string pendingTarget;
+            string eastStep;
+            string westStep;
+            lock (_diseqcMotionLock)
+            {
+                positionConfidence = _diseqcPositionEstimate.Confidence;
+                estimatedAngle = _diseqcPositionEstimate.HasEstimate
+                    ? FormatSignedDiseqcAngle(_diseqcPositionEstimate.EstimatedAngleMicrodegrees)
+                    : "Unknown";
+                positionSource = _diseqcPositionEstimate.Source;
+                pendingTarget = _diseqcPositionEstimate.HasPendingTarget
+                    ? FormatSignedDiseqcAngle(_diseqcPositionEstimate.PendingTargetMicrodegrees)
+                    : "None";
+                eastStep = _diseqcPositionEstimate.HasStepCalibration
+                    ? DiseqcGotoAngleEncoder.FormatMicrodegrees(_diseqcPositionEstimate.EastStepMicrodegrees)
+                    : "Disabled";
+                westStep = _diseqcPositionEstimate.HasStepCalibration
+                    ? DiseqcGotoAngleEncoder.FormatMicrodegrees(_diseqcPositionEstimate.WestStepMicrodegrees)
+                    : "Disabled";
+            }
+            if (_activeCommandTransport == CommandTransport.Usb)
+            {
+                WriteHumanHeading("DiSEqC");
+                WriteHumanField("Preset", DiseqcV1Presets.ToText(_diseqcRoutePreset));
+                WriteHumanField("Tone", toneEnabled ? "On" : "Off");
+                WriteHumanField("Frequency", toneEnabled ? _diseqcCarrierFrequencyHz.ToString() + " Hz" : "Not active");
+                WriteHumanField("Duty cycle", toneEnabled ? _diseqcCarrierDutyPercent.ToString() + "%" : "Not active");
+                WriteHumanField("Transmitter", _diseqcTxBusy ? "Busy" : "Idle");
+                WriteHumanField("Motion", motionBusy ? "Busy" : "Idle");
+                WriteHumanField("Motion ID", motionId == 0 ? "None" : motionId.ToString());
+                WriteHumanField("Operation", motionOperation);
+                WriteHumanField("Remaining", motionBusy ? ((motionRemainingMs + 999) / 1000).ToString() + " s" : "0 s");
+                WriteHumanField("Completion source", motionCompletionSource);
+                WriteHumanField("Command mode", _diseqcMotionCommandMode);
+                WriteHumanField("Direction", _diseqcMotionDirection);
+                WriteHumanField("Requested angle", _diseqcMotionRequestedAngle == "none" ? "Not applicable" : _diseqcMotionRequestedAngle + " deg");
+                WriteHumanField("Encoded angle", _diseqcMotionEncodedAngle == "none" ? "Not applicable" : _diseqcMotionEncodedAngle + " deg");
+                WriteHumanField("Movement voltage", _diseqcMotionVoltageV == 0 ? "Unknown" : _diseqcMotionVoltageV.ToString() + " V");
+                WriteHumanField("Estimated angle", estimatedAngle == "Unknown" ? estimatedAngle : estimatedAngle + " deg");
+                WriteHumanField("Position confidence", positionConfidence);
+                WriteHumanField("Position source", positionSource);
+                WriteHumanField("Pending target", pendingTarget == "None" ? pendingTarget : pendingTarget + " deg");
+                WriteHumanField("East step calibration", eastStep == "Disabled" ? eastStep : eastStep + " deg");
+                WriteHumanField("West step calibration", westStep == "Disabled" ? westStep : westStep + " deg");
+                WriteHumanField("East software limit", FormatDiseqcTravelLimit(_diseqcEastTravelLimitMicrodegrees));
+                WriteHumanField("West software limit", FormatDiseqcTravelLimit(_diseqcWestTravelLimitMicrodegrees));
+                WriteHumanField("Watchdog timeout", (_diseqcMotionTimeoutMs / 1000).ToString() + " s");
+                return;
+            }
+
+            _activeOutputSink(
+                "diseqc preset=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) +
+                " tone=" + (toneEnabled ? "on" : "off") +
+                " frequency_hz=" + (toneEnabled ? _diseqcCarrierFrequencyHz.ToString() : "0") +
+                " duty_percent=" + (toneEnabled ? _diseqcCarrierDutyPercent.ToString() : "0") +
+                " tx_busy=" + (_diseqcTxBusy ? "1" : "0") +
+                " motion_busy=" + (motionBusy ? "1" : "0") +
+                " motion_id=" + motionId.ToString() +
+                " motion_operation=" + motionOperation +
+                " motion_remaining_ms=" + motionRemainingMs.ToString() +
+                " motion_completion=" + motionCompletionSource +
+                " " + BuildDiseqcMotionMetadataData() +
+                " " + BuildDiseqcTravelLimitsData() +
+                " motion_timeout_ms=" + _diseqcMotionTimeoutMs.ToString() +
+                "\r\n");
+        }
+
+        private static void HandleDiseqcAngleLimitsCommand(string[] tokens, int reqId)
+        {
+            if (tokens.Length == 3 && tokens[2] == "status")
+            {
+                WriteCommandResult(reqId, true, "ok", "diseqc angle-limits", BuildDiseqcTravelLimitsData());
+                return;
+            }
+
+            if (tokens.Length == 3 && tokens[2] == "off")
+            {
+                if (!EnsureDiseqcMotionIdle(reqId))
+                {
+                    return;
+                }
+
+                _diseqcEastTravelLimitMicrodegrees = 0;
+                _diseqcWestTravelLimitMicrodegrees = 0;
+                WriteCommandResult(reqId, true, "ok", "diseqc angle-limits disabled", BuildDiseqcTravelLimitsData());
+                return;
+            }
+
+            if (tokens.Length != 4)
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "diseqc angle-limits usage",
+                    "usage=diseqc angle-limits <status|off|east_degrees west_degrees>");
+                return;
+            }
+
+            int eastMicrodegrees;
+            int eastTenths;
+            string eastError;
+            int westMicrodegrees;
+            int westTenths;
+            string westError;
+            if (!DiseqcGotoAngleEncoder.TryParseDegrees(tokens[2], out eastMicrodegrees, out eastTenths, out eastError) ||
+                !DiseqcGotoAngleEncoder.TryParseDegrees(tokens[3], out westMicrodegrees, out westTenths, out westError) ||
+                eastMicrodegrees <= 0 || westMicrodegrees <= 0)
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "diseqc angle-limits invalid",
+                    "east=" + SanitizeToken(tokens[2]) +
+                    " west=" + SanitizeToken(tokens[3]) +
+                    " max_deg=" + DiseqcLimits.GotoAngularMaxDegrees.ToString());
+                return;
+            }
+
+            if (!EnsureDiseqcMotionIdle(reqId))
+            {
+                return;
+            }
+
+            _diseqcEastTravelLimitMicrodegrees = eastMicrodegrees;
+            _diseqcWestTravelLimitMicrodegrees = westMicrodegrees;
+            WriteCommandResult(reqId, true, "ok", "diseqc angle-limits", BuildDiseqcTravelLimitsData());
+        }
+
+        private static string BuildDiseqcTravelLimitsData()
+        {
+            return "angle_limits_configured=" +
+                (_diseqcEastTravelLimitMicrodegrees > 0 && _diseqcWestTravelLimitMicrodegrees > 0 ? "1" : "0") +
+                " east_limit_deg=" + FormatDiseqcTravelLimit(_diseqcEastTravelLimitMicrodegrees) +
+                " west_limit_deg=" + FormatDiseqcTravelLimit(_diseqcWestTravelLimitMicrodegrees);
+        }
+
+        private static string FormatDiseqcTravelLimit(int microdegrees)
+        {
+            return microdegrees <= 0 ? "disabled" : DiseqcGotoAngleEncoder.FormatMicrodegrees(microdegrees);
         }
 
         private static void HandleDiseqcTimeoutCommand(string[] tokens, int reqId)
@@ -382,15 +759,31 @@ namespace CubleyControl
                 return;
             }
 
+            bool positionInvalidated = false;
+            if (IsRawPositionerCommand(frame))
+            {
+                lock (_diseqcMotionLock)
+                {
+                    _diseqcPositionEstimate.Invalidate();
+                }
+                positionInvalidated = true;
+            }
+
             WriteCommandResult(reqId, true, "ok", source, "bytes=" + BytesToHex(frame) + " encoded_bits=" + (frame.Length * 9).ToString());
+            if (positionInvalidated)
+            {
+                PublishMqttDiseqcState();
+            }
         }
 
-        private static void EmitDiseqcPositionerTransmitResult(
-            int reqId,
-            string source,
-            byte[] positionerFrame,
-            string motionOperation,
-            int motionDurationMs)
+        private static bool IsRawPositionerCommand(byte[] frame)
+        {
+            return frame != null && frame.Length >= 3 &&
+                (frame[1] == DiseqcAddress.AnyPositioner || frame[1] == DiseqcAddress.AnyPolarizerOrPositioner) &&
+                frame[2] >= DiseqcCommand.Halt && frame[2] <= DiseqcCommand.RecalculatePositions;
+        }
+
+        private static void EmitDiseqcPositionerSettingResult(int reqId, string source, byte[] positionerFrame)
         {
             string error;
             byte[][] prefixFrames;
@@ -408,7 +801,88 @@ namespace CubleyControl
                     return;
                 }
 
-                CompleteOrBeginDiseqcMotion(motionOperation, motionDurationMs);
+                WriteCommandResult(reqId, true, "ok", source, "bytes=" + BytesToHex(positionerFrame));
+                return;
+            }
+
+            byte[][] sequence = new byte[prefixFrames.Length + 1][];
+            for (int i = 0; i < prefixFrames.Length; i++)
+            {
+                sequence[i] = prefixFrames[i];
+            }
+
+            sequence[prefixFrames.Length] = positionerFrame;
+            if (!TryTransmitDiseqcSequence(sequence, out error))
+            {
+                WriteCommandResult(reqId, false, "hw_fault", source + " failed", "reason=" + SanitizeToken(error));
+                return;
+            }
+
+            WriteCommandResult(
+                reqId,
+                true,
+                "ok",
+                source,
+                "preset=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) + " bytes=" + BytesToHex(positionerFrame));
+        }
+
+        private static void EmitDiseqcPositionerTransmitResult(
+            int reqId,
+            string source,
+            byte[] positionerFrame,
+            string motionOperation,
+            int motionDurationMs)
+        {
+            EmitDiseqcPositionerTransmitResult(
+                reqId,
+                source,
+                positionerFrame,
+                motionOperation,
+                motionDurationMs,
+                motionOperation == null ? "halt" : motionOperation,
+                "none",
+                "none",
+                MotionDirectionFromOperation(motionOperation),
+                0);
+        }
+
+        private static void EmitDiseqcPositionerTransmitResult(
+            int reqId,
+            string source,
+            byte[] positionerFrame,
+            string motionOperation,
+            int motionDurationMs,
+            string commandMode,
+            string requestedAngle,
+            string encodedAngle,
+            string direction,
+            int positionValue)
+        {
+            string error;
+            byte[][] prefixFrames;
+            if (!TryBuildPresetPrefixFrames(out prefixFrames, out error))
+            {
+                WriteCommandResult(reqId, false, "hw_fault", source + " failed", "reason=" + SanitizeToken(error));
+                return;
+            }
+
+            if (prefixFrames.Length == 0)
+            {
+                if (!TryTransmitDiseqcFrame(positionerFrame, out error))
+                {
+                    WriteCommandResult(reqId, false, "hw_fault", source + " failed", "reason=" + SanitizeToken(error));
+                    return;
+                }
+
+                CompleteOrBeginDiseqcMotion(
+                    motionOperation,
+                    motionDurationMs,
+                    commandMode,
+                    requestedAngle,
+                    encodedAngle,
+                    direction,
+                    GetDiseqcMotionVoltageV(),
+                    positionValue);
                 WriteCommandResult(
                     reqId,
                     true,
@@ -434,7 +908,15 @@ namespace CubleyControl
                 return;
             }
 
-            CompleteOrBeginDiseqcMotion(motionOperation, motionDurationMs);
+            CompleteOrBeginDiseqcMotion(
+                motionOperation,
+                motionDurationMs,
+                commandMode,
+                requestedAngle,
+                encodedAngle,
+                direction,
+                GetDiseqcMotionVoltageV(),
+                positionValue);
 
             WriteCommandResult(
                 reqId,
@@ -447,10 +929,42 @@ namespace CubleyControl
                 BuildDiseqcMotionResultData());
         }
 
+        private static string MotionDirectionFromOperation(string operation)
+        {
+            if (operation == null)
+            {
+                return "none";
+            }
+
+            if (operation.IndexOf("east") >= 0)
+            {
+                return "east";
+            }
+
+            if (operation.IndexOf("west") >= 0)
+            {
+                return "west";
+            }
+
+            return "none";
+        }
+
+        private static int GetDiseqcMotionVoltageV()
+        {
+            if (!EnsureLnbInitialized())
+            {
+                return 0;
+            }
+
+            return LNBH26.NativeGetPolarizationForChannel(LnbChannelA) == (int)LNBH26.Polarization.Horizontal
+                ? 18
+                : 13;
+        }
+
         private static bool EnsureDiseqcMotionIdle(int reqId)
         {
-            int activeJobId = GetActiveDiseqcJobId();
-            if (activeJobId == 0)
+            int motionId = GetActiveDiseqcJobId();
+            if (motionId == 0)
             {
                 return true;
             }
@@ -460,15 +974,15 @@ namespace CubleyControl
             int remainingMs;
             int timeoutMs;
             string detail;
-            TryGetDiseqcJobSnapshot(activeJobId, out operation, out state, out remainingMs, out timeoutMs, out detail);
+            TryGetDiseqcJobSnapshot(motionId, out operation, out state, out remainingMs, out timeoutMs, out detail);
+            _blockingDiseqcJobId = motionId;
 
-            _blockingDiseqcJobId = activeJobId;
             WriteCommandResult(
                 reqId,
                 false,
                 "busy",
                 "diseqc motion busy",
-                "motion_id=" + activeJobId.ToString() +
+                "motion_id=" + motionId.ToString() +
                 " operation=" + operation +
                 " remaining_ms=" + remainingMs.ToString());
             return false;
@@ -490,43 +1004,71 @@ namespace CubleyControl
                 return;
             }
 
-            if (activeJobId != requestedMotionId)
-            {
-                WriteCommandResult(
-                    reqId,
-                    false,
-                    "validation_error",
-                    "diseqc motion id mismatch",
-                    "motion_id=" + activeJobId.ToString());
-                return;
-            }
-
-            if (!TryEndDiseqcJob(requestedMotionId, JobStateReleased, string.Empty))
+            if (activeJobId != requestedMotionId ||
+                !TryEndDiseqcJob(requestedMotionId, JobStateReleased, string.Empty))
             {
                 WriteCommandResult(reqId, false, "validation_error", "diseqc motion id mismatch", "motion_id=" + activeJobId.ToString());
                 return;
+            }
+
+            lock (_diseqcMotionLock)
+            {
+                _diseqcPositionEstimate.CompletePending();
             }
 
             PublishMqttDiseqcJobTransition("end", requestedMotionId);
             WriteCommandResult(reqId, true, "ok", "diseqc complete", "motion_id=" + requestedMotionId.ToString());
         }
 
-        /// <summary>
-        /// A null <paramref name="operation"/> means the transmitted frame was
-        /// a Halt, which ends any running job rather than starting one.
-        /// </summary>
-        private static void CompleteOrBeginDiseqcMotion(string operation, int durationMs)
+        private static void CompleteOrBeginDiseqcMotion(
+            string operation,
+            int durationMs,
+            string commandMode,
+            string requestedAngle,
+            string encodedAngle,
+            string direction,
+            int voltageV,
+            int positionValue)
         {
             if (operation == null)
             {
                 int haltedJobId = EndActiveDiseqcJob(JobStateHalted, string.Empty);
+                lock (_diseqcMotionLock)
+                {
+                    _diseqcPositionEstimate.Invalidate();
+                }
+
                 if (haltedJobId != 0)
                 {
                     _lastStartedDiseqcJobId = haltedJobId;
                     PublishMqttDiseqcJobTransition("end", haltedJobId);
                 }
-
                 return;
+            }
+
+            lock (_diseqcMotionLock)
+            {
+                _diseqcMotionCommandMode = commandMode;
+                _diseqcMotionRequestedAngle = requestedAngle;
+                _diseqcMotionEncodedAngle = encodedAngle;
+                _diseqcMotionDirection = direction;
+                _diseqcMotionVoltageV = voltageV;
+                if (commandMode == "angular")
+                {
+                    _diseqcPositionEstimate.BeginGotoAngular(
+                        direction == "east" ? DiseqcMotorDirection.East : DiseqcMotorDirection.West,
+                        positionValue);
+                }
+                else if (commandMode == "step")
+                {
+                    _diseqcPositionEstimate.BeginStep(
+                        direction == "east" ? DiseqcMotorDirection.East : DiseqcMotorDirection.West,
+                        positionValue);
+                }
+                else
+                {
+                    _diseqcPositionEstimate.Invalidate();
+                }
             }
 
             int jobId = BeginDiseqcJob(operation, durationMs);
@@ -544,7 +1086,55 @@ namespace CubleyControl
             GetDiseqcMotionSnapshot(out busy, out motionId, out operation, out remainingMs, out completionSource);
             return " motion_busy=" + (busy ? "1" : "0") +
                 " motion_id=" + motionId.ToString() +
-                " motion_remaining_ms=" + remainingMs.ToString();
+                " motion_remaining_ms=" + remainingMs.ToString() +
+                " " + BuildDiseqcMotionMetadataData();
+        }
+
+        private static string BuildDiseqcMotionMetadataData()
+        {
+            lock (_diseqcMotionLock)
+            {
+                return "command_mode=" + _diseqcMotionCommandMode +
+                    " requested_angle_deg=" + _diseqcMotionRequestedAngle +
+                    " encoded_angle_deg=" + _diseqcMotionEncodedAngle +
+                    " direction=" + _diseqcMotionDirection +
+                    " movement_voltage_v=" + (_diseqcMotionVoltageV == 0 ? "unknown" : _diseqcMotionVoltageV.ToString()) +
+                    " " + BuildDiseqcPositionEstimateDataLocked();
+            }
+        }
+
+        private static string BuildDiseqcPositionEstimateData()
+        {
+            lock (_diseqcMotionLock)
+            {
+                return BuildDiseqcPositionEstimateDataLocked();
+            }
+        }
+
+        private static string BuildDiseqcPositionEstimateDataLocked()
+        {
+            return "position_confidence=" + _diseqcPositionEstimate.Confidence +
+                " estimated_angle_deg=" + (_diseqcPositionEstimate.HasEstimate
+                    ? FormatSignedDiseqcAngle(_diseqcPositionEstimate.EstimatedAngleMicrodegrees)
+                    : "unknown") +
+                " position_source=" + _diseqcPositionEstimate.Source +
+                " pending_target_deg=" + (_diseqcPositionEstimate.HasPendingTarget
+                    ? FormatSignedDiseqcAngle(_diseqcPositionEstimate.PendingTargetMicrodegrees)
+                    : "none") +
+                " step_calibration_configured=" + (_diseqcPositionEstimate.HasStepCalibration ? "1" : "0") +
+                " east_step_deg=" + (_diseqcPositionEstimate.HasStepCalibration
+                    ? DiseqcGotoAngleEncoder.FormatMicrodegrees(_diseqcPositionEstimate.EastStepMicrodegrees)
+                    : "none") +
+                " west_step_deg=" + (_diseqcPositionEstimate.HasStepCalibration
+                    ? DiseqcGotoAngleEncoder.FormatMicrodegrees(_diseqcPositionEstimate.WestStepMicrodegrees)
+                    : "none");
+        }
+
+        private static string FormatSignedDiseqcAngle(int signedMicrodegrees)
+        {
+            return signedMicrodegrees < 0
+                ? "-" + DiseqcGotoAngleEncoder.FormatMicrodegrees(-signedMicrodegrees)
+                : DiseqcGotoAngleEncoder.FormatMicrodegrees(signedMicrodegrees);
         }
 
         private static void DiseqcMotionMonitorLoop()
@@ -553,8 +1143,8 @@ namespace CubleyControl
             {
                 Thread.Sleep(DiseqcMotionPollIntervalMs);
 
-                int expiredJobId = GetExpiredDiseqcJobId();
-                if (expiredJobId == 0)
+                int expiredMotionId = GetExpiredDiseqcJobId();
+                if (expiredMotionId == 0)
                 {
                     continue;
                 }
@@ -562,9 +1152,7 @@ namespace CubleyControl
                 bool ended;
                 lock (_commandLock)
                 {
-                    // Re-check under the command lock: the job may have been
-                    // halted or released while this loop was waiting for it.
-                    if (GetExpiredDiseqcJobId() != expiredJobId)
+                    if (GetExpiredDiseqcJobId() != expiredMotionId)
                     {
                         continue;
                     }
@@ -583,14 +1171,19 @@ namespace CubleyControl
                         EndLnbIoOperation();
                     }
 
+                    lock (_diseqcMotionLock)
+                    {
+                        _diseqcPositionEstimate.FailVerification();
+                    }
+
                     ended = error.Length == 0
-                        ? TryEndDiseqcJob(expiredJobId, JobStateTimeout, string.Empty)
-                        : TryEndDiseqcJob(expiredJobId, JobStateTimeoutHaltFailed, SanitizeToken(error));
+                        ? TryEndDiseqcJob(expiredMotionId, JobStateTimeout, string.Empty)
+                        : TryEndDiseqcJob(expiredMotionId, JobStateTimeoutHaltFailed, SanitizeToken(error));
                 }
 
                 if (ended)
                 {
-                    PublishMqttDiseqcJobTransition("end", expiredJobId);
+                    PublishMqttDiseqcJobTransition("end", expiredMotionId);
                 }
             }
         }

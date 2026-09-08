@@ -33,6 +33,12 @@ namespace Cubley.Diseqc
         MiniB = 1,
     }
 
+    public enum DiseqcMotorDirection
+    {
+        East = 0,
+        West = 1,
+    }
+
     public static class DiseqcAddress
     {
         public const byte AnyLnbSwitchSmatv = 0x10;
@@ -48,9 +54,15 @@ namespace Cubley.Diseqc
 
         // 1.2 positioner command set.
         public const byte Halt = 0x60;
+        public const byte LimitsOff = 0x63;
+        public const byte SetEastLimit = 0x66;
+        public const byte SetWestLimit = 0x67;
         public const byte DriveEastOrStep = 0x68;
         public const byte DriveWestOrStep = 0x69;
+        public const byte StorePosition = 0x6A;
         public const byte GotoStoredPosition = 0x6B;
+        public const byte GotoAngularPosition = 0x6E;
+        public const byte RecalculatePositions = 0x6F;
     }
 
     public static class DiseqcLimits
@@ -58,5 +70,6 @@ namespace Cubley.Diseqc
         public const int MinFrameBytes = 3;
         public const int MaxFrameBytes = 6;
         public const int EncodedBitsPerByte = 9;
+        public const int GotoAngularMaxDegrees = 180;
     }
 }

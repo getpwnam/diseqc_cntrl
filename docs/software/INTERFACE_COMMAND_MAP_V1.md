@@ -116,8 +116,26 @@ CubleyControl console
 |   |         Set the switch current limit.
 |   |
 |   |-- diseqc
-|   |   |-- goto <0..255>
-|   |   |     Move to a stored position.
+|   |   |-- goto <0..60>
+|   |   |     Move to a TM-2300 stored position; position 0 is the reference.
+|   |   |-- goto-angle <east|west> <0..180 degrees>
+|   |   |     Move to a GoToX angular position within configured software limits.
+|   |   |-- reference
+|   |   |     Move to motor reference position 0.
+|   |   |-- store <1..60>
+|   |   |     Store the current physical position in the motor.
+|   |   |-- recalculate
+|   |   |     Send the motor's basic re-synchronize/position-shift command.
+|   |   |-- motor-limit <east|west|off>
+|   |   |     Set or disable the motor's internal limits at the current position.
+|   |   |-- angle-limits status|off
+|   |   |     Inspect or disable the volatile angular software limits.
+|   |   |-- angle-limits <east_degrees> <west_degrees>
+|   |   |     Arm direction-specific software limits after checking hardware stops.
+|   |   |-- step-calibration status|off
+|   |   |     Inspect or disable volatile open-loop step calibration.
+|   |   |-- step-calibration <east_deg_per_step> <west_deg_per_step>
+|   |   |     Set direction-specific step sizes with up to six decimal places.
 |   |   |-- step <east|west> <1..128>
 |   |   |     Move a fixed number of steps.
 |   |   |-- drive <east|west>
@@ -480,7 +498,18 @@ mutations are accepted only after entering configuration mode.
 
 | Command | Accepted values and behavior |
 |---|---|
-| `diseqc goto <position>` | Go to stored position `0..255`. This is not an angle command. |
+| `diseqc goto <position>` | Go to TM-2300 stored position `0..60`. Position `0` is the motor reference; this is not an angle command. |
+| `diseqc goto-angle <east\|west> <degrees>` | Send positioner command `0x6E` for an explicit motor angle. Decimal degrees are rounded to the nearest tenth, with half-step ties rounded upward, then encoded with the DiSEqC GoToX fractional lookup. A direction-specific software limit must first be configured. |
+| `diseqc reference` | Send `0x6B 0x00` to move to the motor's reference position. |
+| `diseqc store <position>` | Store the current physical position in motor slot `1..60` with command `0x6A`. |
+| `diseqc recalculate` | Send the basic `0x6F 0x00` Set/Recalculate Positions command. For the TM-2300 receiver workflow this re-synchronizes the selected stored position and shifts the others; the DiSEqC specification defines parameter `0x00` as manufacturer-specific, so verify this behavior on the installed motor before relying on it. |
+| `diseqc motor-limit <east\|west\|off>` | Send motor-internal limit command `0x66`, `0x67`, or `0x63`. East or west records the motor's current physical position as that limit. This does not configure Cubley's angular safety limits. |
+| `diseqc angle-limits <east_degrees> <west_degrees>` | Set positive, direction-specific runtime limits in the protocol range through 180 degrees. Rejected during motion. The operator must choose values strictly inside the motor's physically adjusted hardware stops. |
+| `diseqc angle-limits status` | Show whether angular motion is armed and both direction limits. |
+| `diseqc angle-limits off` | Disable angular movement. This is the power-on default and is rejected during motion. |
+| `diseqc step-calibration <east_deg_per_step> <west_deg_per_step>` | Set volatile direction-specific step sizes with up to six decimal places. Calibration starts disabled after boot. |
+| `diseqc step-calibration status` | Show step calibration and position-estimate state. |
+| `diseqc step-calibration off` | Disable step calibration. |
 | `diseqc step <east\|west> <steps>` | Move `1..128` steps. |
 | `diseqc drive <east\|west>` | Start continuous movement. |
 | `diseqc stop` | Transmit the positioner halt command. |
@@ -495,16 +524,47 @@ mutations are accepted only after entering configuration mode.
 | `diseqc tone status` | Show carrier state and settings. |
 | `diseqc listen <on\|off>` | Enable or disable the channel-A LNBH26 external DiSEqC input; boolean aliases are accepted. |
 
-The selected preset prefixes `goto`, `step`, `drive`, and `stop`. Raw `diseqc tx`
-frames are transmitted unchanged. Successful `goto`, `step`, and `drive` commands
-hold a motion lock that rejects further movement and raw frames. Step commands use
-a step-derived deadline capped by the configured motion watchdog timeout; goto and
-drive use the configured motion watchdog timeout directly. The timeout defaults to
+The selected preset prefixes all first-class positioner commands, including
+`goto`, `goto-angle`, `reference`, `store`, `recalculate`, `motor-limit`, `step`,
+`drive`, and `stop`.
+Raw `diseqc tx` frames are transmitted unchanged. Successful `goto`, `goto-angle`,
+`step`, and `drive` commands hold a motion lock that rejects further movement and
+raw frames. Step commands use a step-derived deadline capped by the configured
+motion watchdog timeout; goto and drive use the configured motion watchdog timeout directly. The timeout defaults to
 90 seconds and is adjustable from 5 to 300 seconds with `diseqc timeout <seconds>`.
 When the timeout elapses, the firmware transmits Halt automatically and marks the
 motion complete with `completion=timeout`. `diseqc stop` is always accepted and
 clears the lock after transmitting Halt. An external completion command must
 include the current motion ID so a delayed signal cannot release a newer movement.
+
+`goto-angle` uses the DiSEqC 1.2 five-byte form `E0 31 6E xx xx`.
+The two data bytes contain an east (`0xE`) or west (`0xD`) direction nibble and
+a whole-degree magnitude followed by the standard fractional-tenth code lookup
+`0,2,3,5,6,8,A,B,D,E`. For example, east `36.6` encodes as `E2 4A`.
+Input is strict unsigned decimal text with at most six fractional digits; signs,
+exponent notation, and locale decimal separators are rejected because direction
+is a separate argument. The local estimate remains in microdegrees so calibrated
+steps can retain finer resolution than the GoToX command.
+
+Angular software limits are deliberately volatile and start disabled after every
+boot. This fail-closed behavior requires the operator or future station
+orchestrator to confirm the motor's adjustable hardware stops before arming a
+bounded session. A configured software value is not evidence that the physical
+hardware limit was measured correctly.
+
+Motion command results and DiSEqC state/events record `command_mode`,
+`requested_angle_deg`, `encoded_angle_deg`, `direction`, `movement_voltage_v`,
+`position_confidence`, `estimated_angle_deg`, `position_source`,
+`pending_target_deg`, `step_calibration_configured`, `east_step_deg`, and
+`west_step_deg`. The retained state also records
+`angle_limits_configured`, `east_limit_deg`, and `west_limit_deg`. A successful
+GoToX transmission records a pending target without changing the previous
+estimate. Matching external completion adopts the encoded target as
+`position_confidence=estimated`. A calibrated step similarly adopts its pending
+target on external completion. Stored-position movement, reference movement,
+continuous drive, Halt, uncalibrated step completion, and raw positioner commands
+leave the angular estimate `unknown`; watchdog expiry sets `verification_failed`.
+No command-only transition is reported as `rf_verified`.
 
 ## Canonical Command IDs
 
