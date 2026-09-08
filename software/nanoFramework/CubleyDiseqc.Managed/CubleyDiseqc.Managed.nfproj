@@ -24,6 +24,8 @@
   <ItemGroup>
     <Compile Include="DiseqcCommandBuilder.cs" />
     <Compile Include="DiseqcFrameCodec.cs" />
+    <Compile Include="DiseqcGotoAngleEncoder.cs" />
+    <Compile Include="DiseqcPositionEstimate.cs" />
     <Compile Include="DiseqcProtocol.cs" />
     <Compile Include="DiseqcV1Presets.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

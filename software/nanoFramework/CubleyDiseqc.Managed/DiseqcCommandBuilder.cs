@@ -5,6 +5,22 @@ namespace Cubley.Diseqc
         // Command byte high nibble for Write N0/N1 uses option bits in the low nibble.
         private const byte SwitchOptionBase = 0xF0;
 
+        public static byte[] BuildRaw(byte[] frame)
+        {
+            if (frame == null)
+            {
+                return new byte[0];
+            }
+
+            byte[] copy = new byte[frame.Length];
+            for (int i = 0; i < frame.Length; i++)
+            {
+                copy[i] = frame[i];
+            }
+
+            return copy;
+        }
+
         public static byte[] BuildFrame(DiseqcFraming framing, byte address, byte command)
         {
             return new byte[] { (byte)framing, address, command };
@@ -18,6 +34,21 @@ namespace Cubley.Diseqc
         public static byte[] BuildHalt()
         {
             return BuildFrame(DiseqcFraming.FirstTransmissionNoReply, DiseqcAddress.AnyPolarizerOrPositioner, DiseqcCommand.Halt);
+        }
+
+        public static byte[] BuildLimitsOff()
+        {
+            return BuildFrame(DiseqcFraming.FirstTransmissionNoReply, DiseqcAddress.AnyPolarizerOrPositioner, DiseqcCommand.LimitsOff);
+        }
+
+        public static byte[] BuildSetEastLimit()
+        {
+            return BuildFrame(DiseqcFraming.FirstTransmissionNoReply, DiseqcAddress.AnyPolarizerOrPositioner, DiseqcCommand.SetEastLimit);
+        }
+
+        public static byte[] BuildSetWestLimit()
+        {
+            return BuildFrame(DiseqcFraming.FirstTransmissionNoReply, DiseqcAddress.AnyPolarizerOrPositioner, DiseqcCommand.SetWestLimit);
         }
 
         public static byte[] BuildDriveEast()
@@ -40,9 +71,41 @@ namespace Cubley.Diseqc
             return BuildFrame(DiseqcFraming.FirstTransmissionNoReply, DiseqcAddress.AnyPolarizerOrPositioner, DiseqcCommand.DriveWestOrStep, NormalizeSteps(steps));
         }
 
+        public static byte[] BuildStorePosition(byte position)
+        {
+            return BuildFrame(DiseqcFraming.FirstTransmissionNoReply, DiseqcAddress.AnyPolarizerOrPositioner, DiseqcCommand.StorePosition, position);
+        }
+
         public static byte[] BuildGotoStoredPosition(byte position)
         {
             return BuildFrame(DiseqcFraming.FirstTransmissionNoReply, DiseqcAddress.AnyPolarizerOrPositioner, DiseqcCommand.GotoStoredPosition, position);
+        }
+
+        public static byte[] BuildRecalculatePositions()
+        {
+            return BuildFrame(DiseqcFraming.FirstTransmissionNoReply, DiseqcAddress.AnyPolarizerOrPositioner, DiseqcCommand.RecalculatePositions, 0x00);
+        }
+
+        public static bool TryBuildGotoAngularPosition(
+            DiseqcMotorDirection direction,
+            string degrees,
+            out byte[] frame,
+            out int requestedMicrodegrees,
+            out int encodedAngleTenths,
+            out string error)
+        {
+            return DiseqcGotoAngleEncoder.TryBuildFrame(
+                direction,
+                degrees,
+                out frame,
+                out requestedMicrodegrees,
+                out encodedAngleTenths,
+                out error);
+        }
+
+        public static byte[] BuildWritePortGroupN0(byte option)
+        {
+            return BuildFrame(DiseqcFraming.FirstTransmissionNoReply, DiseqcAddress.AnyLnbSwitchSmatv, DiseqcCommand.WriteN0, option);
         }
 
         // DiSEqC 1.0 committed switch control (port/pol/band matrix).
@@ -104,6 +167,53 @@ namespace Cubley.Diseqc
                 BuildUncommittedSwitch(uncommittedInputIndex),
                 BuildCommittedSwitch(position, option, polarization, band),
             };
+        }
+
+        public static byte[] BuildPositionerHalt()
+        {
+            return BuildHalt();
+        }
+
+        public static byte[] BuildPositionerDriveEast()
+        {
+            return BuildDriveEast();
+        }
+
+        public static byte[] BuildPositionerDriveWest()
+        {
+            return BuildDriveWest();
+        }
+
+        public static byte[] BuildPositionerStepEast(byte steps)
+        {
+            return BuildStepEast(steps);
+        }
+
+        public static byte[] BuildPositionerStepWest(byte steps)
+        {
+            return BuildStepWest(steps);
+        }
+
+        public static byte[] BuildPositionerGotoStoredPosition(byte position)
+        {
+            return BuildGotoStoredPosition(position);
+        }
+
+        public static bool TryBuildPositionerGotoAngularPosition(
+            DiseqcMotorDirection direction,
+            string degrees,
+            out byte[] frame,
+            out int requestedMicrodegrees,
+            out int encodedAngleTenths,
+            out string error)
+        {
+            return TryBuildGotoAngularPosition(
+                direction,
+                degrees,
+                out frame,
+                out requestedMicrodegrees,
+                out encodedAngleTenths,
+                out error);
         }
 
         private static byte NormalizeSteps(byte steps)

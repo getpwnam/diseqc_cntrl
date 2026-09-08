@@ -77,6 +77,7 @@ namespace CubleyControl
         /// </summary>
         private static bool TryEndDiseqcJob(int jobId, string state, string detail)
         {
+            bool ended;
             lock (_diseqcJobLock)
             {
                 if (jobId == 0 || _diseqcActiveJobId != jobId)
@@ -99,8 +100,15 @@ namespace CubleyControl
                 _diseqcJobDeadlines[slot] = 0;
                 _diseqcActiveJobId = 0;
                 _diseqcLastTerminalJobId = jobId;
-                return true;
+                ended = true;
             }
+
+            if (ended)
+            {
+                RestoreDiseqcMotionVoltageAfterJob();
+            }
+
+            return ended;
         }
 
         /// <summary>Ends whichever job is active. Returns its id, or 0 if none was.</summary>
