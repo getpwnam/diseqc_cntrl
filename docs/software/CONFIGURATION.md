@@ -5,13 +5,31 @@
 CubleyControl has two persisted configuration domains:
 
 - IPv4, DHCP, and DNS use the standard nanoFramework network configuration block.
-- The device hostname and MQTT settings use the portable 512-byte Cubley
+- The device hostname, MQTT settings, and DiSEqC positioning calibration use the portable 512-byte Cubley
   application record described in
   [CONFIGURATION_STORAGE.md](CONFIGURATION_STORAGE.md).
 
-The active MQTT backend is STM32 internal flash. FRAM is not initialized or
+The active application-configuration backend is STM32 internal flash. FRAM is not initialized or
 probed on the current development board. The application record is deliberately
 backend-neutral so the same bytes can move to dual FRAM slots later.
+
+Persistent positioning values are staged and committed from USB configuration
+mode:
+
+```text
+configure
+diseqc angle-limits 50 50
+diseqc step-calibration 0.112658 0.112658
+diseqc fixed-offset west 3.38
+show candidate-config diseqc
+commit
+exit
+```
+
+Operational `diseqc angle-limits` and `diseqc step-calibration` commands remain
+runtime overrides and do not write flash. `diseqc fixed-offset` is configured
+only through configuration mode. Use `diseqc defaults` or `load defaults diseqc`
+to stage disabled positioning defaults.
 
 ## Application Defaults
 
@@ -106,7 +124,7 @@ backend uses two generation-selected slots to provide atomic record replacement.
 
 ## Credentials
 
-Schema v2 stores MQTT credentials as cleartext in the application record. Password
+Schema v3 stores MQTT credentials as cleartext in the application record. Password
 values are redacted from command debug logs and are never returned by configuration
 commands. TLS and encrypted-at-rest credentials are outside the v1 scope.
 

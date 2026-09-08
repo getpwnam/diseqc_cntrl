@@ -25,6 +25,7 @@
     <Compile Include="$(BuildInfoSource)" Condition=" '$(BuildInfoSource)' != '' " />
     <Compile Include="Json.cs" />
     <Compile Include="Program.Commands.Configuration.cs" />
+    <Compile Include="Program.Commands.DiseqcConfig.cs" />
     <Compile Include="Program.Commands.Diseqc.cs" />
     <Compile Include="Program.Commands.Lnb.cs" />
     <Compile Include="Program.Commands.Mqtt.cs" />

@@ -6,8 +6,8 @@ Define the portable Cubley application configuration record and its physical
 storage backends. The record format is independent of internal flash or FRAM.
 
 Network interface addressing remains in the standard nanoFramework network
-configuration block. The application record stores the device hostname and MQTT
-settings.
+configuration block. The application record stores the device hostname, MQTT
+settings, and DiSEqC positioning calibration.
 
 ## Portable Record
 
@@ -16,7 +16,7 @@ The record is exactly 512 bytes. Integer fields are little-endian.
 | Offset | Size | Field | Description |
 |---:|---:|---|---|
 | `0x000` | 4 | Magic | ASCII `CCFG` |
-| `0x004` | 1 | Schema version | Currently `2` |
+| `0x004` | 1 | Schema version | Currently `3`; version `2` remains readable |
 | `0x005` | 1 | Flags | Reserved, currently `0` |
 | `0x006` | 2 | Payload length | Used bytes from the payload area |
 | `0x008` | 4 | Generation | Monotonic save generation |
@@ -28,7 +28,9 @@ The CRC polynomial is the reflected `0xEDB88320` form with initial value
 
 Schema v2 keys are `hostname`, `enabled`, `broker`, `port`, `client_id`,
 `username`, `password`, `topic_prefix`, `keepalive_seconds`, and
-`reconnect_seconds`. Schema v1 records are not migrated; they are rejected and
+`reconnect_seconds`. Schema v3 adds `de_lim`, `dw_lim`, `de_step`, `dw_step`,
+and `d_offset`, stored as signed or unsigned microdegrees. Missing v3 keys use
+disabled/zero defaults when a v2 record is loaded. Schema v1 records are rejected and
 the application starts with disabled defaults.
 
 ## Active Internal Flash Backend

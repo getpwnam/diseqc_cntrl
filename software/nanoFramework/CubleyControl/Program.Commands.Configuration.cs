@@ -1,3 +1,5 @@
+using Cubley.Diseqc;
+
 namespace CubleyControl
 {
     public static partial class Program
@@ -78,6 +80,12 @@ namespace CubleyControl
                     PrefixConfigurationTokens(tokens, "mqtt"),
                     PrefixConfigurationTokens(valueTokens, "mqtt"),
                     reqId);
+                return;
+            }
+
+            if (head == "diseqc")
+            {
+                HandleSetDiseqcConfigurationCommand(tokens, reqId);
                 return;
             }
 
@@ -195,7 +203,8 @@ namespace CubleyControl
                     "hostname <name|auto>\r\n" +
                     "network <mode dhcp|static|address IP|mask MASK|gateway IP|dns auto|dns static DNS1 [DNS2]|defaults>\r\n" +
                     "mqtt <enabled on|off|broker <HOST|clear>|port PORT|client-id <ID|auto>|username <VALUE|clear>|password <VALUE|clear>|topic-prefix PREFIX|keepalive SEC|reconnect SEC|default|defaults>\r\n" +
-                    "show <running-config|run|startup-config|start|candidate-config|candidate|cand> [network|mqtt]\r\n" +
+                    "diseqc <angle-limits EAST WEST|step-calibration EAST WEST|fixed-offset east|west DEGREES|defaults|off>\r\n" +
+                    "show <running-config|run|startup-config|start|candidate-config|candidate|cand> [network|mqtt|diseqc]\r\n" +
                     "show storage|configuration-storage|config-storage\r\n" +
                     "show diff | show config diff\r\n" +
                     "debug <on|off>\r\n" +
@@ -233,7 +242,14 @@ namespace CubleyControl
             if (topic == "mqtt" || topic == "mq")
             {
                 WriteHumanHeading("MQTT syntax");
-                _activeOutputSink("mqtt <enabled on|off|broker HOST|port PORT|client-id ID|username VALUE|password VALUE|topic-prefix PREFIX|keepalive SEC|reconnect SEC|defaults>\r\n");
+                _activeOutputSink("mqtt <enabled on|off|broker HOST|port PORT|client-id ID|username VALUE|password VALUE|topic-prefix PREFIX|keepalive SEC|reconnect SEC|default|defaults>\r\n");
+                return;
+            }
+
+            if (topic == "diseqc")
+            {
+                WriteHumanHeading("DiSEqC configuration syntax");
+                _activeOutputSink("diseqc <angle-limits EAST WEST|step-calibration EAST WEST|fixed-offset east|west DEGREES|defaults|off>\r\n");
                 return;
             }
 
@@ -241,7 +257,7 @@ namespace CubleyControl
             {
                 WriteHumanHeading("Show syntax");
                 _activeOutputSink(
-                    "show <running-config|run|startup-config|start|candidate-config|candidate|cand> [network|mqtt]\r\n" +
+                    "show <running-config|run|startup-config|start|candidate-config|candidate|cand> [network|mqtt|diseqc]\r\n" +
                     "show storage|configuration-storage|config-storage\r\n" +
                     "show diff | show config diff\r\n");
                 return;
@@ -320,16 +336,32 @@ namespace CubleyControl
 
             if (domain == "mqtt" || domain == "mq" || domain == "all")
             {
+                int eastLimit = _pendingMqttConfiguration.DiseqcEastLimitMicrodegrees;
+                int westLimit = _pendingMqttConfiguration.DiseqcWestLimitMicrodegrees;
+                int eastStep = _pendingMqttConfiguration.DiseqcEastStepMicrodegrees;
+                int westStep = _pendingMqttConfiguration.DiseqcWestStepMicrodegrees;
+                int offset = _pendingMqttConfiguration.DiseqcGotoOffsetMicrodegrees;
                 string hostname = _pendingMqttConfiguration.Hostname;
                 _pendingMqttConfiguration = MqttConfiguration.CreateDefaults();
                 if (domain != "all")
                 {
                     _pendingMqttConfiguration.Hostname = hostname;
+                    _pendingMqttConfiguration.DiseqcEastLimitMicrodegrees = eastLimit;
+                    _pendingMqttConfiguration.DiseqcWestLimitMicrodegrees = westLimit;
+                    _pendingMqttConfiguration.DiseqcEastStepMicrodegrees = eastStep;
+                    _pendingMqttConfiguration.DiseqcWestStepMicrodegrees = westStep;
+                    _pendingMqttConfiguration.DiseqcGotoOffsetMicrodegrees = offset;
                 }
                 _mqttConfigurationDirty = _pendingMqttConfiguration.ToPayload() != _mqttConfiguration.ToPayload();
             }
 
-            if (domain != "network" && domain != "net" && domain != "mqtt" && domain != "mq" && domain != "all")
+            if (domain == "diseqc")
+            {
+                ClearDiseqcConfiguration(_pendingMqttConfiguration);
+                _mqttConfigurationDirty = _pendingMqttConfiguration.ToPayload() != _mqttConfiguration.ToPayload();
+            }
+
+            if (domain != "network" && domain != "net" && domain != "mqtt" && domain != "mq" && domain != "diseqc" && domain != "all")
             {
                 WriteCommandResult(reqId, false, "validation_error", "defaults domain invalid", "domain=" + domain);
                 return;
@@ -377,7 +409,7 @@ namespace CubleyControl
                     return;
                 }
 
-                if ((domain == "all" || domain == "mqtt") &&
+                if ((domain == "all" || domain == "mqtt" || domain == "diseqc") &&
                     !_applicationConfigurationStorage.TryLoad(out mqtt, out generation, out error))
                 {
                     if (_mqttConfigurationSource == "defaults")
@@ -404,7 +436,7 @@ namespace CubleyControl
 
             if (tokens.Length != index + 1)
             {
-                WriteCommandResult(reqId, false, "validation_error", "configuration display usage", "usage=show <running-config|startup-config|candidate-config> [network|mqtt]");
+                WriteCommandResult(reqId, false, "validation_error", "configuration display usage", "usage=show <running-config|startup-config|candidate-config> [network|mqtt|diseqc]");
                 return null;
             }
 
@@ -419,7 +451,7 @@ namespace CubleyControl
                 return "mqtt";
             }
 
-            if (domain != "network" && domain != "mqtt" && domain != "all")
+            if (domain != "network" && domain != "mqtt" && domain != "diseqc" && domain != "all")
             {
                 WriteCommandResult(reqId, false, "validation_error", "configuration domain invalid", "domain=" + domain);
                 return null;
@@ -439,7 +471,7 @@ namespace CubleyControl
                 return;
             }
 
-            _activeOutputSink("! cubley-config v2 " + source + "\r\n");
+            _activeOutputSink("! cubley-config v3 " + source + "\r\n");
             bool hideDefaults = source == "running";
             NetworkConfiguration defaultNetwork = NetworkConfiguration.CreateDefaults();
             MqttConfiguration defaultMqtt = MqttConfiguration.CreateDefaults();
@@ -475,6 +507,24 @@ namespace CubleyControl
                 EmitConfigurationLine(hideDefaults, mqtt.KeepAliveSeconds != defaultMqtt.KeepAliveSeconds, "mqtt keepalive " + mqtt.KeepAliveSeconds.ToString() + "\r\n");
                 EmitConfigurationLine(hideDefaults, mqtt.ReconnectSeconds != defaultMqtt.ReconnectSeconds, "mqtt reconnect " + mqtt.ReconnectSeconds.ToString() + "\r\n");
             }
+            if (domain == "all" || domain == "diseqc")
+            {
+                EmitConfigurationLine(hideDefaults,
+                    mqtt.DiseqcEastLimitMicrodegrees != 0 || mqtt.DiseqcWestLimitMicrodegrees != 0,
+                    mqtt.DiseqcEastLimitMicrodegrees == 0
+                        ? "diseqc angle-limits off\r\n"
+                        : "diseqc angle-limits " + DiseqcGotoAngleEncoder.FormatMicrodegrees(mqtt.DiseqcEastLimitMicrodegrees) + " " + DiseqcGotoAngleEncoder.FormatMicrodegrees(mqtt.DiseqcWestLimitMicrodegrees) + "\r\n");
+                EmitConfigurationLine(hideDefaults,
+                    mqtt.DiseqcEastStepMicrodegrees != 0 || mqtt.DiseqcWestStepMicrodegrees != 0,
+                    mqtt.DiseqcEastStepMicrodegrees == 0
+                        ? "diseqc step-calibration off\r\n"
+                        : "diseqc step-calibration " + DiseqcGotoAngleEncoder.FormatMicrodegrees(mqtt.DiseqcEastStepMicrodegrees) + " " + DiseqcGotoAngleEncoder.FormatMicrodegrees(mqtt.DiseqcWestStepMicrodegrees) + "\r\n");
+                EmitConfigurationLine(hideDefaults,
+                    mqtt.DiseqcGotoOffsetMicrodegrees != 0,
+                    mqtt.DiseqcGotoOffsetMicrodegrees == 0
+                        ? "diseqc fixed-offset off\r\n"
+                        : "diseqc fixed-offset " + (mqtt.DiseqcGotoOffsetMicrodegrees > 0 ? "east " : "west ") + DiseqcGotoAngleEncoder.FormatMicrodegrees(mqtt.DiseqcGotoOffsetMicrodegrees > 0 ? mqtt.DiseqcGotoOffsetMicrodegrees : -mqtt.DiseqcGotoOffsetMicrodegrees) + "\r\n");
+            }
         }
 
         private static void EmitConfigurationLine(bool hideDefaults, bool differsFromDefault, string line)
@@ -507,6 +557,9 @@ namespace CubleyControl
             changed |= EmitConfigurationDiffLine("mqtt topic-prefix ", _mqttConfiguration.TopicPrefix, _pendingMqttConfiguration.TopicPrefix);
             changed |= EmitConfigurationDiffLine("mqtt keepalive ", _mqttConfiguration.KeepAliveSeconds.ToString(), _pendingMqttConfiguration.KeepAliveSeconds.ToString());
             changed |= EmitConfigurationDiffLine("mqtt reconnect ", _mqttConfiguration.ReconnectSeconds.ToString(), _pendingMqttConfiguration.ReconnectSeconds.ToString());
+            changed |= EmitConfigurationDiffLine("diseqc angle-limits ", FormatDiseqcPair(_mqttConfiguration.DiseqcEastLimitMicrodegrees, _mqttConfiguration.DiseqcWestLimitMicrodegrees), FormatDiseqcPair(_pendingMqttConfiguration.DiseqcEastLimitMicrodegrees, _pendingMqttConfiguration.DiseqcWestLimitMicrodegrees));
+            changed |= EmitConfigurationDiffLine("diseqc step-calibration ", FormatDiseqcPair(_mqttConfiguration.DiseqcEastStepMicrodegrees, _mqttConfiguration.DiseqcWestStepMicrodegrees), FormatDiseqcPair(_pendingMqttConfiguration.DiseqcEastStepMicrodegrees, _pendingMqttConfiguration.DiseqcWestStepMicrodegrees));
+            changed |= EmitConfigurationDiffLine("diseqc fixed-offset ", FormatDiseqcOffset(_mqttConfiguration.DiseqcGotoOffsetMicrodegrees), FormatDiseqcOffset(_pendingMqttConfiguration.DiseqcGotoOffsetMicrodegrees));
 
             if (!changed)
             {
@@ -542,6 +595,24 @@ namespace CubleyControl
             return string.IsNullOrEmpty(value) ? "clear" : value;
         }
 
+        private static string FormatDiseqcPair(int eastMicrodegrees, int westMicrodegrees)
+        {
+            return eastMicrodegrees == 0
+                ? "off"
+                : DiseqcGotoAngleEncoder.FormatMicrodegrees(eastMicrodegrees) + " " + DiseqcGotoAngleEncoder.FormatMicrodegrees(westMicrodegrees);
+        }
+
+        private static string FormatDiseqcOffset(int signedMicrodegrees)
+        {
+            if (signedMicrodegrees == 0)
+            {
+                return "off";
+            }
+
+            return (signedMicrodegrees > 0 ? "east " : "west ") +
+                DiseqcGotoAngleEncoder.FormatMicrodegrees(signedMicrodegrees > 0 ? signedMicrodegrees : -signedMicrodegrees);
+        }
+
         private static void CommitCandidateConfiguration(int reqId)
         {
             if (!IsConfigurationDirty())
@@ -571,6 +642,12 @@ namespace CubleyControl
             uint savedMqttGeneration = previousMqttGeneration;
             bool mqttChanged = _mqttConfigurationDirty;
             bool networkChanged = _networkConfigurationDirty;
+
+            if (HasDiseqcConfigurationChanged(candidateMqtt, previousMqtt) && GetActiveDiseqcJobId() != 0)
+            {
+                WriteCommandResult(reqId, false, "busy", "diseqc motion active", "motion_id=" + GetActiveDiseqcJobId().ToString());
+                return;
+            }
 
             if (mqttChanged && !TryPersistMqttConfiguration(candidateMqtt, previousMqttGeneration, out savedMqttGeneration, out error))
             {
@@ -629,6 +706,7 @@ namespace CubleyControl
                 }
                 _mqttConfigurationSource = _applicationConfigurationStorage.Source;
                 _mqttConfigurationError = string.Empty;
+                ApplyDiseqcConfiguration(_mqttConfiguration);
             }
 
             _pendingNetworkConfiguration = _networkConfiguration.Clone();

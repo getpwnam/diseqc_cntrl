@@ -36,6 +36,7 @@ namespace CubleyControl
             _pendingMqttConfiguration = _mqttConfiguration.Clone();
             _mqttConfigurationDirty = false;
             _mqttConfigurationRevision = 1;
+            ApplyDiseqcConfiguration(_mqttConfiguration);
             WriteStructuredDebug(
                 "CONFIG",
                 "schema=1 sub=config comp=storage domain=mqtt operation=load" +

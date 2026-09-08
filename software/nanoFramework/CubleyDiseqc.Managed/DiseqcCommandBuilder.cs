@@ -103,6 +103,29 @@ namespace Cubley.Diseqc
                 out error);
         }
 
+        public static bool TryBuildGotoAngularPosition(
+            DiseqcMotorDirection direction,
+            string degrees,
+            int signedOffsetMicrodegrees,
+            out byte[] frame,
+            out int requestedMicrodegrees,
+            out DiseqcMotorDirection effectiveDirection,
+            out int effectiveMicrodegrees,
+            out int encodedAngleTenths,
+            out string error)
+        {
+            return DiseqcGotoAngleEncoder.TryBuildFrame(
+                direction,
+                degrees,
+                signedOffsetMicrodegrees,
+                out frame,
+                out requestedMicrodegrees,
+                out effectiveDirection,
+                out effectiveMicrodegrees,
+                out encodedAngleTenths,
+                out error);
+        }
+
         public static byte[] BuildWritePortGroupN0(byte option)
         {
             return BuildFrame(DiseqcFraming.FirstTransmissionNoReply, DiseqcAddress.AnyLnbSwitchSmatv, DiseqcCommand.WriteN0, option);
