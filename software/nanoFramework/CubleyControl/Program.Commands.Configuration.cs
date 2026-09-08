@@ -190,19 +190,22 @@ namespace CubleyControl
         {
             if (tokens.Length == 1)
             {
-                WriteHumanHeading("Configuration commands");
-                WriteHelpCommand("hostname <name|auto>", "Set the device hostname");
-                WriteHelpCommand("network <setting> <value>", "Stage network configuration");
-                WriteHelpCommand("mqtt <setting> <value>", "Stage MQTT configuration");
-                WriteHelpCommand("show <topic>", "Display configuration and storage state");
-                WriteHelpCommand("debug <on|off>", "Control successful setter output");
-                WriteHelpCommand("commit", "Persist and activate the candidate");
-                WriteHelpCommand("discard", "Abandon candidate changes");
-                WriteHelpCommand("load defaults [domain]", "Stage default values");
-                WriteHelpCommand("exit", "Leave configuration mode when clean");
-                WriteHelpCommand("quit", "Release the console when clean (alias: logout)");
-                WriteHelpCommand("help [command]", "Show command help (alias: ?)");
-                _activeOutputSink("\r\nA '*' in the prompt marks uncommitted changes.\r\n");
+                WriteHumanHeading("Configuration syntax");
+                _activeOutputSink(
+                    "hostname <name|auto>\r\n" +
+                    "network <mode dhcp|static|address IP|mask MASK|gateway IP|dns auto|dns static DNS1 [DNS2]|defaults>\r\n" +
+                    "mqtt <enabled on|off|broker HOST|port PORT|client-id ID|username VALUE|password VALUE|topic-prefix PREFIX|keepalive SEC|reconnect SEC|defaults>\r\n" +
+                    "show <running-config|run|startup-config|start|candidate-config|candidate|cand> [network|mqtt]\r\n" +
+                    "show storage|configuration-storage|config-storage\r\n" +
+                    "show diff | show config diff\r\n" +
+                    "debug <on|off>\r\n" +
+                    "commit|apply\r\n" +
+                    "discard|abort\r\n" +
+                    "load defaults [network|mqtt|all]\r\n" +
+                    "defaults [network|mqtt|all]\r\n" +
+                    "exit|end\r\n" +
+                    "help|h|? [command]\r\n" +
+                    "quit|logout\r\n");
                 return;
             }
 
@@ -215,89 +218,74 @@ namespace CubleyControl
             string topic = tokens[1];
             if (topic == "network" || topic == "net")
             {
-                WriteHumanHeading("Network configuration");
-                WriteHelpCommand("network mode <dhcp|static>", "Set address assignment mode");
-                WriteHelpCommand("network address <ipv4>", "Set static IPv4 address");
-                WriteHelpCommand("network mask <mask>", "Set static subnet mask");
-                WriteHelpCommand("network gateway <ipv4>", "Set static gateway");
-                WriteHelpCommand("network dns auto", "Use automatic DNS");
-                WriteHelpCommand("network dns static <dns1> [dns2]", "Set static DNS servers");
-                WriteHelpCommand("network defaults", "Stage network defaults");
+                WriteHumanHeading("Network syntax");
+                _activeOutputSink("network <mode dhcp|static|address IP|mask MASK|gateway IP|dns auto|dns static DNS1 [DNS2]|defaults>\r\n");
                 return;
             }
 
             if (topic == "hostname")
             {
-                WriteHumanHeading("Device hostname");
-                WriteHelpCommand("hostname <name|auto>", "Set a DNS-label hostname or derive one from the STM32 unique ID");
+                WriteHumanHeading("Hostname syntax");
+                _activeOutputSink("hostname <name|auto>\r\n");
                 return;
             }
 
             if (topic == "mqtt" || topic == "mq")
             {
-                WriteHumanHeading("MQTT configuration");
-                WriteHelpCommand("mqtt enabled <on|off>", "Enable or disable the service");
-                WriteHelpCommand("mqtt broker <host|clear>", "Set or clear broker address");
-                WriteHelpCommand("mqtt port <1..65535>", "Set broker port");
-                WriteHelpCommand("mqtt client-id <id|auto>", "Set client identifier");
-                WriteHelpCommand("mqtt username <value|clear>", "Set or clear username");
-                WriteHelpCommand("mqtt password <value|clear>", "Set or clear password");
-                WriteHelpCommand("mqtt topic-prefix <prefix>", "Set MQTT base topic prefix");
-                WriteHelpCommand("mqtt keepalive <15..3600>", "Set keepalive seconds");
-                WriteHelpCommand("mqtt reconnect <1..60>", "Set reconnect delay seconds");
-                WriteHelpCommand("mqtt defaults", "Stage MQTT defaults");
+                WriteHumanHeading("MQTT syntax");
+                _activeOutputSink("mqtt <enabled on|off|broker HOST|port PORT|client-id ID|username VALUE|password VALUE|topic-prefix PREFIX|keepalive SEC|reconnect SEC|defaults>\r\n");
                 return;
             }
 
             if (topic == "show")
             {
-                WriteHumanHeading("Configuration show commands");
-                WriteHelpCommand("show candidate-config [domain]", "Display the staged candidate");
-                WriteHelpCommand("show config diff", "Compare candidate and running state");
-                WriteHelpCommand("show running-config [domain]", "Display active configuration");
-                WriteHelpCommand("show startup-config [domain]", "Display persisted configuration");
-                WriteHelpCommand("show storage", "Display backend and load status");
+                WriteHumanHeading("Show syntax");
+                _activeOutputSink(
+                    "show <running-config|run|startup-config|start|candidate-config|candidate|cand> [network|mqtt]\r\n" +
+                    "show storage|configuration-storage|config-storage\r\n" +
+                    "show diff | show config diff\r\n");
                 return;
             }
 
             if (topic == "debug")
             {
-                WriteHumanHeading("Debug output");
-                WriteHelpCommand("debug on", "Show successful setter results");
-                WriteHelpCommand("debug off", "Keep successful setters silent");
+                WriteHumanHeading("Debug syntax");
+                _activeOutputSink("debug <on|off>\r\n");
                 return;
             }
 
             if (topic == "commit" || topic == "apply")
             {
-                WriteHumanHeading("Commit candidate");
-                WriteHelpCommand("commit", "Validate, persist, and activate changes");
-                WriteHelpCommand("apply", "Alias for commit");
+                WriteHumanHeading("Commit syntax");
+                _activeOutputSink("commit|apply\r\n");
                 return;
             }
 
             if (topic == "discard" || topic == "abort")
             {
-                WriteHumanHeading("Discard candidate");
-                WriteHelpCommand("discard", "Restore the committed candidate");
-                WriteHelpCommand("abort", "Alias for discard");
+                WriteHumanHeading("Discard syntax");
+                _activeOutputSink("discard|abort\r\n");
                 return;
             }
 
             if (topic == "load" || topic == "defaults")
             {
-                WriteHumanHeading("Load defaults");
-                WriteHelpCommand("load defaults [network|mqtt|all]", "Stage defaults without committing");
-                WriteHelpCommand("defaults [network|mqtt|all]", "Short form");
+                WriteHumanHeading("Defaults syntax");
+                _activeOutputSink("load defaults [network|mqtt|all]\r\ndefaults [network|mqtt|all]\r\n");
                 return;
             }
 
             if (topic == "exit" || topic == "end")
             {
-                WriteHumanHeading("Exit configuration mode");
-                WriteHelpCommand("exit | end | Ctrl+D", "Leave only when the candidate is clean");
-                WriteHelpCommand("commit", "Apply uncommitted changes first");
-                WriteHelpCommand("discard", "Abandon uncommitted changes first");
+                WriteHumanHeading("Exit syntax");
+                _activeOutputSink("exit|end\r\n");
+                return;
+            }
+
+            if (topic == "quit" || topic == "logout")
+            {
+                WriteHumanHeading("Session syntax");
+                _activeOutputSink("quit|logout\r\n");
                 return;
             }
 
