@@ -68,17 +68,17 @@ namespace Cubley.Diseqc
             int stepSize = direction == DiseqcMotorDirection.East
                 ? EastStepMicrodegrees
                 : WestStepMicrodegrees;
-            int signedDelta = direction == DiseqcMotorDirection.East
-                ? stepSize * steps
-                : -(stepSize * steps);
-            int target = EstimatedAngleMicrodegrees + signedDelta;
+            long signedDelta = direction == DiseqcMotorDirection.East
+                ? (long)stepSize * steps
+                : -((long)stepSize * steps);
+            long target = (long)EstimatedAngleMicrodegrees + signedDelta;
             if (target < -MaximumMagnitudeMicrodegrees || target > MaximumMagnitudeMicrodegrees)
             {
                 return;
             }
 
             HasPendingTarget = true;
-            PendingTargetMicrodegrees = target;
+            PendingTargetMicrodegrees = (int)target;
             PendingSource = "step";
         }
 

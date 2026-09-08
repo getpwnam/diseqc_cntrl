@@ -474,7 +474,12 @@ namespace CubleyControl
                     "diseqc step",
                     east ? DiseqcCommandBuilder.BuildStepEast((byte)value) : DiseqcCommandBuilder.BuildStepWest((byte)value),
                     east ? "step_east" : "step_west",
-                    DiseqcStepBaseTimeMs + (value * DiseqcStepTimePerStepMs));
+                    DiseqcStepBaseTimeMs + (value * DiseqcStepTimePerStepMs),
+                    "step",
+                    "none",
+                    "none",
+                    east ? "east" : "west",
+                    value);
                 return;
             }
 

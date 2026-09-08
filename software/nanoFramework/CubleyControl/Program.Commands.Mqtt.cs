@@ -355,9 +355,10 @@ namespace CubleyControl
                 }
 
                 int position;
-                if (!command.TryGetInt("position", out position) || position < 0 || position > 255)
+                if (!command.TryGetInt("position", out position) ||
+                    position < 0 || position > DiseqcMotorStoredPositionMax)
                 {
-                    return BuildMqttFailureBody(commandId, "validation_error", "position must be an integer 0 to 255", 0);
+                    return BuildMqttFailureBody(commandId, "validation_error", "position must be an integer 0 to 60", 0);
                 }
 
                 operation = PositionerOpGoto;

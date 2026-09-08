@@ -48,6 +48,18 @@ public sealed class DiseqcPositionEstimateTests
         Assert.Equal("verification_failed", estimate.Confidence);
     }
 
+    [Fact]
+    public void StepTargetOutsideRangeDoesNotOverflowIntoPendingTarget()
+    {
+        var estimate = CreateEstimatedPosition(DiseqcMotorDirection.East, 1_000_000);
+        estimate.ConfigureStepCalibration(180_000_000, 180_000_000);
+
+        estimate.BeginStep(DiseqcMotorDirection.East, 128);
+
+        Assert.False(estimate.HasPendingTarget);
+        Assert.Equal(1_000_000, estimate.EstimatedAngleMicrodegrees);
+    }
+
     private static DiseqcPositionEstimate CreateEstimatedPosition(
         DiseqcMotorDirection direction,
         int magnitudeMicrodegrees)
