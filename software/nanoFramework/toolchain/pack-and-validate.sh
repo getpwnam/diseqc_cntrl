@@ -102,6 +102,7 @@ esac
 
 mkdir -p "$OUT_DIR"
 
+EXPECTED_SIZE=0
 for f in "${ARGS[@]}"; do
   if [[ ! -f "$f" ]]; then
     fail "input not found: $f"
@@ -119,6 +120,9 @@ for f in "${ARGS[@]}"; do
   if [[ "$REQUIRED_MARKER" != "ANY" && "$marker_name" != "$REQUIRED_MARKER" ]]; then
     fail "marker policy violation: $f has $marker_name, required $REQUIRED_MARKER"
   fi
+
+  input_size="$(stat -c '%s' "$f")"
+  EXPECTED_SIZE=$((EXPECTED_SIZE + input_size))
 done
 
 if [[ -z "$OUT_BASE" ]]; then
@@ -133,6 +137,11 @@ LATEST_LINK="$OUT_DIR/latest.deploy.bin"
 cat "${ARGS[@]}" > "$OUT_FILE"
 
 OUT_SIZE="$(stat -c '%s' "$OUT_FILE")"
+if (( OUT_SIZE != EXPECTED_SIZE )); then
+  rm -f "$OUT_FILE"
+  fail "output size mismatch: ${OUT_SIZE} bytes written, expected ${EXPECTED_SIZE} bytes"
+fi
+
 if (( OUT_SIZE > DEPLOY_REGION_MAX_BYTES )); then
   rm -f "$OUT_FILE"
   fail "output too large: ${OUT_SIZE} bytes > ${DEPLOY_REGION_MAX_BYTES} bytes (deployment region limit)"
@@ -144,5 +153,6 @@ ln -sfn "$(basename "$OUT_FILE")" "$LATEST_LINK"
 
 echo "PACK_OK: $OUT_FILE"
 echo "SIZE_OK: $OUT_SIZE bytes"
+echo "INPUT_COUNT: ${#ARGS[@]}"
 echo "MARKER_POLICY: $REQUIRED_MARKER"
 echo "LATEST: $LATEST_LINK -> $(readlink "$LATEST_LINK")"

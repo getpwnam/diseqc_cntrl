@@ -614,6 +614,7 @@ else
   CUBLEY_INTEROP_PE="$OUTPUT_DIR/CubleyNative.pe"
   CUBLEY_DISEQC_MANAGED_PE="$OUTPUT_DIR/CubleyDiseqcManaged.pe"
   RUNTIME_EVENTS_PE=""
+  SYSTEM_TEXT_PE=""
 
   if [[ "$SKIP_INTEROP_VALIDATION" != "true" && -x "$CHECKSUM_TOOL" ]]; then
     if [[ -f "$CUBLEY_INTEROP_PE" ]]; then
@@ -636,6 +637,17 @@ else
     fi
   fi
 
+  if [[ -f "$OUTPUT_DIR/nanoFramework.System.Text.pe" ]]; then
+    SYSTEM_TEXT_PE="$OUTPUT_DIR/nanoFramework.System.Text.pe"
+  else
+    shopt -s nullglob
+    system_text_candidates=("$ROOT_DIR"/packages/nanoFramework.System.Text.*/lib/nanoFramework.System.Text.pe)
+    shopt -u nullglob
+    if [[ ${#system_text_candidates[@]} -gt 0 ]]; then
+      SYSTEM_TEXT_PE="$(printf '%s\n' "${system_text_candidates[@]}" | sort -V | tail -n1)"
+    fi
+  fi
+
   if [[ -f "$PRIMARY_PE" ]]; then
     required_pe_paths=(
       "$PRIMARY_PE"
@@ -648,7 +660,7 @@ else
       "$OUTPUT_DIR/nanoFramework.Runtime.Native.pe"
       "$OUTPUT_DIR/nanoFramework.System.Collections.pe"
       "$OUTPUT_DIR/System.IO.Streams.pe"
-      "$OUTPUT_DIR/nanoFramework.System.Text.pe"
+      "$SYSTEM_TEXT_PE"
       "$OUTPUT_DIR/System.Net.pe"
       "$OUTPUT_DIR/nanoFramework.M2Mqtt.Core.pe"
       "$OUTPUT_DIR/nanoFramework.M2Mqtt.pe"
@@ -658,7 +670,7 @@ else
     missing_required_pe="false"
     for required_pe in "${required_pe_paths[@]}"; do
       if [[ -z "$required_pe" || ! -f "$required_pe" ]]; then
-        echo "[error] Required deployment assembly missing: ${required_pe:-nanoFramework.Runtime.Events.pe}" >&2
+        echo "[error] Required deployment assembly missing: ${required_pe:-resolved package assembly}" >&2
         missing_required_pe="true"
       fi
     done
@@ -673,24 +685,37 @@ else
       "${required_pe_paths[@]}"
     )
 
-    if [[ -x "$SCRIPT_DIR/pack-and-validate.sh" ]]; then
-      "$SCRIPT_DIR/pack-and-validate.sh" "${pack_args[@]}" >/dev/null
+    if [[ ! -x "$SCRIPT_DIR/pack-and-validate.sh" ]]; then
+      echo "[error] Required deployment packer is unavailable: $SCRIPT_DIR/pack-and-validate.sh" >&2
+      exit 1
     fi
 
-    if [[ -L "$OUTPUT_DIR/latest.deploy.bin" || -f "$OUTPUT_DIR/latest.deploy.bin" ]]; then
-      cp -f "$OUTPUT_DIR/latest.deploy.bin" "$OUTPUT_BIN"
-      echo "Created deterministic deployment bundle: $OUTPUT_BIN"
+    "$SCRIPT_DIR/pack-and-validate.sh" "${pack_args[@]}"
+
+    latest_bundle="$OUTPUT_DIR/latest.deploy.bin"
+    packed_bundle="$(readlink -f "$latest_bundle")"
+    if [[ -z "$packed_bundle" || ! -f "$packed_bundle" ]]; then
+      echo "[error] Deployment packer did not publish a valid latest bundle: $latest_bundle" >&2
+      exit 1
     fi
 
-    if [[ -f "$OUTPUT_BIN" ]]; then
-      timestamp="$(date +%Y%m%d-%H%M%S)"
-      bundle_name="${TARGET_NAME}_bundle_${timestamp}.bin"
-      bundle_path="$OUTPUT_DIR/$bundle_name"
-      cp "$OUTPUT_BIN" "$bundle_path"
-      ln -sf "$bundle_name" "$OUTPUT_DIR/latest.deploy.bin"
-      echo "Created timestamped bundle: $bundle_path"
-      echo "Updated symlink: $OUTPUT_DIR/latest.deploy.bin -> $bundle_name"
+    python3 "$SCRIPT_DIR/inspect_deploy_bundle.py" "$packed_bundle"
+
+    output_tmp="$(mktemp "$OUTPUT_DIR/.${TARGET_NAME}.bin.XXXXXX")"
+    trap 'rm -f "$output_tmp"; cleanup' EXIT
+    cp "$packed_bundle" "$output_tmp"
+    python3 "$SCRIPT_DIR/inspect_deploy_bundle.py" "$output_tmp"
+    mv -f "$output_tmp" "$OUTPUT_BIN"
+    trap cleanup EXIT
+
+    if ! cmp -s "$packed_bundle" "$OUTPUT_BIN"; then
+      echo "[error] Compatibility deployment image differs from validated bundle: $OUTPUT_BIN" >&2
+      exit 1
     fi
+
+    echo "Created deterministic deployment bundle: $OUTPUT_BIN"
+    echo "Validated deployment bundle: $packed_bundle"
+    echo "Updated symlink: $latest_bundle -> $(readlink "$latest_bundle")"
   fi
 fi
 

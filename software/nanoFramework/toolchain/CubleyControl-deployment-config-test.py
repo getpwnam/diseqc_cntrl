@@ -33,7 +33,7 @@ EXPECTED_BUILD_MANIFEST = [
     "$OUTPUT_DIR/nanoFramework.Runtime.Native.pe",
     "$OUTPUT_DIR/nanoFramework.System.Collections.pe",
     "$OUTPUT_DIR/System.IO.Streams.pe",
-    "$OUTPUT_DIR/nanoFramework.System.Text.pe",
+    "$SYSTEM_TEXT_PE",
     "$OUTPUT_DIR/System.Net.pe",
     "$OUTPUT_DIR/nanoFramework.M2Mqtt.Core.pe",
     "$OUTPUT_DIR/nanoFramework.M2Mqtt.pe",
@@ -103,6 +103,30 @@ require(
 require(
     'Required deployment assembly missing:' in build_script,
     "build script does not fail closed for a missing required assembly",
+)
+require(
+    'system_text_candidates=("$ROOT_DIR"/packages/nanoFramework.System.Text.*/lib/nanoFramework.System.Text.pe)' in build_script,
+    "build script does not resolve the transitive System.Text deployment assembly",
+)
+require(
+    'Required deployment packer is unavailable:' in build_script,
+    "build script does not fail closed when the deployment packer is unavailable",
+)
+require(
+    'packed_bundle="$(readlink -f "$latest_bundle")"' in build_script and
+    'python3 "$SCRIPT_DIR/inspect_deploy_bundle.py" "$packed_bundle"' in build_script,
+    "build script does not resolve and validate the authoritative packed bundle",
+)
+require(
+    'output_tmp="$(mktemp "$OUTPUT_DIR/.${TARGET_NAME}.bin.XXXXXX")"' in build_script and
+    'cp "$packed_bundle" "$output_tmp"' in build_script and
+    'mv -f "$output_tmp" "$OUTPUT_BIN"' in build_script and
+    'cmp -s "$packed_bundle" "$OUTPUT_BIN"' in build_script,
+    "build script does not atomically publish and compare the compatibility bundle",
+)
+require(
+    'bundle_name="${TARGET_NAME}_bundle_${timestamp}.bin"' not in build_script,
+    "build script still republishes the validated bundle through a second timestamped copy",
 )
 
 deploy_script = deploy_script_path.read_text(encoding="utf-8")
