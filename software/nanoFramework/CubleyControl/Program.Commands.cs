@@ -156,17 +156,19 @@ namespace CubleyControl
         {
             if (tokens.Length == 1)
             {
-                WriteHumanHeading("Available commands");
-                WriteHelpCommand("show [topic]", "Display device and service state");
-                WriteHelpCommand("lnb <a|b> <action> [value]", "Control LNB channel state");
-                WriteHelpCommand("diseqc <action> ...", "Control switches and positioners");
-                WriteHelpCommand("dns lookup <hostname>", "Resolve a host name");
-                WriteHelpCommand("configure", "Enter configuration mode");
-                WriteHelpCommand("watch [on|off]", "Control periodic status output");
-                WriteHelpCommand("led <on|off> | pulse", "Control the status LED");
-                WriteHelpCommand("quit", "Release the console (alias: logout)");
-                WriteHelpCommand("help [command]", "Show command help (alias: ?)");
-                _activeOutputSink("\r\nUse 'help <command>' for more information.\r\n");
+                WriteHumanHeading("Operational syntax");
+                _activeOutputSink(
+                    "show [lnb [a|b]|diseqc|network|net|mqtt|running-config [network|mqtt]|startup-config [network|mqtt]|status|capabilities|caps|version|ver]\r\n" +
+                    "lnb <a|b> <enable|disable|polarization|band|iset|isw> [value]\r\n" +
+                    "diseqc <goto|step|drive|stop|preset|timeout|tx|tone|listen|complete> ...\r\n" +
+                    "dns lookup <hostname>\r\n" +
+                    "watch [on|off|1|0]\r\n" +
+                    "status|st  capabilities|caps  version|ver\r\n" +
+                    "led on|off\r\n" +
+                    "pulse\r\n" +
+                    "configure|config|conf [terminal|t]\r\n" +
+                    "help|h|? [command]\r\n" +
+                    "quit|logout\r\n");
                 return;
             }
 
@@ -179,99 +181,110 @@ namespace CubleyControl
             string topic = tokens[1];
             if (topic == "lnb" || topic == "l")
             {
-                WriteHumanHeading("LNB commands");
-                WriteHelpCommand("show lnb [a|b]", "Display LNB state");
-                WriteHelpCommand("lnb <a|b> enable", "Enable LNB output");
-                WriteHelpCommand("lnb <a|b> disable", "Disable LNB output");
-                WriteHelpCommand("lnb <a|b> polarization <value>", "Set vertical or horizontal polarization");
-                WriteHelpCommand("lnb <a|b> band <value>", "Set low or high band");
-                WriteHelpCommand("lnb <a|b> iset <value>", "Set current range");
-                WriteHelpCommand("lnb <a|b> isw <value>", "Set switch current limit");
+                WriteHumanHeading("LNB syntax");
+                _activeOutputSink("show lnb [a|b]\r\nlnb <a|b> <enable|disable|polarization|band|iset|isw> [value]\r\n");
                 return;
             }
 
             if (topic == "show")
             {
-                WriteHumanHeading("Show commands");
-                WriteHelpCommand("show", "Display a device summary");
-                WriteHelpCommand("show lnb [a|b]", "Display LNB state");
-                WriteHelpCommand("show diseqc", "Display DiSEqC state");
-                WriteHelpCommand("show network", "Display live network state");
-                WriteHelpCommand("show mqtt", "Display live MQTT state");
-                WriteHelpCommand("show running-config [domain]", "Display active configuration");
-                WriteHelpCommand("show startup-config [domain]", "Display persisted configuration");
-                WriteHelpCommand("show status|capabilities|version", "Display system information");
+                WriteHumanHeading("Show syntax");
+                _activeOutputSink(
+                    "show\r\n" +
+                    "show lnb [a|b]\r\n" +
+                    "show diseqc\r\n" +
+                    "show network\r\n" +
+                    "show mqtt\r\n" +
+                    "show running-config|run [network|mqtt]\r\n" +
+                    "show startup-config|start [network|mqtt]\r\n" +
+                    "show status|capabilities|caps|version|ver\r\n");
                 return;
             }
 
             if (topic == "diseqc")
             {
-                WriteHumanHeading("DiSEqC commands");
-                WriteHelpCommand("diseqc goto <0..255>", "Move to a stored position");
-                WriteHelpCommand("diseqc step <east|west> <1..128>", "Move a fixed number of steps");
-                WriteHelpCommand("diseqc drive <east|west>", "Start continuous movement");
-                WriteHelpCommand("diseqc stop", "Stop movement");
-                WriteHelpCommand("diseqc preset <value>", "Select or inspect routing preset");
-                WriteHelpCommand("diseqc timeout <5..300|status>", "Set or inspect the motion watchdog timeout (seconds)");
-                WriteHelpCommand("diseqc tx <hex bytes>", "Transmit a raw frame");
-                WriteHelpCommand("diseqc tone <on|off|status>", "Control or inspect the carrier tone");
-                WriteHelpCommand("diseqc listen <on|off>", "Control external modulation input");
-                WriteHelpCommand("diseqc complete <motion-id>", "Release a completed motion lock");
+                WriteHumanHeading("DiSEqC syntax");
+                _activeOutputSink(
+                    "diseqc goto <0..255>\r\n" +
+                    "diseqc step <east|west> <1..128>\r\n" +
+                    "diseqc drive <east|west>\r\n" +
+                    "diseqc stop\r\n" +
+                    "diseqc preset <status|off|direct|aa|ab|ba|bb>\r\n" +
+                    "diseqc timeout <status|5..300>\r\n" +
+                    "diseqc tx <framing> <address> <command> [data_byte]...\r\n" +
+                    "diseqc tone on [freq_hz] [duty_pct]|off|status\r\n" +
+                    "diseqc listen on|off\r\n" +
+                    "diseqc complete <motion_id>\r\n");
                 return;
             }
 
             if (topic == "network" || topic == "net")
             {
-                WriteHumanHeading("Network commands");
-                WriteHelpCommand("show network", "Display live interface state");
-                WriteHelpCommand("show running-config network", "Display active network configuration");
-                WriteHelpCommand("configure", "Change network configuration");
+                WriteHumanHeading("Network syntax");
+                _activeOutputSink("show network\r\nshow running-config|run network\r\nconfigure|config|conf [terminal|t]\r\n");
                 return;
             }
 
             if (topic == "mqtt")
             {
-                WriteHumanHeading("MQTT state and configuration");
-                WriteHelpCommand("show mqtt", "Display live MQTT service state");
-                WriteHelpCommand("show running-config mqtt", "Display active MQTT configuration");
-                WriteHelpCommand("configure", "Change MQTT configuration");
+                WriteHumanHeading("MQTT syntax");
+                _activeOutputSink("show mqtt\r\nshow running-config|run mqtt\r\nconfigure|config|conf [terminal|t]\r\n");
                 return;
             }
 
             if (topic == "dns")
             {
-                WriteHumanHeading("DNS commands");
-                WriteHelpCommand("dns lookup <hostname>", "Resolve a host name");
+                WriteHumanHeading("DNS syntax");
+                _activeOutputSink("dns lookup <hostname>\r\n");
                 return;
             }
 
             if (topic == "configure" || topic == "config" || topic == "conf")
             {
-                WriteHumanHeading("Configuration mode");
-                WriteHelpCommand("configure", "Enter USB configuration mode");
-                WriteHelpCommand("config | conf | conf t", "Accepted aliases");
+                WriteHumanHeading("Configure syntax");
+                _activeOutputSink("configure|config|conf [terminal|t]\r\n");
                 return;
             }
 
             if (topic == "watch" || topic == "w")
             {
-                WriteHumanHeading("Watch command");
-                WriteHelpCommand("watch [on|off]", "Control periodic status output");
+                WriteHumanHeading("Watch syntax");
+                _activeOutputSink("watch|w [on|off|1|0]\r\n");
                 return;
             }
 
             if (topic == "led")
             {
-                WriteHumanHeading("LED commands");
-                WriteHelpCommand("led <on|off>", "Set the status LED");
-                WriteHelpCommand("pulse", "Pulse the status LED for 100 ms");
+                WriteHumanHeading("LED syntax");
+                _activeOutputSink("led on|off\r\npulse\r\n");
+                return;
+            }
+
+            if (topic == "status" || topic == "st")
+            {
+                WriteHumanHeading("Status syntax");
+                _activeOutputSink("status|st\r\nshow status\r\n");
+                return;
+            }
+
+            if (topic == "capabilities" || topic == "caps")
+            {
+                WriteHumanHeading("Capabilities syntax");
+                _activeOutputSink("capabilities|caps\r\nshow capabilities|caps\r\n");
+                return;
+            }
+
+            if (topic == "version" || topic == "ver")
+            {
+                WriteHumanHeading("Version syntax");
+                _activeOutputSink("version|ver\r\nshow version|ver\r\n");
                 return;
             }
 
             if (topic == "quit" || topic == "logout")
             {
-                WriteHumanHeading("Console session");
-                WriteHelpCommand("quit | logout", "Release the console when configuration is clean");
+                WriteHumanHeading("Session syntax");
+                _activeOutputSink("quit|logout\r\n");
                 return;
             }
 
