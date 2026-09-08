@@ -90,6 +90,7 @@ RUN apt-get install -y --no-install-recommends \
     xxd \
     jq \
     rsync \
+    fd-find \
     # poppler-utils (pdftotext)
     poppler-utils
 
