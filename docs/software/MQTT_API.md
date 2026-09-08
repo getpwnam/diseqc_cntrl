@@ -1,10 +1,8 @@
 # MQTT API Reference
 
-> **Superseded for commands, responses and DiSEqC topics.** The `command`,
-> `response`, `event/diseqc` and `state/diseqc` topics now carry the JSON
-> contract in [DEVICE_API_V2.md](DEVICE_API_V2.md), which also defines the
-> positioner job model. This document remains authoritative for the LNB topics,
-> connection lifecycle, health monitoring, and configuration, all unchanged.
+MQTT is an outbound-only state announcement interface. CubleyControl does not
+subscribe to command topics and MQTT cannot initiate hardware operations. REST
+control is defined in [DEVICE_API_V2.md](DEVICE_API_V2.md).
 
 The target structured payload and subsystem ownership rules are defined in
 [OBSERVABILITY_CONTRACT_V1.md](OBSERVABILITY_CONTRACT_V1.md). This document
@@ -17,16 +15,10 @@ CubleyControl uses MQTT 3.1.1 without TLS. It connects through the STM32F407
 Ethernet MAC and LAN8742A PHY after IPv4 and DNS are ready.
 
 The configured topic prefix is `diseqc` by default. The effective device root is
-`<prefix>/<hostname>`. Commands arrive as JSON objects on a single topic rather
-than using a separate topic for every operation. Positioner operations are
-dispatched from typed parameters; the remaining operations are still executed by
-the console tokenizer behind a strict allowlist, and administrative
-configuration commands are not exposed.
+`<prefix>/<hostname>`.
 
 | Direction | Topic | Payload | QoS | Retained |
 |---|---|---|---:|---|
-| Command to device | `<prefix>/<hostname>/command` | v2 JSON command object | 1 | Must be false |
-| Response from device | `<prefix>/<hostname>/response` | v2 JSON response object | 1 | No |
 | LNB asynchronous transition | `<prefix>/<hostname>/event/lnb` | Schema-1 LNB event fields | 1 | No |
 | Current LNB state | `<prefix>/<hostname>/state/lnb` | Schema-1 LNB state fields | 1 | Yes |
 | Positioner job transition | `<prefix>/<hostname>/event/diseqc` | v2 JSON job event | 1 | No |
@@ -36,27 +28,16 @@ configuration commands are not exposed.
 The broker receives a retained `online` message after connection. The configured
 last will is retained `offline` at QoS 1.
 
-LNB and DiSEqC execution does not perform socket I/O. Responses, events, and state
+LNB and DiSEqC execution does not perform socket I/O. Events and state
 updates are placed in a bounded queue and published only by the MQTT worker. A
 broker failure, blocked publish, or full publication queue can lose MQTT output,
 but cannot delay or change completion of a hardware command.
 
-## Commands And Results
-
-See [DEVICE_API_V2.md](DEVICE_API_V2.md) for the command envelope, the operation
-list, result codes, deduplication rules and the positioner job model. In outline:
+## Monitoring
 
 ```bash
-mosquitto_sub -t 'diseqc/+/response' -t 'diseqc/+/event/+' -t 'diseqc/+/state/+' -t 'diseqc/+/availability' -v
-mosquitto_pub -q 1 -t 'diseqc/cubley-a1b2c3/command' -m '{"id":"01J8ZK4M7Q","op":"positioner.goto","position":12}'
-mosquitto_pub -q 1 -t 'diseqc/cubley-a1b2c3/command' -m '{"id":"01J8ZK4M7R","op":"lnb.polarization","channel":"a","value":"v"}'
-mosquitto_pub -q 1 -t 'diseqc/cubley-a1b2c3/command' -m '{"id":"01J8ZK4M7S","op":"positioner.halt"}'
+mosquitto_sub -t 'diseqc/+/event/+' -t 'diseqc/+/state/+' -t 'diseqc/+/availability' -v
 ```
-
-Exactly one response is published per command. The device rejects messages on an
-unexpected topic, empty or oversized payloads, and retained command messages,
-which prevents a stale retained command from executing after reconnect or
-reboot.
 
 ## Events And State
 
@@ -67,8 +48,8 @@ published.
 The GPIO callback only signals a worker; register inspection and MQTT publication
 run outside the interrupt callback.
 
-`state/lnb` is a retained snapshot published on connection, after each MQTT
-command, and after each fault transition. It begins with
+`state/lnb` is a retained snapshot published on connection, after each successful
+LNB control change, and after each fault transition. It begins with
 `schema=1 sub=lnb comp=state` and includes health, communication,
 fault, monitor and initialization state, register values, and channel polarization
 and band when available. Consumers should use `event/lnb` for live transitions
@@ -137,14 +118,12 @@ cubley-a1b2c3(config*)# commit
 
 The broker must be set before an enabled configuration can be committed. Credentials
 are case-preserving but cannot contain spaces in schema v2. Password commands are
-redacted from debug logs and configuration output. MQTT messages containing
-configuration commands are rejected as unsupported.
+redacted from debug logs and configuration output.
 
 See [CONFIGURATION.md](CONFIGURATION.md) for the complete command list and
 [CONFIGURATION_STORAGE.md](CONFIGURATION_STORAGE.md) for the persisted schema.
 
 ## Scope
 
-No per-command topic contract is defined. TLS, certificate management, and
-encrypted credential storage remain deferred, as does any authentication or
-authorization of MQTT commands.
+There are no MQTT command or response topics. TLS, certificate management, and
+encrypted credential storage remain deferred.

@@ -722,25 +722,5 @@ namespace CubleyControl
             }
         }
 
-        private static bool IsMqttOperationalCommand(string[] tokens)
-        {
-            string head = tokens[0];
-            if (head == "status" || head == "st" || head == "capabilities" || head == "caps" ||
-                head == "version" || head == "ver" || head == "lnb" || head == "l" || head == "diseqc")
-            {
-                return true;
-            }
-
-            if (head == "show")
-            {
-                return tokens.Length == 1 ||
-                    (tokens.Length >= 2 &&
-                        (tokens[1] == "lnb" || tokens[1] == "diseqc" || tokens[1] == "status" ||
-                            tokens[1] == "version" || tokens[1] == "ver" ||
-                            tokens[1] == "capabilities" || tokens[1] == "caps"));
-            }
-
-            return false;
-        }
     }
 }

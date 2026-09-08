@@ -46,7 +46,7 @@ namespace CubleyControl
         private static int _lnbFaultSequence;
         private static bool _lnbFaultCheckPending;
         private static readonly object _lnbFaultTransitionLock = new object();
-        // Shared command execution across transports (serial + MQTT). All
+        // Shared command execution across transports (serial + REST). All
         // commands funnel through ExecuteCommand -> HandleConsoleCommand ->
         // WriteCommandResult, which writes through whichever OutputSink is
         // active for the calling transport. The lock serializes command
@@ -57,7 +57,7 @@ namespace CubleyControl
         private enum CommandTransport
         {
             Usb,
-            Mqtt
+            Rest
         }
 
         private enum ConsoleTransport
@@ -95,7 +95,7 @@ namespace CubleyControl
         /// </summary>
         private static void ExecutePositionerOperation(int operation, int value, OutputSink outputSink)
         {
-            ExecuteCommandCore(CommandModePositioner, null, operation, value, outputSink, CommandTransport.Mqtt);
+            ExecuteCommandCore(CommandModePositioner, null, operation, value, outputSink, CommandTransport.Rest);
         }
 
         private static void ExecuteCommandCore(

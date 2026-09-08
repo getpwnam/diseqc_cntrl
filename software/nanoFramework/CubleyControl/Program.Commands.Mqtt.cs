@@ -11,7 +11,6 @@ namespace CubleyControl
 {
     public static partial class Program
     {
-        private const int MqttSubscriptionFailure = 0x80;
         // Wire contract version; see docs/software/DEVICE_API_V2.md.
         private const int DeviceContractVersion = 2;
         private const int MqttCommandIdMaxLength = 32;
@@ -27,8 +26,6 @@ namespace CubleyControl
         private const string MqttAvailabilityOnline = "online";
         private const string MqttAvailabilityOffline = "offline";
         private static MqttClient _mqttClient;
-        private static string _mqttCommandTopic = string.Empty;
-        private static string _mqttResponseTopic = string.Empty;
         private static string _mqttEventTopic = string.Empty;
         private static string _mqttStateTopic = string.Empty;
         private static string _mqttDiseqcEventTopic = string.Empty;
@@ -118,8 +115,6 @@ namespace CubleyControl
         {
             string topicRoot = BuildMqttTopicRoot(configuration);
             string availabilityTopic = topicRoot + "/availability";
-            _mqttCommandTopic = topicRoot + "/command";
-            _mqttResponseTopic = topicRoot + "/response";
             _mqttEventTopic = topicRoot + "/event/lnb";
             _mqttStateTopic = topicRoot + "/state/lnb";
             _mqttDiseqcEventTopic = topicRoot + "/event/diseqc";
@@ -129,8 +124,6 @@ namespace CubleyControl
 
             _mqttClient = new MqttClient(configuration.Broker, configuration.Port, false, null, null, MqttSslProtocols.None);
             _mqttClient.ProtocolVersion = MqttProtocolVersion.Version_3_1_1;
-            _mqttClient.MqttMsgPublishReceived += OnMqttMessageReceived;
-            _mqttClient.MqttMsgSubscribed += OnMqttSubscribed;
             _mqttClient.ConnectionClosed += OnMqttConnectionClosed;
 
             try
@@ -176,16 +169,6 @@ namespace CubleyControl
                     return;
                 }
 
-                _mqttRuntimeState = "subscribing";
-                ushort subscriptionMessageId = _mqttClient.Subscribe(
-                    new string[] { _mqttCommandTopic },
-                    new MqttQoSLevel[] { MqttQoSLevel.AtLeastOnce });
-                WriteStructuredDebug(
-                    "MQTT",
-                    "schema=1 sub=mqtt comp=subscribe operation=request stat=pending" +
-                    " topic=" + _mqttCommandTopic +
-                    " qos=1 message_id=" + subscriptionMessageId.ToString());
-
                 while (_mqttClient.IsConnected &&
                     revision == _mqttConfigurationRevision &&
                     _mqttRuntimeState != "error")
@@ -208,16 +191,12 @@ namespace CubleyControl
                 SetMqttPublishAccepting(false);
                 MqttClient client = _mqttClient;
                 _mqttClient = null;
-                _mqttCommandTopic = string.Empty;
-                _mqttResponseTopic = string.Empty;
                 _mqttEventTopic = string.Empty;
                 _mqttStateTopic = string.Empty;
                 _mqttDiseqcEventTopic = string.Empty;
                 _mqttDiseqcStateTopic = string.Empty;
                 if (client != null)
                 {
-                    client.MqttMsgPublishReceived -= OnMqttMessageReceived;
-                    client.MqttMsgSubscribed -= OnMqttSubscribed;
                     client.ConnectionClosed -= OnMqttConnectionClosed;
                     TryDisconnectMqttClient(client);
                     try
@@ -233,32 +212,6 @@ namespace CubleyControl
                     }
                 }
             }
-        }
-
-        private static void OnMqttSubscribed(object sender, MqttMsgSubscribedEventArgs e)
-        {
-            MqttQoSLevel[] grantedQosLevels = e.GrantedQoSLevels;
-            if (grantedQosLevels == null ||
-                grantedQosLevels.Length == 0 ||
-                (int)grantedQosLevels[0] == MqttSubscriptionFailure)
-            {
-                _mqttLastError = "subscribe_rejected";
-                _mqttRuntimeState = "error";
-                WriteStructuredDebug(
-                    "MQTT",
-                    "schema=1 sub=mqtt comp=subscribe operation=ack stat=error" +
-                    " code=subscribe_rejected message_id=" + e.MessageId.ToString());
-                return;
-            }
-
-            _mqttLastError = string.Empty;
-            _mqttRuntimeState = "connected";
-            WriteStructuredDebug(
-                "MQTT",
-                "schema=1 sub=mqtt comp=subscribe operation=ack stat=ok" +
-                " topic=" + _mqttCommandTopic +
-                " qos=" + ((int)grantedQosLevels[0]).ToString() +
-                " message_id=" + e.MessageId.ToString());
         }
 
         private static void TryDisconnectMqttClient(MqttClient client)
@@ -281,52 +234,7 @@ namespace CubleyControl
             }
         }
 
-        private static void OnMqttMessageReceived(object sender, MqttMsgPublishEventArgs e)
-        {
-            int payloadLength = e.Message == null ? 0 : e.Message.Length;
-            WriteStructuredDebug(
-                "COMMAND",
-                "schema=1 sub=command comp=receive operation=decode stat=ok transport=mqtt" +
-                " topic=" + e.Topic +
-                " qos=" + ((int)e.QosLevel).ToString() +
-                " retained=" + (e.Retain ? "1" : "0") +
-                " length=" + payloadLength.ToString());
-
-            if (e.Topic != _mqttCommandTopic)
-            {
-                WriteStructuredDebug(
-                    "COMMAND",
-                    "schema=1 sub=command comp=receive operation=reject stat=error" +
-                    " transport=mqtt code=unexpected_topic topic=" + e.Topic);
-                return;
-            }
-
-            if (e.Retain)
-            {
-                WriteStructuredDebug(
-                    "COMMAND",
-                    "schema=1 sub=command comp=receive operation=reject stat=error" +
-                    " transport=mqtt code=retained_command");
-                return;
-            }
-
-            if (e.Message == null || e.Message.Length == 0 || e.Message.Length > MqttCommandEnvelopeMaxLength)
-            {
-                WriteStructuredDebug(
-                    "COMMAND",
-                    "schema=1 sub=command comp=receive operation=reject stat=error" +
-                    " transport=mqtt code=invalid_length length=" + payloadLength.ToString());
-                return;
-            }
-
-            string payload = AsciiBytesToString(e.Message);
-            lock (_mqttCommandTransactionLock)
-            {
-                ProcessMqttCommand(payload);
-            }
-        }
-
-        private static void ProcessMqttCommand(string payload)
+        private static string ProcessApiCommand(string payload)
         {
             JsonObject command;
             string parseError;
@@ -335,40 +243,39 @@ namespace CubleyControl
                 WriteStructuredDebug(
                     "COMMAND",
                     "schema=1 sub=command comp=envelope operation=parse stat=error" +
-                    " transport=mqtt code=invalid_envelope detail=" + SanitizeToken(parseError));
-                PublishMqttFailure("?", "validation_error", parseError);
-                return;
+                    " transport=rest code=invalid_envelope detail=" + SanitizeToken(parseError));
+                return "{" + BuildMqttFailureBody("?", "validation_error", parseError, 0) + "}";
             }
 
             int version = DeviceContractVersion;
             if (command.Has("v") &&
                 (!command.TryGetInt("v", out version) || version != DeviceContractVersion))
             {
-                PublishMqttFailure(
+                return "{" + BuildMqttFailureBody(
                     "?",
                     "validation_error",
-                    "unsupported contract version; this device speaks v" + DeviceContractVersion.ToString());
-                return;
+                    "unsupported contract version; this device speaks v" + DeviceContractVersion.ToString(),
+                    0) + "}";
             }
 
             string commandId;
             if (!command.TryGetString("id", out commandId) || !IsValidMqttCommandId(commandId))
             {
-                PublishMqttFailure(
+                return "{" + BuildMqttFailureBody(
                     "?",
                     "validation_error",
-                    "id must be 1 to " + MqttCommandIdMaxLength.ToString() + " characters of A-Za-z0-9._:-");
-                return;
+                    "id must be 1 to " + MqttCommandIdMaxLength.ToString() + " characters of A-Za-z0-9._:-",
+                    0) + "}";
             }
 
             string op;
             if (!command.TryGetString("op", out op) || !IsValidMqttOpName(op))
             {
-                PublishMqttFailure(
+                return "{" + BuildMqttFailureBody(
                     commandId,
                     "validation_error",
-                    "op must be 1 to " + MqttOpMaxLength.ToString() + " characters of a-z0-9._");
-                return;
+                    "op must be 1 to " + MqttOpMaxLength.ToString() + " characters of a-z0-9._",
+                    0) + "}";
             }
 
             int cachedIndex = FindCachedMqttCommand(commandId);
@@ -379,39 +286,36 @@ namespace CubleyControl
                     WriteStructuredDebug(
                         "COMMAND",
                         "schema=1 sub=command comp=deduplicate operation=reject stat=error" +
-                        " transport=mqtt code=id_conflict id=" + SanitizeToken(commandId));
-                    PublishMqttFailure(
+                        " transport=rest code=id_conflict id=" + SanitizeToken(commandId));
+                    return "{" + BuildMqttFailureBody(
                         commandId,
                         "id_conflict",
-                        "id reused within the deduplication window with a different payload");
-                    return;
+                        "id reused within the deduplication window with a different payload",
+                        0) + "}";
                 }
 
                 WriteStructuredDebug(
                     "COMMAND",
                     "schema=1 sub=command comp=deduplicate operation=replay stat=ok" +
-                    " transport=mqtt id=" + SanitizeToken(commandId));
-                PublishMqttResponseBody(_mqttCachedResponseBodies[cachedIndex], true);
-                return;
+                    " transport=rest id=" + SanitizeToken(commandId));
+                return "{" + _mqttCachedResponseBodies[cachedIndex] + ",\"replayed\":true}";
             }
 
             _mqttActiveCommandKey = commandId;
             WriteStructuredDebug(
                 "COMMAND",
                 "schema=1 sub=command comp=dispatch operation=start stat=ok" +
-                " transport=mqtt id=" + SanitizeToken(commandId) +
+                " transport=rest id=" + SanitizeToken(commandId) +
                 " op=" + SanitizeToken(op));
 
             string responseBody = ExecuteMqttOperation(commandId, op, command);
             CacheMqttCommandResponse(commandId, payload, responseBody);
-            PublishMqttResponseBody(responseBody, false);
-            PublishMqttState();
-            PublishMqttDiseqcState();
 
             WriteStructuredDebug(
                 "COMMAND",
                 "schema=1 sub=command comp=dispatch operation=complete stat=ok" +
-                " transport=mqtt id=" + SanitizeToken(commandId));
+                " transport=rest id=" + SanitizeToken(commandId));
+            return "{" + responseBody + "}";
         }
 
         private static string ExecuteMqttOperation(string commandId, string op, JsonObject command)
@@ -422,7 +326,7 @@ namespace CubleyControl
                 return ExecuteMqttPositionerMotion(commandId, op, command);
             }
 
-            if (op == "positioner.show" || op == "positioner.job" || op == "positioner.release")
+            if (op == "positioner.release")
             {
                 return ExecuteMqttPositionerQuery(commandId, op, command);
             }
@@ -536,16 +440,6 @@ namespace CubleyControl
         {
             string error;
 
-            if (op == "positioner.show")
-            {
-                if (!TryValidateMqttMembers(command, null, null, out error))
-                {
-                    return BuildMqttFailureBody(commandId, "validation_error", error, 0);
-                }
-
-                return BuildMqttResponseBody(commandId, true, "ok", null, BuildDiseqcStateJson(), 0, null);
-            }
-
             if (!TryValidateMqttMembers(command, "job", null, out error))
             {
                 return BuildMqttFailureBody(commandId, "validation_error", error, 0);
@@ -555,17 +449,6 @@ namespace CubleyControl
             if (!command.TryGetInt("job", out jobId) || jobId <= 0)
             {
                 return BuildMqttFailureBody(commandId, "validation_error", "job must be a positive integer", 0);
-            }
-
-            string jobJson = BuildDiseqcJobJson(jobId);
-            if (jobJson == "null")
-            {
-                return BuildMqttFailureBody(commandId, "not_found", "unknown or evicted job", 0);
-            }
-
-            if (op == "positioner.job")
-            {
-                return BuildMqttResponseBody(commandId, true, "ok", null, jobJson, jobId, null);
             }
 
             // positioner.release: the identity check inside TryEndDiseqcJob is
@@ -596,7 +479,7 @@ namespace CubleyControl
             }
 
             ResetMqttCommandOutcome();
-            ExecuteCommand(consoleCommand, MqttOutputSink, CommandTransport.Mqtt);
+            ExecuteCommand(consoleCommand, MqttOutputSink, CommandTransport.Rest);
 
             if (!_mqttResultRecorded)
             {
@@ -623,50 +506,6 @@ namespace CubleyControl
             consoleCommand = string.Empty;
             code = "validation_error";
             error = string.Empty;
-
-            if (op == "system.status" || op == "system.version" || op == "system.capabilities")
-            {
-                if (!TryValidateMqttMembers(command, null, null, out error))
-                {
-                    return false;
-                }
-
-                consoleCommand = op == "system.status" ? "status" : (op == "system.version" ? "version" : "capabilities");
-                return true;
-            }
-
-            if (op == "diseqc.show")
-            {
-                if (!TryValidateMqttMembers(command, null, null, out error))
-                {
-                    return false;
-                }
-
-                consoleCommand = "show diseqc";
-                return true;
-            }
-
-            if (op == "lnb.show")
-            {
-                if (!TryValidateMqttMembers(command, "channel", null, out error))
-                {
-                    return false;
-                }
-
-                consoleCommand = "show lnb";
-                if (command.Has("channel"))
-                {
-                    string channel;
-                    if (!TryReadLnbChannel(command, out channel, out error))
-                    {
-                        return false;
-                    }
-
-                    consoleCommand += " " + channel;
-                }
-
-                return true;
-            }
 
             if (op == "lnb.enable" || op == "lnb.disable")
             {
@@ -963,26 +802,6 @@ namespace CubleyControl
             }
 
             return builder.BuildBody();
-        }
-
-        private static void PublishMqttFailure(string commandId, string code, string msg)
-        {
-            PublishMqttResponseBody(BuildMqttFailureBody(commandId, code, msg, 0), false);
-        }
-
-        private static void PublishMqttResponseBody(string responseBody, bool replayed)
-        {
-            string payload = replayed
-                ? "{" + responseBody + ",\"replayed\":true}"
-                : "{" + responseBody + "}";
-
-            WriteStructuredDebug(
-                "COMMAND",
-                "schema=1 sub=command comp=response operation=publish stat=ok" +
-                " transport=mqtt topic=" + _mqttResponseTopic +
-                " duplicate=" + (replayed ? "1" : "0") +
-                " payload=" + SanitizeToken(payload));
-            QueueMqttPublication(_mqttResponseTopic, payload, MqttQoSLevel.AtLeastOnce, false);
         }
 
         private static int FindCachedMqttCommand(string commandId)

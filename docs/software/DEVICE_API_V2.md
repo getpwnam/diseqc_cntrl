@@ -1,9 +1,8 @@
 # Device API v2 — JSON Command Envelope And Positioner Jobs
 
 Status: **draft contract**, implemented on the device but not yet exercised on
-hardware. Supersedes the positional MQTT envelope described in
-[MQTT_API.md](MQTT_API.md) for the `command` and `response` topics, and adds a
-positioner job resource to `event/diseqc` and `state/diseqc`.
+hardware. REST is the only network control transport. MQTT is outbound-only and
+announces availability, events, and retained state.
 
 ## Why this exists
 
@@ -28,7 +27,7 @@ network transport carries JSON. Both drive the same hardware paths.
 ```
 USB CDC  ──  IOS-style CLI  ──┐
                               ├──>  operation  ──>  DiSEqC / LNB hardware
-MQTT     ──  JSON envelope  ──┘
+REST     ──  JSON envelope  ──┘
 ```
 
 Nothing in this document changes the console. An operator types
@@ -36,19 +35,13 @@ Nothing in this document changes the console. An operator types
 
 ## Transport
 
-Unchanged from v1: MQTT 3.1.1, no TLS, QoS 1, topic root `<prefix>/<hostname>`.
+Send commands with `POST /api/v2/commands` over HTTP. The request and response
+content type is `application/json`. A command result is returned in the HTTP
+response body; the device does not publish command responses to MQTT.
 
-| Direction | Topic | Payload | Retained |
-|---|---|---|---|
-| Command to device | `<root>/command` | v2 command object | Must be false |
-| Response from device | `<root>/response` | v2 response object, **one per command** | No |
-| Positioner job transition | `<root>/event/diseqc` | v2 event object | No |
-| Current positioner state | `<root>/state/diseqc` | v2 state object | Yes |
-| LNB transition / state | `<root>/event/lnb`, `<root>/state/lnb` | unchanged schema-1 key/value text | see MQTT_API.md |
-| Availability | `<root>/availability` | `online` / `offline` | Yes |
-
-LNB event and state topics are **not** migrated by this change and keep their
-schema-1 key/value form.
+MQTT 3.1.1 remains the announcement transport. Its topic root is
+`<prefix>/<hostname>`; see [MQTT_API.md](MQTT_API.md) for topics and delivery
+semantics. The device does not subscribe to any MQTT topic.
 
 ### Payload constraints
 
@@ -83,17 +76,9 @@ than arrays, e.g. `"frame":"E01038F0"`.
 
 ### `id` is an idempotency key, not a correlation tag
 
-QoS 1 is at-least-once: the broker may redeliver a command, and a redelivered
-`positioner.step` is byte-identical to a genuine second one. Only the publisher
-knows which it is, so the publisher labels it. This is the same role
-`Idempotency-Key` plays in an HTTP API, and it would still be required if this
-were REST.
-
-It is not carried in MQTT 5 `Correlation Data` because the nanoFramework M2Mqtt
-client decodes that property off the wire and then discards it before raising
-`MqttMsgPublishReceived` — `MqttMsgPublishEventArgs` exposes only topic,
-payload, dup flag, QoS and retain. Until that is fixed upstream, an inbound
-correlation token has to live in the payload regardless of protocol version.
+HTTP clients can retry after a timeout without knowing whether the device
+executed the first request. The requester-assigned `id` prevents a retry of a
+non-idempotent operation such as `positioner.step` from executing twice.
 
 ### Deduplication
 
@@ -116,7 +101,7 @@ UUID is ideal, and 32 chars is enough for either).
 
 ## Response envelope
 
-Exactly one response is published per accepted command.
+Exactly one response object is returned per HTTP request.
 
 ```json
 {"v":2,"id":"01J8ZK4M7Q","ok":true,"code":"accepted","job":7,"ts_ms":41231}
@@ -183,8 +168,7 @@ positioner.goto/step/drive ──> running ──┬── positioner.halt ─�
 
 Only one job runs at a time. A motion command while a job is `running` fails
 with `busy` and names the active job; it does not queue. The device retains the
-4 most recent job records, so a terminal job stays queryable via
-`positioner.job` until evicted.
+4 most recent job records for state announcement and release validation.
 
 ### Job object
 
@@ -206,8 +190,6 @@ with `busy` and names the active job; it does not queue. The device retains the
 | `positioner.drive` | `direction` `"east"`\|`"west"` | `accepted` + `job`, or `busy` |
 | `positioner.halt` | — | `ok`; terminates the active job as `halted` |
 | `positioner.release` | `job` int | `ok`; terminates that job as `released` |
-| `positioner.job` | `job` int | `ok` + `data` = job object, or `not_found` |
-| `positioner.show` | — | `ok` + `data` = current state object |
 
 `positioner.release` checks the job id, so a late release for a superseded job
 is rejected rather than ending a newer movement.
@@ -220,25 +202,19 @@ structured `data` object:
 
 | `op` | Parameters | Console equivalent |
 |---|---|---|
-| `system.status` | — | `status` |
-| `system.version` | — | `version` |
-| `system.capabilities` | — | `capabilities` |
-| `lnb.show` | `channel` `"a"`\|`"b"` (optional) | `show lnb [a\|b]` |
 | `lnb.enable` / `lnb.disable` | `channel` | `lnb <ch> enable\|disable` |
 | `lnb.polarization` | `channel`, `value` | `lnb <ch> polarization <value>` |
 | `lnb.band` | `channel`, `value` | `lnb <ch> band <value>` |
 | `diseqc.tx` | `frame` hex string, 1–6 bytes | `diseqc tx <bytes>` |
 | `diseqc.preset` | `value` | `diseqc preset <value>` |
 | `diseqc.tone` | `value` `"on"`\|`"off"` | `diseqc tone <value>` |
-| `diseqc.show` | — | `show diseqc` |
 
 The bridge is a migration stage, not the destination. It exists so the wire
 contract could be finalised in one change without rewriting every handler
 untested. Moving an op from `lines` to `data` is a **breaking change and
 requires a contract version bump** — v2 freezes the shapes above.
 
-Configuration commands remain unavailable on MQTT, as in v1. Configuration is
-USB-only.
+Configuration commands remain USB-only and are not exposed by REST.
 
 ## Events
 
@@ -254,8 +230,7 @@ ordering within a boot.
 
 ## State
 
-`state/diseqc`, retained, republished on connect, after each command, and on
-each job transition:
+`state/diseqc`, retained, republished on connect and on each job transition:
 
 ```json
 {"v":2,"sub":"diseqc","comp":"state","busy":true,"timeout_ms":90000,
@@ -279,9 +254,8 @@ migrating an op from `lines` to `data` — increments it.
 
 ## Known gaps
 
-- No authentication or authorization on the MQTT transport. Anyone who can
-  publish to `<root>/command` can move the motor. Access control is expected to
-  live in the client that fronts this device, not on the MCU.
-- No TLS. Unchanged from v1 and still deferred.
+- REST has no authentication or authorization. Network access to TCP port 80
+  must be restricted to trusted controllers.
+- REST and MQTT have no TLS.
 - `ts_ms` is an uptime tick, not wall clock. There is no RTC.
 - LNB event and state topics are still schema-1 key/value text.
