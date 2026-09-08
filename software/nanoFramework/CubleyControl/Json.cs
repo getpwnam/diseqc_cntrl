@@ -95,19 +95,6 @@ namespace CubleyControl
             value = _numbers[index];
             return true;
         }
-
-        internal bool TryGetBool(string key, out bool value)
-        {
-            value = false;
-            int index = IndexOf(key);
-            if (index < 0 || _kinds[index] != KindBool)
-            {
-                return false;
-            }
-
-            value = _numbers[index] != 0;
-            return true;
-        }
     }
 
     internal static class Json

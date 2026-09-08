@@ -1144,22 +1144,5 @@ namespace CubleyControl
 
             return result;
         }
-
-        private static string AsciiBytesToString(byte[] bytes)
-        {
-            if (bytes == null || bytes.Length == 0)
-            {
-                return string.Empty;
-            }
-
-            char[] chars = new char[bytes.Length];
-            for (int i = 0; i < bytes.Length; i++)
-            {
-                byte b = bytes[i];
-                chars[i] = (b <= 0x7F) ? (char)b : '?';
-            }
-
-            return new string(chars);
-        }
     }
 }

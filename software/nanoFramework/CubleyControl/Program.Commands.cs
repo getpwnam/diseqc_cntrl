@@ -434,13 +434,6 @@ namespace CubleyControl
         {
             string safeMsg = SanitizeToken(msg);
             string payload = data == null ? string.Empty : data;
-            string kvLine =
-                "kv ok=" + (ok ? "1" : "0") +
-                " code=" + code +
-                " msg=" + safeMsg +
-                " ts_ms=" + NextResponseTick().ToString() +
-                " req_id=" + reqId.ToString() +
-                (payload.Length > 0 ? " " + payload : string.Empty);
 
             WriteStructuredDebug(
                 "COMMAND",
@@ -527,17 +520,6 @@ namespace CubleyControl
             }
 
             return _requestId;
-        }
-
-        private static int NextResponseTick()
-        {
-            _responseTick += UsbConsoleReadTimeoutMs;
-            if (_responseTick <= 0)
-            {
-                _responseTick = UsbConsoleReadTimeoutMs;
-            }
-
-            return _responseTick;
         }
 
         private static string[] SplitTokens(string text)

@@ -32,20 +32,11 @@ namespace CubleyControl
             if (tokens.Length == 1)
             {
                 int enabled = UsbCdcConsole.NativeIsEnabled();
-                if (_activeCommandTransport == CommandTransport.Usb)
-                {
-                    WriteHumanHeading("System");
-                    WriteHumanField("Serial", "Up");
-                    WriteHumanField(
-                        "USB console",
-                        enabled == 0 ? "Disconnected" : IsConsoleLeaseActive(ConsoleTransport.Usb) ? "Active" : "Inactive");
-                }
-                else
-                {
-                    _activeOutputSink(
-                        "system serial=up cdc_enabled=" + enabled.ToString() +
-                        " console_active=" + (IsConsoleLeaseActive(ConsoleTransport.Usb) ? "1" : "0") + "\r\n");
-                }
+                WriteHumanHeading("System");
+                WriteHumanField("Serial", "Up");
+                WriteHumanField(
+                    "USB console",
+                    enabled == 0 ? "Disconnected" : IsConsoleLeaseActive(ConsoleTransport.Usb) ? "Active" : "Inactive");
                 EmitLnbShowSummaryLine(LnbChannelA);
                 EmitLnbShowSummaryLine(1);
                 EmitDiseqcShowSummaryLine();
@@ -304,15 +295,8 @@ namespace CubleyControl
         {
             if (!EnsureLnbInitialized())
             {
-                if (_activeCommandTransport == CommandTransport.Usb)
-                {
-                    WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper());
-                    WriteHumanField("State", BuildLnbInitFailureText());
-                }
-                else
-                {
-                    _activeOutputSink("lnb." + LnbChannelToSchemaName(channel) + " state=init_failed " + BuildLnbInitDiagnosticData() + "\r\n");
-                }
+                WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper());
+                WriteHumanField("State", BuildLnbInitFailureText());
                 return;
             }
 
@@ -326,15 +310,8 @@ namespace CubleyControl
             int rc = ReadLnbStatusPairSafe(out s1, out s2);
             if (rc != (int)LNBH26.Status.Ok)
             {
-                if (_activeCommandTransport == CommandTransport.Usb)
-                {
-                    WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper());
-                    WriteHumanField("Status", "Read failed (code " + rc.ToString() + ")");
-                }
-                else
-                {
-                    _activeOutputSink("lnb." + LnbChannelToSchemaName(channel) + " status=read_failed rc=" + rc.ToString() + "\r\n");
-                }
+                WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper());
+                WriteHumanField("Status", "Read failed (code " + rc.ToString() + ")");
                 return;
             }
 
@@ -345,50 +322,23 @@ namespace CubleyControl
             rc = ReadLnbDataRegistersSafe(out d1, out d2, out d3, out d4);
             if (rc != (int)LNBH26.Status.Ok)
             {
-                if (_activeCommandTransport == CommandTransport.Usb)
-                {
-                    WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper());
-                    WriteHumanField("Configuration", "Read failed (code " + rc.ToString() + ")");
-                }
-                else
-                {
-                    _activeOutputSink("lnb." + LnbChannelToSchemaName(channel) + " config=read_failed rc=" + rc.ToString() + "\r\n");
-                }
-                return;
-            }
-
-            if (_activeCommandTransport == CommandTransport.Usb)
-            {
                 WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper());
-                WriteHumanField("Enabled", IsLnbChannelEnabled(channel, d1) ? "Yes" : "No");
-                WriteHumanField("Polarization", PolarizationToText(pol));
-                WriteHumanField("Band", BandToText(band));
-                WriteHumanField("Current range", IsetToText(isetLow));
-                WriteHumanField("Current limit", IswToText(iswLow));
-                WriteHumanField("Voltage", VoltageSelectForChannelToText(channel, d1));
-                WriteHumanField("Tone", IsToneEnabledForChannel(channel, d2) ? "On" : "Off");
-                WriteHumanField("Low-power mode", IsLowPowerEnabledForChannel(channel, d2) ? "On" : "Off");
-                WriteHumanField("External modulation", IsExtmEnabledForChannel(channel, d2) ? "On" : "Off");
-                WriteHumanField("Status", HasFaultStatus(s1) ? "Fault" : "OK");
-                WriteHumanField("Status registers", "S1 " + ToHexU8(s1) + ", S2 " + ToHexU8(s2));
+                WriteHumanField("Configuration", "Read failed (code " + rc.ToString() + ")");
                 return;
             }
 
-            _activeOutputSink(
-                "lnb." + LnbChannelToSchemaName(channel) +
-                " enabled=" + (IsLnbChannelEnabled(channel, d1) ? "on" : "off") +
-                " pol=" + PolarizationToText(pol) +
-                " band=" + BandToText(band) +
-                " iset=" + IsetToText(isetLow) +
-                " isw=" + IswToText(iswLow) +
-                " voltage=" + VoltageSelectForChannelToText(channel, d1) +
-                " tone=" + (IsToneEnabledForChannel(channel, d2) ? "on" : "off") +
-                " lpm=" + (IsLowPowerEnabledForChannel(channel, d2) ? "on" : "off") +
-                " extm=" + (IsExtmEnabledForChannel(channel, d2) ? "on" : "off") +
-                " status=" + (HasFaultStatus(s1) ? "fault" : "ok") +
-                " s1=" + ToHexU8(s1) +
-                " s2=" + ToHexU8(s2) +
-                "\r\n");
+            WriteHumanHeading("LNB " + LnbChannelToSchemaName(channel).ToUpper());
+            WriteHumanField("Enabled", IsLnbChannelEnabled(channel, d1) ? "Yes" : "No");
+            WriteHumanField("Polarization", PolarizationToText(pol));
+            WriteHumanField("Band", BandToText(band));
+            WriteHumanField("Current range", IsetToText(isetLow));
+            WriteHumanField("Current limit", IswToText(iswLow));
+            WriteHumanField("Voltage", VoltageSelectForChannelToText(channel, d1));
+            WriteHumanField("Tone", IsToneEnabledForChannel(channel, d2) ? "On" : "Off");
+            WriteHumanField("Low-power mode", IsLowPowerEnabledForChannel(channel, d2) ? "On" : "Off");
+            WriteHumanField("External modulation", IsExtmEnabledForChannel(channel, d2) ? "On" : "Off");
+            WriteHumanField("Status", HasFaultStatus(s1) ? "Fault" : "OK");
+            WriteHumanField("Status registers", "S1 " + ToHexU8(s1) + ", S2 " + ToHexU8(s2));
         }
 
         private static bool HasFaultStatus(int status1)
