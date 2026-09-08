@@ -6,7 +6,8 @@ namespace CubleyControl
     {
         public const int RecordSize = 512;
         public const int HeaderSize = 16;
-        public const byte SchemaVersion = 2;
+        public const byte SchemaVersion = 3;
+        private const byte LegacySchemaVersion = 2;
 
         public static bool TryEncode(MqttConfiguration configuration, uint generation, out byte[] record, out string error)
         {
@@ -61,7 +62,7 @@ namespace CubleyControl
                 return false;
             }
 
-            if (record[4] != SchemaVersion)
+            if (record[4] != SchemaVersion && record[4] != LegacySchemaVersion)
             {
                 error = "record_version_unsupported";
                 return false;

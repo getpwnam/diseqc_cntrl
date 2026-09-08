@@ -56,8 +56,18 @@ namespace CubleyControl
             if ((field == "default" || field == "defaults") && tokens.Length == 3)
             {
                 string hostname = _pendingMqttConfiguration.Hostname;
+                int eastLimit = _pendingMqttConfiguration.DiseqcEastLimitMicrodegrees;
+                int westLimit = _pendingMqttConfiguration.DiseqcWestLimitMicrodegrees;
+                int eastStep = _pendingMqttConfiguration.DiseqcEastStepMicrodegrees;
+                int westStep = _pendingMqttConfiguration.DiseqcWestStepMicrodegrees;
+                int offset = _pendingMqttConfiguration.DiseqcGotoOffsetMicrodegrees;
                 _pendingMqttConfiguration = MqttConfiguration.CreateDefaults();
                 _pendingMqttConfiguration.Hostname = hostname;
+                _pendingMqttConfiguration.DiseqcEastLimitMicrodegrees = eastLimit;
+                _pendingMqttConfiguration.DiseqcWestLimitMicrodegrees = westLimit;
+                _pendingMqttConfiguration.DiseqcEastStepMicrodegrees = eastStep;
+                _pendingMqttConfiguration.DiseqcWestStepMicrodegrees = westStep;
+                _pendingMqttConfiguration.DiseqcGotoOffsetMicrodegrees = offset;
                 StageApplicationChange(reqId, "mqtt-defaults", "disabled", previous);
                 return;
             }
@@ -166,7 +176,7 @@ namespace CubleyControl
 
         private static void WriteMqttSetUsage(int reqId)
         {
-            WriteCommandResult(reqId, false, "validation_error", "mqtt usage", "usage=mqtt <enabled on|off|broker HOST|port PORT|client-id ID|username VALUE|password VALUE|topic-prefix PREFIX|keepalive SEC|reconnect SEC|defaults>");
+            WriteCommandResult(reqId, false, "validation_error", "mqtt usage", "usage=mqtt <enabled on|off|broker HOST|port PORT|client-id ID|username VALUE|password VALUE|topic-prefix PREFIX|keepalive SEC|reconnect SEC|default|defaults>");
         }
     }
 }

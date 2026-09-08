@@ -10,6 +10,7 @@ namespace CubleyControl
         public const int MaximumUsernameLength = 48;
         public const int MaximumPasswordLength = 96;
         public const int MaximumTopicPrefixLength = 64;
+        public const int MaximumDiseqcAngleMicrodegrees = 180_000_000;
 
         public bool Enabled;
         public string Broker = string.Empty;
@@ -21,6 +22,11 @@ namespace CubleyControl
         public string TopicPrefix = "diseqc";
         public int KeepAliveSeconds = 60;
         public int ReconnectSeconds = 5;
+        public int DiseqcEastLimitMicrodegrees;
+        public int DiseqcWestLimitMicrodegrees;
+        public int DiseqcEastStepMicrodegrees;
+        public int DiseqcWestStepMicrodegrees;
+        public int DiseqcGotoOffsetMicrodegrees;
 
         public static MqttConfiguration CreateDefaults()
         {
@@ -40,7 +46,12 @@ namespace CubleyControl
                 Password = Password,
                 TopicPrefix = TopicPrefix,
                 KeepAliveSeconds = KeepAliveSeconds,
-                ReconnectSeconds = ReconnectSeconds
+                ReconnectSeconds = ReconnectSeconds,
+                DiseqcEastLimitMicrodegrees = DiseqcEastLimitMicrodegrees,
+                DiseqcWestLimitMicrodegrees = DiseqcWestLimitMicrodegrees,
+                DiseqcEastStepMicrodegrees = DiseqcEastStepMicrodegrees,
+                DiseqcWestStepMicrodegrees = DiseqcWestStepMicrodegrees,
+                DiseqcGotoOffsetMicrodegrees = DiseqcGotoOffsetMicrodegrees
             };
         }
 
@@ -108,6 +119,25 @@ namespace CubleyControl
                 return false;
             }
 
+            if (!IsValidDiseqcPair(DiseqcEastLimitMicrodegrees, DiseqcWestLimitMicrodegrees))
+            {
+                error = "diseqc_limits_invalid";
+                return false;
+            }
+
+            if (!IsValidDiseqcPair(DiseqcEastStepMicrodegrees, DiseqcWestStepMicrodegrees))
+            {
+                error = "diseqc_steps_invalid";
+                return false;
+            }
+
+            if (DiseqcGotoOffsetMicrodegrees < -MaximumDiseqcAngleMicrodegrees ||
+                DiseqcGotoOffsetMicrodegrees > MaximumDiseqcAngleMicrodegrees)
+            {
+                error = "diseqc_offset_invalid";
+                return false;
+            }
+
             if (ToPayload().Length > ApplicationConfigurationRecord.RecordSize - ApplicationConfigurationRecord.HeaderSize)
             {
                 error = "payload_too_large";
@@ -130,7 +160,12 @@ namespace CubleyControl
                 "password=" + Password + "\n" +
                 "topic_prefix=" + TopicPrefix + "\n" +
                 "keepalive_seconds=" + KeepAliveSeconds.ToString() + "\n" +
-                "reconnect_seconds=" + ReconnectSeconds.ToString();
+                "reconnect_seconds=" + ReconnectSeconds.ToString() + "\n" +
+                "de_lim=" + DiseqcEastLimitMicrodegrees.ToString() + "\n" +
+                "dw_lim=" + DiseqcWestLimitMicrodegrees.ToString() + "\n" +
+                "de_step=" + DiseqcEastStepMicrodegrees.ToString() + "\n" +
+                "dw_step=" + DiseqcWestStepMicrodegrees.ToString() + "\n" +
+                "d_offset=" + DiseqcGotoOffsetMicrodegrees.ToString();
         }
 
         public static bool TryParsePayload(string payload, out MqttConfiguration configuration, out string error)
@@ -221,6 +256,51 @@ namespace CubleyControl
                     }
                     configuration.ReconnectSeconds = number;
                 }
+                else if (key == "de_lim")
+                {
+                    if (!int.TryParse(value, out number))
+                    {
+                        error = "diseqc_east_limit_invalid";
+                        return false;
+                    }
+                    configuration.DiseqcEastLimitMicrodegrees = number;
+                }
+                else if (key == "dw_lim")
+                {
+                    if (!int.TryParse(value, out number))
+                    {
+                        error = "diseqc_west_limit_invalid";
+                        return false;
+                    }
+                    configuration.DiseqcWestLimitMicrodegrees = number;
+                }
+                else if (key == "de_step")
+                {
+                    if (!int.TryParse(value, out number))
+                    {
+                        error = "diseqc_east_step_invalid";
+                        return false;
+                    }
+                    configuration.DiseqcEastStepMicrodegrees = number;
+                }
+                else if (key == "dw_step")
+                {
+                    if (!int.TryParse(value, out number))
+                    {
+                        error = "diseqc_west_step_invalid";
+                        return false;
+                    }
+                    configuration.DiseqcWestStepMicrodegrees = number;
+                }
+                else if (key == "d_offset")
+                {
+                    if (!int.TryParse(value, out number))
+                    {
+                        error = "diseqc_goto_offset_invalid";
+                        return false;
+                    }
+                    configuration.DiseqcGotoOffsetMicrodegrees = number;
+                }
                 else
                 {
                     error = "payload_key_unknown";
@@ -229,6 +309,17 @@ namespace CubleyControl
             }
 
             return configuration.TryValidate(out error);
+        }
+
+        private static bool IsValidDiseqcPair(int eastMicrodegrees, int westMicrodegrees)
+        {
+            if (eastMicrodegrees == 0 && westMicrodegrees == 0)
+            {
+                return true;
+            }
+
+            return eastMicrodegrees > 0 && eastMicrodegrees <= MaximumDiseqcAngleMicrodegrees &&
+                westMicrodegrees > 0 && westMicrodegrees <= MaximumDiseqcAngleMicrodegrees;
         }
 
         private static bool IsValidHostname(string value)

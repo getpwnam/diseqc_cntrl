@@ -18,8 +18,35 @@ namespace Cubley.Diseqc
             out int encodedAngleTenths,
             out string error)
         {
+            DiseqcMotorDirection effectiveDirection;
+            int effectiveMicrodegrees;
+            return TryBuildFrame(
+                direction,
+                degrees,
+                0,
+                out frame,
+                out requestedMicrodegrees,
+                out effectiveDirection,
+                out effectiveMicrodegrees,
+                out encodedAngleTenths,
+                out error);
+        }
+
+        public static bool TryBuildFrame(
+            DiseqcMotorDirection direction,
+            string degrees,
+            int signedOffsetMicrodegrees,
+            out byte[] frame,
+            out int requestedMicrodegrees,
+            out DiseqcMotorDirection effectiveDirection,
+            out int effectiveMicrodegrees,
+            out int encodedAngleTenths,
+            out string error)
+        {
             frame = new byte[0];
             requestedMicrodegrees = 0;
+            effectiveDirection = DiseqcMotorDirection.East;
+            effectiveMicrodegrees = 0;
             encodedAngleTenths = 0;
             error = string.Empty;
 
@@ -29,12 +56,34 @@ namespace Cubley.Diseqc
                 return false;
             }
 
-            if (!TryParseDegrees(degrees, out requestedMicrodegrees, out encodedAngleTenths, out error))
+            int ignoredTenths;
+            if (!TryParseDegrees(degrees, out requestedMicrodegrees, out ignoredTenths, out error))
             {
                 return false;
             }
 
-            int directionWord = direction == DiseqcMotorDirection.East ? 0xE000 : 0xD000;
+            long signedRequestedMicrodegrees = direction == DiseqcMotorDirection.East
+                ? requestedMicrodegrees
+                : -((long)requestedMicrodegrees);
+            long signedEffectiveMicrodegrees = signedRequestedMicrodegrees + signedOffsetMicrodegrees;
+            long maximumMicrodegrees = (long)DiseqcLimits.GotoAngularMaxDegrees * MicrodegreesPerDegree;
+            if (signedEffectiveMicrodegrees < -maximumMicrodegrees || signedEffectiveMicrodegrees > maximumMicrodegrees)
+            {
+                error = "offset_out_of_range";
+                return false;
+            }
+
+            effectiveDirection = signedEffectiveMicrodegrees < 0
+                ? DiseqcMotorDirection.West
+                : DiseqcMotorDirection.East;
+            effectiveMicrodegrees = (int)(signedEffectiveMicrodegrees < 0
+                ? -signedEffectiveMicrodegrees
+                : signedEffectiveMicrodegrees);
+            long scaled = ((long)effectiveMicrodegrees * TenthsPerDegree) +
+                (MicrodegreesPerDegree / 2);
+            encodedAngleTenths = (int)(scaled / MicrodegreesPerDegree);
+
+            int directionWord = effectiveDirection == DiseqcMotorDirection.East ? 0xE000 : 0xD000;
             int wholeDegrees = encodedAngleTenths / TenthsPerDegree;
             int fractionalTenth = encodedAngleTenths % TenthsPerDegree;
             int positionWord = directionWord | (wholeDegrees << 4) | FractionCodeByTenth[fractionalTenth];

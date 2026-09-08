@@ -129,11 +129,11 @@ CubleyControl console
 |   |   |-- motor-limit <east|west|off>
 |   |   |     Set or disable the motor's internal limits at the current position.
 |   |   |-- angle-limits status|off
-|   |   |     Inspect or disable the volatile angular software limits.
+|   |   |     Inspect or temporarily disable the active angular software limits.
 |   |   |-- angle-limits <east_degrees> <west_degrees>
 |   |   |     Arm direction-specific software limits after checking hardware stops.
 |   |   |-- step-calibration status|off
-|   |   |     Inspect or disable volatile open-loop step calibration.
+|   |   |     Inspect or temporarily disable active open-loop step calibration.
 |   |   |-- step-calibration <east_deg_per_step> <west_deg_per_step>
 |   |   |     Set direction-specific step sizes with up to six decimal places.
 |   |   |-- step <east|west> <1..128>
@@ -401,7 +401,7 @@ The output uses canonical commands only, includes explicit defaults, and has a
 version header. Blank lines and lines beginning with `!` are ignored on input.
 
 ```text
-! cubley-config v2
+! cubley-config v3
 hostname cubley-dish-01
 network mode static
 network address 192.168.1.40
@@ -477,22 +477,30 @@ state. Assignment commands require a value; all reads begin with `show`.
 
 ## Network And MQTT Configuration
 
-Network addressing is persisted by nanoFramework. MQTT settings are written to the
-portable application configuration record. Both are changed only through the USB
+Network addressing is persisted by nanoFramework. MQTT and DiSEqC positioning settings are written to the
+portable application configuration record. All are changed only through the USB
 configuration mode described above.
 
 | Command | Behavior |
 |---|---|
 | `show network` | Show active link, MAC, IPv4, and DNS state. |
 | `show mqtt` | Show active MQTT state, endpoint, reconnect attempts, and last error. |
-| `show running-config [network\|mqtt]` | Show active configuration with passwords redacted. |
-| `show startup-config [network\|mqtt]` | Show persisted configuration with passwords redacted. |
+| `show running-config [network\|mqtt\|diseqc]` | Show active configuration with passwords redacted. |
+| `show startup-config [network\|mqtt\|diseqc]` | Show persisted configuration with passwords redacted. |
 
 Configuration backend and load diagnostics are available separately as
 `show storage` from USB configuration mode.
 
 The public operational grammar does not use `get` or `set`. Network and MQTT
 mutations are accepted only after entering configuration mode.
+
+Configuration mode accepts persistent `diseqc angle-limits <east> <west>`,
+`diseqc step-calibration <east> <west>`, and
+`diseqc fixed-offset <east|west> <degrees>` values. `commit` writes them to the
+portable application record. A fixed offset is added to the signed USALS motor
+angle before direction-specific limit checking and GoToX encoding. For example,
+`fixed-offset west 3.38` changes a requested `36.6` degrees east to an effective
+`33.22` degrees east, encoded as `33.2` degrees.
 
 ## DiSEqC Commands
 
@@ -506,8 +514,8 @@ mutations are accepted only after entering configuration mode.
 | `diseqc motor-limit <east\|west\|off>` | Send motor-internal limit command `0x66`, `0x67`, or `0x63`. East or west records the motor's current physical position as that limit. This does not configure Cubley's angular safety limits. |
 | `diseqc angle-limits <east_degrees> <west_degrees>` | Set positive, direction-specific runtime limits in the protocol range through 180 degrees. Rejected during motion. The operator must choose values strictly inside the motor's physically adjusted hardware stops. |
 | `diseqc angle-limits status` | Show whether angular motion is armed and both direction limits. |
-| `diseqc angle-limits off` | Disable angular movement. This is the power-on default and is rejected during motion. |
-| `diseqc step-calibration <east_deg_per_step> <west_deg_per_step>` | Set volatile direction-specific step sizes with up to six decimal places. Calibration starts disabled after boot. |
+| `diseqc angle-limits off` | Temporarily disable angular movement. Persisted limits are loaded again after reboot. Rejected during motion. |
+| `diseqc step-calibration <east_deg_per_step> <west_deg_per_step>` | Temporarily set direction-specific step sizes with up to six decimal places. Persisted calibration is loaded again after reboot. |
 | `diseqc step-calibration status` | Show step calibration and position-estimate state. |
 | `diseqc step-calibration off` | Disable step calibration. |
 | `diseqc step <east\|west> <steps>` | Move `1..128` steps. |
@@ -549,8 +557,8 @@ exponent notation, and locale decimal separators are rejected because direction
 is a separate argument. The local estimate remains in microdegrees so calibrated
 steps can retain finer resolution than the GoToX command.
 
-Angular software limits are deliberately volatile and start disabled after every
-boot. This fail-closed behavior requires the operator or future station
+Angular software limits start disabled after boot unless persistent values were
+explicitly committed. This fail-closed behavior requires the operator or future station
 orchestrator to confirm the motor's adjustable hardware stops before arming a
 bounded session. A configured software value is not evidence that the physical
 hardware limit was measured correctly.

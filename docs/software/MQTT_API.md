@@ -95,7 +95,7 @@ and `state/lnb` to establish or recover current state.
 `position_source`, `pending_target_deg`, `step_calibration_configured`,
 `east_step_deg`, `west_step_deg`, and `timeout_ms`.
 The retained state additionally carries `angle_limits_configured`,
-`east_limit_deg`, and `west_limit_deg`. Successful goto, step, and drive commands
+`east_limit_deg`, `west_limit_deg`, and `goto_offset_deg`. Successful goto, step, and drive commands
 set the state busy. Further movement and raw transmit commands fail as busy until
 Halt, timeout, or `diseqc complete <motion_id>` releases the lock. The ID check
 prevents a stale external completion message from releasing a newer movement.
@@ -103,7 +103,7 @@ prevents a stale external completion message from releasing a newer movement.
 adjustable with `diseqc timeout <5..300>` (seconds, default 90).
 
 Angular movement is fail-closed after boot. Before `diseqc goto-angle` can run,
-set volatile east/west bounds with `diseqc angle-limits <east> <west>` after
+set active east/west bounds with `diseqc angle-limits <east> <west>` after
 confirming that both are inside the motor's adjusted hardware stops. The command
 accepts explicit direction plus unsigned decimal degrees and reports both the
 requested value and the value rounded to the protocol's tenth-degree GoToX
@@ -111,7 +111,7 @@ encoding.
 Transmission records `pending_target_deg` while preserving any prior estimate.
 Matching external completion adopts the encoded GoToX target as
 `position_confidence=estimated`, not `rf_verified`. A step does the same only
-when direction-specific volatile step calibration is configured. Timeout sets
+when direction-specific step calibration is configured. Timeout sets
 `verification_failed`; continuous drive, stored/reference movement, Halt,
 uncalibrated step completion, and raw positioner commands set `unknown`.
 

@@ -76,4 +76,52 @@ public sealed class DiseqcGotoAngleEncoderTests
         Assert.Empty(frame);
         Assert.Equal(expectedError, error);
     }
+
+    [Theory]
+    [InlineData(DiseqcMotorDirection.East, "36.6", -3_380_000, DiseqcMotorDirection.East, 33_220_000, "E0-31-6E-E2-13")]
+    [InlineData(DiseqcMotorDirection.East, "2", -3_400_000, DiseqcMotorDirection.West, 1_400_000, "E0-31-6E-D0-16")]
+    [InlineData(DiseqcMotorDirection.West, "2", 3_400_000, DiseqcMotorDirection.East, 1_400_000, "E0-31-6E-E0-16")]
+    public void AppliesSignedOffsetBeforeEncoding(
+        DiseqcMotorDirection requestedDirection,
+        string requestedDegrees,
+        int signedOffsetMicrodegrees,
+        DiseqcMotorDirection expectedDirection,
+        int expectedEffectiveMicrodegrees,
+        string expectedFrame)
+    {
+        bool success = DiseqcGotoAngleEncoder.TryBuildFrame(
+            requestedDirection,
+            requestedDegrees,
+            signedOffsetMicrodegrees,
+            out byte[] frame,
+            out _,
+            out DiseqcMotorDirection effectiveDirection,
+            out int effectiveMicrodegrees,
+            out _,
+            out string error);
+
+        Assert.True(success, error);
+        Assert.Equal(expectedDirection, effectiveDirection);
+        Assert.Equal(expectedEffectiveMicrodegrees, effectiveMicrodegrees);
+        Assert.Equal(expectedFrame, BitConverter.ToString(frame));
+    }
+
+    [Fact]
+    public void RejectsOffsetTargetOutsideMotorRange()
+    {
+        bool success = DiseqcGotoAngleEncoder.TryBuildFrame(
+            DiseqcMotorDirection.East,
+            "179",
+            2_000_000,
+            out byte[] frame,
+            out _,
+            out _,
+            out _,
+            out _,
+            out string error);
+
+        Assert.False(success);
+        Assert.Empty(frame);
+        Assert.Equal("offset_out_of_range", error);
+    }
 }

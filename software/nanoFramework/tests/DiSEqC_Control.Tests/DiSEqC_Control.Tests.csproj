@@ -12,6 +12,8 @@
     <Compile Include="../../CubleyDiseqc.Managed/DiseqcGotoAngleEncoder.cs" Link="Managed/DiseqcGotoAngleEncoder.cs" />
     <Compile Include="../../CubleyDiseqc.Managed/DiseqcPositionEstimate.cs" Link="Managed/DiseqcPositionEstimate.cs" />
     <Compile Include="../../CubleyDiseqc.Managed/DiseqcProtocol.cs" Link="Managed/DiseqcProtocol.cs" />
+    <Compile Include="../../CubleyControl/ApplicationConfigurationRecord.cs" Link="Control/ApplicationConfigurationRecord.cs" />
+    <Compile Include="../../CubleyControl/MqttConfiguration.cs" Link="Control/MqttConfiguration.cs" />
   </ItemGroup>
 
   <ItemGroup>

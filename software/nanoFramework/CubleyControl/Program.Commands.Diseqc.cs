@@ -38,6 +38,7 @@ namespace CubleyControl
         private static int _diseqcMotionTimeoutMs = DiseqcMotionWorstCaseMs;
         private static int _diseqcEastTravelLimitMicrodegrees;
         private static int _diseqcWestTravelLimitMicrodegrees;
+        private static int _diseqcGotoOffsetMicrodegrees;
         private static string _diseqcMotionCommandMode = "none";
         private static string _diseqcMotionRequestedAngle = "none";
         private static string _diseqcMotionEncodedAngle = "none";
@@ -239,13 +240,18 @@ namespace CubleyControl
 
                 byte[] frame;
                 int requestedMicrodegrees;
+                DiseqcMotorDirection effectiveDirection;
+                int effectiveMicrodegrees;
                 int encodedAngleTenths;
                 string error;
                 if (!DiseqcCommandBuilder.TryBuildGotoAngularPosition(
                     direction,
                     tokens[3],
+                    _diseqcGotoOffsetMicrodegrees,
                     out frame,
                     out requestedMicrodegrees,
+                    out effectiveDirection,
+                    out effectiveMicrodegrees,
                     out encodedAngleTenths,
                     out error))
                 {
@@ -258,7 +264,7 @@ namespace CubleyControl
                     return;
                 }
 
-                int travelLimit = direction == DiseqcMotorDirection.East
+                int travelLimit = effectiveDirection == DiseqcMotorDirection.East
                     ? _diseqcEastTravelLimitMicrodegrees
                     : _diseqcWestTravelLimitMicrodegrees;
                 if (travelLimit <= 0)
@@ -272,15 +278,16 @@ namespace CubleyControl
                     return;
                 }
 
-                if (!DiseqcGotoAngleEncoder.IsWithinTravelLimit(requestedMicrodegrees, travelLimit))
+                if (!DiseqcGotoAngleEncoder.IsWithinTravelLimit(effectiveMicrodegrees, travelLimit))
                 {
                     WriteCommandResult(
                         reqId,
                         false,
                         "validation_error",
                         "diseqc goto-angle exceeds software limit",
-                        "direction=" + tokens[2] +
+                        "direction=" + (effectiveDirection == DiseqcMotorDirection.East ? "east" : "west") +
                         " requested_angle_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(requestedMicrodegrees) +
+                        " effective_angle_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(effectiveMicrodegrees) +
                         " limit_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(travelLimit));
                     return;
                 }
@@ -289,12 +296,12 @@ namespace CubleyControl
                     reqId,
                     "diseqc goto-angle",
                     frame,
-                    "goto_angle_" + tokens[2],
+                    "goto_angle_" + (effectiveDirection == DiseqcMotorDirection.East ? "east" : "west"),
                     _diseqcMotionTimeoutMs,
                     "angular",
                     DiseqcGotoAngleEncoder.FormatMicrodegrees(requestedMicrodegrees),
                     DiseqcGotoAngleEncoder.FormatTenths(encodedAngleTenths),
-                    tokens[2],
+                    effectiveDirection == DiseqcMotorDirection.East ? "east" : "west",
                     encodedAngleTenths * 100_000);
                 return;
             }
@@ -562,6 +569,7 @@ namespace CubleyControl
                 WriteHumanField("West step calibration", westStep == "Disabled" ? westStep : westStep + " deg");
                 WriteHumanField("East software limit", FormatDiseqcTravelLimit(_diseqcEastTravelLimitMicrodegrees));
                 WriteHumanField("West software limit", FormatDiseqcTravelLimit(_diseqcWestTravelLimitMicrodegrees));
+                WriteHumanField("GoToX fixed offset", FormatSignedDiseqcAngle(_diseqcGotoOffsetMicrodegrees) + " deg");
                 WriteHumanField("Watchdog timeout", (_diseqcMotionTimeoutMs / 1000).ToString() + " s");
                 return;
             }
@@ -651,7 +659,8 @@ namespace CubleyControl
             return "angle_limits_configured=" +
                 (_diseqcEastTravelLimitMicrodegrees > 0 && _diseqcWestTravelLimitMicrodegrees > 0 ? "1" : "0") +
                 " east_limit_deg=" + FormatDiseqcTravelLimit(_diseqcEastTravelLimitMicrodegrees) +
-                " west_limit_deg=" + FormatDiseqcTravelLimit(_diseqcWestTravelLimitMicrodegrees);
+                " west_limit_deg=" + FormatDiseqcTravelLimit(_diseqcWestTravelLimitMicrodegrees) +
+                " goto_offset_deg=" + FormatSignedDiseqcAngle(_diseqcGotoOffsetMicrodegrees);
         }
 
         private static string FormatDiseqcTravelLimit(int microdegrees)
