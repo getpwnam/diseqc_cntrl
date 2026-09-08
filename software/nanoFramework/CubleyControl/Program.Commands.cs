@@ -158,7 +158,7 @@ namespace CubleyControl
             {
                 WriteHumanHeading("Operational syntax");
                 _activeOutputSink(
-                    "show [lnb [a|b]|diseqc|network|mqtt|running-config [network|mqtt]|startup-config [network|mqtt]|status|capabilities|version]\r\n" +
+                    "show [lnb [a|b]|diseqc|network|net|mqtt|running-config [network|mqtt]|startup-config [network|mqtt]|status|capabilities|caps|version|ver]\r\n" +
                     "lnb <a|b> <enable|disable|polarization|band|iset|isw> [value]\r\n" +
                     "diseqc <goto|step|drive|stop|preset|timeout|tx|tone|listen|complete> ...\r\n" +
                     "dns lookup <hostname>\r\n" +
