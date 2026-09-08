@@ -642,7 +642,6 @@ else
       "$CUBLEY_INTEROP_PE"
       "$CUBLEY_DISEQC_MANAGED_PE"
       "$OUTPUT_DIR/System.Device.Gpio.pe"
-      "$OUTPUT_DIR/System.Device.Pwm.pe"
       "$OUTPUT_DIR/nanoFramework.Hardware.Stm32.pe"
       "$RUNTIME_EVENTS_PE"
       "$OUTPUT_DIR/System.Threading.pe"
