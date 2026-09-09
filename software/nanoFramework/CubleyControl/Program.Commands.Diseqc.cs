@@ -795,21 +795,15 @@ namespace CubleyControl
                 return;
             }
 
-            bool positionInvalidated = false;
             if (IsRawPositionerCommand(frame))
             {
                 lock (_diseqcMotionLock)
                 {
                     _diseqcPositionEstimate.Invalidate();
                 }
-                positionInvalidated = true;
             }
 
             WriteCommandResult(reqId, true, "ok", source, "bytes=" + BytesToHex(frame) + " encoded_bits=" + (frame.Length * 9).ToString());
-            if (positionInvalidated)
-            {
-                PublishMqttDiseqcState();
-            }
         }
 
         private static bool IsRawPositionerCommand(byte[] frame)
@@ -1186,7 +1180,7 @@ namespace CubleyControl
                 _diseqcPositionEstimate.CompletePending();
             }
 
-            PublishMqttDiseqcJobTransition("end", requestedMotionId);
+            WriteStructuredDebug("DISEQC", BuildDiseqcJobEventJson("end", requestedMotionId));
             WriteCommandResult(reqId, true, "ok", "diseqc complete", "motion_id=" + requestedMotionId.ToString());
         }
 
@@ -1211,7 +1205,7 @@ namespace CubleyControl
                 if (haltedJobId != 0)
                 {
                     _lastStartedDiseqcJobId = haltedJobId;
-                    PublishMqttDiseqcJobTransition("end", haltedJobId);
+                    WriteStructuredDebug("DISEQC", BuildDiseqcJobEventJson("end", haltedJobId));
                 }
                 return;
             }
@@ -1243,7 +1237,7 @@ namespace CubleyControl
 
             int jobId = BeginDiseqcJob(operation, durationMs);
             _lastStartedDiseqcJobId = jobId;
-            PublishMqttDiseqcJobTransition("start", jobId);
+            WriteStructuredDebug("DISEQC", BuildDiseqcJobEventJson("start", jobId));
         }
 
         private static string BuildDiseqcMotionResultData()
@@ -1357,7 +1351,7 @@ namespace CubleyControl
 
                 if (ended)
                 {
-                    PublishMqttDiseqcJobTransition("end", expiredMotionId);
+                    WriteStructuredDebug("DISEQC", BuildDiseqcJobEventJson("end", expiredMotionId));
                 }
             }
         }

@@ -17,8 +17,6 @@ REQUIRED_ASSEMBLIES = [
     "System.IO.Streams.pe",
     "nanoFramework.System.Text.pe",
     "System.Net.pe",
-    "nanoFramework.M2Mqtt.Core.pe",
-    "nanoFramework.M2Mqtt.pe",
     "mscorlib.pe",
 ]
 
@@ -35,8 +33,6 @@ EXPECTED_BUILD_MANIFEST = [
     "$OUTPUT_DIR/System.IO.Streams.pe",
     "$SYSTEM_TEXT_PE",
     "$OUTPUT_DIR/System.Net.pe",
-    "$OUTPUT_DIR/nanoFramework.M2Mqtt.Core.pe",
-    "$OUTPUT_DIR/nanoFramework.M2Mqtt.pe",
     "$OUTPUT_DIR/mscorlib.pe",
 ]
 

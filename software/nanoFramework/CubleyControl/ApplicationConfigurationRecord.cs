@@ -6,10 +6,9 @@ namespace CubleyControl
     {
         public const int RecordSize = 512;
         public const int HeaderSize = 16;
-        public const byte SchemaVersion = 3;
-        private const byte LegacySchemaVersion = 2;
+        public const byte SchemaVersion = 4;
 
-        public static bool TryEncode(MqttConfiguration configuration, uint generation, out byte[] record, out string error)
+        public static bool TryEncode(ApplicationConfiguration configuration, uint generation, out byte[] record, out string error)
         {
             record = null;
             error = null;
@@ -45,9 +44,9 @@ namespace CubleyControl
             return true;
         }
 
-        public static bool TryDecode(byte[] record, out MqttConfiguration configuration, out uint generation, out string error)
+        public static bool TryDecode(byte[] record, out ApplicationConfiguration configuration, out uint generation, out string error)
         {
-            configuration = MqttConfiguration.CreateDefaults();
+            configuration = ApplicationConfiguration.CreateDefaults();
             generation = 0;
             if (record == null || record.Length != RecordSize)
             {
@@ -62,7 +61,7 @@ namespace CubleyControl
                 return false;
             }
 
-            if (record[4] != SchemaVersion && record[4] != LegacySchemaVersion)
+            if (record[4] != SchemaVersion)
             {
                 error = "record_version_unsupported";
                 return false;
@@ -85,7 +84,7 @@ namespace CubleyControl
 
             generation = ReadUInt32(record, 8);
             string text = AsciiBytesToString(payload);
-            return MqttConfiguration.TryParsePayload(text, out configuration, out error);
+            return ApplicationConfiguration.TryParsePayload(text, out configuration, out error);
         }
 
         private static byte[] AsciiStringToBytes(string text)

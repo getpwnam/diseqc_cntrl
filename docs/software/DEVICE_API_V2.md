@@ -1,14 +1,14 @@
 # Device API v2 — JSON Command Envelope And Positioner Jobs
 
 Status: **draft contract**, implemented on the device but not yet exercised on
-hardware. REST is the only network control transport. MQTT is outbound-only and
-announces availability, events, and retained state.
+hardware. REST is the only network interface.
 
 ## Why this exists
 
-The v1 MQTT envelope was `<decimal id> <console command line>` — the human
-console grammar used as a wire format, capped at 64 bytes, with a 16-bit
-requester-assigned ID as its first token. Two problems followed from that:
+The previous machine command envelope was
+`<decimal id> <console command line>`: the human console grammar used as a wire
+format, capped at 64 bytes, with a 16-bit requester-assigned ID as its first
+token. Two problems followed from that:
 
 1. The machine API and the operator CLI shared one grammar, so neither could
    change without breaking the other.
@@ -37,7 +37,7 @@ Nothing in this document changes the console. An operator types
 
 Send commands with `POST /api/v2/commands` over HTTP. The request and response
 content type is `application/json`. A command result is returned in the HTTP
-response body; the device does not publish command responses to MQTT.
+response body.
 
 Read current device state with:
 
@@ -45,10 +45,6 @@ Read current device state with:
 - `GET /api/v2/state/positioner`
 - `GET /api/v2/state/lnb`
 - `GET /api/v2/jobs/{job}`
-
-MQTT 3.1.1 remains the announcement transport. Its topic root is
-`<prefix>/<hostname>`; see [MQTT_API.md](MQTT_API.md) for topics and delivery
-semantics. The device does not subscribe to any MQTT topic.
 
 ### Payload constraints
 
@@ -93,7 +89,7 @@ The device remembers the 8 most recent `{id, raw payload, response}`
 transactions for **120 seconds**.
 
 - Same `id`, byte-identical payload, within the window → the original response
-  is republished verbatim with an added `"replayed":true` member, and the
+  is returned verbatim with an added `"replayed":true` member, and the
   command is **not** executed again. `ok` and `code` stay as they originally
   were, so a replay is never mistaken for a fresh execution.
 - Same `id`, different payload, within the window → `id_conflict`, nothing
@@ -176,7 +172,7 @@ positioner.goto/goto_angle/step/drive ──> running ──┬── positioner
 
 Only one job runs at a time. A motion command while a job is `running` fails
 with `busy` and names the active job; it does not queue. The device retains the
-4 most recent job records for state announcement and release validation.
+ 4 most recent job records for state queries and release validation.
 
 ### Job object
 
@@ -260,35 +256,6 @@ requires a contract version bump** — v2 freezes the shapes above.
 
 Configuration commands remain USB-only and are not exposed by REST.
 
-## Events
-
-`event/diseqc`, non-retained, one per job transition:
-
-```json
-{"v":2,"event_id":14,"sub":"diseqc","comp":"job","transition":"start",
- "job":7,"op":"goto","state":"running","remaining_ms":89750}
-```
-
-`transition` is `start` or `end`. `event_id` is a monotonic counter for
-ordering within a boot.
-
-## State
-
-`state/diseqc`, retained, republished on connect and on each job transition:
-
-```json
-{"v":2,"sub":"diseqc","comp":"state","busy":true,"timeout_ms":90000,
- "active":{"job":7,...},"last":{"job":6,...}}
-```
-
-`active` is the running job or null; `last` is the most recent terminal job or
-null. Consumers should use `event/diseqc` for live transitions and
-`state/diseqc` to establish or recover current state after a reconnect.
-
-Because `active` and `last` are nested objects, `state/diseqc` is **outbound
-only** — it is written by the device, and is outside the flat-object subset the
-inbound parser accepts. Nothing needs to parse it back on the device.
-
 ## Versioning
 
 `v` is the contract version and is checked on every inbound command. Additive,
@@ -300,6 +267,7 @@ migrating an op from `lines` to `data` — increments it.
 
 - REST has no authentication or authorization. Network access to TCP port 80
   must be restricted to trusted controllers.
-- REST and MQTT have no TLS.
+- REST has no TLS.
 - `ts_ms` is an uptime tick, not wall clock. There is no RTC.
-- LNB event and state topics are still schema-1 key/value text.
+- REST clients must poll state and job resources; there is no push notification
+  interface.

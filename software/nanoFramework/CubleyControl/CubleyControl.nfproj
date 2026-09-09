@@ -21,26 +21,26 @@
   <ItemGroup>
     <Compile Include="ApplicationConfigurationRecord.cs" />
     <Compile Include="ApplicationConfigurationStorage.cs" />
+    <Compile Include="ApplicationConfiguration.cs" />
     <Compile Include="BuildInfo.cs" Condition=" '$(BuildInfoSource)' == '' " />
     <Compile Include="$(BuildInfoSource)" Condition=" '$(BuildInfoSource)' != '' " />
     <Compile Include="Json.cs" />
     <Compile Include="Program.Commands.Configuration.cs" />
+    <Compile Include="Program.Commands.ApplicationConfig.cs" />
     <Compile Include="Program.Commands.DiseqcConfig.cs" />
     <Compile Include="Program.Commands.Diseqc.cs" />
     <Compile Include="Program.Commands.Lnb.cs" />
-    <Compile Include="Program.Commands.Mqtt.cs" />
-    <Compile Include="Program.Commands.MqttConfig.cs" />
+    <Compile Include="Program.Commands.Api.cs" />
     <Compile Include="Program.Commands.Network.cs" />
     <Compile Include="Program.Commands.Rest.cs" />
     <Compile Include="Program.Commands.cs" />
     <Compile Include="Program.Jobs.cs" />
     <Compile Include="Program.LnbHealth.cs" />
     <Compile Include="Program.Network.cs" />
-    <Compile Include="Program.MqttConfiguration.cs" />
+    <Compile Include="Program.ApplicationConfiguration.cs" />
     <Compile Include="Program.Infrastructure.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="InternalNetworkConfigurationStorage.cs" />
-    <Compile Include="MqttConfiguration.cs" />
     <Compile Include="NetworkConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -56,12 +56,6 @@
     </Reference>
     <Reference Include="System.Threading">
       <HintPath>..\packages\nanoFramework.System.Threading.1.1.52\lib\System.Threading.dll</HintPath>
-    </Reference>
-    <Reference Include="nanoFramework.M2Mqtt">
-      <HintPath>..\packages\nanoFramework.M2Mqtt.5.1.223\lib\nanoFramework.M2Mqtt.dll</HintPath>
-    </Reference>
-    <Reference Include="nanoFramework.M2Mqtt.Core">
-      <HintPath>..\packages\nanoFramework.M2Mqtt.5.1.223\lib\nanoFramework.M2Mqtt.Core.dll</HintPath>
     </Reference>
     <Reference Include="nanoFramework.Hardware.Stm32">
       <HintPath>..\packages\nanoFramework.Hardware.Stm32.1.10.37\lib\nanoFramework.Hardware.Stm32.dll</HintPath>

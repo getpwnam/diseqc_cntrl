@@ -1,13 +1,13 @@
-# CubleyControl Command Map
+# CubleyControl Interface Map
 
-Status: implemented command set as of 2026-08-27
+Status: implemented interfaces as of 2026-09-09
 
 ## Purpose
 
-Document the command grammar implemented by `software/nanoFramework/CubleyControl`.
-USB CDC and MQTT pass command text to the same parser after transport policy is
-applied. Commands are case-insensitive, leading and trailing whitespace is ignored,
-and repeated spaces are collapsed.
+Document the USB CDC command grammar and the separate REST v2 machine interface
+implemented by `software/nanoFramework/CubleyControl`. USB commands are
+case-insensitive, leading and trailing whitespace is ignored, and repeated spaces
+are collapsed. REST uses JSON operations rather than console command text.
 
 ## USB CDC Transport
 
@@ -15,12 +15,10 @@ Opening the USB CDC transport displays the product banner followed by `Console
 inactive. Press Enter to activate.` Press Enter to acquire the interactive console
 lease and display the prompt. There is no `cubley v1` CLI prefix.
 
-Only one interactive console may hold the lease at a time. A later USB, SSH, or
-other interactive transport must wait until the owner runs `quit` or `logout`,
-disconnects, or remains inactive for ten minutes. The console warns after nine
-minutes of inactivity. Only input received from the operator refreshes the lease;
-periodic `watch` output and other asynchronous output do not. MQTT commands are
-stateless and do not acquire the interactive console lease.
+Only one USB console may hold the lease at a time. The lease ends when the owner
+runs `quit` or `logout`, disconnects, or remains inactive for ten minutes. The
+console warns after nine minutes of inactivity. Only operator input refreshes the
+lease; periodic `watch` output does not.
 
 In operational mode, empty-line `Ctrl+D` also releases the console. In
 configuration mode, `Ctrl+D` retains its existing meaning of leaving configuration
@@ -41,222 +39,30 @@ Fail: <reason>
 In configuration mode, `debug on` enables the legacy successful-command result
 framing for the current USB session. `debug off` restores quiet setters. Failures
 remain visible in either mode, and detailed diagnostics are always written to the
-firmware debug log. MQTT retains machine-oriented result framing.
+firmware debug log.
 
 `help` and `?` display an aligned command-and-description list for the current
 mode. `help <command>` displays the corresponding subcommands and usage.
 
 ## Command Organization
 
-The command interface has two responsibilities:
+The USB CDC interface has two responsibilities:
 
 1. Operational control for normal device use.
-2. Administrative configuration of the network and MQTT service.
+2. Administrative configuration of network and application settings.
 
-The USB CDC console supports both responsibilities through separate command modes.
-MQTT supports only self-contained operational commands. Configuration mode is
-session state and must never be shared between USB CDC and MQTT.
-
-### Console Command Tree
-
-This tree is the compact index of the accepted USB console grammar. Angle brackets
-denote required values, square brackets denote optional values, and `|` separates
-alternatives. Keep it synchronized with `Program.Commands.cs` and the owning
-`Program.Commands.*.cs` handlers whenever command parsing changes.
-
-```text
-CubleyControl console
-|
-|-- Operational mode
-|   |
-|   |-- help|h|? [topic]
-|   |     Show command help.
-|   |
-|   |-- show
-|   |   |-- show
-|   |   |     Display system, both LNB channels, and DiSEqC summary.
-|   |   |-- lnb [a|b]
-|   |   |     Display LNB state.
-|   |   |-- diseqc
-|   |   |     Display routing preset, carrier, transmitter, and motion state.
-|   |   |-- network|net
-|   |   |     Display live network interface state.
-|   |   |-- mqtt
-|   |   |     Display live MQTT service state.
-|   |   |-- running-config|run [network|net|mqtt|mq]
-|   |   |     Display active configuration.
-|   |   |-- startup-config|start [network|net|mqtt|mq]
-|   |   |     Display persisted configuration.
-|   |   |-- status
-|   |   |     Display USB console and status LED health.
-|   |   |-- capabilities|caps
-|   |   |     Display supported transports and configuration capabilities.
-|   |   `-- version|ver
-|   |         Display product, firmware, Git, interface, and shell versions.
-|   |
-|   |-- status|st
-|   |     Short form of "show status".
-|   |-- capabilities|caps
-|   |     Short form of "show capabilities".
-|   |-- version|ver
-|   |     Short form of "show version".
-|   |
-|   |-- lnb|l <a|b>
-|   |   |-- enable
-|   |   |     Enable the selected LNB output.
-|   |   |-- disable
-|   |   |     Disable the selected LNB output.
-|   |   |-- polarization|pol|p <vertical|v|horizontal|h>
-|   |   |     Set LNB polarization.
-|   |   |-- band|b <low|l|high|h>
-|   |   |     Set LNB frequency band.
-|   |   |-- iset <default|normal|high|0|low|reduced|1>
-|   |   |     Set the LNB current range.
-|   |   `-- isw <4a|4|default|high|0|2.5a|2p5a|2_5a|low|reduced|1>
-|   |         Set the switch current limit.
-|   |
-|   |-- diseqc
-|   |   |-- goto <0..60>
-|   |   |     Move to a TM-2300 stored position; position 0 is the reference.
-|   |   |-- goto-angle <east|west> <0..180 degrees>
-|   |   |     Move to a GoToX angular position within configured software limits.
-|   |   |-- reference
-|   |   |     Move to motor reference position 0.
-|   |   |-- store <1..60>
-|   |   |     Store the current physical position in the motor.
-|   |   |-- recalculate
-|   |   |     Send the motor's basic re-synchronize/position-shift command.
-|   |   |-- motor-limit <east|west|off>
-|   |   |     Set or disable the motor's internal limits at the current position.
-|   |   |-- angle-limits status|off
-|   |   |     Inspect or temporarily disable the active angular software limits.
-|   |   |-- angle-limits <east_degrees> <west_degrees>
-|   |   |     Arm direction-specific software limits after checking hardware stops.
-|   |   |-- step-calibration status|off
-|   |   |     Inspect or temporarily disable active open-loop step calibration.
-|   |   |-- step-calibration <east_deg_per_step> <west_deg_per_step>
-|   |   |     Set direction-specific step sizes with up to six decimal places.
-|   |   |-- step <east|west> <1..128>
-|   |   |     Move a fixed number of steps.
-|   |   |-- drive <east|west>
-|   |   |     Start continuous movement.
-|   |   |-- stop
-|   |   |     Transmit the positioner halt command.
-|   |   |-- complete <motion_id>
-|   |   |     Mark the matching active motion complete.
-|   |   |-- preset status
-|   |   |     Display the selected routing preset.
-|   |   |-- preset <off|direct|aa|ab|ba|bb>
-|   |   |     Select the routing prefix for positioner commands.
-|   |   |-- timeout status
-|   |   |     Display the configured motion watchdog timeout.
-|   |   |-- timeout <5..300>
-|   |   |     Set the motion watchdog timeout in seconds.
-|   |   |-- tx <framing> <address> <command> [data_byte ...]
-|   |   |     Transmit a raw frame of 3 through 6 bytes.
-|   |   |-- tone on [frequency_hz] [duty_percent]
-|   |   |     Start the carrier; defaults to 22000 Hz and 50%.
-|   |   |-- tone off|status
-|   |   |     Stop or inspect the carrier.
-|   |   `-- listen <on|off|1|0|true|false>
-|   |         Control the channel-A external modulation input.
-|   |
-|   |-- dns lookup <hostname>
-|   |     Resolve a hostname.
-|   |-- watch|w [on|off|1|0]
-|   |     Control periodic status output; omitted value means on.
-|   |-- led <on|off>
-|   |     Set the status LED.
-|   |-- pulse
-|   |     Pulse the status LED for 100 ms.
-|   |-- configure|config|conf [terminal|t]
-|   |     Enter USB configuration mode.
-|   `-- quit|logout
-|         Release the console when configuration is clean.
-|
-`-- Configuration mode
-	|
-	|-- help|h|? [topic]
-	|     Show configuration command help.
-	|-- hostname <name|auto>
-	|     Set the hostname or derive it from the STM32 unique ID.
-	|
-	|-- network|net
-	|   |-- mode <dhcp|static>
-	|   |     Set address assignment mode.
-	|   |-- address|addr|ip <ipv4>
-	|   |     Set the static IPv4 address.
-	|   |-- mask <mask>
-	|   |     Set the static subnet mask.
-	|   |-- gateway|gw <ipv4>
-	|   |     Set the static gateway.
-	|   |-- dns auto
-	|   |     Use automatic DNS.
-	|   |-- dns static <dns1> [dns2]
-	|   |     Set static DNS servers.
-	|   `-- default|defaults
-	|         Stage network defaults.
-	|
-	|-- mqtt|mq
-	|   |-- enabled|enable <on|off|1|0|true|false>
-	|   |     Enable or disable MQTT.
-	|   |-- broker|host <host|clear>
-	|   |     Set or clear the broker address.
-	|   |-- port <1..65535>
-	|   |     Set the broker port.
-	|   |-- client-id|client <id|auto>
-	|   |     Set the client identifier.
-	|   |-- username|user <value|clear>
-	|   |     Set or clear the username.
-	|   |-- password|pass <value|clear>
-	|   |     Set or clear the password.
-	|   |-- topic-prefix|topic <prefix>
-	|   |     Set the MQTT base topic prefix.
-	|   |-- keepalive|keep-alive <15..3600>
-	|   |     Set keepalive seconds.
-	|   |-- reconnect <1..60>
-	|   |     Set reconnect delay seconds.
-	|   `-- default|defaults
-	|         Stage MQTT defaults.
-	|
-	|-- show
-	|   |-- candidate-config|candidate|cand [network|net|mqtt|mq]
-	|   |     Display the staged candidate.
-	|   |-- diff | config diff
-	|   |     Compare candidate and running configuration.
-	|   |-- running-config|run [network|net|mqtt|mq]
-	|   |     Display active configuration.
-	|   |-- startup-config|start [network|net|mqtt|mq]
-	|   |     Display persisted configuration.
-	|   `-- storage|configuration-storage|config-storage
-	|         Display storage backend and loading status.
-	|
-	|-- debug <on|off>
-	|     Control successful setter output.
-	|-- commit|apply
-	|     Validate, persist, and activate changes.
-	|-- discard|abort
-	|     Abandon candidate changes.
-	|-- load defaults [network|net|mqtt|mq|all]
-	|     Stage defaults without committing.
-	|-- defaults [network|net|mqtt|mq|all]
-	|     Short form of "load defaults".
-	|-- exit|end
-	|     Return to operational mode when the candidate is clean.
-	`-- quit|logout
-		  Release the console when the candidate is clean.
-```
+REST provides machine control and read-only state resources. It does not expose
+the interactive console mode or configuration commands.
 
 `Ctrl+D` releases a clean operational session. In configuration mode it behaves
 like `exit`. Blank lines and lines beginning with `!` are ignored.
 
-### Transport And Mode Matrix
+### Interface Matrix
 
-| Interface | Operational mode | Configuration mode | Notes |
-|---|---:|---:|---|
-| USB CDC | yes | yes | Initial administrative interface. |
-| MQTT | yes | no | One complete operational command per non-retained message. |
-| Telnet or SSH | future | future | Each connection must own an independent mode and candidate configuration. |
+| Interface | Control | Read state | Configuration |
+|---|---:|---:|---:|
+| USB CDC | Console commands | Human-readable `show` commands | Configuration mode |
+| REST v2 | `POST /api/v2/commands` | HTTP GET resources | Not exposed |
 
 Configuration mode limits accidental changes; it is not an authentication or
 authorization boundary.
@@ -274,28 +80,16 @@ eight Git commit characters, and a `.dirty` suffix when the worktree differs fro
 that commit, for example `1.0.0+g1a2b3c4d.dirty`. Direct project builds use
 `1.0.0+unknown`. `show version` reports the same build version and Git commit.
 
-| Command family | USB CDC | MQTT | Purpose |
-|---|---:|---:|---|
-| `show`, `show status` | yes | yes | Show overall runtime health. |
-| `show capabilities` | yes | yes | Show supported operational capabilities. |
-| `show version` | yes | yes | Show firmware and interface versions. |
-| `show lnb [a\|b]` | yes | yes | Inspect both channels or one selected channel. |
-| `lnb <a\|b> <action> [value]` | yes | yes | Perform one LNB state change. |
-| `show diseqc`, `diseqc ...` | yes | yes | Inspect or perform one DiSEqC operation. |
-| `help [topic]` | yes | no | Show context-sensitive console help. |
-| `watch [on\|off]` | yes | no | Control the USB periodic status display. |
-| `show network`, `show mqtt` | yes | no | Inspect local service health. |
-| `show running-config [network\|mqtt]` | yes | no | Render active non-default configuration with secrets redacted. |
-| `show startup-config [network\|mqtt]` | yes | no | Render persisted configuration with secrets redacted. |
-| `dns lookup <hostname>` | yes | no | Run a local DNS diagnostic. |
-| `led on`, `led off`, `pulse` | yes | no | Run local status LED diagnostics. |
-| `configure` | yes | no | Enter configuration mode. |
-| `quit`, `logout` | yes | no | Release the interactive console lease. |
-
-The `MQTT` column above is the complete command allowlist for that transport.
-The MQTT dispatcher must reject every other command as `unsupported` before it
-reaches the shared parser. MQTT does not retain a mode, candidate, or command
-transaction between messages.
+| Command family | Purpose |
+|---|---|
+| `show`, `status`, `capabilities`, `version` | Inspect local runtime and build state. |
+| `show lnb`, `lnb ...` | Inspect or change LNB outputs. |
+| `show diseqc`, `diseqc ...` | Inspect or perform DiSEqC operations. |
+| `show network`, `dns lookup` | Inspect network state or run DNS diagnostics. |
+| `show running-config`, `show startup-config` | Inspect active or persisted configuration. |
+| `watch`, `led`, `pulse` | Run USB or status LED diagnostics. |
+| `configure` | Enter configuration mode. |
+| `quit`, `logout` | Release the USB console lease. |
 
 ### Configuration Mode
 
@@ -322,32 +116,18 @@ to use the committed hostname while a different hostname is staged.
 | `network dns static <dns1> [dns2]` | Set one or two static DNS servers. |
 | `network defaults` | Stage default DHCP and automatic DNS settings. |
 
-#### MQTT Configuration
-
-| Command | Candidate change |
-|---|---|
-| `mqtt enabled <on\|off>` | Enable or disable MQTT at the next commit. |
-| `mqtt broker <host\|clear>` | Set or clear the broker hostname or IPv4 address. |
-| `mqtt port <1..65535>` | Set the broker port. |
-| `mqtt client-id <id\|auto>` | Set an explicit client ID or use the effective hostname. |
-| `mqtt username <value\|clear>` | Set or clear the username. |
-| `mqtt password <value\|clear>` | Set or clear the password without echoing it. |
-| `mqtt topic-prefix <prefix>` | Set the base topic prefix. |
-| `mqtt keepalive <15..3600>` | Set the keepalive interval in seconds. |
-| `mqtt reconnect <1..60>` | Set the reconnect interval in seconds. |
-| `mqtt defaults` | Stage disabled MQTT defaults. |
 
 #### Candidate Lifecycle
 
 | Command | Behavior |
 |---|---|
 | `show storage` | Show the network and application configuration backends and load status. |
-| `show candidate-config [network\|mqtt]` | Render the candidate with secrets redacted. |
+| `show candidate-config [network\|application\|diseqc\|all]` | Render the candidate. |
 | `show config diff` | Show canonical lines added, removed, or changed relative to the committed configuration. |
 | `debug <on\|off>` | Show or suppress successful setter results for the current USB session. |
 | `commit` | Validate the complete candidate, persist changed domains, and activate them. |
 | `discard` | Replace the candidate with the committed configuration. |
-| `load defaults [network\|mqtt\|all]` | Stage defaults without committing them. |
+| `load defaults [network\|application\|diseqc\|all]` | Stage defaults without committing them. |
 | `exit` | Return to operational mode when clean; `end` and empty-line `Ctrl+D` are equivalent. |
 
 Only one configuration session may own the candidate. `exit` refuses dirty state
@@ -356,13 +136,11 @@ to prevent an intentional console action from silently losing work. The prompt i
 differs from the running configuration. A dirty exit remains in configuration mode and tells
 the operator to use `commit` or `discard`; a second exit never implies discard. A USB
 disconnect discards uncommitted changes and releases configuration mode so stale
-changes cannot be committed by a later session. A future network console must use
-a per-session candidate and should support confirmed commit with automatic rollback
-for changes that can disconnect its own management path.
+changes cannot be committed by a later session.
 
-Network and MQTT currently use different persistence backends. `commit` can
-validate both domains before writing either one, but power-fail atomic persistence
-across both domains is not yet guaranteed and must not be claimed by the result.
+Network and application settings use different persistence backends. `commit`
+validates both domains before writing, but power-fail atomic persistence across
+both domains is not guaranteed.
 A failed multi-domain write retains the candidate and attempts to restore both
 previously committed snapshots before anything is activated. A failed write that
 is successfully rolled back returns `persist_failed`; `persist_partial` is reserved
@@ -376,14 +154,6 @@ for failed recovery.
 | `network` | `net` |
 | `network address` | `network addr`, `network ip` |
 | `network gateway` | `network gw` |
-| `mqtt` | `mq` |
-| `mqtt enabled` | `mqtt enable` |
-| `mqtt broker` | `mqtt host` |
-| `mqtt client-id` | `mqtt client` |
-| `mqtt username` | `mqtt user` |
-| `mqtt password` | `mqtt pass` |
-| `mqtt topic-prefix` | `mqtt topic` |
-| `mqtt keepalive` | `mqtt keep-alive` |
 | `show running-config` | `show run` |
 | `show startup-config` | `show start` |
 | `show candidate-config` | `show candidate`, `show cand` |
@@ -401,22 +171,16 @@ The output uses canonical commands only, includes explicit defaults, and has a
 version header. Blank lines and lines beginning with `!` are ignored on input.
 
 ```text
-! cubley-config v3
+! cubley-config v4 startup
 hostname cubley-dish-01
 network mode static
 network address 192.168.1.40
 network mask 255.255.255.0
 network gateway 192.168.1.1
 network dns static 192.168.1.1 1.1.1.1
-mqtt enabled on
-mqtt broker broker.example.net
-mqtt port 1883
-mqtt client-id auto
-mqtt username cubley
-! mqtt password configured
-mqtt topic-prefix dishes/site-a
-mqtt keepalive 60
-mqtt reconnect 5
+diseqc angle-limits 50 50
+diseqc step-calibration 0.112658 0.112658
+diseqc fixed-offset west 3.38
 ```
 
 Configuration rendering is generated from the typed configuration objects, not
@@ -433,7 +197,7 @@ a new device requires entering the password separately before `commit`.
 | Command | Aliases | Behavior |
 |---|---|---|
 | `help` | `h`, `?` | List commands with brief descriptions. |
-| `help <lnb\|show\|diseqc\|network\|mqtt>` | `help l` for LNB help | Show aligned command-specific usage. |
+| `help <lnb\|show\|diseqc\|network\|dns\|configure>` | `help l` for LNB help | Show aligned command-specific usage. |
 | `show status` | `status`, `st` | Show USB CDC and status LED health. |
 | `watch [on\|off]` | `w`, values `1\|0`; omitted value means `on` | Enable or disable the periodic serial status line. |
 | `show capabilities` | `capabilities`, `caps`, `show caps` | Show the current capability summary. |
@@ -475,23 +239,22 @@ limit, voltage, tone, low-power mode, external DiSEqC input, and fault registers
 Enabling or disabling a logical channel updates that channel's native LNB output
 state. Assignment commands require a value; all reads begin with `show`.
 
-## Network And MQTT Configuration
+## Network And Application Configuration
 
-Network addressing is persisted by nanoFramework. MQTT and DiSEqC positioning settings are written to the
-portable application configuration record. All are changed only through the USB
-configuration mode described above.
+Network addressing is persisted by nanoFramework. Hostname and DiSEqC
+positioning settings are written to the portable schema-4 application record.
+All are changed only through USB configuration mode.
 
 | Command | Behavior |
 |---|---|
 | `show network` | Show active link, MAC, IPv4, and DNS state. |
-| `show mqtt` | Show active MQTT state, endpoint, reconnect attempts, and last error. |
-| `show running-config [network\|mqtt\|diseqc]` | Show active configuration with passwords redacted. |
-| `show startup-config [network\|mqtt\|diseqc]` | Show persisted configuration with passwords redacted. |
+| `show running-config [network\|application\|diseqc\|all]` | Show active non-default configuration. |
+| `show startup-config [network\|application\|diseqc\|all]` | Show persisted configuration. |
 
 Configuration backend and load diagnostics are available separately as
 `show storage` from USB configuration mode.
 
-The public operational grammar does not use `get` or `set`. Network and MQTT
+The public operational grammar does not use `get` or `set`. Configuration
 mutations are accepted only after entering configuration mode.
 
 Configuration mode accepts persistent `diseqc angle-limits <east> <west>`,
@@ -580,36 +343,30 @@ No command-only transition is reported as `rf_verified`.
 ## Canonical Command IDs
 
 Dotted IDs such as `system.version.get` and `diseqc.lnb.set.band` remain available
-to internal contracts but are not executable USB or MQTT command forms. External
+to internal contracts but are not executable USB command forms. External
 commands use the operational grammar documented above.
 
-## MQTT Transport
+## REST v2 Interface
 
-MQTT uses the active LAN8742A IPv4/DHCP/DNS implementation. It starts only after
-MQTT is enabled in saved configuration and the interface has a usable IPv4 address.
-The target subsystem-owned message schema and state/event subtopics are specified
-in [OBSERVABILITY_CONTRACT_V1.md](OBSERVABILITY_CONTRACT_V1.md); the table below
-records the currently implemented binding.
+REST is the sole network interface. It listens on TCP port 80 after the device has
+a usable IPv4 address. There is no authentication or TLS.
 
-When enabled, the current binding is:
+| Request | Purpose |
+|---|---|
+| `POST /api/v2/commands` | Execute one JSON operation and return its result. |
+| `GET /api/v2/health` | Read liveness and firmware version. |
+| `GET /api/v2/state/positioner` | Read active/last jobs and position estimate. |
+| `GET /api/v2/state/lnb` | Read LNB health, faults, registers, polarization, and band. |
+| `GET /api/v2/jobs/{job}` | Read one of the four retained positioner jobs. |
 
-| Direction | Topic | Payload |
-|---|---|---|
-| Command to device | `<prefix>/<hostname>/command` | `<uint16-id> <command>` from the MQTT operational allowlist. |
-| Response from device | `<prefix>/<hostname>/response` | Terminal `id=<id> OK` or `id=<id> Fail: ...`; queries may first emit requested output lines. |
-| LNB asynchronous transition | `<prefix>/<hostname>/event/lnb` | Non-retained schema-1 LNB event fields. |
-| Current LNB state | `<prefix>/<hostname>/state/lnb` | Retained schema-1 LNB state fields. |
-| Device availability | `<prefix>/<hostname>/availability` | Retained `online` or last-will `offline`. |
+Supported operation families are:
 
-Retained, empty, malformed-ID, and greater-than-64-byte command lines are rejected.
-QoS 1 duplicate commands among the eight most recent IDs replay cached responses
-without executing again; reuse of a cached ID with different command text fails.
-State and health details are carried by subsystem state and event topics rather
-than repeated in successful command acknowledgements.
-The topic prefix defaults to `diseqc` and is configurable from USB configuration
-mode with `mqtt topic-prefix`.
+- `positioner.goto`, `positioner.goto_angle`, `positioner.step`,
+  `positioner.drive`, `positioner.halt`, and `positioner.complete`.
+- `lnb.enable`, `lnb.disable`, `lnb.polarization`, and `lnb.band`.
+- `diseqc.tx`, `diseqc.preset`, and `diseqc.tone`.
 
-The effective device root is `<prefix>/<hostname>`. The hostname and MQTT client ID
-are configured independently. The per-command `cubley/v1/...` topics and JSON request/result envelopes described
-by the interface schema files are design contracts and are not implemented by the
-current MQTT transport.
+REST does not expose console help, watch output, LED diagnostics, DNS lookup, or
+configuration mode. Clients poll job and state GET resources for progress and
+recovery. See [DEVICE_API_V2.md](DEVICE_API_V2.md) for envelope, idempotency,
+validation, and job semantics.

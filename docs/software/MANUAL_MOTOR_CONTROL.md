@@ -127,72 +127,32 @@ void OnButtonReleased()
 }
 ```
 
-### Example 3: MQTT Manual Control
+### Example 3: REST v2 Manual Control
 
-```csharp
-void OnMqttMessage(object sender, MqttMsgPublishEventArgs e)
-{
-    string topic = e.Topic;
-    string payload = Encoding.UTF8.GetString(e.Message);
-    
-    switch (topic)
-    {
-        case "diseqc/manual/step_east":
-            rotor.StepEast(byte.Parse(payload));  // Payload: "1" or "5"
-            break;
-            
-        case "diseqc/manual/step_west":
-            rotor.StepWest(byte.Parse(payload));
-            break;
-            
-        case "diseqc/manual/drive_east":
-            rotor.DriveEast();
-            break;
-            
-        case "diseqc/manual/drive_west":
-            rotor.DriveWest();
-            break;
-            
-        case "diseqc/manual/halt":
-            rotor.Halt();
-            break;
-    }
-}
+Network automation uses `POST /api/v2/commands`. Give every logical action a
+unique ID; retry the exact same body and ID after an ambiguous HTTP failure.
+
+```bash
+base="http://<device-ip>"
+
+curl -fsS "$base/api/v2/commands" \
+  -H 'Content-Type: application/json' \
+  --data '{"v":2,"id":"step-east-001","op":"positioner.step","direction":"east","count":1}'
+
+curl -fsS "$base/api/v2/commands" \
+  -H 'Content-Type: application/json' \
+  --data '{"v":2,"id":"drive-west-001","op":"positioner.drive","direction":"west"}'
+
+curl -fsS "$base/api/v2/commands" \
+  -H 'Content-Type: application/json' \
+  --data '{"v":2,"id":"halt-001","op":"positioner.halt"}'
 ```
 
-### Example 4: Web Interface Control
+Motion responses include a job ID. Poll `GET /api/v2/jobs/{job}` for terminal
+state, and use `GET /api/v2/state/positioner` to recover after reconnecting. See
+[DEVICE_API_V2.md](DEVICE_API_V2.md) for the complete contract.
 
-```csharp
-// REST API endpoints
-[Route("api/rotor/step/east")]
-public IActionResult StepEast([FromQuery] byte steps = 1)
-{
-    if (rotor.IsBusy())
-        return BadRequest("Rotor is busy");
-    
-    rotor.StepEast(steps);
-    return Ok($"Stepped East {steps} step(s)");
-}
-
-[Route("api/rotor/step/west")]
-public IActionResult StepWest([FromQuery] byte steps = 1)
-{
-    if (rotor.IsBusy())
-        return BadRequest("Rotor is busy");
-    
-    rotor.StepWest(steps);
-    return Ok($"Stepped West {steps} step(s)");
-}
-
-[Route("api/rotor/halt")]
-public IActionResult Halt()
-{
-    rotor.Halt();
-    return Ok("Rotor halted");
-}
-```
-
-### Example 5: Automatic Scanning
+### Example 4: Automatic Scanning
 
 ```csharp
 // Scan for satellite signal by stepping
@@ -200,37 +160,37 @@ async Task ScanForSignal()
 {
     const int STEPS_PER_SCAN = 1;
     const int MAX_STEPS = 30;  // Scan ±30 degrees
-    
+
     // Start from current position
     for (int i = 0; i < MAX_STEPS; i++)
     {
         rotor.StepEast(STEPS_PER_SCAN);
         await Task.Delay(1000);  // Wait for movement + signal check
-        
+
         float signalQuality = ReadSignalQuality();  // Your signal reading
-        
+
         if (signalQuality > 80.0f)
         {
             Console.WriteLine($"Signal found! Quality: {signalQuality}%");
             return;
         }
     }
-    
+
     // Scan back West
     for (int i = 0; i < MAX_STEPS * 2; i++)
     {
         rotor.StepWest(STEPS_PER_SCAN);
         await Task.Delay(1000);
-        
+
         float signalQuality = ReadSignalQuality();
-        
+
         if (signalQuality > 80.0f)
         {
             Console.WriteLine($"Signal found! Quality: {signalQuality}%");
             return;
         }
     }
-    
+
     Console.WriteLine("Signal not found in scan range");
 }
 ```
@@ -320,25 +280,6 @@ rotor.Halt();
 // Rotor should have moved continuously for 3 seconds
 ```
 
-## 📊 MQTT Topics for Manual Control
-
-### Subscribe Topics (Commands)
-
-```
-diseqc/manual/step_east      → Payload: "1" to "128" (number of steps)
-diseqc/manual/step_west      → Payload: "1" to "128"
-diseqc/manual/drive_east     → Payload: any (starts continuous)
-diseqc/manual/drive_west     → Payload: any (starts continuous)
-diseqc/manual/halt           → Payload: any (stops movement)
-```
-
-### Publish Topics (Status)
-
-```
-diseqc/status                → "stepping_east" / "stepping_west" / "driving_east" / "driving_west" / "idle"
-diseqc/position              → Current angle (if tracked)
-```
-
 ## 🎮 UI Control Example
 
 ```html
@@ -347,32 +288,48 @@ diseqc/position              → Current angle (if tracked)
     <button onclick="stepWest()">◀ Step West</button>
     <button onclick="halt()">■ HALT</button>
     <button onclick="stepEast()">Step East ▶</button>
-    
+
     <br>
-    
+
     <button onmousedown="driveWest()" onmouseup="halt()">◀◀ Hold West</button>
     <button onmousedown="driveEast()" onmouseup="halt()">Hold East ▶▶</button>
 </div>
 
 <script>
+let commandSequence = 0;
+
+function sendCommand(op, parameters = {}) {
+    commandSequence += 1;
+    return fetch('/api/v2/commands', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            v: 2,
+            id: `manual-${Date.now()}-${commandSequence}`,
+            op,
+            ...parameters
+        })
+    }).then(response => response.json());
+}
+
 function stepEast() {
-    fetch('/api/rotor/step/east?steps=1');
+    return sendCommand('positioner.step', {direction: 'east', count: 1});
 }
 
 function stepWest() {
-    fetch('/api/rotor/step/west?steps=1');
+    return sendCommand('positioner.step', {direction: 'west', count: 1});
 }
 
 function driveEast() {
-    fetch('/api/rotor/drive/east');
+    return sendCommand('positioner.drive', {direction: 'east'});
 }
 
 function driveWest() {
-    fetch('/api/rotor/drive/west');
+    return sendCommand('positioner.drive', {direction: 'west'});
 }
 
 function halt() {
-    fetch('/api/rotor/halt');
+    return sendCommand('positioner.halt');
 }
 </script>
 ```
