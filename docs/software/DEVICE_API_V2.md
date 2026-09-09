@@ -39,6 +39,13 @@ Send commands with `POST /api/v2/commands` over HTTP. The request and response
 content type is `application/json`. A command result is returned in the HTTP
 response body; the device does not publish command responses to MQTT.
 
+Read current device state with:
+
+- `GET /api/v2/health`
+- `GET /api/v2/state/positioner`
+- `GET /api/v2/state/lnb`
+- `GET /api/v2/jobs/{job}`
+
 MQTT 3.1.1 remains the announcement transport. Its topic root is
 `<prefix>/<hostname>`; see [MQTT_API.md](MQTT_API.md) for topics and delivery
 semantics. The device does not subscribe to any MQTT topic.
@@ -104,12 +111,13 @@ UUID is ideal, and 32 chars is enough for either).
 Exactly one response object is returned per HTTP request.
 
 ```json
-{"v":2,"id":"01J8ZK4M7Q","ok":true,"code":"accepted","job":7,"ts_ms":41231}
+{"v":2,"boot_id":"d942c94f-16fd-4d8e-b6d5-44201d3caa4c","id":"01J8ZK4M7Q","ok":true,"code":"accepted","job":7,"ts_ms":41231}
 ```
 
 | Member | Type | Always | Meaning |
 |---|---|---|---|
 | `v` | int | yes | Always `2`. |
+| `boot_id` | string | yes | Changes on every boot. Job IDs are meaningful only within this boot. |
 | `id` | string | yes | Echo of the command `id`, or `"?"` if the envelope was unparseable. |
 | `ok` | bool | yes | Whether the command was accepted and completed. |
 | `code` | string | yes | Machine-readable outcome, see below. |
@@ -145,14 +153,14 @@ that represents "the dish is moving".
 | `halted` | yes | `positioner.halt` stopped it, or a `stop` was issued at the console. |
 | `timeout` | yes | The motion watchdog expired and the device transmitted Halt. |
 | `timeout_halt_failed` | yes | The watchdog expired but the Halt transmission failed. **The positioner may still be moving.** |
-| `released` | yes | A client asserted that motion finished. |
+| `completed` | yes | A client asserted that motion finished and supplied a verification result. |
 
 **There is deliberately no `succeeded` state.** A DiSEqC 1.2 positioner returns
 no arrival indication, so the device cannot know the dish reached its target —
-it only knows what it transmitted and how much time has passed. `released`
-records a *client's claim* of arrival, not a device observation. Any consumer
-that needs true arrival must establish it out of band (signal lock, for
-example) and then call `positioner.release`.
+it only knows what it transmitted and how much time has passed. `completed`
+records a client's result, not motor feedback from the device. A consumer can
+report RF verification obtained out of band when it calls
+`positioner.complete`.
 
 `timeout` is the normal terminal state for `positioner.drive`, which has no
 intrinsic duration, and the fallback for `goto` and `step`.
@@ -163,7 +171,7 @@ intrinsic duration, and the fallback for `goto` and `step`.
 positioner.goto/goto_angle/step/drive ──> running ──┬── positioner.halt ────> halted
                                                     ├── watchdog expiry ────> timeout
                                                     │                         timeout_halt_failed
-                                                    └── positioner.release ─> released
+                                                    └── positioner.complete ─> completed
 ```
 
 Only one job runs at a time. A motion command while a job is `running` fails
@@ -173,11 +181,15 @@ with `busy` and names the active job; it does not queue. The device retains the
 ### Job object
 
 ```json
-{"job":7,"op":"goto","state":"running","remaining_ms":83400,"timeout_ms":90000,"detail":""}
+{"job":7,"op":"goto","state":"running","verification":"pending","remaining_ms":83400,"timeout_ms":90000,"detail":""}
 ```
 
 `remaining_ms` is 0 for terminal states. `detail` carries a failure reason for
 `timeout_halt_failed` and is empty otherwise.
+
+`verification` is `pending` while running, `estimated`, `rf_verified`, or
+`verification_failed` after client completion, and `none` for other terminal
+paths.
 
 ## Operations
 
@@ -190,14 +202,36 @@ with `busy` and names the active job; it does not queue. The device retains the
 | `positioner.step` | `direction` `"east"`\|`"west"`, `count` int 1–128 | `accepted` + `job`, or `busy` |
 | `positioner.drive` | `direction` `"east"`\|`"west"` | `accepted` + `job`, or `busy` |
 | `positioner.halt` | — | `ok`; terminates the active job as `halted` |
-| `positioner.release` | `job` int | `ok`; terminates that job as `released` |
+| `positioner.complete` | `job` int, `verification` string | `ok`; terminates that job as `completed` |
 
-`positioner.release` checks the job id, so a late release for a superseded job
-is rejected rather than ending a newer movement. Releasing a GoToX job promotes
-its offset-adjusted, protocol-rounded pending target to
-`position_confidence=estimated`. Releasing a calibrated step job similarly
-promotes its pending target. Stored-position, uncalibrated-step, and continuous
-drive jobs leave the angular estimate unknown.
+`positioner.complete` checks the job id, so a late completion for a superseded
+job is rejected rather than ending a newer movement. `verification` accepts:
+
+- `estimated`: adopt a GoToX or calibrated-step pending target with estimated
+  confidence.
+- `rf_verified`: adopt that pending target with RF-verified confidence. The
+  command is rejected if the job has no angular pending target.
+- `verification_failed`: invalidate the position estimate.
+
+The device always adopts its offset-adjusted, protocol-rounded pending target;
+the client cannot inject an arbitrary angle. Stored-position, uncalibrated-step,
+and continuous-drive jobs cannot be marked `rf_verified`.
+
+### REST queries
+
+Read-only responses use this envelope and do not require a request ID:
+
+```json
+{"v":2,"boot_id":"d942c94f-16fd-4d8e-b6d5-44201d3caa4c","ok":true,"code":"ok","ts_ms":41500,"data":{}}
+```
+
+`GET /api/v2/jobs/{job}` returns a retained job object. The device retains the
+four most recent jobs; an unknown or evicted ID returns HTTP 404 with
+`code=not_found`. `GET /api/v2/state/positioner` returns the active and most
+recent terminal jobs plus the current position confidence, estimated angle,
+source, and pending target. `GET /api/v2/state/lnb` returns the current LNB
+health, communication, fault, register, polarization, and band snapshot.
+`GET /api/v2/health` returns liveness and the firmware version.
 
 `angle` is a string because inbound JSON deliberately rejects floating-point
 numbers. The operation applies the persisted signed GoToX offset, enforces the
