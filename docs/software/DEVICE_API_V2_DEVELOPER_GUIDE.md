@@ -179,7 +179,7 @@ curl -X POST "http://<device-ip>/api/v2/commands" \
 The following sequence enables LNB output A, references the motor, and then
 moves to the Cheltenham Astra 2 GoToX angle. It requires `jq`, persisted GoToX
 offset and angular limits, and a fresh request ID for every logical command.
-Only release each job after observing that the motor has physically stopped.
+Only complete each job after observing that the motor has physically stopped.
 
 ```bash
 BASE_URL="http://<device-ip>/api/v2/commands"
@@ -196,7 +196,7 @@ printf '%s\n' "$reference_response" | jq .
 reference_job=$(printf '%s\n' "$reference_response" |
   jq -er 'select(.ok and .code == "accepted") | .job')
 
-# Wait for the motor to stop at reference before releasing this job.
+# Wait for the motor to stop at reference before completing this job.
 curl -fsS "$BASE_URL" \
   -H 'Content-Type: application/json' \
   --data "{\"v\":2,\"id\":\"$run_id-ref-complete\",\"op\":\"positioner.complete\",\"job\":$reference_job,\"verification\":\"estimated\"}"
