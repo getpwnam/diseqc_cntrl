@@ -238,71 +238,7 @@ namespace CubleyControl
                     return;
                 }
 
-                byte[] frame;
-                int requestedMicrodegrees;
-                DiseqcMotorDirection effectiveDirection;
-                int effectiveMicrodegrees;
-                int encodedAngleTenths;
-                string error;
-                if (!DiseqcCommandBuilder.TryBuildGotoAngularPosition(
-                    direction,
-                    tokens[3],
-                    _diseqcGotoOffsetMicrodegrees,
-                    out frame,
-                    out requestedMicrodegrees,
-                    out effectiveDirection,
-                    out effectiveMicrodegrees,
-                    out encodedAngleTenths,
-                    out error))
-                {
-                    WriteCommandResult(
-                        reqId,
-                        false,
-                        "validation_error",
-                        "diseqc goto-angle invalid",
-                        "angle=" + SanitizeToken(tokens[3]) + " reason=" + SanitizeToken(error));
-                    return;
-                }
-
-                int travelLimit = effectiveDirection == DiseqcMotorDirection.East
-                    ? _diseqcEastTravelLimitMicrodegrees
-                    : _diseqcWestTravelLimitMicrodegrees;
-                if (travelLimit <= 0)
-                {
-                    WriteCommandResult(
-                        reqId,
-                        false,
-                        "validation_error",
-                        "diseqc angle limits not configured",
-                        "usage=diseqc angle-limits <east_degrees> <west_degrees>");
-                    return;
-                }
-
-                if (!DiseqcGotoAngleEncoder.IsWithinTravelLimit(effectiveMicrodegrees, travelLimit))
-                {
-                    WriteCommandResult(
-                        reqId,
-                        false,
-                        "validation_error",
-                        "diseqc goto-angle exceeds software limit",
-                        "direction=" + (effectiveDirection == DiseqcMotorDirection.East ? "east" : "west") +
-                        " requested_angle_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(requestedMicrodegrees) +
-                        " effective_angle_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(effectiveMicrodegrees) +
-                        " limit_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(travelLimit));
-                    return;
-                }
-
-                EmitDiseqcPositionerTransmitResult(
-                    reqId,
-                    "diseqc goto-angle",
-                    frame,
-                    "goto_angle_" + (effectiveDirection == DiseqcMotorDirection.East ? "east" : "west"),
-                    _diseqcMotionTimeoutMs,
-                    "angular",
-                    DiseqcGotoAngleEncoder.FormatMicrodegrees(requestedMicrodegrees),
-                    DiseqcGotoAngleEncoder.FormatTenths(encodedAngleTenths),
-                    effectiveDirection == DiseqcMotorDirection.East ? "east" : "west",
-                    encodedAngleTenths * 100_000);
+                RunDiseqcGotoAngle(reqId, direction, tokens[3]);
                 return;
             }
 
@@ -504,6 +440,89 @@ namespace CubleyControl
             }
 
             WriteCommandResult(reqId, false, "unsupported", "unknown positioner operation", "operation=" + operation.ToString());
+        }
+
+        private static void RunPositionerGotoAngle(DiseqcMotorDirection direction, string degrees)
+        {
+            int reqId = NextRequestId();
+            _activeCommandIsSetter = true;
+            _activeCommand = "positioner goto-angle";
+
+            if (!EnsureDiseqcMotionIdle(reqId))
+            {
+                return;
+            }
+
+            RunDiseqcGotoAngle(reqId, direction, degrees);
+        }
+
+        private static void RunDiseqcGotoAngle(int reqId, DiseqcMotorDirection direction, string degrees)
+        {
+            byte[] frame;
+            int requestedMicrodegrees;
+            DiseqcMotorDirection effectiveDirection;
+            int effectiveMicrodegrees;
+            int encodedAngleTenths;
+            string error;
+            if (!DiseqcCommandBuilder.TryBuildGotoAngularPosition(
+                direction,
+                degrees,
+                _diseqcGotoOffsetMicrodegrees,
+                out frame,
+                out requestedMicrodegrees,
+                out effectiveDirection,
+                out effectiveMicrodegrees,
+                out encodedAngleTenths,
+                out error))
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "diseqc goto-angle invalid",
+                    "angle=" + SanitizeToken(degrees) + " reason=" + SanitizeToken(error));
+                return;
+            }
+
+            int travelLimit = effectiveDirection == DiseqcMotorDirection.East
+                ? _diseqcEastTravelLimitMicrodegrees
+                : _diseqcWestTravelLimitMicrodegrees;
+            if (travelLimit <= 0)
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "diseqc angle limits not configured",
+                    "usage=diseqc angle-limits <east_degrees> <west_degrees>");
+                return;
+            }
+
+            if (!DiseqcGotoAngleEncoder.IsWithinTravelLimit(effectiveMicrodegrees, travelLimit))
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "diseqc goto-angle exceeds software limit",
+                    "direction=" + (effectiveDirection == DiseqcMotorDirection.East ? "east" : "west") +
+                    " requested_angle_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(requestedMicrodegrees) +
+                    " effective_angle_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(effectiveMicrodegrees) +
+                    " limit_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(travelLimit));
+                return;
+            }
+
+            EmitDiseqcPositionerTransmitResult(
+                reqId,
+                "diseqc goto-angle",
+                frame,
+                "goto_angle_" + (effectiveDirection == DiseqcMotorDirection.East ? "east" : "west"),
+                _diseqcMotionTimeoutMs,
+                "angular",
+                DiseqcGotoAngleEncoder.FormatMicrodegrees(requestedMicrodegrees),
+                DiseqcGotoAngleEncoder.FormatTenths(encodedAngleTenths),
+                effectiveDirection == DiseqcMotorDirection.East ? "east" : "west",
+                encodedAngleTenths * 100_000);
         }
 
         private static void EmitDiseqcShowSummaryLine()

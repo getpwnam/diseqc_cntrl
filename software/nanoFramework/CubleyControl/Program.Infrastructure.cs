@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Device.Gpio;
 using System.Threading;
+using Cubley.Diseqc;
 using Cubley.Interop;
 
 namespace CubleyControl
@@ -82,10 +83,11 @@ namespace CubleyControl
 
         private const int CommandModeConsoleText = 0;
         private const int CommandModePositioner = 1;
+        private const int CommandModePositionerGotoAngle = 2;
 
         private static void ExecuteCommand(string command, OutputSink outputSink, CommandTransport transport)
         {
-            ExecuteCommandCore(CommandModeConsoleText, command, 0, 0, outputSink, transport);
+            ExecuteCommandCore(CommandModeConsoleText, command, 0, 0, null, DiseqcMotorDirection.East, outputSink, transport);
         }
 
         /// <summary>
@@ -95,7 +97,23 @@ namespace CubleyControl
         /// </summary>
         private static void ExecutePositionerOperation(int operation, int value, OutputSink outputSink)
         {
-            ExecuteCommandCore(CommandModePositioner, null, operation, value, outputSink, CommandTransport.Rest);
+            ExecuteCommandCore(CommandModePositioner, null, operation, value, null, DiseqcMotorDirection.East, outputSink, CommandTransport.Rest);
+        }
+
+        private static void ExecutePositionerGotoAngle(
+            DiseqcMotorDirection direction,
+            string degrees,
+            OutputSink outputSink)
+        {
+            ExecuteCommandCore(
+                CommandModePositionerGotoAngle,
+                null,
+                0,
+                0,
+                degrees,
+                direction,
+                outputSink,
+                CommandTransport.Rest);
         }
 
         private static void ExecuteCommandCore(
@@ -103,6 +121,8 @@ namespace CubleyControl
             string command,
             int operation,
             int value,
+            string degrees,
+            DiseqcMotorDirection direction,
             OutputSink outputSink,
             CommandTransport transport)
         {
@@ -119,9 +139,26 @@ namespace CubleyControl
                         {
                             HandleConsoleCommand(command);
                         }
-                        else
+                        else if (mode == CommandModePositioner)
                         {
                             RunPositionerOperation(operation, value);
+                        }
+                        else if (mode == CommandModePositionerGotoAngle)
+                        {
+                            RunPositionerGotoAngle(direction, degrees);
+                        }
+                        else
+                        {
+                            WriteStructuredDebug(
+                                "COMMAND",
+                                "schema=1 sub=command comp=dispatch operation=reject stat=error" +
+                                " reason=unknown_mode mode=" + mode.ToString());
+                            WriteCommandResult(
+                                NextRequestId(),
+                                false,
+                                "unsupported",
+                                "unknown command mode",
+                                "mode=" + mode.ToString());
                         }
                     }
                 }
