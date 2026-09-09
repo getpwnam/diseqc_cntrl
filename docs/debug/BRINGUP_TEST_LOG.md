@@ -1716,3 +1716,11 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin; /tmp/cubley-nanobooter-readback.bin; /tmp/cubley-nanoclr-readback.bin
 - Conclusion: Built and flashed nanoBooter and nanoCLR; both SWD readbacks matched the build artifacts byte-for-byte.
 - Note: Deployment region was preserved; software reset used AIRCR because NRST is not connected. Runtime mailbox verification script is absent from this checkout.
+
+### 2026-09-09 15:15:06 UTC [PASS]
+- Git rev: d946761
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): uart-preflight.sh --baud 921600; build-CubleyControl.sh build --project CubleyControl/CubleyControl.nfproj --configuration Debug; deploy-CubleyControl.sh --reset; nanoff --nanodevice --serialport /dev/ttyUSB0 --baud 921600 --devicedetails
+- Artifact: software/nanoFramework/build/CubleyControl/CubleyControl_bundle-20260909T151435Z.deploy.bin (244684 bytes)
+- Conclusion: CubleyControl built, deployed over nanoff, rebooted, and verified on CUBLEY_F407_0_5 with all managed assemblies present
+- Note: PR branch feature/rest-goto-angle at d946761; CubleyNative checksum 0x0A4353F9; UART preflight status 0
