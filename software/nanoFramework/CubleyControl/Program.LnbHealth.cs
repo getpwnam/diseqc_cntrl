@@ -26,6 +26,41 @@ namespace CubleyControl
         private static int _lnbHealthD4;
         private static int _lnbHealthPublishElapsedMs;
 
+        private static string BuildLnbStateJson()
+        {
+            lock (_lnbIoLock)
+            {
+                JsonBuilder builder = new JsonBuilder()
+                    .AddInt("v", DeviceContractVersion)
+                    .AddString("sub", "lnb")
+                    .AddString("comp", "state")
+                    .AddString("status", _lnbHealthState)
+                    .AddString("communication", !_lnbHealthHasResult ? "unknown" : (_lnbHealthCommsOk ? "ok" : "error"))
+                    .AddInt("health_failures", _lnbHealthConsecutiveFailures)
+                    .AddInt("health_rc", _lnbHealthResult)
+                    .AddString("s1", ToHexU8(_lnbHealthS1))
+                    .AddString("s2", ToHexU8(_lnbHealthS2))
+                    .AddString("d1", ToHexU8(_lnbHealthD1))
+                    .AddString("d2", ToHexU8(_lnbHealthD2))
+                    .AddString("d3", ToHexU8(_lnbHealthD3))
+                    .AddString("d4", ToHexU8(_lnbHealthD4))
+                    .AddBool("fault", _lnbFaultAsserted)
+                    .AddString("monitor", _lnbFaultReady ? "ready" : "unavailable")
+                    .AddString("initialization", LnbStatusToToken(_lnbInitStatus));
+
+                if (_lnbInitStatus == (int)LNBH26.Status.Ok)
+                {
+                    builder
+                        .AddString("a_polarization", PolarizationToText(LNBH26.NativeGetPolarizationForChannel(LnbChannelA)))
+                        .AddString("a_band", BandToText(LNBH26.NativeGetBandForChannel(LnbChannelA)))
+                        .AddString("b_polarization", PolarizationToText(LNBH26.NativeGetPolarizationForChannel(1)))
+                        .AddString("b_band", BandToText(LNBH26.NativeGetBandForChannel(1)));
+                }
+
+                return builder.Build();
+            }
+        }
+
         private static void LnbHealthLoop()
         {
             int delayMs = LnbHealthIntervalMs;

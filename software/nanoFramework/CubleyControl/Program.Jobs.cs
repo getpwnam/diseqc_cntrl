@@ -11,19 +11,20 @@ namespace CubleyControl
         //
         // There is deliberately no "succeeded" state: a DiSEqC 1.2 positioner
         // reports no arrival indication, so the device only ever knows what it
-        // transmitted and how much time has elapsed. JobStateReleased records a
-        // client's assertion that motion finished, not a device observation.
+        // transmitted and how much time has elapsed. JobStateCompleted records
+        // a client's assertion that motion finished, not a device observation.
         private const int DiseqcJobHistoryDepth = 4;
         private const string JobStateRunning = "running";
         private const string JobStateHalted = "halted";
         private const string JobStateTimeout = "timeout";
         private const string JobStateTimeoutHaltFailed = "timeout_halt_failed";
-        private const string JobStateReleased = "released";
+        private const string JobStateCompleted = "completed";
 
         private static readonly object _diseqcJobLock = new object();
         private static readonly int[] _diseqcJobIds = new int[DiseqcJobHistoryDepth];
         private static readonly string[] _diseqcJobOps = new string[DiseqcJobHistoryDepth];
         private static readonly string[] _diseqcJobStates = new string[DiseqcJobHistoryDepth];
+        private static readonly string[] _diseqcJobVerifications = new string[DiseqcJobHistoryDepth];
         private static readonly string[] _diseqcJobDetails = new string[DiseqcJobHistoryDepth];
         private static readonly long[] _diseqcJobDeadlines = new long[DiseqcJobHistoryDepth];
         private static readonly int[] _diseqcJobTimeouts = new int[DiseqcJobHistoryDepth];
@@ -60,6 +61,7 @@ namespace CubleyControl
                 _diseqcJobIds[slot] = _diseqcNextJobId;
                 _diseqcJobOps[slot] = operation;
                 _diseqcJobStates[slot] = JobStateRunning;
+                _diseqcJobVerifications[slot] = "pending";
                 _diseqcJobDetails[slot] = string.Empty;
                 _diseqcJobTimeouts[slot] = timeoutMs;
                 _diseqcJobDeadlines[slot] = Environment.TickCount64 +
@@ -76,6 +78,11 @@ namespace CubleyControl
         /// from terminating a newer movement.
         /// </summary>
         private static bool TryEndDiseqcJob(int jobId, string state, string detail)
+        {
+            return TryEndDiseqcJob(jobId, state, "none", detail);
+        }
+
+        private static bool TryEndDiseqcJob(int jobId, string state, string verification, string detail)
         {
             bool ended;
             lock (_diseqcJobLock)
@@ -96,6 +103,7 @@ namespace CubleyControl
                 }
 
                 _diseqcJobStates[slot] = state;
+                _diseqcJobVerifications[slot] = verification;
                 _diseqcJobDetails[slot] = detail == null ? string.Empty : detail;
                 _diseqcJobDeadlines[slot] = 0;
                 _diseqcActiveJobId = 0;
@@ -160,12 +168,14 @@ namespace CubleyControl
             int jobId,
             out string operation,
             out string state,
+            out string verification,
             out int remainingMs,
             out int timeoutMs,
             out string detail)
         {
             operation = "idle";
             state = string.Empty;
+            verification = "none";
             remainingMs = 0;
             timeoutMs = 0;
             detail = string.Empty;
@@ -180,6 +190,7 @@ namespace CubleyControl
 
                 operation = _diseqcJobOps[slot];
                 state = _diseqcJobStates[slot];
+                verification = _diseqcJobVerifications[slot];
                 timeoutMs = _diseqcJobTimeouts[slot];
                 detail = _diseqcJobDetails[slot];
                 remainingMs = state == JobStateRunning
@@ -240,9 +251,10 @@ namespace CubleyControl
             motionId = reportedJobId;
 
             string state;
+            string verification;
             int timeoutMs;
             string detail;
-            if (!TryGetDiseqcJobSnapshot(reportedJobId, out operation, out state, out remainingMs, out timeoutMs, out detail))
+            if (!TryGetDiseqcJobSnapshot(reportedJobId, out operation, out state, out verification, out remainingMs, out timeoutMs, out detail))
             {
                 operation = "idle";
                 remainingMs = 0;
@@ -264,10 +276,11 @@ namespace CubleyControl
         {
             string operation;
             string state;
+            string verification;
             int remainingMs;
             int timeoutMs;
             string detail;
-            if (!TryGetDiseqcJobSnapshot(jobId, out operation, out state, out remainingMs, out timeoutMs, out detail))
+            if (!TryGetDiseqcJobSnapshot(jobId, out operation, out state, out verification, out remainingMs, out timeoutMs, out detail))
             {
                 return "null";
             }
@@ -276,6 +289,7 @@ namespace CubleyControl
                 .AddInt("job", jobId)
                 .AddString("op", operation)
                 .AddString("state", state)
+                .AddString("verification", verification)
                 .AddInt("remaining_ms", remainingMs)
                 .AddInt("timeout_ms", timeoutMs)
                 .AddString("detail", detail)
@@ -291,25 +305,40 @@ namespace CubleyControl
                 lastTerminalJobId = _diseqcLastTerminalJobId;
             }
 
-            return new JsonBuilder()
+            JsonBuilder builder = new JsonBuilder()
                 .AddInt("v", DeviceContractVersion)
                 .AddString("sub", "diseqc")
                 .AddString("comp", "state")
                 .AddBool("busy", activeJobId != 0)
                 .AddInt("timeout_ms", _diseqcMotionTimeoutMs)
                 .AddRaw("active", activeJobId == 0 ? "null" : BuildDiseqcJobJson(activeJobId))
-                .AddRaw("last", lastTerminalJobId == 0 ? "null" : BuildDiseqcJobJson(lastTerminalJobId))
-                .Build();
+                .AddRaw("last", lastTerminalJobId == 0 ? "null" : BuildDiseqcJobJson(lastTerminalJobId));
+
+            lock (_diseqcMotionLock)
+            {
+                builder
+                    .AddString("position_confidence", _diseqcPositionEstimate.Confidence)
+                    .AddRaw("estimated_angle_deg", _diseqcPositionEstimate.HasEstimate
+                        ? Json.Quote(FormatSignedDiseqcAngle(_diseqcPositionEstimate.EstimatedAngleMicrodegrees))
+                        : "null")
+                    .AddString("position_source", _diseqcPositionEstimate.Source)
+                    .AddRaw("pending_target_deg", _diseqcPositionEstimate.HasPendingTarget
+                        ? Json.Quote(FormatSignedDiseqcAngle(_diseqcPositionEstimate.PendingTargetMicrodegrees))
+                        : "null");
+            }
+
+            return builder.Build();
         }
 
         private static string BuildDiseqcJobEventJson(string transition, int jobId)
         {
             string operation;
             string state;
+            string verification;
             int remainingMs;
             int timeoutMs;
             string detail;
-            TryGetDiseqcJobSnapshot(jobId, out operation, out state, out remainingMs, out timeoutMs, out detail);
+            TryGetDiseqcJobSnapshot(jobId, out operation, out state, out verification, out remainingMs, out timeoutMs, out detail);
 
             return new JsonBuilder()
                 .AddInt("v", DeviceContractVersion)
@@ -320,6 +349,7 @@ namespace CubleyControl
                 .AddInt("job", jobId)
                 .AddString("op", operation)
                 .AddString("state", state)
+                .AddString("verification", verification)
                 .AddInt("remaining_ms", remainingMs)
                 .Build();
         }

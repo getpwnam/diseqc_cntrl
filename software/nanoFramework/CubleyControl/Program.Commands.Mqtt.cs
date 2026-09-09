@@ -331,9 +331,9 @@ namespace CubleyControl
                 return ExecuteMqttPositionerMotion(commandId, op, command);
             }
 
-            if (op == "positioner.release")
+            if (op == "positioner.complete")
             {
-                return ExecuteMqttPositionerQuery(commandId, op, command);
+                return ExecuteMqttPositionerComplete(commandId, command);
             }
 
             return ExecuteMqttBridgedOperation(commandId, op, command);
@@ -490,11 +490,11 @@ namespace CubleyControl
                 null);
         }
 
-        private static string ExecuteMqttPositionerQuery(string commandId, string op, JsonObject command)
+        private static string ExecuteMqttPositionerComplete(string commandId, JsonObject command)
         {
             string error;
 
-            if (!TryValidateMqttMembers(command, "job", null, out error))
+            if (!TryValidateMqttMembers(command, "job", "verification", out error))
             {
                 return BuildMqttFailureBody(commandId, "validation_error", error, 0);
             }
@@ -505,16 +505,59 @@ namespace CubleyControl
                 return BuildMqttFailureBody(commandId, "validation_error", "job must be a positive integer", 0);
             }
 
-            // positioner.release: the identity check inside TryEndDiseqcJob is
-            // what stops a late release from ending a newer movement.
-            if (!TryEndDiseqcJob(jobId, JobStateReleased, string.Empty))
+            string verification;
+            if (!command.TryGetString("verification", out verification) ||
+                (verification != "estimated" && verification != "rf_verified" &&
+                verification != "verification_failed"))
+            {
+                return BuildMqttFailureBody(
+                    commandId,
+                    "validation_error",
+                    "verification must be estimated, rf_verified, or verification_failed",
+                    0);
+            }
+
+            if (BuildDiseqcJobJson(jobId) == "null")
+            {
+                return BuildMqttFailureBody(commandId, "not_found", "job is unknown or has been evicted", 0);
+            }
+
+            if (GetActiveDiseqcJobId() != jobId)
             {
                 return BuildMqttFailureBody(commandId, "validation_error", "job is not the running job", GetActiveDiseqcJobId());
             }
 
             lock (_diseqcMotionLock)
             {
-                _diseqcPositionEstimate.CompletePending();
+                if (verification == "rf_verified" && !_diseqcPositionEstimate.HasPendingTarget)
+                {
+                    return BuildMqttFailureBody(
+                        commandId,
+                        "validation_error",
+                        "job has no angular target to verify",
+                        jobId);
+                }
+            }
+
+            if (!TryEndDiseqcJob(jobId, JobStateCompleted, verification, string.Empty))
+            {
+                return BuildMqttFailureBody(commandId, "validation_error", "job is not the running job", GetActiveDiseqcJobId());
+            }
+
+            lock (_diseqcMotionLock)
+            {
+                if (verification == "rf_verified")
+                {
+                    _diseqcPositionEstimate.CompletePendingAsRfVerified();
+                }
+                else if (verification == "verification_failed")
+                {
+                    _diseqcPositionEstimate.FailVerification();
+                }
+                else
+                {
+                    _diseqcPositionEstimate.CompletePending();
+                }
             }
 
             PublishMqttDiseqcJobTransition("end", jobId);
@@ -835,6 +878,7 @@ namespace CubleyControl
         {
             JsonBuilder builder = new JsonBuilder()
                 .AddInt("v", DeviceContractVersion)
+                .AddString("boot_id", RestBootId)
                 .AddString("id", commandId)
                 .AddBool("ok", ok)
                 .AddString("code", code)

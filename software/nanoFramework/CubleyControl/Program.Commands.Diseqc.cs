@@ -1140,10 +1140,11 @@ namespace CubleyControl
 
             string operation;
             string state;
+            string verification;
             int remainingMs;
             int timeoutMs;
             string detail;
-            TryGetDiseqcJobSnapshot(motionId, out operation, out state, out remainingMs, out timeoutMs, out detail);
+            TryGetDiseqcJobSnapshot(motionId, out operation, out state, out verification, out remainingMs, out timeoutMs, out detail);
             _blockingDiseqcJobId = motionId;
 
             WriteCommandResult(
@@ -1174,7 +1175,7 @@ namespace CubleyControl
             }
 
             if (activeJobId != requestedMotionId ||
-                !TryEndDiseqcJob(requestedMotionId, JobStateReleased, string.Empty))
+                !TryEndDiseqcJob(requestedMotionId, JobStateCompleted, "estimated", string.Empty))
             {
                 WriteCommandResult(reqId, false, "validation_error", "diseqc motion id mismatch", "motion_id=" + activeJobId.ToString());
                 return;

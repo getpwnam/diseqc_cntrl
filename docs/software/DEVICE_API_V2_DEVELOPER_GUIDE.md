@@ -8,6 +8,8 @@ been fully exercised on hardware. The canonical contract is
 
 - Base URL: `http://<device-ip>`
 - Endpoint: `POST /api/v2/commands`
+- Read endpoints: `/api/v2/health`, `/api/v2/state/positioner`,
+  `/api/v2/state/lnb`, and `/api/v2/jobs/{job}`
 - Content type: `application/json`
 - No authentication or TLS; use only on a trusted network.
 - HTTP status-code mappings are not yet contractual. Clients should parse the
@@ -55,7 +57,7 @@ Raw DiSEqC frames use uppercase hex strings, for example `"E01038F0"`.
 | `positioner.step` | `direction`: `"east"` or `"west"`; `count`: integer 1-128 |
 | `positioner.drive` | `direction`: `"east"` or `"west"` |
 | `positioner.halt` | None |
-| `positioner.release` | `job`: integer |
+| `positioner.complete` | `job`: integer; `verification`: `estimated`, `rf_verified`, or `verification_failed` |
 | `lnb.enable` | `channel` |
 | `lnb.disable` | `channel` |
 | `lnb.polarization` | `channel`, `value` |
@@ -74,6 +76,7 @@ Configuration operations are available only through the USB console, not REST.
 ```json
 {
   "v": 2,
+  "boot_id": "d942c94f-16fd-4d8e-b6d5-44201d3caa4c",
   "id": "unique-request-id",
   "ok": true,
   "code": "accepted",
@@ -85,6 +88,7 @@ Configuration operations are available only through the USB console, not REST.
 Always present:
 
 - `v`: Contract version.
+- `boot_id`: Per-boot identity; treat job IDs from another boot as stale.
 - `id`: Request ID, or `"?"` if parsing failed.
 - `ok`: Whether the command was accepted or completed.
 - `code`: Machine-readable result.
@@ -112,7 +116,7 @@ Job states:
 - `halted`
 - `timeout`
 - `timeout_halt_failed`
-- `released`
+- `completed`
 
 There is no `succeeded` state because DiSEqC does not report arrival. A
 controller should detect completion externally, such as through signal lock,
@@ -121,19 +125,32 @@ then call:
 ```json
 {
   "v": 2,
-  "id": "release-7",
-  "op": "positioner.release",
-  "job": 7
+  "id": "complete-7",
+  "op": "positioner.complete",
+  "job": 7,
+  "verification": "rf_verified"
 }
 ```
 
-Releasing a `positioner.goto_angle` job promotes its offset-adjusted and
-protocol-rounded pending target to `position_confidence=estimated`. Releasing a
-calibrated step job promotes that pending target in the same way. This remains
-an open-loop estimate: release is the controller's assertion that movement
-finished, not feedback from the motor.
+`rf_verified` promotes the device's offset-adjusted and protocol-rounded pending
+target to `position_confidence=rf_verified`; the client does not supply an
+angle. Use `estimated` when motion stopped without independent verification, or
+`verification_failed` when RF evidence disproves arrival. Stored-position,
+uncalibrated-step, and continuous-drive jobs have no angular pending target and
+cannot be marked `rf_verified`.
 
-A watchdog eventually halts unreleased motion.
+A watchdog eventually halts incomplete motion.
+
+## State Queries
+
+All read responses include `v`, `boot_id`, `ok`, `code`, `ts_ms`, and `data`.
+Poll `GET /api/v2/jobs/{job}` after a motion command. A missing or evicted job
+returns HTTP 404 and `code=not_found`. Use `GET /api/v2/state/positioner` to
+recover the active job and position confidence after reconnecting, and
+`GET /api/v2/state/lnb` for current LNB health and fault state.
+
+`GET /api/v2/health` is the lightweight liveness endpoint. A changed `boot_id`
+means cached job IDs and uptime values belong to an earlier boot.
 
 ## MQTT Notifications
 
@@ -182,7 +199,7 @@ reference_job=$(printf '%s\n' "$reference_response" |
 # Wait for the motor to stop at reference before releasing this job.
 curl -fsS "$BASE_URL" \
   -H 'Content-Type: application/json' \
-  --data "{\"v\":2,\"id\":\"$run_id-ref-release\",\"op\":\"positioner.release\",\"job\":$reference_job}"
+  --data "{\"v\":2,\"id\":\"$run_id-ref-complete\",\"op\":\"positioner.complete\",\"job\":$reference_job,\"verification\":\"estimated\"}"
 
 goto_response=$(curl -fsS "$BASE_URL" \
   -H 'Content-Type: application/json' \
@@ -194,9 +211,9 @@ goto_job=$(printf '%s\n' "$goto_response" |
 # Wait for physical cessation and verify the known Astra 2 signal first.
 curl -fsS "$BASE_URL" \
   -H 'Content-Type: application/json' \
-  --data "{\"v\":2,\"id\":\"$run_id-astra2-release\",\"op\":\"positioner.release\",\"job\":$goto_job}"
+  --data "{\"v\":2,\"id\":\"$run_id-astra2-complete\",\"op\":\"positioner.complete\",\"job\":$goto_job,\"verification\":\"rf_verified\"}"
 ```
 
-Do not release a job if arrival is uncertain. Use `positioner.halt` instead; a
+Do not complete a job if arrival is uncertain. Use `positioner.halt` instead; a
 Halt or watchdog timeout deliberately prevents the pending target from becoming
 an estimated position.

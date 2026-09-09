@@ -22,7 +22,20 @@ public sealed class DiseqcPositionEstimateTests
     }
 
     [Fact]
-    public void RestGotoAngleAdoptsOffsetAdjustedEncodedTargetOnRelease()
+    public void RfVerificationPromotesPendingTargetWithVerifiedConfidence()
+    {
+        var estimate = new DiseqcPositionEstimate();
+        estimate.BeginGotoAngular(DiseqcMotorDirection.East, 28_200_000);
+
+        Assert.True(estimate.CompletePendingAsRfVerified());
+        Assert.Equal(28_200_000, estimate.EstimatedAngleMicrodegrees);
+        Assert.Equal("rf_verified", estimate.Confidence);
+        Assert.Equal("goto_x", estimate.Source);
+        Assert.False(estimate.HasPendingTarget);
+    }
+
+    [Fact]
+    public void RestGotoAngleAdoptsOffsetAdjustedEncodedTargetOnCompletion()
     {
         bool success = DiseqcCommandBuilder.TryBuildGotoAngularPosition(
             DiseqcMotorDirection.East,

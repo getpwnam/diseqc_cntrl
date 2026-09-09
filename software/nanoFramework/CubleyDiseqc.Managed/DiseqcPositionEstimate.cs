@@ -84,6 +84,16 @@ namespace Cubley.Diseqc
 
         public bool CompletePending()
         {
+            return CompletePending("estimated");
+        }
+
+        public bool CompletePendingAsRfVerified()
+        {
+            return CompletePending("rf_verified");
+        }
+
+        private bool CompletePending(string confidence)
+        {
             if (!HasPendingTarget)
             {
                 Invalidate();
@@ -92,7 +102,7 @@ namespace Cubley.Diseqc
 
             HasEstimate = true;
             EstimatedAngleMicrodegrees = PendingTargetMicrodegrees;
-            Confidence = "estimated";
+            Confidence = confidence;
             Source = PendingSource;
             ClearPending();
             return true;

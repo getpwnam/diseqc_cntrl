@@ -11,6 +11,11 @@ namespace CubleyControl
         private const string RestCommandPath = "/api/v2/commands";
         private const int RestHeaderMaxLength = 768;
         private const int RestSocketTimeoutMs = 2000;
+        private const string RestJobsPathPrefix = "/api/v2/jobs/";
+        private const string RestHealthPath = "/api/v2/health";
+        private const string RestPositionerStatePath = "/api/v2/state/positioner";
+        private const string RestLnbStatePath = "/api/v2/state/lnb";
+        private static readonly string RestBootId = Guid.NewGuid().ToString();
 
         private static void RestLoop()
         {
@@ -105,6 +110,12 @@ namespace CubleyControl
 
             string method = headers.Substring(0, firstSpace);
             string path = headers.Substring(firstSpace + 1, secondSpace - firstSpace - 1);
+            if (method == "GET")
+            {
+                HandleRestGetRequest(client, path);
+                return;
+            }
+
             if (path != RestCommandPath)
             {
                 WriteRestResponse(client, 404, null);
@@ -137,8 +148,82 @@ namespace CubleyControl
                 received += count;
             }
 
-            string responseBody = ProcessApiCommand(AsciiBytesToString(request, bodyOffset, contentLength));
+            string responseBody;
+            lock (_commandLock)
+            {
+                responseBody = ProcessApiCommand(AsciiBytesToString(request, bodyOffset, contentLength));
+            }
             WriteRestResponse(client, 200, responseBody);
+        }
+
+        private static void HandleRestGetRequest(Socket client, string path)
+        {
+            if (path == RestHealthPath)
+            {
+                string health = new JsonBuilder()
+                    .AddString("status", "ok")
+                    .AddString("firmware_version", BuildInfo.Version)
+                    .Build();
+                WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", health, null));
+                return;
+            }
+
+            if (path == RestPositionerStatePath)
+            {
+                WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", BuildDiseqcStateJson(), null));
+                return;
+            }
+
+            if (path == RestLnbStatePath)
+            {
+                WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", BuildLnbStateJson(), null));
+                return;
+            }
+
+            if (path.StartsWith(RestJobsPathPrefix))
+            {
+                int jobId;
+                string text = path.Substring(RestJobsPathPrefix.Length);
+                if (!TryParsePositiveInt(text, out jobId))
+                {
+                    WriteRestResponse(client, 400, BuildRestQueryResponse(false, "validation_error", null, "job must be a positive integer"));
+                    return;
+                }
+
+                string job = BuildDiseqcJobJson(jobId);
+                if (job == "null")
+                {
+                    WriteRestResponse(client, 404, BuildRestQueryResponse(false, "not_found", null, "job is unknown or has been evicted"));
+                    return;
+                }
+
+                WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", job, null));
+                return;
+            }
+
+            WriteRestResponse(client, 404, BuildRestQueryResponse(false, "not_found", null, "resource not found"));
+        }
+
+        private static string BuildRestQueryResponse(bool ok, string code, string data, string message)
+        {
+            JsonBuilder builder = new JsonBuilder()
+                .AddInt("v", DeviceContractVersion)
+                .AddString("boot_id", RestBootId)
+                .AddBool("ok", ok)
+                .AddString("code", code)
+                .AddLong("ts_ms", Environment.TickCount64);
+
+            if (message != null)
+            {
+                builder.AddString("msg", message);
+            }
+
+            if (data != null)
+            {
+                builder.AddRaw("data", data);
+            }
+
+            return builder.Build();
         }
 
         private static int FindRestBodyOffset(byte[] request, int length)
