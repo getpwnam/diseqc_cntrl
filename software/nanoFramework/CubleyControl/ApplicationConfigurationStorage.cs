@@ -5,8 +5,8 @@ namespace CubleyControl
     internal interface IApplicationConfigurationStorage
     {
         string Source { get; }
-        bool TryLoad(out MqttConfiguration configuration, out uint generation, out string error);
-        bool TrySave(MqttConfiguration configuration, uint currentGeneration, out uint savedGeneration, out string error);
+        bool TryLoad(out ApplicationConfiguration configuration, out uint generation, out string error);
+        bool TrySave(ApplicationConfiguration configuration, uint currentGeneration, out uint savedGeneration, out string error);
     }
 
     internal sealed class InternalFlashApplicationConfigurationStorage : IApplicationConfigurationStorage
@@ -16,9 +16,9 @@ namespace CubleyControl
             get { return "internal"; }
         }
 
-        public bool TryLoad(out MqttConfiguration configuration, out uint generation, out string error)
+        public bool TryLoad(out ApplicationConfiguration configuration, out uint generation, out string error)
         {
-            configuration = MqttConfiguration.CreateDefaults();
+            configuration = ApplicationConfiguration.CreateDefaults();
             generation = 0;
             byte[] record = new byte[ApplicationConfigurationRecord.RecordSize];
             int status = ZPersistentConfiguration.NativeRead(record, 0, record.Length);
@@ -32,7 +32,7 @@ namespace CubleyControl
         }
 
         public bool TrySave(
-            MqttConfiguration configuration,
+            ApplicationConfiguration configuration,
             uint currentGeneration,
             out uint savedGeneration,
             out string error)
@@ -51,7 +51,7 @@ namespace CubleyControl
                 return false;
             }
 
-            MqttConfiguration verified;
+            ApplicationConfiguration verified;
             uint verifiedGeneration;
             if (!TryLoad(out verified, out verifiedGeneration, out error) ||
                 verifiedGeneration != savedGeneration || verified.ToPayload() != configuration.ToPayload())

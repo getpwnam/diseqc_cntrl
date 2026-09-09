@@ -8,7 +8,6 @@ namespace CubleyControl
     {
         private const int LnbHealthIntervalMs = 10_000;
         private const int LnbHealthMaximumBackoffMs = 60_000;
-        private const int LnbHealthStateRefreshMs = 60_000;
         private static readonly object _lnbIoLock = new object();
         private static readonly object _lnbIoReservationLock = new object();
         private static int _lnbIoReservations;
@@ -24,7 +23,6 @@ namespace CubleyControl
         private static int _lnbHealthD2;
         private static int _lnbHealthD3;
         private static int _lnbHealthD4;
-        private static int _lnbHealthPublishElapsedMs;
 
         private static string BuildLnbStateJson()
         {
@@ -73,7 +71,6 @@ namespace CubleyControl
             while (true)
             {
                 Thread.Sleep(delayMs);
-                _lnbHealthPublishElapsedMs += delayMs;
 
                 if (!TryBeginLnbHealthOperation())
                 {
@@ -86,7 +83,6 @@ namespace CubleyControl
 
                 try
                 {
-                    bool changed;
                     bool commsTransition;
                     bool previousCommsOk;
                     bool faultAssertion;
@@ -95,28 +91,21 @@ namespace CubleyControl
                     {
                         previousCommsOk = _lnbHealthCommsOk;
                         bool hadResult = _lnbHealthHasResult;
-                        changed = CheckLnbHealth(out faultAssertion, out faultSequence);
+                        CheckLnbHealth(out faultAssertion, out faultSequence);
                         commsTransition = hadResult && previousCommsOk != _lnbHealthCommsOk;
                     }
 
                     if (faultAssertion)
                     {
-                        PublishMqttLnbFaultTransition(true, "health");
-                        _lnbHealthPublishElapsedMs = 0;
+                        EmitLnbFaultTransition(true, "health", faultSequence);
                     }
 
                     if (commsTransition)
                     {
-                        PublishMqttLnbHealthEvent(
+                        EmitLnbHealthEvent(
                             _lnbHealthCommsOk ? "restored" : "lost",
                             _lnbHealthCheckSequence,
                             _lnbHealthResult);
-                    }
-
-                    if (!faultAssertion && (changed || _lnbHealthPublishElapsedMs >= LnbHealthStateRefreshMs))
-                    {
-                        PublishMqttState();
-                        _lnbHealthPublishElapsedMs = 0;
                     }
 
                     delayMs = CalculateLnbHealthDelay();
@@ -137,20 +126,10 @@ namespace CubleyControl
             }
         }
 
-        private static bool CheckLnbHealth(out bool faultAssertion, out int faultSequence)
+        private static void CheckLnbHealth(out bool faultAssertion, out int faultSequence)
         {
             faultAssertion = false;
             faultSequence = 0;
-            bool hadResult = _lnbHealthHasResult;
-            bool previousCommsOk = _lnbHealthCommsOk;
-            string previousState = _lnbHealthState;
-            int previousResult = _lnbHealthResult;
-            int previousS1 = _lnbHealthS1;
-            int previousS2 = _lnbHealthS2;
-            int previousD1 = _lnbHealthD1;
-            int previousD2 = _lnbHealthD2;
-            int previousD3 = _lnbHealthD3;
-            int previousD4 = _lnbHealthD4;
 
             _lnbHealthCheckSequence++;
             _lnbHealthHasResult = true;
@@ -211,16 +190,26 @@ namespace CubleyControl
                 " s2=" + ToHexU8(s2) +
                 " level=debug");
 
-            return !hadResult ||
-                previousCommsOk != _lnbHealthCommsOk ||
-                previousState != _lnbHealthState ||
-                previousResult != _lnbHealthResult ||
-                previousS1 != _lnbHealthS1 ||
-                previousS2 != _lnbHealthS2 ||
-                previousD1 != _lnbHealthD1 ||
-                previousD2 != _lnbHealthD2 ||
-                previousD3 != _lnbHealthD3 ||
-                previousD4 != _lnbHealthD4;
+        }
+
+        private static void EmitLnbFaultTransition(bool active, string source, int sequence)
+        {
+            WriteStructuredDebug(
+                "LNB",
+                "schema=1 sub=lnb comp=fault operation=transition" +
+                " stat=" + (active ? "active" : "clear") +
+                " seq=" + sequence.ToString() +
+                " source=" + SanitizeToken(source));
+        }
+
+        private static void EmitLnbHealthEvent(string status, int sequence, int result)
+        {
+            WriteStructuredDebug(
+                "LNB",
+                "schema=1 sub=lnb comp=health operation=comms" +
+                " stat=" + status +
+                " seq=" + sequence.ToString() +
+                " rc=" + result.ToString());
         }
 
         private static int CalculateLnbHealthDelay()

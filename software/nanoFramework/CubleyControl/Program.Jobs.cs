@@ -342,7 +342,6 @@ namespace CubleyControl
 
             return new JsonBuilder()
                 .AddInt("v", DeviceContractVersion)
-                .AddInt("event_id", NextMqttEventId())
                 .AddString("sub", "diseqc")
                 .AddString("comp", "job")
                 .AddString("transition", transition)

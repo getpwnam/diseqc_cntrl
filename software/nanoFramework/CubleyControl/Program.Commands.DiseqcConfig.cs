@@ -12,14 +12,14 @@ namespace CubleyControl
                 return;
             }
 
-            MqttConfiguration previous = _pendingMqttConfiguration.Clone();
+            ApplicationConfiguration previous = _pendingApplicationConfiguration.Clone();
             string field = tokens[1];
             if (field == "angle-limits")
             {
                 if (tokens.Length == 3 && tokens[2] == "off")
                 {
-                    _pendingMqttConfiguration.DiseqcEastLimitMicrodegrees = 0;
-                    _pendingMqttConfiguration.DiseqcWestLimitMicrodegrees = 0;
+                    _pendingApplicationConfiguration.DiseqcEastLimitMicrodegrees = 0;
+                    _pendingApplicationConfiguration.DiseqcWestLimitMicrodegrees = 0;
                     StageDiseqcConfigurationChange(reqId, field, "off", previous);
                     return;
                 }
@@ -38,8 +38,8 @@ namespace CubleyControl
                     return;
                 }
 
-                _pendingMqttConfiguration.DiseqcEastLimitMicrodegrees = eastMicrodegrees;
-                _pendingMqttConfiguration.DiseqcWestLimitMicrodegrees = westMicrodegrees;
+                _pendingApplicationConfiguration.DiseqcEastLimitMicrodegrees = eastMicrodegrees;
+                _pendingApplicationConfiguration.DiseqcWestLimitMicrodegrees = westMicrodegrees;
                 StageDiseqcConfigurationChange(reqId, field, tokens[2] + "," + tokens[3], previous);
                 return;
             }
@@ -48,8 +48,8 @@ namespace CubleyControl
             {
                 if (tokens.Length == 3 && tokens[2] == "off")
                 {
-                    _pendingMqttConfiguration.DiseqcEastStepMicrodegrees = 0;
-                    _pendingMqttConfiguration.DiseqcWestStepMicrodegrees = 0;
+                    _pendingApplicationConfiguration.DiseqcEastStepMicrodegrees = 0;
+                    _pendingApplicationConfiguration.DiseqcWestStepMicrodegrees = 0;
                     StageDiseqcConfigurationChange(reqId, field, "off", previous);
                     return;
                 }
@@ -68,8 +68,8 @@ namespace CubleyControl
                     return;
                 }
 
-                _pendingMqttConfiguration.DiseqcEastStepMicrodegrees = eastMicrodegrees;
-                _pendingMqttConfiguration.DiseqcWestStepMicrodegrees = westMicrodegrees;
+                _pendingApplicationConfiguration.DiseqcEastStepMicrodegrees = eastMicrodegrees;
+                _pendingApplicationConfiguration.DiseqcWestStepMicrodegrees = westMicrodegrees;
                 StageDiseqcConfigurationChange(reqId, field, tokens[2] + "," + tokens[3], previous);
                 return;
             }
@@ -78,7 +78,7 @@ namespace CubleyControl
             {
                 if (tokens.Length == 3 && tokens[2] == "off")
                 {
-                    _pendingMqttConfiguration.DiseqcGotoOffsetMicrodegrees = 0;
+                    _pendingApplicationConfiguration.DiseqcGotoOffsetMicrodegrees = 0;
                     StageDiseqcConfigurationChange(reqId, field, "off", previous);
                     return;
                 }
@@ -94,7 +94,7 @@ namespace CubleyControl
                     return;
                 }
 
-                _pendingMqttConfiguration.DiseqcGotoOffsetMicrodegrees = tokens[2] == "east"
+                _pendingApplicationConfiguration.DiseqcGotoOffsetMicrodegrees = tokens[2] == "east"
                     ? magnitudeMicrodegrees
                     : -magnitudeMicrodegrees;
                 StageDiseqcConfigurationChange(reqId, field, tokens[2] + "," + tokens[3], previous);
@@ -103,7 +103,7 @@ namespace CubleyControl
 
             if (field == "defaults" && tokens.Length == 2)
             {
-                ClearDiseqcConfiguration(_pendingMqttConfiguration);
+                ClearDiseqcConfiguration(_pendingApplicationConfiguration);
                 StageDiseqcConfigurationChange(reqId, field, "disabled", previous);
                 return;
             }
@@ -115,21 +115,21 @@ namespace CubleyControl
             int reqId,
             string field,
             string value,
-            MqttConfiguration previous)
+            ApplicationConfiguration previous)
         {
             string error;
-            if (!_pendingMqttConfiguration.TryValidate(out error))
+            if (!_pendingApplicationConfiguration.TryValidate(out error))
             {
-                _pendingMqttConfiguration = previous;
+                _pendingApplicationConfiguration = previous;
                 WriteCommandResult(reqId, false, "validation_error", "diseqc configuration invalid", "field=" + field + " reason=" + error);
                 return;
             }
 
-            _mqttConfigurationDirty = _pendingMqttConfiguration.ToPayload() != _mqttConfiguration.ToPayload();
-            WriteCommandResult(reqId, true, "ok", "configuration staged", "field=diseqc_" + field + " value=" + value + " state=" + (_mqttConfigurationDirty ? "staged" : "saved"));
+            _applicationConfigurationDirty = _pendingApplicationConfiguration.ToPayload() != _applicationConfiguration.ToPayload();
+            WriteCommandResult(reqId, true, "ok", "configuration staged", "field=diseqc_" + field + " value=" + value + " state=" + (_applicationConfigurationDirty ? "staged" : "saved"));
         }
 
-        private static void ApplyDiseqcConfiguration(MqttConfiguration configuration)
+        private static void ApplyDiseqcConfiguration(ApplicationConfiguration configuration)
         {
             lock (_diseqcMotionLock)
             {
@@ -149,7 +149,7 @@ namespace CubleyControl
             }
         }
 
-        private static bool HasDiseqcConfigurationChanged(MqttConfiguration first, MqttConfiguration second)
+        private static bool HasDiseqcConfigurationChanged(ApplicationConfiguration first, ApplicationConfiguration second)
         {
             return first.DiseqcEastLimitMicrodegrees != second.DiseqcEastLimitMicrodegrees ||
                 first.DiseqcWestLimitMicrodegrees != second.DiseqcWestLimitMicrodegrees ||
@@ -158,7 +158,7 @@ namespace CubleyControl
                 first.DiseqcGotoOffsetMicrodegrees != second.DiseqcGotoOffsetMicrodegrees;
         }
 
-        private static void ClearDiseqcConfiguration(MqttConfiguration configuration)
+        private static void ClearDiseqcConfiguration(ApplicationConfiguration configuration)
         {
             configuration.DiseqcEastLimitMicrodegrees = 0;
             configuration.DiseqcWestLimitMicrodegrees = 0;

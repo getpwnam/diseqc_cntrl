@@ -13,7 +13,7 @@
     <Compile Include="../../CubleyDiseqc.Managed/DiseqcPositionEstimate.cs" Link="Managed/DiseqcPositionEstimate.cs" />
     <Compile Include="../../CubleyDiseqc.Managed/DiseqcProtocol.cs" Link="Managed/DiseqcProtocol.cs" />
     <Compile Include="../../CubleyControl/ApplicationConfigurationRecord.cs" Link="Control/ApplicationConfigurationRecord.cs" />
-    <Compile Include="../../CubleyControl/MqttConfiguration.cs" Link="Control/MqttConfiguration.cs" />
+    <Compile Include="../../CubleyControl/ApplicationConfiguration.cs" Link="Control/ApplicationConfiguration.cs" />
   </ItemGroup>
 
   <ItemGroup>

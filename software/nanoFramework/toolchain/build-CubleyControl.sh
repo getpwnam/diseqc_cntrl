@@ -662,8 +662,6 @@ else
       "$OUTPUT_DIR/System.IO.Streams.pe"
       "$SYSTEM_TEXT_PE"
       "$OUTPUT_DIR/System.Net.pe"
-      "$OUTPUT_DIR/nanoFramework.M2Mqtt.Core.pe"
-      "$OUTPUT_DIR/nanoFramework.M2Mqtt.pe"
       "$OUTPUT_DIR/mscorlib.pe"
     )
 

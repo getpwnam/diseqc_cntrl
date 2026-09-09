@@ -158,7 +158,7 @@ namespace CubleyControl
             {
                 WriteHumanHeading("Operational syntax");
                 _activeOutputSink(
-                    "show [lnb [a|b]|diseqc|network|net|mqtt|running-config [network|mqtt]|startup-config [network|mqtt]|status|capabilities|caps|version|ver]\r\n" +
+                    "show [lnb [a|b]|diseqc|network|net|running-config [network|application|diseqc|all]|startup-config [network|application|diseqc|all]|status|capabilities|caps|version|ver]\r\n" +
                     "lnb <a|b> <enable|disable|polarization|band|iset|isw> [value]\r\n" +
                     "diseqc <goto|step|drive|stop|preset|timeout|tx|tone|listen|complete> ...\r\n" +
                     "dns lookup <hostname>\r\n" +
@@ -194,9 +194,8 @@ namespace CubleyControl
                     "show lnb [a|b]\r\n" +
                     "show diseqc\r\n" +
                     "show network\r\n" +
-                    "show mqtt\r\n" +
-                    "show running-config|run [network|mqtt]\r\n" +
-                    "show startup-config|start [network|mqtt]\r\n" +
+                    "show running-config|run [network|application|diseqc|all]\r\n" +
+                    "show startup-config|start [network|application|diseqc|all]\r\n" +
                     "show status|capabilities|caps|version|ver\r\n");
                 return;
             }
@@ -222,13 +221,6 @@ namespace CubleyControl
             {
                 WriteHumanHeading("Network syntax");
                 _activeOutputSink("show network\r\nshow running-config|run network\r\nconfigure|config|conf [terminal|t]\r\n");
-                return;
-            }
-
-            if (topic == "mqtt")
-            {
-                WriteHumanHeading("MQTT syntax");
-                _activeOutputSink("show mqtt\r\nshow running-config|run mqtt\r\nconfigure|config|conf [terminal|t]\r\n");
                 return;
             }
 
@@ -311,9 +303,7 @@ namespace CubleyControl
                 WriteHumanHeading("Capabilities");
                 WriteHumanField("Serial commands", "Available");
                 WriteHumanField("REST control", "Available");
-                WriteHumanField("MQTT state", "Available");
                 WriteHumanField("USB configuration", "Available");
-                WriteHumanField("MQTT configuration", "Unavailable");
                 return;
             }
 
@@ -322,7 +312,7 @@ namespace CubleyControl
                 true,
                 "ok",
                 "capabilities",
-                "root=cubley/v2 serial_format=hybrid transport.serial=1 transport.rest=1 mqtt_state=1 config_usb=1 config_rest=0");
+                "root=cubley/v2 serial_format=hybrid transport.serial=1 transport.rest=1 config_usb=1 config_rest=0");
         }
 
         private static void EmitVersion(int reqId)
@@ -375,7 +365,7 @@ namespace CubleyControl
             if (_usbConfigurationMode)
             {
                 return head == "network" || head == "net" ||
-                    head == "mqtt" || head == "mq" ||
+                    head == "hostname" || head == "diseqc" ||
                     head == "commit" || head == "apply" ||
                     head == "discard" || head == "abort" ||
                     head == "load" || head == "defaults" ||
@@ -455,7 +445,7 @@ namespace CubleyControl
                 " stat=" + (ok ? "ok" : "error") +
                 " code=" + code +
                 " transport=" + (_activeCommandTransport == CommandTransport.Rest ? "rest" : "cdc") +
-                (_activeCommandTransport == CommandTransport.Rest ? " id=" + SanitizeToken(_mqttActiveCommandKey) : string.Empty) +
+                (_activeCommandTransport == CommandTransport.Rest ? " id=" + SanitizeToken(_activeApiCommandKey) : string.Empty) +
                 " request_id=" + reqId.ToString() +
                 " command=" + SanitizeToken(_activeCommand) +
                 " detail=" + safeMsg +
@@ -471,7 +461,7 @@ namespace CubleyControl
 
             if (_activeCommandTransport == CommandTransport.Rest)
             {
-                RecordMqttCommandOutcome(ok, code, safeMsg);
+                RecordApiCommandOutcome(ok, code, safeMsg);
                 return;
             }
 
@@ -620,21 +610,6 @@ namespace CubleyControl
 
         private static string RedactCommandForLog(string command)
         {
-            if (string.IsNullOrEmpty(command))
-            {
-                return string.Empty;
-            }
-
-            string[] tokens = SplitTokens(NormalizeCommandInput(command).ToLower());
-            int domainIndex = tokens.Length > 0 && tokens[0] == "set" ? 1 : 0;
-            int fieldIndex = domainIndex + 1;
-            if (tokens.Length > fieldIndex &&
-                (tokens[domainIndex] == "mqtt" || tokens[domainIndex] == "mq") &&
-                (tokens[fieldIndex] == "password" || tokens[fieldIndex] == "pass"))
-            {
-                return "mqtt password <redacted>";
-            }
-
             return command;
         }
 

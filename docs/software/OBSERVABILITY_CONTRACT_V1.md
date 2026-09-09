@@ -1,176 +1,110 @@
 # Observability Contract V1
 
-## Purpose
+## Scope
 
-This contract defines one structured message model for retained state, asynchronous
-events, and `Debug.WriteLine` diagnostics. MQTT and debug output for structured
-domain data must be projections of the same canonical payload rather than
-independently formatted descriptions of the same operation.
+CubleyControl exposes observability through two independent surfaces:
 
-This is the target contract. LNB state and events plus LNB, command, and MQTT debug
-diagnostics use the schema-1 contract. Other subsystem diagnostics still use
-historical formats; see [Migration](#migration). MQTT command responses deliberately
-use the compact acknowledgement format defined under [MQTT Topics](#mqtt-topics).
+- Local structured diagnostics written with `Debug.WriteLine`.
+- REST v2 snapshots returned by HTTP GET requests.
 
-## Subsystems
+Debug output is a bring-up and fault-diagnosis interface. It is not forwarded by
+the device over the network. REST clients recover state by polling; there is no
+network event or subscription interface.
 
-Every structured message must contain exactly one `subsystem` value from this
-stable set:
+## Local Structured Diagnostics
+
+The standard local diagnostic line is:
+
+```text
+[SUBSYSTEM] schema=1 sub=<name> comp=<name> operation=<action> stat=<state> ...
+```
+
+The bracketed prefix supports human scanning. The payload carries the structured
+fields. Prefix and `sub` normally refer to the same owner.
 
 | Subsystem | Ownership |
 |---|---|
-| `main` | Boot, reset cause, heartbeat, worker lifecycle, and process-level health |
-| `config` | Configuration parsing, validation, persistence, staging, and application |
-| `command` | Shared command parsing, dispatch, correlation, and completion |
-| `mqtt` | Broker connection, subscription, receive, publish, and reconnect lifecycle |
-| `lnb` | LNBH26 initialization, control, register state, health, and faults |
-| `diseqc` | DiSEqC framing, carrier, transmission, switching, and motor operations |
-| `network` | Interface state, addressing, DHCP, and DNS |
-| `cdc` | USB CDC connection, console input, output, and transport errors |
+| `main` | Boot, reset cause, heartbeat, and process-level health |
+| `config` | Network and application configuration load/persistence |
+| `command` | USB CDC and REST command parsing, dispatch, deduplication, and completion |
+| `lnb` | LNBH26 initialization, control, register reads, health, and faults |
+| `diseqc` | DiSEqC control, motor jobs, voltage restoration, and transmission |
+| `network` | Interface state, addressing, and DNS |
+| `cdc` | USB CDC worker, session, and output lifecycle |
+| `rest` | HTTP listener lifecycle |
 
-Transport direction and implementation mechanism are not subsystems. Use fields
-such as `comp=subscribe`, `operation=publish`, `transport=mqtt`, or
-`source=irq` instead of creating `mqtt-sub`, `mqtt-pub`, or interrupt subsystems.
-
-Configuration messages use `sub=config` with a `domain` field such as
-`domain=mqtt` or `domain=network`. Messages about the live MQTT or network service
-remain owned by `sub=mqtt` or `sub=network`.
-
-## Payload Format
-
-Payloads are space-separated `key=value` fields encoded as ASCII. This avoids a
-JSON parser and allocator on the device while remaining readable and easy to
-consume on the broker.
-
-Every message begins with these fields in this order:
-
-```text
-schema=1 sub=<name> comp=<name>
-```
-
-Additional common fields are:
+Common fields:
 
 | Field | Meaning |
 |---|---|
+| `schema` | Diagnostic schema version; currently `1` |
 | `sub` | Owning subsystem |
-| `comp` | Component within the owning subsystem |
+| `comp` | Component within that subsystem |
 | `operation` | Action being attempted or reported |
-| `stat` | `ok`, `error`, `busy`, `unavailable`, or a domain state |
-| `comm` | Communication condition when distinct from overall state |
+| `stat` | Outcome or domain state, such as `ok`, `error`, `busy`, or `unavailable` |
 | `code` | Stable machine-readable result or error code |
-| `id` | Requester-assigned 16-bit command ID in command diagnostics |
-| `event_id` | Device-assigned event sequence |
-| `seq` | Local diagnostic sequence, such as the LNB health-check count |
-| `source` | Origin such as `irq`, `poll`, `health`, or `command` |
-| `transport` | `mqtt` or `cdc` when transport is relevant |
-| `level` | `info`, `warning`, `error`, or `debug` |
+| `transport` | `cdc` or `rest` for command diagnostics |
+| `request_id` | Device-local command sequence |
+| `id` | REST requester-assigned command ID when applicable |
+| `seq` | Subsystem-local sequence |
+| `source` | Origin such as `irq`, `health`, or `command` |
+| `level` | Diagnostic verbosity, including `debug` |
 
 Keys and enumerated values use lowercase ASCII with underscores. Boolean values
-are `0` or `1`, decimal integers have no leading sign unless negative values are
-meaningful, and register bytes use `0xNN`. Free-form text is not part of the
-machine contract; use stable `code` values and additional structured fields.
-Values that cannot satisfy this token grammar must be sanitized before emission.
+use `0` or `1`; register bytes use `0xNN`. Free text is sanitized into a single
+token before emission.
 
 Examples:
 
 ```text
-schema=1 sub=lnb comp=health stat=ok seq=187 s1=0x00 s2=0x00
-schema=1 sub=lnb comp=fault stat=active source=irq event_id=731 fault=overcurrent
-schema=1 sub=mqtt comp=subscribe stat=ok qos=1 message_id=14
-schema=1 sub=config comp=storage domain=mqtt operation=load stat=ok generation=6
-schema=1 sub=command comp=completion transport=mqtt id=42 stat=ok code=ok
+[CONFIG] schema=1 sub=config comp=storage domain=application operation=load stat=ok source=internal generation=6
+[COMMAND] schema=1 sub=command comp=completion operation=execute stat=ok code=ok transport=rest id=goto-7 request_id=14
+[LNB] schema=1 sub=lnb comp=health operation=check stat=ok seq=187 rc=0 failures=0 s1=0x00 s2=0x00 level=debug
+[REST] schema=1 sub=rest comp=server operation=listen stat=ok port=80
 ```
 
-## MQTT Topics
-
-The effective root remains `<prefix>/<hostname>`.
-
-| Purpose | Topic | Retained | QoS |
-|---|---|---:|---:|
-| Command input | `<root>/command` | No | 1 |
-| Correlated response | `<root>/response` | No | 1 |
-| Subsystem transition | `<root>/event/<subsystem>` | No | 1 |
-| Subsystem snapshot | `<root>/state/<subsystem>` | Yes | 1 |
-| Availability | `<root>/availability` | Yes | 0/1 |
-
-`response` remains unified because the command ID is the correlation key. A
-state-changing or action command publishes one terminal `id=<id> OK` response on
-success or one `id=<id> Fail: ...` response on failure. Queries may publish their
-requested output lines before the terminal response. Responses intentionally stay
-compact and are not schema-1 payloads; state and health details belong on subsystem
-state and event topics.
-
-Each retained `state/<subsystem>` payload is a complete snapshot owned by that
-subsystem. Splitting retained state prevents an LNB update from replacing network
-or MQTT state. Events are deltas and must never be used as the sole source of
-current state.
-
-## Debug Alignment
-
-Structured state and event payloads are built once. The exact payload is published
-to MQTT when applicable and appended unchanged to the debug prefix. Structured
-diagnostics use the same schema and ownership rules but are not command responses:
+Positioner job transitions are also written locally under `[DISEQC]`, using the
+same v2 JSON job-event shape produced by the positioner state builders:
 
 ```text
-[LNB] schema=1 sub=lnb comp=health stat=ok seq=187 s1=0x00 s2=0x00
+[DISEQC] {"v":2,"sub":"diseqc","comp":"job","transition":"start","job":7,"op":"goto","state":"running","verification":"pending","remaining_ms":89750}
 ```
 
-The bracketed prefix is for human scanning only. Consumers must parse the payload,
-not the prefix. Prefixes use the uppercase subsystem name: `[MAIN]`, `[CONFIG]`,
-`[COMMAND]`, `[MQTT]`, `[LNB]`, `[DISEQC]`, `[NETWORK]`, and `[CDC]`.
+These lines remain local diagnostics and do not create a network event contract.
 
-Messages that are only useful for local diagnostics still use the same schema and
-include `level=debug`. A future MQTT verbosity setting may suppress publication of
-`level=debug` messages, but it must not change payload shape or suppress retained
-state, warnings, errors, or safety events. Compact command responses are never
-controlled by diagnostic verbosity.
+## REST Snapshots
 
-Secrets must be redacted before the canonical payload is passed to either sink.
+REST is the sole network observability interface:
+
+| Request | Snapshot |
+|---|---|
+| `GET /api/v2/health` | Liveness and firmware version |
+| `GET /api/v2/state/positioner` | Active and last terminal jobs, timeout, position confidence, estimate, source, and pending target |
+| `GET /api/v2/state/lnb` | LNB health, communications, faults, registers, polarization, and band |
+| `GET /api/v2/jobs/{job}` | One retained positioner job |
+
+Every successful GET response includes `v`, `boot_id`, `ok`, `code`, `ts_ms`,
+and `data`. `boot_id` changes at reboot. `ts_ms` is uptime, not wall time.
+
+The device retains four positioner jobs. An unknown or evicted job returns HTTP
+404 with `code=not_found`. Controllers must use the positioner snapshot to
+recover after reconnecting and must discard cached job IDs when `boot_id`
+changes.
+
+Polling frequency is a client policy. Clients should poll job state while motion
+is active and read broader snapshots at startup, after reconnect, or when an
+operation result requires reconciliation.
+
+See [DEVICE_API_V2.md](DEVICE_API_V2.md) for response shapes and job semantics.
 
 ## Interrupt And Worker Boundary
 
-Interrupt callbacks do not format messages, call `Debug.WriteLine`, read LNBH26
-registers, or publish MQTT data. They acknowledge or latch the hardware condition
-and signal the owning subsystem worker.
+Interrupt callbacks acknowledge or latch hardware state and signal the owning
+worker. They do not format diagnostics or read LNBH26 registers. The worker
+performs register access and emits records with the original source retained,
+for example `source=irq` or `source=health`.
 
-The worker performs register access and emits the canonical message. Interrupt
-provenance is retained as a field:
+## Data Handling
 
-```text
-schema=1 sub=lnb comp=fault source=irq stat=active event_id=731
-```
-
-Faults discovered by another path use the same component and fields with a
-different source, such as `source=health`. This keeps fault ownership in `lnb`
-without hiding how the condition was detected.
-
-## Migration
-
-Current debug prefixes map to the contract as follows:
-
-| Current prefix | Target subsystem/component |
-|---|---|
-| `BOOT`, `HEARTBEAT` | `main` with `comp=boot` or `comp=heartbeat` |
-| `CDC` | `cdc` |
-| `CDC-CMD` | `command` with `transport=cdc` or `transport=mqtt` |
-| `CDC-LNB`, `LNB-FAULT`, `LNB-HEALTH` | `lnb` with the appropriate component |
-| `MQTT`, `MQTT-CMD`, `MQTT-EVENT`, `MQTT-STATE` | `mqtt` for transport lifecycle; owning subsystem for domain payloads |
-| `MQTT-CONFIG`, `NETWORK-CONFIG` | `config` with `domain=mqtt` or `domain=network` |
-| `NETWORK`, `DNS` | `network` with `comp=interface` or `comp=dns` |
-
-Migration should introduce one payload formatter/sink boundary first, then convert
-subsystems incrementally. During migration, documentation and implementation must
-clearly distinguish legacy lines from schema-1 payloads.
-
-Current migration status:
-
-| Subsystem | Status |
-|---|---|
-| `lnb` | State, events, health, fault, initialization, and register diagnostics migrated |
-| `command` | Shared dispatch/completion and MQTT receive/deduplication diagnostics migrated |
-| `mqtt` | Connection, subscription, publication, and reconnect diagnostics migrated |
-| `main` | Boot and heartbeat diagnostics migrated |
-| `config` | MQTT/network storage-load and network-apply diagnostics migrated |
-| `network` | Interface-read and DNS diagnostics migrated |
-| `cdc` | Worker, connection, and output diagnostics migrated |
-| `diseqc` | No standalone legacy diagnostics; command outcomes use `sub=command` |
+Diagnostics must not contain secrets. REST has no authentication or TLS, so TCP
+port 80 must be restricted to trusted controllers and networks.
