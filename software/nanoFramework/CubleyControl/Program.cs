@@ -13,7 +13,7 @@ namespace CubleyControl
             heartbeatThread.Start();
 
             InitializeNetworkConfiguration();
-            InitializeMqttConfiguration();
+            InitializeApplicationConfiguration();
             InitializeLnbSafeDefaults();
             InitializeLnbFaultMonitor();
 
@@ -25,9 +25,6 @@ namespace CubleyControl
                 var lnbFaultPollThread = new Thread(LnbFaultPollLoop);
                 lnbFaultPollThread.Start();
             }
-
-            var mqttThread = new Thread(MqttLoop);
-            mqttThread.Start();
 
             var restThread = new Thread(RestLoop);
             restThread.Start();

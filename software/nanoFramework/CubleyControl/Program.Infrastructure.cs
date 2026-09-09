@@ -651,7 +651,7 @@ namespace CubleyControl
                     if (normalized == "quit" || normalized == "logout")
                     {
                         _consoleLine = string.Empty;
-                        if (_usbConfigurationMode && (_networkConfigurationDirty || _mqttConfigurationDirty))
+                        if (_usbConfigurationMode && (_networkConfigurationDirty || _applicationConfigurationDirty))
                         {
                             SafeUsbWrite("Warning: uncommitted changes. Use 'commit' to apply or 'discard' to abandon them.\r\n" + GetUsbPrompt());
                             continue;
@@ -680,12 +680,8 @@ namespace CubleyControl
                     if (_consoleLine.Length > 0)
                     {
                         _consoleHistoryIndex = _consoleHistoryCount;
-                        bool sensitive = IsSensitiveConsoleInput(_consoleLine);
                         _consoleLine = _consoleLine.Substring(0, _consoleLine.Length - 1);
-                        if (!sensitive)
-                        {
-                            SafeUsbWrite("\b \b");
-                        }
+                        SafeUsbWrite("\b \b");
                     }
                     continue;
                 }
@@ -699,10 +695,7 @@ namespace CubleyControl
                 {
                     _consoleHistoryIndex = _consoleHistoryCount;
                     _consoleLine += c.ToString();
-                    if (!IsSensitiveConsoleInput(_consoleLine))
-                    {
-                        SafeUsbWrite(c.ToString());
-                    }
+                    SafeUsbWrite(c.ToString());
                 }
             }
         }
@@ -710,7 +703,7 @@ namespace CubleyControl
         private static void StoreConsoleHistory(string line)
         {
             string command = NormalizeCommandInput(line);
-            if (command.Length == 0 || command[0] == '!' || IsSensitiveConsoleInput(command))
+            if (command.Length == 0 || command[0] == '!')
             {
                 return;
             }
@@ -781,15 +774,6 @@ namespace CubleyControl
 
             _consoleHistoryCount = 0;
             _consoleHistoryIndex = 0;
-        }
-
-        private static bool IsSensitiveConsoleInput(string line)
-        {
-            string normalized = NormalizeCommandInput(line).ToLower();
-            return normalized.IndexOf("mqtt password ") == 0 ||
-                normalized.IndexOf("mqtt pass ") == 0 ||
-                normalized.IndexOf("mq password ") == 0 ||
-                normalized.IndexOf("mq pass ") == 0;
         }
 
         private static bool TrySetLed(PinValue value)
@@ -1101,7 +1085,7 @@ namespace CubleyControl
                 }
             }
 
-            PublishMqttLnbFaultTransition(asserted, source);
+            EmitLnbFaultTransition(asserted, source, sequence);
         }
     }
 }

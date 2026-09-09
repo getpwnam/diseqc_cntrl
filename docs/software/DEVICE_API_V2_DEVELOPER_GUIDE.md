@@ -152,19 +152,27 @@ recover the active job and position confidence after reconnecting, and
 `GET /api/v2/health` is the lightweight liveness endpoint. A changed `boot_id`
 means cached job IDs and uptime values belong to an earlier boot.
 
-## MQTT Notifications
+## Polling And Recovery
 
-REST is used for commands and immediate responses. MQTT is used for asynchronous
-announcements under `<prefix>/<hostname>`.
+The device has no push notification interface. After a motion command returns
+`accepted`, poll `GET /api/v2/jobs/{job}` until the job becomes terminal. Use a
+bounded interval appropriate to the controller; polling faster than the motor can
+change state provides no benefit.
 
-Relevant topics:
+After a timeout or network reconnect:
 
-- `event/diseqc`: Non-retained job transitions.
-- `state/diseqc`: Retained current and recent job state.
-- `availability`: Retained `online` or `offline` state.
+1. Read `GET /api/v2/health` and compare `boot_id` with the previous response.
+2. Read `GET /api/v2/state/positioner` to recover the active job, most recent
+  terminal job, and position estimate.
+3. If the boot ID is unchanged and the job is retained, resume polling
+  `GET /api/v2/jobs/{job}`.
+4. Read `GET /api/v2/state/lnb` when the workflow depends on LNB power, fault,
+  polarization, or band state.
 
-Use state messages to recover after reconnecting and event messages for live
-transitions. See [MQTT_API.md](MQTT_API.md) for transport details.
+A changed `boot_id` invalidates prior job IDs and uptime comparisons. An HTTP 404
+with `code=not_found` means the job is unknown or has left the four-entry retention
+ring; recover from the positioner snapshot rather than resubmitting motion
+blindly.
 
 ## Example
 

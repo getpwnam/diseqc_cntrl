@@ -8,7 +8,7 @@ Define the software boundaries, control flow, and ownership for the `software/na
 
 - Target: `M0DMF_CUBLEY_F407`
 - Build orchestrator: `toolchain/build-native.sh`
-- Networking (`System.Net`): **disabled** in the currently validated profile
+- Networking (`System.Net`): enabled for the device REST API
 - Firmware outputs: `build/nanoCLR.bin`, `build/nanoCLR.hex`, `build/nanoCLR.elf`
 
 ## Layered Model
@@ -18,7 +18,7 @@ Define the software boundaries, control flow, and ownership for the `software/na
    - Responsibilities:
      - command routing
      - high-level rotor/LNB workflows
-     - state publication/integration glue
+    - REST command and state interface
 
 2. **Interop Layer (C++ bridge)**
    - Location: `nf-native/*_interop.cpp`
@@ -76,7 +76,8 @@ The first three are upstream bugs/limitations; the last two are board-specific d
 
 - DiSEqC carrier/timing: TIM-based output path (board-configured)
 - LNB control: I2C (`LNBH26PQR`)
-- Optional network path (when enabled): W5500 over SPI
+- Network path: STM32F407 internal Ethernet MAC over RMII with LAN8742A PHY
+- Network application interface: REST v2 over HTTP
 
 ## Domain Boundaries
 
@@ -90,8 +91,7 @@ The first three are upstream bugs/limitations; the last two are board-specific d
 - `../debug/TESTING_GUIDE.md`
 - `INTEROP_CONTRACT_V1.md`
 - `INTEROP_VERSIONING_POLICY.md`
-- `MQTT_API.md`
+- `DEVICE_API_V2.md`
 - `OBSERVABILITY_CONTRACT_V1.md`
 - `CONFIGURATION.md`
 - `../debug/LNB_I2C_TESTING.md`
-- `../debug/W5500_LINK_BRINGUP_CHECKLIST.md`

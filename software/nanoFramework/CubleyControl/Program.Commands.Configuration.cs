@@ -10,7 +10,7 @@ namespace CubleyControl
 
         private static string GetUsbPrompt()
         {
-            string hostname = ResolveHostname(_mqttConfiguration.Hostname);
+            string hostname = ResolveHostname(_applicationConfiguration.Hostname);
             if (!_usbConfigurationMode)
             {
                 return hostname + "> ";
@@ -31,9 +31,9 @@ namespace CubleyControl
         private static void BeginUsbConfigurationSession(int reqId)
         {
             _pendingNetworkConfiguration = _networkConfiguration.Clone();
-            _pendingMqttConfiguration = _mqttConfiguration.Clone();
+            _pendingApplicationConfiguration = _applicationConfiguration.Clone();
             _networkConfigurationDirty = false;
-            _mqttConfigurationDirty = false;
+            _applicationConfigurationDirty = false;
             _watchEnabled = false;
             _usbConfigurationMode = true;
             WriteCommandResult(reqId, true, "ok", "configuration mode", "mode=config");
@@ -44,9 +44,9 @@ namespace CubleyControl
             lock (_commandLock)
             {
                 _pendingNetworkConfiguration = _networkConfiguration.Clone();
-                _pendingMqttConfiguration = _mqttConfiguration.Clone();
+                _pendingApplicationConfiguration = _applicationConfiguration.Clone();
                 _networkConfigurationDirty = false;
-                _mqttConfigurationDirty = false;
+                _applicationConfigurationDirty = false;
                 _watchEnabled = false;
                 _usbConfigurationMode = false;
                 _usbDebugEnabled = false;
@@ -58,7 +58,7 @@ namespace CubleyControl
             string head = tokens[0];
             if (head == "help" || head == "h" || head == "?")
             {
-                HandleConfigurationHelp(tokens, reqId);
+                HandleConfigurationHelp(tokens);
                 return;
             }
 
@@ -71,15 +71,6 @@ namespace CubleyControl
             if (head == "hostname")
             {
                 HandleSetHostnameCommand(tokens, reqId);
-                return;
-            }
-
-            if (head == "mqtt" || head == "mq")
-            {
-                HandleSetMqttCommand(
-                    PrefixConfigurationTokens(tokens, "mqtt"),
-                    PrefixConfigurationTokens(valueTokens, "mqtt"),
-                    reqId);
                 return;
             }
 
@@ -113,14 +104,18 @@ namespace CubleyControl
                 if (tokens.Length >= 2 &&
                     (tokens[1] == "candidate-config" || tokens[1] == "candidate" || tokens[1] == "cand"))
                 {
-                    EmitConfigurationDocument("candidate", _pendingNetworkConfiguration, _pendingMqttConfiguration, GetConfigurationDomain(tokens, 2, reqId));
+                    EmitConfigurationDocument(
+                        "candidate",
+                        _pendingNetworkConfiguration,
+                        _pendingApplicationConfiguration,
+                        GetConfigurationDomain(tokens, 2, reqId));
                     return;
                 }
 
                 if ((tokens.Length == 2 && tokens[1] == "diff") ||
                     (tokens.Length == 3 && tokens[1] == "config" && tokens[2] == "diff"))
                 {
-                    EmitConfigurationDiff(reqId);
+                    EmitConfigurationDiff();
                     return;
                 }
             }
@@ -159,9 +154,9 @@ namespace CubleyControl
                 }
 
                 _pendingNetworkConfiguration = _networkConfiguration.Clone();
-                _pendingMqttConfiguration = _mqttConfiguration.Clone();
+                _pendingApplicationConfiguration = _applicationConfiguration.Clone();
                 _networkConfigurationDirty = false;
-                _mqttConfigurationDirty = false;
+                _applicationConfigurationDirty = false;
                 WriteCommandResult(reqId, true, "ok", "configuration discarded", "state=clean");
                 return;
             }
@@ -180,7 +175,7 @@ namespace CubleyControl
                     return;
                 }
 
-                if (_networkConfigurationDirty || _mqttConfigurationDirty)
+                if (IsConfigurationDirty())
                 {
                     _activeOutputSink("Warning: uncommitted changes. Use 'commit' to apply or 'discard' to abandon them.\r\n");
                     return;
@@ -194,7 +189,7 @@ namespace CubleyControl
             WriteCommandResult(reqId, false, "unsupported", "unknown configuration command", "cmd=" + head);
         }
 
-        private static void HandleConfigurationHelp(string[] tokens, int reqId)
+        private static void HandleConfigurationHelp(string[] tokens)
         {
             if (tokens.Length == 1)
             {
@@ -202,16 +197,15 @@ namespace CubleyControl
                 _activeOutputSink(
                     "hostname <name|auto>\r\n" +
                     "network <mode dhcp|static|address IP|mask MASK|gateway IP|dns auto|dns static DNS1 [DNS2]|defaults>\r\n" +
-                    "mqtt <enabled on|off|broker <HOST|clear>|port PORT|client-id <ID|auto>|username <VALUE|clear>|password <VALUE|clear>|topic-prefix PREFIX|keepalive SEC|reconnect SEC|default|defaults>\r\n" +
                     "diseqc <angle-limits EAST WEST|step-calibration EAST WEST|fixed-offset east|west DEGREES|defaults|off>\r\n" +
-                    "show <running-config|run|startup-config|start|candidate-config|candidate|cand> [network|mqtt|diseqc]\r\n" +
+                    "show <running-config|run|startup-config|start|candidate-config|candidate|cand> [network|application|diseqc|all]\r\n" +
                     "show storage|configuration-storage|config-storage\r\n" +
                     "show diff | show config diff\r\n" +
                     "debug <on|off>\r\n" +
                     "commit|apply\r\n" +
                     "discard|abort\r\n" +
-                    "load defaults [network|mqtt|all]\r\n" +
-                    "defaults [network|mqtt|all]\r\n" +
+                    "load defaults [network|application|diseqc|all]\r\n" +
+                    "defaults [network|application|diseqc|all]\r\n" +
                     "exit|end\r\n" +
                     "help|h|? [command]\r\n" +
                     "quit|logout\r\n");
@@ -232,17 +226,10 @@ namespace CubleyControl
                 return;
             }
 
-            if (topic == "hostname")
+            if (topic == "hostname" || topic == "application")
             {
-                WriteHumanHeading("Hostname syntax");
+                WriteHumanHeading("Application syntax");
                 _activeOutputSink("hostname <name|auto>\r\n");
-                return;
-            }
-
-            if (topic == "mqtt" || topic == "mq")
-            {
-                WriteHumanHeading("MQTT syntax");
-                _activeOutputSink("mqtt <enabled on|off|broker HOST|port PORT|client-id ID|username VALUE|password VALUE|topic-prefix PREFIX|keepalive SEC|reconnect SEC|default|defaults>\r\n");
                 return;
             }
 
@@ -257,7 +244,7 @@ namespace CubleyControl
             {
                 WriteHumanHeading("Show syntax");
                 _activeOutputSink(
-                    "show <running-config|run|startup-config|start|candidate-config|candidate|cand> [network|mqtt|diseqc]\r\n" +
+                    "show <running-config|run|startup-config|start|candidate-config|candidate|cand> [network|application|diseqc|all]\r\n" +
                     "show storage|configuration-storage|config-storage\r\n" +
                     "show diff | show config diff\r\n");
                 return;
@@ -287,7 +274,7 @@ namespace CubleyControl
             if (topic == "load" || topic == "defaults")
             {
                 WriteHumanHeading("Defaults syntax");
-                _activeOutputSink("load defaults [network|mqtt|all]\r\ndefaults [network|mqtt|all]\r\n");
+                _activeOutputSink("load defaults [network|application|diseqc|all]\r\ndefaults [network|application|diseqc|all]\r\n");
                 return;
             }
 
@@ -313,8 +300,8 @@ namespace CubleyControl
             WriteHumanHeading("Configuration storage");
             WriteHumanField("Network backend", string.IsNullOrEmpty(_networkConfigurationSource) ? "Unknown" : _networkConfigurationSource);
             WriteHumanField("Network status", string.IsNullOrEmpty(_networkConfigurationError) ? "OK" : _networkConfigurationError);
-            WriteHumanField("Application backend", string.IsNullOrEmpty(_mqttConfigurationSource) ? "Unknown" : _mqttConfigurationSource);
-            WriteHumanField("Application status", string.IsNullOrEmpty(_mqttConfigurationError) ? "OK" : _mqttConfigurationError);
+            WriteHumanField("Application backend", string.IsNullOrEmpty(_applicationConfigurationSource) ? "Unknown" : _applicationConfigurationSource);
+            WriteHumanField("Application status", string.IsNullOrEmpty(_applicationConfigurationError) ? "OK" : _applicationConfigurationError);
         }
 
         private static void HandleLoadDefaults(string[] tokens, int reqId)
@@ -323,51 +310,43 @@ namespace CubleyControl
             if ((tokens[0] == "load" && (tokens.Length < 2 || tokens[1] != "defaults")) ||
                 tokens.Length > domainIndex + 1)
             {
-                WriteCommandResult(reqId, false, "validation_error", "load defaults usage", "usage=load defaults [network|mqtt|all]");
+                WriteCommandResult(reqId, false, "validation_error", "load defaults usage", "usage=load defaults [network|application|diseqc|all]");
                 return;
             }
 
             string domain = tokens.Length > domainIndex ? tokens[domainIndex] : "all";
-            if (domain == "network" || domain == "net" || domain == "all")
-            {
-                _pendingNetworkConfiguration = NetworkConfiguration.CreateDefaults();
-                _networkConfigurationDirty = _pendingNetworkConfiguration.ToPayload() != _networkConfiguration.ToPayload();
-            }
-
-            if (domain == "mqtt" || domain == "mq" || domain == "all")
-            {
-                int eastLimit = _pendingMqttConfiguration.DiseqcEastLimitMicrodegrees;
-                int westLimit = _pendingMqttConfiguration.DiseqcWestLimitMicrodegrees;
-                int eastStep = _pendingMqttConfiguration.DiseqcEastStepMicrodegrees;
-                int westStep = _pendingMqttConfiguration.DiseqcWestStepMicrodegrees;
-                int offset = _pendingMqttConfiguration.DiseqcGotoOffsetMicrodegrees;
-                string hostname = _pendingMqttConfiguration.Hostname;
-                _pendingMqttConfiguration = MqttConfiguration.CreateDefaults();
-                if (domain != "all")
-                {
-                    _pendingMqttConfiguration.Hostname = hostname;
-                    _pendingMqttConfiguration.DiseqcEastLimitMicrodegrees = eastLimit;
-                    _pendingMqttConfiguration.DiseqcWestLimitMicrodegrees = westLimit;
-                    _pendingMqttConfiguration.DiseqcEastStepMicrodegrees = eastStep;
-                    _pendingMqttConfiguration.DiseqcWestStepMicrodegrees = westStep;
-                    _pendingMqttConfiguration.DiseqcGotoOffsetMicrodegrees = offset;
-                }
-                _mqttConfigurationDirty = _pendingMqttConfiguration.ToPayload() != _mqttConfiguration.ToPayload();
-            }
-
-            if (domain == "diseqc")
-            {
-                ClearDiseqcConfiguration(_pendingMqttConfiguration);
-                _mqttConfigurationDirty = _pendingMqttConfiguration.ToPayload() != _mqttConfiguration.ToPayload();
-            }
-
-            if (domain != "network" && domain != "net" && domain != "mqtt" && domain != "mq" && domain != "diseqc" && domain != "all")
+            if (domain != "network" && domain != "net" && domain != "application" &&
+                domain != "diseqc" && domain != "all")
             {
                 WriteCommandResult(reqId, false, "validation_error", "defaults domain invalid", "domain=" + domain);
                 return;
             }
 
-            WriteCommandResult(reqId, true, "ok", "defaults staged", "domain=" + domain + " state=" + (IsConfigurationDirty() ? "staged" : "saved"));
+            if (domain == "network" || domain == "net" || domain == "all")
+            {
+                _pendingNetworkConfiguration = NetworkConfiguration.CreateDefaults();
+                _networkConfigurationDirty =
+                    _pendingNetworkConfiguration.ToPayload() != _networkConfiguration.ToPayload();
+            }
+
+            if (domain == "application" || domain == "all")
+            {
+                _pendingApplicationConfiguration.Hostname = string.Empty;
+            }
+
+            if (domain == "diseqc" || domain == "all")
+            {
+                ClearDiseqcConfiguration(_pendingApplicationConfiguration);
+            }
+
+            _applicationConfigurationDirty =
+                _pendingApplicationConfiguration.ToPayload() != _applicationConfiguration.ToPayload();
+            WriteCommandResult(
+                reqId,
+                true,
+                "ok",
+                "defaults staged",
+                "domain=" + domain + " state=" + (IsConfigurationDirty() ? "staged" : "saved"));
         }
 
         private static string[] PrefixConfigurationTokens(string[] tokens, string domain)
@@ -385,7 +364,7 @@ namespace CubleyControl
 
         private static bool IsConfigurationDirty()
         {
-            return _networkConfigurationDirty || _mqttConfigurationDirty;
+            return _networkConfigurationDirty || _applicationConfigurationDirty;
         }
 
         private static void HandleShowConfigurationCommand(string[] tokens, bool startup, int reqId)
@@ -397,7 +376,7 @@ namespace CubleyControl
             }
 
             NetworkConfiguration network = _networkConfiguration.Clone();
-            MqttConfiguration mqtt = _mqttConfiguration.Clone();
+            ApplicationConfiguration application = _applicationConfiguration.Clone();
             if (startup)
             {
                 string error;
@@ -409,22 +388,22 @@ namespace CubleyControl
                     return;
                 }
 
-                if ((domain == "all" || domain == "mqtt" || domain == "diseqc") &&
-                    !_applicationConfigurationStorage.TryLoad(out mqtt, out generation, out error))
+                if ((domain == "all" || domain == "application" || domain == "diseqc") &&
+                    !_applicationConfigurationStorage.TryLoad(out application, out generation, out error))
                 {
-                    if (_mqttConfigurationSource == "defaults")
+                    if (_applicationConfigurationSource == "defaults")
                     {
-                        mqtt = MqttConfiguration.CreateDefaults();
+                        application = ApplicationConfiguration.CreateDefaults();
                     }
                     else
                     {
-                        WriteCommandResult(reqId, false, "persist_failed", "startup mqtt unavailable", "reason=" + error);
+                        WriteCommandResult(reqId, false, "persist_failed", "startup application unavailable", "reason=" + error);
                         return;
                     }
                 }
             }
 
-            EmitConfigurationDocument(startup ? "startup" : "running", network, mqtt, domain);
+            EmitConfigurationDocument(startup ? "startup" : "running", network, application, domain);
         }
 
         private static string GetConfigurationDomain(string[] tokens, int index, int reqId)
@@ -436,22 +415,17 @@ namespace CubleyControl
 
             if (tokens.Length != index + 1)
             {
-                WriteCommandResult(reqId, false, "validation_error", "configuration display usage", "usage=show <running-config|startup-config|candidate-config> [network|mqtt|diseqc]");
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "configuration display usage",
+                    "usage=show <running-config|startup-config|candidate-config> [network|application|diseqc|all]");
                 return null;
             }
 
-            string domain = tokens[index];
-            if (domain == "net")
-            {
-                return "network";
-            }
-
-            if (domain == "mq")
-            {
-                return "mqtt";
-            }
-
-            if (domain != "network" && domain != "mqtt" && domain != "diseqc" && domain != "all")
+            string domain = tokens[index] == "net" ? "network" : tokens[index];
+            if (domain != "network" && domain != "application" && domain != "diseqc" && domain != "all")
             {
                 WriteCommandResult(reqId, false, "validation_error", "configuration domain invalid", "domain=" + domain);
                 return null;
@@ -463,7 +437,7 @@ namespace CubleyControl
         private static void EmitConfigurationDocument(
             string source,
             NetworkConfiguration network,
-            MqttConfiguration mqtt,
+            ApplicationConfiguration application,
             string domain)
         {
             if (domain == null)
@@ -471,59 +445,64 @@ namespace CubleyControl
                 return;
             }
 
-            _activeOutputSink("! cubley-config v3 " + source + "\r\n");
+            _activeOutputSink("! cubley-config v4 " + source + "\r\n");
             bool hideDefaults = source == "running";
             NetworkConfiguration defaultNetwork = NetworkConfiguration.CreateDefaults();
-            MqttConfiguration defaultMqtt = MqttConfiguration.CreateDefaults();
-            if (domain == "all" || domain == "mqtt")
+            ApplicationConfiguration defaultApplication = ApplicationConfiguration.CreateDefaults();
+
+            if (domain == "all" || domain == "application")
             {
-                EmitConfigurationLine(hideDefaults, mqtt.Hostname != defaultMqtt.Hostname,
-                    "hostname " + (string.IsNullOrEmpty(mqtt.Hostname) ? "auto" : mqtt.Hostname) + "\r\n");
+                EmitConfigurationLine(
+                    hideDefaults,
+                    application.Hostname != defaultApplication.Hostname,
+                    "hostname " + (string.IsNullOrEmpty(application.Hostname) ? "auto" : application.Hostname) + "\r\n");
             }
+
             if (domain == "all" || domain == "network")
             {
                 EmitConfigurationLine(hideDefaults, network.Mode != defaultNetwork.Mode, "network mode " + network.Mode + "\r\n");
                 EmitConfigurationLine(hideDefaults, network.Address != defaultNetwork.Address, "network address " + network.Address + "\r\n");
                 EmitConfigurationLine(hideDefaults, network.SubnetMask != defaultNetwork.SubnetMask, "network mask " + network.SubnetMask + "\r\n");
                 EmitConfigurationLine(hideDefaults, network.Gateway != defaultNetwork.Gateway, "network gateway " + network.Gateway + "\r\n");
-                EmitConfigurationLine(hideDefaults,
+                EmitConfigurationLine(
+                    hideDefaults,
                     network.AutomaticDns != defaultNetwork.AutomaticDns ||
-                    network.Dns1 != defaultNetwork.Dns1 || network.Dns2 != defaultNetwork.Dns2,
+                        network.Dns1 != defaultNetwork.Dns1 || network.Dns2 != defaultNetwork.Dns2,
                     network.AutomaticDns
                         ? "network dns auto\r\n"
                         : "network dns static " + network.Dns1 +
                             (network.Dns2 == "0.0.0.0" ? string.Empty : " " + network.Dns2) + "\r\n");
             }
 
-            if (domain == "all" || domain == "mqtt")
-            {
-                EmitConfigurationLine(hideDefaults, mqtt.Enabled != defaultMqtt.Enabled, "mqtt enabled " + (mqtt.Enabled ? "on" : "off") + "\r\n");
-                EmitConfigurationLine(hideDefaults, mqtt.Broker != defaultMqtt.Broker, "mqtt broker " + (string.IsNullOrEmpty(mqtt.Broker) ? "clear" : mqtt.Broker) + "\r\n");
-                EmitConfigurationLine(hideDefaults, mqtt.Port != defaultMqtt.Port, "mqtt port " + mqtt.Port.ToString() + "\r\n");
-                EmitConfigurationLine(hideDefaults, mqtt.ClientId != defaultMqtt.ClientId, "mqtt client-id " + (string.IsNullOrEmpty(mqtt.ClientId) ? "auto" : mqtt.ClientId) + "\r\n");
-                EmitConfigurationLine(hideDefaults, mqtt.Username != defaultMqtt.Username, "mqtt username " + (string.IsNullOrEmpty(mqtt.Username) ? "clear" : mqtt.Username) + "\r\n");
-                EmitConfigurationLine(hideDefaults, mqtt.Password != defaultMqtt.Password, string.IsNullOrEmpty(mqtt.Password) ? "mqtt password clear\r\n" : "! mqtt password configured\r\n");
-                EmitConfigurationLine(hideDefaults, mqtt.TopicPrefix != defaultMqtt.TopicPrefix, "mqtt topic-prefix " + mqtt.TopicPrefix + "\r\n");
-                EmitConfigurationLine(hideDefaults, mqtt.KeepAliveSeconds != defaultMqtt.KeepAliveSeconds, "mqtt keepalive " + mqtt.KeepAliveSeconds.ToString() + "\r\n");
-                EmitConfigurationLine(hideDefaults, mqtt.ReconnectSeconds != defaultMqtt.ReconnectSeconds, "mqtt reconnect " + mqtt.ReconnectSeconds.ToString() + "\r\n");
-            }
             if (domain == "all" || domain == "diseqc")
             {
-                EmitConfigurationLine(hideDefaults,
-                    mqtt.DiseqcEastLimitMicrodegrees != 0 || mqtt.DiseqcWestLimitMicrodegrees != 0,
-                    mqtt.DiseqcEastLimitMicrodegrees == 0
+                EmitConfigurationLine(
+                    hideDefaults,
+                    application.DiseqcEastLimitMicrodegrees != 0 || application.DiseqcWestLimitMicrodegrees != 0,
+                    application.DiseqcEastLimitMicrodegrees == 0
                         ? "diseqc angle-limits off\r\n"
-                        : "diseqc angle-limits " + DiseqcGotoAngleEncoder.FormatMicrodegrees(mqtt.DiseqcEastLimitMicrodegrees) + " " + DiseqcGotoAngleEncoder.FormatMicrodegrees(mqtt.DiseqcWestLimitMicrodegrees) + "\r\n");
-                EmitConfigurationLine(hideDefaults,
-                    mqtt.DiseqcEastStepMicrodegrees != 0 || mqtt.DiseqcWestStepMicrodegrees != 0,
-                    mqtt.DiseqcEastStepMicrodegrees == 0
+                        : "diseqc angle-limits " +
+                            DiseqcGotoAngleEncoder.FormatMicrodegrees(application.DiseqcEastLimitMicrodegrees) + " " +
+                            DiseqcGotoAngleEncoder.FormatMicrodegrees(application.DiseqcWestLimitMicrodegrees) + "\r\n");
+                EmitConfigurationLine(
+                    hideDefaults,
+                    application.DiseqcEastStepMicrodegrees != 0 || application.DiseqcWestStepMicrodegrees != 0,
+                    application.DiseqcEastStepMicrodegrees == 0
                         ? "diseqc step-calibration off\r\n"
-                        : "diseqc step-calibration " + DiseqcGotoAngleEncoder.FormatMicrodegrees(mqtt.DiseqcEastStepMicrodegrees) + " " + DiseqcGotoAngleEncoder.FormatMicrodegrees(mqtt.DiseqcWestStepMicrodegrees) + "\r\n");
-                EmitConfigurationLine(hideDefaults,
-                    mqtt.DiseqcGotoOffsetMicrodegrees != 0,
-                    mqtt.DiseqcGotoOffsetMicrodegrees == 0
+                        : "diseqc step-calibration " +
+                            DiseqcGotoAngleEncoder.FormatMicrodegrees(application.DiseqcEastStepMicrodegrees) + " " +
+                            DiseqcGotoAngleEncoder.FormatMicrodegrees(application.DiseqcWestStepMicrodegrees) + "\r\n");
+                EmitConfigurationLine(
+                    hideDefaults,
+                    application.DiseqcGotoOffsetMicrodegrees != 0,
+                    application.DiseqcGotoOffsetMicrodegrees == 0
                         ? "diseqc fixed-offset off\r\n"
-                        : "diseqc fixed-offset " + (mqtt.DiseqcGotoOffsetMicrodegrees > 0 ? "east " : "west ") + DiseqcGotoAngleEncoder.FormatMicrodegrees(mqtt.DiseqcGotoOffsetMicrodegrees > 0 ? mqtt.DiseqcGotoOffsetMicrodegrees : -mqtt.DiseqcGotoOffsetMicrodegrees) + "\r\n");
+                        : "diseqc fixed-offset " +
+                            (application.DiseqcGotoOffsetMicrodegrees > 0 ? "east " : "west ") +
+                            DiseqcGotoAngleEncoder.FormatMicrodegrees(
+                                application.DiseqcGotoOffsetMicrodegrees > 0
+                                    ? application.DiseqcGotoOffsetMicrodegrees
+                                    : -application.DiseqcGotoOffsetMicrodegrees) + "\r\n");
             }
         }
 
@@ -535,31 +514,30 @@ namespace CubleyControl
             }
         }
 
-        private static void EmitConfigurationDiff(int reqId)
+        private static void EmitConfigurationDiff()
         {
             bool changed = false;
-            changed |= EmitConfigurationDiffLine("hostname ", string.IsNullOrEmpty(_mqttConfiguration.Hostname) ? "auto" : _mqttConfiguration.Hostname, string.IsNullOrEmpty(_pendingMqttConfiguration.Hostname) ? "auto" : _pendingMqttConfiguration.Hostname);
+            changed |= EmitConfigurationDiffLine(
+                "hostname ",
+                string.IsNullOrEmpty(_applicationConfiguration.Hostname) ? "auto" : _applicationConfiguration.Hostname,
+                string.IsNullOrEmpty(_pendingApplicationConfiguration.Hostname) ? "auto" : _pendingApplicationConfiguration.Hostname);
             changed |= EmitConfigurationDiffLine("network mode ", _networkConfiguration.Mode, _pendingNetworkConfiguration.Mode);
             changed |= EmitConfigurationDiffLine("network address ", _networkConfiguration.Address, _pendingNetworkConfiguration.Address);
             changed |= EmitConfigurationDiffLine("network mask ", _networkConfiguration.SubnetMask, _pendingNetworkConfiguration.SubnetMask);
             changed |= EmitConfigurationDiffLine("network gateway ", _networkConfiguration.Gateway, _pendingNetworkConfiguration.Gateway);
             changed |= EmitConfigurationDiffLine("network dns ", FormatConfiguredDnsCommand(_networkConfiguration), FormatConfiguredDnsCommand(_pendingNetworkConfiguration));
-            changed |= EmitConfigurationDiffLine("mqtt enabled ", _mqttConfiguration.Enabled ? "on" : "off", _pendingMqttConfiguration.Enabled ? "on" : "off");
-            changed |= EmitConfigurationDiffLine("mqtt broker ", ValueOrClear(_mqttConfiguration.Broker), ValueOrClear(_pendingMqttConfiguration.Broker));
-            changed |= EmitConfigurationDiffLine("mqtt port ", _mqttConfiguration.Port.ToString(), _pendingMqttConfiguration.Port.ToString());
-            changed |= EmitConfigurationDiffLine("mqtt client-id ", string.IsNullOrEmpty(_mqttConfiguration.ClientId) ? "auto" : _mqttConfiguration.ClientId, string.IsNullOrEmpty(_pendingMqttConfiguration.ClientId) ? "auto" : _pendingMqttConfiguration.ClientId);
-            changed |= EmitConfigurationDiffLine("mqtt username ", ValueOrClear(_mqttConfiguration.Username), ValueOrClear(_pendingMqttConfiguration.Username));
-            if (_mqttConfiguration.Password != _pendingMqttConfiguration.Password)
-            {
-                _activeOutputSink("! mqtt password changed\r\n");
-                changed = true;
-            }
-            changed |= EmitConfigurationDiffLine("mqtt topic-prefix ", _mqttConfiguration.TopicPrefix, _pendingMqttConfiguration.TopicPrefix);
-            changed |= EmitConfigurationDiffLine("mqtt keepalive ", _mqttConfiguration.KeepAliveSeconds.ToString(), _pendingMqttConfiguration.KeepAliveSeconds.ToString());
-            changed |= EmitConfigurationDiffLine("mqtt reconnect ", _mqttConfiguration.ReconnectSeconds.ToString(), _pendingMqttConfiguration.ReconnectSeconds.ToString());
-            changed |= EmitConfigurationDiffLine("diseqc angle-limits ", FormatDiseqcPair(_mqttConfiguration.DiseqcEastLimitMicrodegrees, _mqttConfiguration.DiseqcWestLimitMicrodegrees), FormatDiseqcPair(_pendingMqttConfiguration.DiseqcEastLimitMicrodegrees, _pendingMqttConfiguration.DiseqcWestLimitMicrodegrees));
-            changed |= EmitConfigurationDiffLine("diseqc step-calibration ", FormatDiseqcPair(_mqttConfiguration.DiseqcEastStepMicrodegrees, _mqttConfiguration.DiseqcWestStepMicrodegrees), FormatDiseqcPair(_pendingMqttConfiguration.DiseqcEastStepMicrodegrees, _pendingMqttConfiguration.DiseqcWestStepMicrodegrees));
-            changed |= EmitConfigurationDiffLine("diseqc fixed-offset ", FormatDiseqcOffset(_mqttConfiguration.DiseqcGotoOffsetMicrodegrees), FormatDiseqcOffset(_pendingMqttConfiguration.DiseqcGotoOffsetMicrodegrees));
+            changed |= EmitConfigurationDiffLine(
+                "diseqc angle-limits ",
+                FormatDiseqcPair(_applicationConfiguration.DiseqcEastLimitMicrodegrees, _applicationConfiguration.DiseqcWestLimitMicrodegrees),
+                FormatDiseqcPair(_pendingApplicationConfiguration.DiseqcEastLimitMicrodegrees, _pendingApplicationConfiguration.DiseqcWestLimitMicrodegrees));
+            changed |= EmitConfigurationDiffLine(
+                "diseqc step-calibration ",
+                FormatDiseqcPair(_applicationConfiguration.DiseqcEastStepMicrodegrees, _applicationConfiguration.DiseqcWestStepMicrodegrees),
+                FormatDiseqcPair(_pendingApplicationConfiguration.DiseqcEastStepMicrodegrees, _pendingApplicationConfiguration.DiseqcWestStepMicrodegrees));
+            changed |= EmitConfigurationDiffLine(
+                "diseqc fixed-offset ",
+                FormatDiseqcOffset(_applicationConfiguration.DiseqcGotoOffsetMicrodegrees),
+                FormatDiseqcOffset(_pendingApplicationConfiguration.DiseqcGotoOffsetMicrodegrees));
 
             if (!changed)
             {
@@ -590,16 +568,12 @@ namespace CubleyControl
                 (configuration.Dns2 == "0.0.0.0" ? string.Empty : " " + configuration.Dns2);
         }
 
-        private static string ValueOrClear(string value)
-        {
-            return string.IsNullOrEmpty(value) ? "clear" : value;
-        }
-
         private static string FormatDiseqcPair(int eastMicrodegrees, int westMicrodegrees)
         {
             return eastMicrodegrees == 0
                 ? "off"
-                : DiseqcGotoAngleEncoder.FormatMicrodegrees(eastMicrodegrees) + " " + DiseqcGotoAngleEncoder.FormatMicrodegrees(westMicrodegrees);
+                : DiseqcGotoAngleEncoder.FormatMicrodegrees(eastMicrodegrees) + " " +
+                    DiseqcGotoAngleEncoder.FormatMicrodegrees(westMicrodegrees);
         }
 
         private static string FormatDiseqcOffset(int signedMicrodegrees)
@@ -610,7 +584,8 @@ namespace CubleyControl
             }
 
             return (signedMicrodegrees > 0 ? "east " : "west ") +
-                DiseqcGotoAngleEncoder.FormatMicrodegrees(signedMicrodegrees > 0 ? signedMicrodegrees : -signedMicrodegrees);
+                DiseqcGotoAngleEncoder.FormatMicrodegrees(
+                    signedMicrodegrees > 0 ? signedMicrodegrees : -signedMicrodegrees);
         }
 
         private static void CommitCandidateConfiguration(int reqId)
@@ -622,7 +597,7 @@ namespace CubleyControl
             }
 
             NetworkConfiguration candidateNetwork = _pendingNetworkConfiguration.Clone();
-            MqttConfiguration candidateMqtt = _pendingMqttConfiguration.Clone();
+            ApplicationConfiguration candidateApplication = _pendingApplicationConfiguration.Clone();
             string error;
             if (!candidateNetwork.TryValidate(out error))
             {
@@ -630,38 +605,53 @@ namespace CubleyControl
                 return;
             }
 
-            if (!candidateMqtt.TryValidate(out error))
+            if (!candidateApplication.TryValidate(out error))
             {
-                WriteCommandResult(reqId, false, "validation_error", "mqtt candidate invalid", "reason=" + error);
+                WriteCommandResult(reqId, false, "validation_error", "application candidate invalid", "reason=" + error);
                 return;
             }
 
             NetworkConfiguration previousNetwork = _networkConfiguration.Clone();
-            MqttConfiguration previousMqtt = _mqttConfiguration.Clone();
-            uint previousMqttGeneration = _mqttConfigurationGeneration;
-            uint savedMqttGeneration = previousMqttGeneration;
-            bool mqttChanged = _mqttConfigurationDirty;
+            ApplicationConfiguration previousApplication = _applicationConfiguration.Clone();
+            uint previousApplicationGeneration = _applicationConfigurationGeneration;
+            uint savedApplicationGeneration = previousApplicationGeneration;
+            bool applicationChanged = _applicationConfigurationDirty;
             bool networkChanged = _networkConfigurationDirty;
 
-            if (HasDiseqcConfigurationChanged(candidateMqtt, previousMqtt) && GetActiveDiseqcJobId() != 0)
+            if (HasDiseqcConfigurationChanged(candidateApplication, previousApplication) && GetActiveDiseqcJobId() != 0)
             {
                 WriteCommandResult(reqId, false, "busy", "diseqc motion active", "motion_id=" + GetActiveDiseqcJobId().ToString());
                 return;
             }
 
-            if (mqttChanged && !TryPersistMqttConfiguration(candidateMqtt, previousMqttGeneration, out savedMqttGeneration, out error))
+            if (applicationChanged &&
+                !TryPersistApplicationConfiguration(
+                    candidateApplication,
+                    previousApplicationGeneration,
+                    out savedApplicationGeneration,
+                    out error))
             {
                 uint restoredGeneration;
-                bool restored = TryPersistMqttConfiguration(previousMqtt, previousMqttGeneration, out restoredGeneration, out error);
+                bool restored = TryPersistApplicationConfiguration(
+                    previousApplication,
+                    previousApplicationGeneration,
+                    out restoredGeneration,
+                    out error);
                 if (restored)
                 {
-                    _mqttConfigurationGeneration = restoredGeneration;
+                    _applicationConfigurationGeneration = restoredGeneration;
                 }
                 else
                 {
-                    ReconcilePartialConfiguration(candidateNetwork, candidateMqtt);
+                    ReconcilePartialConfiguration(candidateNetwork, candidateApplication);
                 }
-                WriteCommandResult(reqId, false, restored ? "persist_failed" : "persist_partial", "configuration commit failed", "domain=mqtt rollback=" + (restored ? "ok" : "failed"));
+
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    restored ? "persist_failed" : "persist_partial",
+                    "configuration commit failed",
+                    "domain=application rollback=" + (restored ? "ok" : "failed"));
                 return;
             }
 
@@ -669,23 +659,33 @@ namespace CubleyControl
             {
                 string rollbackError;
                 bool networkRestored = TryPersistNetworkConfiguration(previousNetwork, out rollbackError);
-                bool mqttRestored = true;
-                uint restoredGeneration = savedMqttGeneration;
-                if (mqttChanged)
+                bool applicationRestored = true;
+                uint restoredGeneration = savedApplicationGeneration;
+                if (applicationChanged)
                 {
-                    mqttRestored = TryPersistMqttConfiguration(previousMqtt, savedMqttGeneration, out restoredGeneration, out rollbackError);
-                    if (mqttRestored)
+                    applicationRestored = TryPersistApplicationConfiguration(
+                        previousApplication,
+                        savedApplicationGeneration,
+                        out restoredGeneration,
+                        out rollbackError);
+                    if (applicationRestored)
                     {
-                        _mqttConfigurationGeneration = restoredGeneration;
+                        _applicationConfigurationGeneration = restoredGeneration;
                     }
                 }
 
-                bool restored = networkRestored && mqttRestored;
+                bool restored = networkRestored && applicationRestored;
                 if (!restored)
                 {
-                    ReconcilePartialConfiguration(candidateNetwork, candidateMqtt);
+                    ReconcilePartialConfiguration(candidateNetwork, candidateApplication);
                 }
-                WriteCommandResult(reqId, false, restored ? "persist_failed" : "persist_partial", "configuration commit failed", "domain=network rollback=" + (restored ? "ok" : "failed"));
+
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    restored ? "persist_failed" : "persist_partial",
+                    "configuration commit failed",
+                    "domain=network rollback=" + (restored ? "ok" : "failed"));
                 return;
             }
 
@@ -696,29 +696,35 @@ namespace CubleyControl
                 _networkConfigurationError = string.Empty;
             }
 
-            if (mqttChanged)
+            if (applicationChanged)
             {
-                lock (_mqttConfigurationLock)
+                lock (_applicationConfigurationLock)
                 {
-                    _mqttConfiguration = candidateMqtt;
-                    _mqttConfigurationGeneration = savedMqttGeneration;
-                    _mqttConfigurationRevision++;
+                    _applicationConfiguration = candidateApplication;
+                    _applicationConfigurationGeneration = savedApplicationGeneration;
                 }
-                _mqttConfigurationSource = _applicationConfigurationStorage.Source;
-                _mqttConfigurationError = string.Empty;
-                ApplyDiseqcConfiguration(_mqttConfiguration);
+
+                _applicationConfigurationSource = _applicationConfigurationStorage.Source;
+                _applicationConfigurationError = string.Empty;
+                ApplyDiseqcConfiguration(_applicationConfiguration);
             }
 
             _pendingNetworkConfiguration = _networkConfiguration.Clone();
-            _pendingMqttConfiguration = _mqttConfiguration.Clone();
+            _pendingApplicationConfiguration = _applicationConfiguration.Clone();
             _networkConfigurationDirty = false;
-            _mqttConfigurationDirty = false;
-            WriteCommandResult(reqId, true, "ok", "configuration committed", "network=" + (networkChanged ? "changed" : "unchanged") + " mqtt=" + (mqttChanged ? "changed" : "unchanged"));
+            _applicationConfigurationDirty = false;
+            WriteCommandResult(
+                reqId,
+                true,
+                "ok",
+                "configuration committed",
+                "network=" + (networkChanged ? "changed" : "unchanged") +
+                    " application=" + (applicationChanged ? "changed" : "unchanged"));
         }
 
         private static void ReconcilePartialConfiguration(
             NetworkConfiguration candidateNetwork,
-            MqttConfiguration candidateMqtt)
+            ApplicationConfiguration candidateApplication)
         {
             string error;
             NetworkConfiguration actualNetwork;
@@ -733,25 +739,28 @@ namespace CubleyControl
                 _networkConfigurationError = "commit_recovery_failed";
             }
 
-            MqttConfiguration startupMqtt;
+            ApplicationConfiguration startupApplication;
             uint startupGeneration;
-            if (_applicationConfigurationStorage.TryLoad(out startupMqtt, out startupGeneration, out error))
+            if (_applicationConfigurationStorage.TryLoad(out startupApplication, out startupGeneration, out error))
             {
-                _mqttConfigurationGeneration = startupGeneration;
-                _mqttConfigurationSource = _applicationConfigurationStorage.Source;
-                _mqttConfigurationError = startupMqtt.ToPayload() == _mqttConfiguration.ToPayload()
-                    ? string.Empty
-                    : "startup_differs_from_running";
+                _applicationConfigurationGeneration = startupGeneration;
+                _applicationConfigurationSource = _applicationConfigurationStorage.Source;
+                _applicationConfigurationError =
+                    startupApplication.ToPayload() == _applicationConfiguration.ToPayload()
+                        ? string.Empty
+                        : "startup_differs_from_running";
             }
             else
             {
-                _mqttConfigurationError = "commit_recovery_failed";
+                _applicationConfigurationError = "commit_recovery_failed";
             }
 
             _pendingNetworkConfiguration = candidateNetwork;
-            _pendingMqttConfiguration = candidateMqtt;
-            _networkConfigurationDirty = _pendingNetworkConfiguration.ToPayload() != _networkConfiguration.ToPayload();
-            _mqttConfigurationDirty = _pendingMqttConfiguration.ToPayload() != _mqttConfiguration.ToPayload();
+            _pendingApplicationConfiguration = candidateApplication;
+            _networkConfigurationDirty =
+                _pendingNetworkConfiguration.ToPayload() != _networkConfiguration.ToPayload();
+            _applicationConfigurationDirty =
+                _pendingApplicationConfiguration.ToPayload() != _applicationConfiguration.ToPayload();
         }
 
         private static bool TryPersistNetworkConfiguration(NetworkConfiguration configuration, out string error)
@@ -766,8 +775,8 @@ namespace CubleyControl
                 verified.ToPayload() == configuration.ToPayload();
         }
 
-        private static bool TryPersistMqttConfiguration(
-            MqttConfiguration configuration,
+        private static bool TryPersistApplicationConfiguration(
+            ApplicationConfiguration configuration,
             uint currentGeneration,
             out uint savedGeneration,
             out string error)
@@ -787,6 +796,5 @@ namespace CubleyControl
                 return false;
             }
         }
-
     }
 }

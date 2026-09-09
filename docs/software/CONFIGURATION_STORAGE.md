@@ -2,64 +2,62 @@
 
 ## Purpose
 
-Define the portable Cubley application configuration record and its physical
-storage backends. The record format is independent of internal flash or FRAM.
+Define the portable Cubley application configuration record and its active
+physical backend. Network addressing and DNS remain in the standard
+nanoFramework network configuration block.
 
-Network interface addressing remains in the standard nanoFramework network
-configuration block. The application record stores the device hostname, MQTT
-settings, and DiSEqC positioning calibration.
+The application record contains only the device hostname and DiSEqC positioning
+calibration.
 
-## Portable Record
+## Schema 4 Record
 
-The record is exactly 512 bytes. Integer fields are little-endian.
+The record is exactly 512 bytes. Header integers are little-endian.
 
 | Offset | Size | Field | Description |
 |---:|---:|---|---|
 | `0x000` | 4 | Magic | ASCII `CCFG` |
-| `0x004` | 1 | Schema version | Currently `3`; version `2` remains readable |
-| `0x005` | 1 | Flags | Reserved, currently `0` |
-| `0x006` | 2 | Payload length | Used bytes from the payload area |
+| `0x004` | 1 | Schema version | `4` |
+| `0x005` | 1 | Flags | Reserved; `0` |
+| `0x006` | 2 | Payload length | Used bytes in the payload area |
 | `0x008` | 4 | Generation | Monotonic save generation |
 | `0x00C` | 4 | CRC32 | CRC32 of used payload bytes |
-| `0x010` | 496 | Payload | UTF-8 `key=value` lines followed by erased padding |
+| `0x010` | 496 | Payload | ASCII `key=value` lines followed by erased padding |
 
-The CRC polynomial is the reflected `0xEDB88320` form with initial value
-`0xFFFFFFFF` and final inversion.
+The CRC uses reflected polynomial `0xEDB88320`, initial value `0xFFFFFFFF`, and
+final inversion.
 
-Schema v2 keys are `hostname`, `enabled`, `broker`, `port`, `client_id`,
-`username`, `password`, `topic_prefix`, `keepalive_seconds`, and
-`reconnect_seconds`. Schema v3 adds `de_lim`, `dw_lim`, `de_step`, `dw_step`,
-and `d_offset`, stored as signed or unsigned microdegrees. Missing v3 keys use
-disabled/zero defaults when a v2 record is loaded. Schema v1 records are rejected and
-the application starts with disabled defaults.
+The payload contains exactly these keys:
+
+```text
+hostname=<configured hostname or empty for automatic>
+de_lim=<east limit in microdegrees>
+dw_lim=<west limit in microdegrees>
+de_step=<east step size in microdegrees>
+dw_step=<west step size in microdegrees>
+d_offset=<signed GoToX offset in microdegrees>
+```
+
+Unknown keys, malformed values, invalid field combinations, a different schema
+version, and invalid magic, length, or CRC cause the record to be rejected. The
+application then uses schema-4 defaults.
 
 ## Active Internal Flash Backend
 
-The STM32 configuration sector spans `0x0800C000` through `0x0800FFFF`.
-The final 512 bytes, `0x0800FE00` through `0x0800FFFF`, are reserved for the
-portable application record. Standard nanoFramework configuration data must
-remain below `0x0800FE00`.
+The STM32 configuration sector spans `0x0800C000` through `0x0800FFFF`. The
+final 512 bytes, `0x0800FE00` through `0x0800FFFF`, are reserved for the
+application record. Standard nanoFramework configuration data must remain below
+`0x0800FE00`.
 
-An update copies the complete 16 KB sector to RAM, replaces the application
+An update copies the complete 16 KiB sector to RAM, replaces the application
 record, erases the sector, writes the complete image, and verifies the record.
-This preserves the standard nanoFramework network configuration block.
+This preserves the nanoFramework network configuration block.
 
-STM32 sector erase means this backend is not power-fail atomic. CRC validation
-detects an incomplete write and causes managed code to use disabled defaults.
-Writes occur only after an explicit save command to limit flash wear.
+Sector erase makes this backend non-atomic across power loss. CRC validation
+detects an incomplete record. Writes occur only after an explicit USB CDC
+configuration commit.
 
-## Future FRAM Backend
+## Future Backend
 
-When FRAM hardware is available, the same 512-byte record can be stored in two
-generation-selected slots at `0x0400` and `0x0600`. The newer valid record wins.
-No schema conversion or MQTT service changes are required when selecting that
-backend.
-
-The current development board has no working FRAM access. Production firmware
-must not initialize or probe FRAM while the internal flash backend is selected.
-
-## Credential Handling
-
-The v2 password is stored as cleartext inside the record. Commands and debug
-logs must redact it, and configuration output may expose only whether a password
-is configured. TLS and encrypted-at-rest credentials are outside the v1 scope.
+The record format is backend-neutral. A future FRAM implementation may store the
+same record in generation-selected slots, but FRAM is not initialized or probed
+on the current board.

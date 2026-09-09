@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading;
 
@@ -70,9 +71,23 @@ namespace CubleyControl
             }
         }
 
+        private static bool HasUsableIpv4Address()
+        {
+            if (!NetworkInterface.GetIsNetworkAvailable())
+            {
+                return false;
+            }
+
+            NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
+            return interfaces != null &&
+                interfaces.Length > 0 &&
+                !string.IsNullOrEmpty(interfaces[0].IPv4Address) &&
+                interfaces[0].IPv4Address != "0.0.0.0";
+        }
+
         private static void HandleRestRequest(Socket client)
         {
-            byte[] request = new byte[RestHeaderMaxLength + MqttCommandEnvelopeMaxLength];
+            byte[] request = new byte[RestHeaderMaxLength + ApiCommandEnvelopeMaxLength];
             int received = 0;
             int bodyOffset = -1;
             while (received < request.Length && bodyOffset < 0)
@@ -129,7 +144,7 @@ namespace CubleyControl
             }
 
             int contentLength = ParseRestContentLength(headers);
-            if (contentLength <= 0 || contentLength > MqttCommandEnvelopeMaxLength)
+            if (contentLength <= 0 || contentLength > ApiCommandEnvelopeMaxLength)
             {
                 WriteRestResponse(client, 400, null);
                 return;
@@ -298,6 +313,23 @@ namespace CubleyControl
             }
 
             return new string(chars);
+        }
+
+        private static byte[] AsciiStringToBytes(string text)
+        {
+            if (text == null)
+            {
+                return new byte[0];
+            }
+
+            byte[] result = new byte[text.Length];
+            for (int index = 0; index < text.Length; index++)
+            {
+                char character = text[index];
+                result[index] = character <= 0x7F ? (byte)character : (byte)'?';
+            }
+
+            return result;
         }
     }
 }
