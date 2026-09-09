@@ -143,9 +143,22 @@ namespace CubleyControl
                         {
                             RunPositionerOperation(operation, value);
                         }
-                        else
+                        else if (mode == CommandModePositionerGotoAngle)
                         {
                             RunPositionerGotoAngle(direction, degrees);
+                        }
+                        else
+                        {
+                            WriteStructuredDebug(
+                                "COMMAND",
+                                "schema=1 sub=command comp=dispatch operation=reject stat=error" +
+                                " reason=unknown_mode mode=" + mode.ToString());
+                            WriteCommandResult(
+                                NextRequestId(),
+                                false,
+                                "unsupported",
+                                "unknown command mode",
+                                "mode=" + mode.ToString());
                         }
                     }
                 }
