@@ -22,6 +22,35 @@ public sealed class DiseqcPositionEstimateTests
     }
 
     [Fact]
+    public void RestGotoAngleAdoptsOffsetAdjustedEncodedTargetOnRelease()
+    {
+        bool success = DiseqcCommandBuilder.TryBuildGotoAngularPosition(
+            DiseqcMotorDirection.East,
+            "36.6",
+            -3_380_000,
+            out _,
+            out int requestedMicrodegrees,
+            out DiseqcMotorDirection effectiveDirection,
+            out _,
+            out int encodedAngleTenths,
+            out string error);
+        var estimate = new DiseqcPositionEstimate();
+
+        Assert.True(success, error);
+        Assert.Equal(36_600_000, requestedMicrodegrees);
+        Assert.Equal(DiseqcMotorDirection.East, effectiveDirection);
+
+        estimate.BeginGotoAngular(effectiveDirection, encodedAngleTenths * 100_000);
+
+        Assert.False(estimate.HasEstimate);
+        Assert.Equal(33_200_000, estimate.PendingTargetMicrodegrees);
+        Assert.True(estimate.CompletePending());
+        Assert.Equal(33_200_000, estimate.EstimatedAngleMicrodegrees);
+        Assert.Equal("estimated", estimate.Confidence);
+        Assert.Equal("goto_x", estimate.Source);
+    }
+
+    [Fact]
     public void CalibratedStepsRetainSubTenthDegreePrecision()
     {
         var estimate = CreateEstimatedPosition(DiseqcMotorDirection.East, 36_600_000);

@@ -160,10 +160,10 @@ intrinsic duration, and the fallback for `goto` and `step`.
 ### Lifecycle
 
 ```
-positioner.goto/step/drive ──> running ──┬── positioner.halt ────> halted
-                                         ├── watchdog expiry ────> timeout
-                                         │                         timeout_halt_failed
-                                         └── positioner.release ─> released
+positioner.goto/goto_angle/step/drive ──> running ──┬── positioner.halt ────> halted
+                                                    ├── watchdog expiry ────> timeout
+                                                    │                         timeout_halt_failed
+                                                    └── positioner.release ─> released
 ```
 
 Only one job runs at a time. A motion command while a job is `running` fails
@@ -185,14 +185,24 @@ with `busy` and names the active job; it does not queue. The device retains the
 
 | `op` | Parameters | Response |
 |---|---|---|
-| `positioner.goto` | `position` int 0–255 | `accepted` + `job`, or `busy` |
+| `positioner.goto` | `position` int 0–60 | `accepted` + `job`, or `busy` |
+| `positioner.goto_angle` | `direction` `"east"`\|`"west"`, `angle` decimal string from `"0"` through `"180"` with up to six fractional digits | `accepted` + `job`, or `busy` |
 | `positioner.step` | `direction` `"east"`\|`"west"`, `count` int 1–128 | `accepted` + `job`, or `busy` |
 | `positioner.drive` | `direction` `"east"`\|`"west"` | `accepted` + `job`, or `busy` |
 | `positioner.halt` | — | `ok`; terminates the active job as `halted` |
 | `positioner.release` | `job` int | `ok`; terminates that job as `released` |
 
 `positioner.release` checks the job id, so a late release for a superseded job
-is rejected rather than ending a newer movement.
+is rejected rather than ending a newer movement. Releasing a GoToX job promotes
+its offset-adjusted, protocol-rounded pending target to
+`position_confidence=estimated`. Releasing a calibrated step job similarly
+promotes its pending target. Stored-position, uncalibrated-step, and continuous
+drive jobs leave the angular estimate unknown.
+
+`angle` is a string because inbound JSON deliberately rejects floating-point
+numbers. The operation applies the persisted signed GoToX offset, enforces the
+configured direction-specific angular limit, and uses the same DiSEqC rounding
+and motion-lock path as console `diseqc goto-angle`.
 
 ### Bridged operations
 

@@ -320,6 +320,11 @@ namespace CubleyControl
 
         private static string ExecuteMqttOperation(string commandId, string op, JsonObject command)
         {
+            if (op == "positioner.goto_angle")
+            {
+                return ExecuteMqttPositionerGotoAngle(commandId, command);
+            }
+
             if (op == "positioner.goto" || op == "positioner.step" ||
                 op == "positioner.drive" || op == "positioner.halt")
             {
@@ -437,6 +442,54 @@ namespace CubleyControl
                 null);
         }
 
+        private static string ExecuteMqttPositionerGotoAngle(string commandId, JsonObject command)
+        {
+            string error;
+            if (!TryValidateMqttMembers(command, "direction", "angle", out error))
+            {
+                return BuildMqttFailureBody(commandId, "validation_error", error, 0);
+            }
+
+            string direction;
+            if (!command.TryGetString("direction", out direction) ||
+                (direction != "east" && direction != "west"))
+            {
+                return BuildMqttFailureBody(commandId, "validation_error", "direction must be \"east\" or \"west\"", 0);
+            }
+
+            string angle;
+            if (!command.TryGetString("angle", out angle))
+            {
+                return BuildMqttFailureBody(commandId, "validation_error", "angle must be a decimal string", 0);
+            }
+
+            ResetMqttCommandOutcome();
+            ExecutePositionerGotoAngle(
+                direction == "east" ? DiseqcMotorDirection.East : DiseqcMotorDirection.West,
+                angle,
+                MqttOutputSink);
+
+            if (!_mqttResultOk)
+            {
+                return BuildMqttFailureBody(
+                    commandId,
+                    _mqttResultCode.Length == 0 ? "hw_fault" : _mqttResultCode,
+                    _mqttResultMsg,
+                    _blockingDiseqcJobId);
+            }
+
+            int jobId = _lastStartedDiseqcJobId;
+            bool started = jobId != 0 && GetActiveDiseqcJobId() == jobId;
+            return BuildMqttResponseBody(
+                commandId,
+                true,
+                started ? "accepted" : "ok",
+                null,
+                started ? null : BuildDiseqcStateJson(),
+                jobId,
+                null);
+        }
+
         private static string ExecuteMqttPositionerQuery(string commandId, string op, JsonObject command)
         {
             string error;
@@ -457,6 +510,11 @@ namespace CubleyControl
             if (!TryEndDiseqcJob(jobId, JobStateReleased, string.Empty))
             {
                 return BuildMqttFailureBody(commandId, "validation_error", "job is not the running job", GetActiveDiseqcJobId());
+            }
+
+            lock (_diseqcMotionLock)
+            {
+                _diseqcPositionEstimate.CompletePending();
             }
 
             PublishMqttDiseqcJobTransition("end", jobId);
