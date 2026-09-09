@@ -170,7 +170,13 @@ namespace CubleyControl
 
             if (path == RestPositionerStatePath)
             {
-                WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", BuildDiseqcStateJson(), null));
+                string state;
+                lock (_commandLock)
+                {
+                    state = BuildDiseqcStateJson();
+                }
+
+                WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", state, null));
                 return;
             }
 
