@@ -37,9 +37,13 @@ dw_step=<west step size in microdegrees>
 d_offset=<signed GoToX offset in microdegrees>
 ```
 
-Unknown keys, malformed values, invalid field combinations, a different schema
-version, and invalid magic, length, or CRC cause the record to be rejected. The
-application then uses schema-4 defaults.
+Valid schema-3 records are migrated in memory by retaining hostname, angle
+limits, step calibration, GoToX offset, and generation. Retired MQTT fields are
+discarded. Schema 4 is written on the next application configuration update.
+
+Unknown keys, malformed retained values, invalid field combinations, an
+unsupported schema version, and invalid magic, length, or CRC cause the record
+to be rejected. The application then uses schema-4 defaults.
 
 ## Active Internal Flash Backend
 
@@ -53,8 +57,8 @@ record, erases the sector, writes the complete image, and verifies the record.
 This preserves the nanoFramework network configuration block.
 
 Sector erase makes this backend non-atomic across power loss. CRC validation
-detects an incomplete record. Writes occur only after an explicit USB CDC
-configuration commit.
+detects an incomplete record. Writes occur after an explicit USB CDC
+configuration commit or an operational `diseqc angle-limits` update.
 
 ## Future Backend
 

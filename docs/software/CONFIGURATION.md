@@ -85,9 +85,11 @@ shown.
 
 ## Runtime Overrides
 
-Operational `diseqc angle-limits` and `diseqc step-calibration` commands change
-RAM state only. Reboot restores committed values. The fixed GoToX offset is
-changed only in configuration mode.
+Operational `diseqc angle-limits <east> <west>` and `diseqc angle-limits off`
+write the application record immediately and survive reboot. The runtime limits
+change only after the write is verified. Operational `diseqc step-calibration`
+commands remain RAM-only, and the fixed GoToX offset is changed only in
+configuration mode.
 
 The signed offset is applied before direction-specific limit checking and GoToX
 encoding. For example, `diseqc fixed-offset west 3.38` changes a requested

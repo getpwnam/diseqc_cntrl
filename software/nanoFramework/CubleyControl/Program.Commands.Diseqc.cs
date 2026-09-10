@@ -625,8 +625,18 @@ namespace CubleyControl
                     return;
                 }
 
-                _diseqcEastTravelLimitMicrodegrees = 0;
-                _diseqcWestTravelLimitMicrodegrees = 0;
+                string error;
+                if (!TryPersistDiseqcAngleLimits(0, 0, out error))
+                {
+                    WriteCommandResult(
+                        reqId,
+                        false,
+                        "persist_failed",
+                        "diseqc angle-limits persistence failed",
+                        "reason=" + SanitizeToken(error));
+                    return;
+                }
+
                 WriteCommandResult(reqId, true, "ok", "diseqc angle-limits disabled", BuildDiseqcTravelLimitsData());
                 return;
             }
@@ -668,8 +678,18 @@ namespace CubleyControl
                 return;
             }
 
-            _diseqcEastTravelLimitMicrodegrees = eastMicrodegrees;
-            _diseqcWestTravelLimitMicrodegrees = westMicrodegrees;
+            string persistError;
+            if (!TryPersistDiseqcAngleLimits(eastMicrodegrees, westMicrodegrees, out persistError))
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "persist_failed",
+                    "diseqc angle-limits persistence failed",
+                    "reason=" + SanitizeToken(persistError));
+                return;
+            }
+
             WriteCommandResult(reqId, true, "ok", "diseqc angle-limits", BuildDiseqcTravelLimitsData());
         }
 
