@@ -7,6 +7,7 @@ namespace CubleyControl
         public const int RecordSize = 512;
         public const int HeaderSize = 16;
         public const byte SchemaVersion = 4;
+        private const byte LegacySchemaVersion = 3;
 
         public static bool TryEncode(ApplicationConfiguration configuration, uint generation, out byte[] record, out string error)
         {
@@ -61,7 +62,8 @@ namespace CubleyControl
                 return false;
             }
 
-            if (record[4] != SchemaVersion)
+            byte schemaVersion = record[4];
+            if (schemaVersion != SchemaVersion && schemaVersion != LegacySchemaVersion)
             {
                 error = "record_version_unsupported";
                 return false;
@@ -84,7 +86,9 @@ namespace CubleyControl
 
             generation = ReadUInt32(record, 8);
             string text = AsciiBytesToString(payload);
-            return ApplicationConfiguration.TryParsePayload(text, out configuration, out error);
+            return schemaVersion == LegacySchemaVersion
+                ? ApplicationConfiguration.TryParseLegacyPayload(text, out configuration, out error)
+                : ApplicationConfiguration.TryParsePayload(text, out configuration, out error);
         }
 
         private static byte[] AsciiStringToBytes(string text)

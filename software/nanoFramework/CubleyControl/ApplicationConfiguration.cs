@@ -76,6 +76,20 @@ namespace CubleyControl
 
         public static bool TryParsePayload(string payload, out ApplicationConfiguration configuration, out string error)
         {
+            return TryParsePayload(payload, false, out configuration, out error);
+        }
+
+        public static bool TryParseLegacyPayload(string payload, out ApplicationConfiguration configuration, out string error)
+        {
+            return TryParsePayload(payload, true, out configuration, out error);
+        }
+
+        private static bool TryParsePayload(
+            string payload,
+            bool allowRetiredTransportFields,
+            out ApplicationConfiguration configuration,
+            out string error)
+        {
             configuration = CreateDefaults();
             if (string.IsNullOrEmpty(payload))
             {
@@ -146,6 +160,10 @@ namespace CubleyControl
                     }
                     configuration.DiseqcGotoOffsetMicrodegrees = number;
                 }
+                else if (allowRetiredTransportFields && IsRetiredTransportField(key))
+                {
+                    continue;
+                }
                 else
                 {
                     error = "payload_key_unknown";
@@ -154,6 +172,14 @@ namespace CubleyControl
             }
 
             return configuration.TryValidate(out error);
+        }
+
+        private static bool IsRetiredTransportField(string key)
+        {
+            return key == "enabled" || key == "broker" || key == "port" ||
+                key == "client_id" || key == "username" || key == "password" ||
+                key == "topic_prefix" || key == "keepalive_seconds" ||
+                key == "reconnect_seconds";
         }
 
         private static bool IsValidDiseqcPair(int eastMicrodegrees, int westMicrodegrees)

@@ -45,5 +45,53 @@ namespace CubleyControl
                     ? string.Empty
                     : " code=" + SanitizeToken(_applicationConfigurationError)));
         }
+
+        private static bool TryPersistDiseqcAngleLimits(
+            int eastMicrodegrees,
+            int westMicrodegrees,
+            out string error)
+        {
+            ApplicationConfiguration candidate;
+            uint currentGeneration;
+            lock (_applicationConfigurationLock)
+            {
+                candidate = _applicationConfiguration.Clone();
+                currentGeneration = _applicationConfigurationGeneration;
+            }
+
+            candidate.DiseqcEastLimitMicrodegrees = eastMicrodegrees;
+            candidate.DiseqcWestLimitMicrodegrees = westMicrodegrees;
+            if (!candidate.TryValidate(out error))
+            {
+                return false;
+            }
+
+            uint savedGeneration;
+            if (!TryPersistApplicationConfiguration(
+                candidate,
+                currentGeneration,
+                out savedGeneration,
+                out error))
+            {
+                return false;
+            }
+
+            lock (_applicationConfigurationLock)
+            {
+                _applicationConfiguration = candidate;
+                _applicationConfigurationGeneration = savedGeneration;
+            }
+
+            _pendingApplicationConfiguration = candidate.Clone();
+            _applicationConfigurationDirty = false;
+            _applicationConfigurationSource = _applicationConfigurationStorage.Source;
+            _applicationConfigurationError = string.Empty;
+            lock (_diseqcMotionLock)
+            {
+                _diseqcEastTravelLimitMicrodegrees = eastMicrodegrees;
+                _diseqcWestTravelLimitMicrodegrees = westMicrodegrees;
+            }
+            return true;
+        }
     }
 }
