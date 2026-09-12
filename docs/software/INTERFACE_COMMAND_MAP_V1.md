@@ -278,7 +278,7 @@ angle before direction-specific limit checking and GoToX encoding. For example,
 | `diseqc angle-limits <east_degrees> <west_degrees>` | Persist positive, direction-specific limits in the protocol range through 180 degrees and apply them after verified storage. Rejected during motion. The operator must choose values strictly inside the motor's physically adjusted hardware stops. |
 | `diseqc angle-limits status` | Show whether angular motion is armed and both direction limits. |
 | `diseqc angle-limits off` | Persist disabled angular movement and apply it after verified storage. Rejected during motion. |
-| `diseqc step-calibration <east_deg_per_step> <west_deg_per_step>` | Temporarily set direction-specific step sizes with up to six decimal places. Persisted calibration is loaded again after reboot. |
+| `diseqc step-calibration <east_deg_per_step> <west_deg_per_step>` | Temporarily set direction-specific step sizes with up to six decimal places. Operational changes are RAM-only; values committed in USB configuration mode are loaded again after reboot. |
 | `diseqc step-calibration status` | Show step calibration and position-estimate state. |
 | `diseqc step-calibration off` | Disable step calibration. |
 | `diseqc step <east\|west> <steps>` | Move `1..128` steps. |
