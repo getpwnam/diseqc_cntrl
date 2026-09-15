@@ -95,6 +95,11 @@ The signed offset is applied before direction-specific limit checking and GoToX
 encoding. For example, `diseqc fixed-offset west 3.38` changes a requested
 36.6 degrees east to an effective 33.22 degrees east before protocol rounding.
 
+The offset is an internal calibration factor. Reported positions stay in the
+signed USALS domain, so the example above is reported as 36.58 degrees east
+after protocol rounding, and the offset-adjusted motor angle is visible only in
+USB `show diseqc detail`.
+
 ## Commit And Recovery
 
 `commit` validates the complete network and application candidates before

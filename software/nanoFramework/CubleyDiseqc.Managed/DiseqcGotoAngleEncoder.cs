@@ -223,6 +223,34 @@ namespace Cubley.Diseqc
                 requestedMicrodegrees <= limitMicrodegrees;
         }
 
+        // Converts the direction and magnitude actually encoded into the GoToX
+        // frame back into the signed USALS domain by removing the fixed offset.
+        // Position reporting stays in USALS terms so the internal calibration
+        // factor is never published.
+        public static int ToSignedUsalsMicrodegrees(
+            DiseqcMotorDirection effectiveDirection,
+            int encodedAngleTenths,
+            int signedOffsetMicrodegrees)
+        {
+            long encodedMicrodegrees = (long)encodedAngleTenths * (MicrodegreesPerDegree / TenthsPerDegree);
+            long signedEncodedMicrodegrees = effectiveDirection == DiseqcMotorDirection.West
+                ? -encodedMicrodegrees
+                : encodedMicrodegrees;
+            long signedUsalsMicrodegrees = signedEncodedMicrodegrees - signedOffsetMicrodegrees;
+            long maximumMicrodegrees = (long)DiseqcLimits.GotoAngularMaxDegrees * MicrodegreesPerDegree;
+            if (signedUsalsMicrodegrees < -maximumMicrodegrees)
+            {
+                return (int)(-maximumMicrodegrees);
+            }
+
+            if (signedUsalsMicrodegrees > maximumMicrodegrees)
+            {
+                return (int)maximumMicrodegrees;
+            }
+
+            return (int)signedUsalsMicrodegrees;
+        }
+
         public static string FormatTenths(int tenths)
         {
             int whole = tenths / TenthsPerDegree;

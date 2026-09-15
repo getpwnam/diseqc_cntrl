@@ -527,7 +527,10 @@ namespace CubleyControl
                 DiseqcGotoAngleEncoder.FormatTenths(encodedAngleTenths),
                 effectiveDirection == DiseqcMotorDirection.East ? "east" : "west",
                 direction == DiseqcMotorDirection.East ? "east" : "west",
-                encodedAngleTenths * 100_000);
+                DiseqcGotoAngleEncoder.ToSignedUsalsMicrodegrees(
+                    effectiveDirection,
+                    encodedAngleTenths,
+                    _diseqcGotoOffsetMicrodegrees));
         }
 
         private static void EmitDiseqcShowSummaryLine(bool detail = false)
@@ -590,22 +593,22 @@ namespace CubleyControl
                     _diseqcMotionRequestedAngle == "none"
                         ? "Not applicable"
                         : requestedDirection + " " + _diseqcMotionRequestedAngle + " deg");
-                WriteHumanField(
-                    "Commanded angle (after GoToX offset)",
-                    _diseqcMotionEncodedAngle == "none"
-                        ? "Not applicable"
-                        : commandedDirection + " " + _diseqcMotionEncodedAngle + " deg");
                 WriteHumanField("Movement voltage", _diseqcMotionVoltageV == 0 ? "Unknown" : _diseqcMotionVoltageV.ToString() + " V");
-                WriteHumanField("Estimated current angle", estimatedAngle == "Unknown" ? estimatedAngle : estimatedAngle + " deg");
+                WriteHumanField("Estimated current angle (USALS)", estimatedAngle == "Unknown" ? estimatedAngle : estimatedAngle + " deg");
                 WriteHumanField("Position confidence", positionConfidence);
                 WriteHumanField("Position source", positionSource);
-                WriteHumanField("Pending target angle", pendingTarget == "None" ? pendingTarget : pendingTarget + " deg");
+                WriteHumanField("Pending target angle (USALS)", pendingTarget == "None" ? pendingTarget : pendingTarget + " deg");
                 if (!detail)
                 {
                     WriteHumanField("More detail", "show diseqc detail");
                     return;
                 }
 
+                WriteHumanField(
+                    "Commanded angle (after GoToX offset)",
+                    _diseqcMotionEncodedAngle == "none"
+                        ? "Not applicable"
+                        : commandedDirection + " " + _diseqcMotionEncodedAngle + " deg");
                 WriteHumanField("East step calibration", eastStep == "Disabled" ? eastStep : eastStep + " deg");
                 WriteHumanField("West step calibration", westStep == "Disabled" ? westStep : westStep + " deg");
                 WriteHumanField("East software limit", FormatDiseqcTravelLimit(_diseqcEastTravelLimitMicrodegrees));
@@ -1268,9 +1271,11 @@ namespace CubleyControl
                 _diseqcMotionVoltageV = voltageV;
                 if (commandMode == "angular")
                 {
+                    // Angular moves carry the signed USALS target so the GoToX
+                    // fixed offset stays out of reported positions.
                     _diseqcPositionEstimate.BeginGotoAngular(
-                        direction == "east" ? DiseqcMotorDirection.East : DiseqcMotorDirection.West,
-                        positionValue);
+                        positionValue < 0 ? DiseqcMotorDirection.West : DiseqcMotorDirection.East,
+                        positionValue < 0 ? -positionValue : positionValue);
                 }
                 else if (commandMode == "step")
                 {
@@ -1309,8 +1314,7 @@ namespace CubleyControl
             {
                 return "command_mode=" + _diseqcMotionCommandMode +
                     " requested_angle_deg=" + _diseqcMotionRequestedAngle +
-                    " encoded_angle_deg=" + _diseqcMotionEncodedAngle +
-                    " direction=" + _diseqcMotionDirection +
+                    " direction=" + _diseqcMotionRequestedDirection +
                     " movement_voltage_v=" + (_diseqcMotionVoltageV == 0 ? "unknown" : _diseqcMotionVoltageV.ToString()) +
                     " motor_voltage_override_active=" + (_diseqcMotionVoltageOverrideActive ? "1" : "0") +
                     " motor_voltage_restore_error=" + (_diseqcMotionVoltageRestoreError.Length == 0
