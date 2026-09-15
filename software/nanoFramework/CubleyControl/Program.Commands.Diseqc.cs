@@ -529,12 +529,7 @@ namespace CubleyControl
                 encodedAngleTenths * 100_000);
         }
 
-        private static void EmitDiseqcShowSummaryLine()
-        {
-            EmitDiseqcShowSummaryLine(false);
-        }
-
-        private static void EmitDiseqcShowSummaryLine(bool detail)
+        private static void EmitDiseqcShowSummaryLine(bool detail = false)
         {
             bool toneEnabled = _diseqcCarrierEnabled;
             bool motionBusy;
