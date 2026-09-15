@@ -516,21 +516,36 @@ namespace CubleyControl
                 return;
             }
 
+            int usalsMicrodegrees = DiseqcGotoAngleEncoder.ToSignedUsalsMicrodegrees(
+                effectiveDirection,
+                encodedAngleTenths,
+                _diseqcGotoOffsetMicrodegrees);
+            if (!DiseqcGotoAngleEncoder.IsWithinUsalsRange(usalsMicrodegrees))
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "diseqc goto-angle exceeds USALS range",
+                    "direction=" + (effectiveDirection == DiseqcMotorDirection.East ? "east" : "west") +
+                    " requested_angle_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(requestedMicrodegrees) +
+                    " effective_angle_deg=" + DiseqcGotoAngleEncoder.FormatMicrodegrees(effectiveMicrodegrees) +
+                    " usals_angle_deg=" + FormatSignedDiseqcAngle(usalsMicrodegrees));
+                return;
+            }
+
             EmitDiseqcPositionerTransmitResult(
                 reqId,
                 "diseqc goto-angle",
                 frame,
-                "goto_angle_" + (effectiveDirection == DiseqcMotorDirection.East ? "east" : "west"),
+                "goto_angle_" + (direction == DiseqcMotorDirection.East ? "east" : "west"),
                 _diseqcMotionTimeoutMs,
                 "angular",
                 DiseqcGotoAngleEncoder.FormatMicrodegrees(requestedMicrodegrees),
                 DiseqcGotoAngleEncoder.FormatTenths(encodedAngleTenths),
                 effectiveDirection == DiseqcMotorDirection.East ? "east" : "west",
                 direction == DiseqcMotorDirection.East ? "east" : "west",
-                DiseqcGotoAngleEncoder.ToSignedUsalsMicrodegrees(
-                    effectiveDirection,
-                    encodedAngleTenths,
-                    _diseqcGotoOffsetMicrodegrees));
+                usalsMicrodegrees);
         }
 
         private static void EmitDiseqcShowSummaryLine(bool detail = false)

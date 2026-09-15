@@ -223,6 +223,17 @@ namespace Cubley.Diseqc
                 requestedMicrodegrees <= limitMicrodegrees;
         }
 
+        // Removing the GoToX offset from an encoded angle can push the
+        // reported USALS value outside the +/-180 degree protocol range even
+        // when the encoded (post-offset) angle itself is in range. Callers
+        // must reject such targets instead of starting motion that the
+        // position estimate cannot track.
+        public static bool IsWithinUsalsRange(int signedMicrodegrees)
+        {
+            long maximumMicrodegrees = (long)DiseqcLimits.GotoAngularMaxDegrees * MicrodegreesPerDegree;
+            return signedMicrodegrees >= -maximumMicrodegrees && signedMicrodegrees <= maximumMicrodegrees;
+        }
+
         // Converts the direction and magnitude actually encoded into the GoToX
         // frame back into the signed USALS domain by removing the fixed offset.
         // Position reporting stays in USALS terms so the internal calibration
