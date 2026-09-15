@@ -413,6 +413,7 @@ namespace CubleyControl
             if (operation == PositionerOpStepEast || operation == PositionerOpStepWest)
             {
                 bool east = operation == PositionerOpStepEast;
+                string stepDirection = east ? "east" : "west";
                 _activeCommand = "positioner step";
                 EmitDiseqcPositionerTransmitResult(
                     reqId,
@@ -423,8 +424,8 @@ namespace CubleyControl
                     "step",
                     "none",
                     "none",
-                    east ? "east" : "west",
-                    east ? "east" : "west",
+                    stepDirection,
+                    stepDirection,
                     value);
                 return;
             }
@@ -928,7 +929,7 @@ namespace CubleyControl
             string commandMode,
             string requestedAngle,
             string encodedAngle,
-            string direction,
+            string commandedDirection,
             string requestedDirection,
             int positionValue)
         {
@@ -968,7 +969,7 @@ namespace CubleyControl
                     commandMode,
                     requestedAngle,
                     encodedAngle,
-                    direction,
+                    commandedDirection,
                     requestedDirection,
                     GetDiseqcMotionVoltageV(),
                     positionValue);
@@ -1008,7 +1009,7 @@ namespace CubleyControl
                 commandMode,
                 requestedAngle,
                 encodedAngle,
-                direction,
+                commandedDirection,
                 requestedDirection,
                 GetDiseqcMotionVoltageV(),
                 positionValue);
