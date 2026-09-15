@@ -43,6 +43,7 @@ namespace CubleyControl
         private static string _diseqcMotionRequestedAngle = "none";
         private static string _diseqcMotionEncodedAngle = "none";
         private static string _diseqcMotionDirection = "none";
+        private static string _diseqcMotionRequestedDirection = "none";
         private static int _diseqcMotionVoltageV;
         private static bool _diseqcMotionVoltageOverrideActive;
         private static int _diseqcMotionRestorePolarization;
@@ -277,6 +278,7 @@ namespace CubleyControl
                     "none",
                     "none",
                     dir,
+                    dir,
                     steps);
                 return;
             }
@@ -422,6 +424,7 @@ namespace CubleyControl
                     "none",
                     "none",
                     east ? "east" : "west",
+                    east ? "east" : "west",
                     value);
                 return;
             }
@@ -522,10 +525,16 @@ namespace CubleyControl
                 DiseqcGotoAngleEncoder.FormatMicrodegrees(requestedMicrodegrees),
                 DiseqcGotoAngleEncoder.FormatTenths(encodedAngleTenths),
                 effectiveDirection == DiseqcMotorDirection.East ? "east" : "west",
+                direction == DiseqcMotorDirection.East ? "east" : "west",
                 encodedAngleTenths * 100_000);
         }
 
         private static void EmitDiseqcShowSummaryLine()
+        {
+            EmitDiseqcShowSummaryLine(false);
+        }
+
+        private static void EmitDiseqcShowSummaryLine(bool detail)
         {
             bool toneEnabled = _diseqcCarrierEnabled;
             bool motionBusy;
@@ -539,6 +548,8 @@ namespace CubleyControl
                 out motionOperation,
                 out motionRemainingMs,
                 out motionCompletionSource);
+            string requestedDirection;
+            string commandedDirection;
             string positionConfidence;
             string estimatedAngle;
             string positionSource;
@@ -547,6 +558,8 @@ namespace CubleyControl
             string westStep;
             lock (_diseqcMotionLock)
             {
+                requestedDirection = _diseqcMotionRequestedDirection;
+                commandedDirection = _diseqcMotionDirection;
                 positionConfidence = _diseqcPositionEstimate.Confidence;
                 estimatedAngle = _diseqcPositionEstimate.HasEstimate
                     ? FormatSignedDiseqcAngle(_diseqcPositionEstimate.EstimatedAngleMicrodegrees)
@@ -572,18 +585,31 @@ namespace CubleyControl
                 WriteHumanField("Transmitter", _diseqcTxBusy ? "Busy" : "Idle");
                 WriteHumanField("Motion", motionBusy ? "Busy" : "Idle");
                 WriteHumanField("Motion ID", motionId == 0 ? "None" : motionId.ToString());
-                WriteHumanField("Operation", motionOperation);
+                WriteHumanField("Operation (internal id)", motionOperation);
                 WriteHumanField("Remaining", motionBusy ? ((motionRemainingMs + 999) / 1000).ToString() + " s" : "0 s");
                 WriteHumanField("Completion source", motionCompletionSource);
                 WriteHumanField("Command mode", _diseqcMotionCommandMode);
-                WriteHumanField("Direction", _diseqcMotionDirection);
-                WriteHumanField("Requested angle", _diseqcMotionRequestedAngle == "none" ? "Not applicable" : _diseqcMotionRequestedAngle + " deg");
-                WriteHumanField("Encoded angle", _diseqcMotionEncodedAngle == "none" ? "Not applicable" : _diseqcMotionEncodedAngle + " deg");
+                WriteHumanField(
+                    "Requested angle (as entered)",
+                    _diseqcMotionRequestedAngle == "none"
+                        ? "Not applicable"
+                        : requestedDirection + " " + _diseqcMotionRequestedAngle + " deg");
+                WriteHumanField(
+                    "Commanded angle (after GoToX offset)",
+                    _diseqcMotionEncodedAngle == "none"
+                        ? "Not applicable"
+                        : commandedDirection + " " + _diseqcMotionEncodedAngle + " deg");
                 WriteHumanField("Movement voltage", _diseqcMotionVoltageV == 0 ? "Unknown" : _diseqcMotionVoltageV.ToString() + " V");
-                WriteHumanField("Estimated angle", estimatedAngle == "Unknown" ? estimatedAngle : estimatedAngle + " deg");
+                WriteHumanField("Estimated current angle", estimatedAngle == "Unknown" ? estimatedAngle : estimatedAngle + " deg");
                 WriteHumanField("Position confidence", positionConfidence);
                 WriteHumanField("Position source", positionSource);
-                WriteHumanField("Pending target", pendingTarget == "None" ? pendingTarget : pendingTarget + " deg");
+                WriteHumanField("Pending target angle", pendingTarget == "None" ? pendingTarget : pendingTarget + " deg");
+                if (!detail)
+                {
+                    WriteHumanField("More detail", "show diseqc detail");
+                    return;
+                }
+
                 WriteHumanField("East step calibration", eastStep == "Disabled" ? eastStep : eastStep + " deg");
                 WriteHumanField("West step calibration", westStep == "Disabled" ? westStep : westStep + " deg");
                 WriteHumanField("East software limit", FormatDiseqcTravelLimit(_diseqcEastTravelLimitMicrodegrees));
@@ -883,6 +909,7 @@ namespace CubleyControl
             string motionOperation,
             int motionDurationMs)
         {
+            string effectiveDirection = MotionDirectionFromOperation(motionOperation);
             EmitDiseqcPositionerTransmitResult(
                 reqId,
                 source,
@@ -892,7 +919,8 @@ namespace CubleyControl
                 motionOperation == null ? "halt" : motionOperation,
                 "none",
                 "none",
-                MotionDirectionFromOperation(motionOperation),
+                effectiveDirection,
+                effectiveDirection,
                 0);
         }
 
@@ -906,6 +934,7 @@ namespace CubleyControl
             string requestedAngle,
             string encodedAngle,
             string direction,
+            string requestedDirection,
             int positionValue)
         {
             string error;
@@ -945,6 +974,7 @@ namespace CubleyControl
                     requestedAngle,
                     encodedAngle,
                     direction,
+                    requestedDirection,
                     GetDiseqcMotionVoltageV(),
                     positionValue);
                 WriteCommandResult(
@@ -984,6 +1014,7 @@ namespace CubleyControl
                 requestedAngle,
                 encodedAngle,
                 direction,
+                requestedDirection,
                 GetDiseqcMotionVoltageV(),
                 positionValue);
 
@@ -1211,6 +1242,7 @@ namespace CubleyControl
             string requestedAngle,
             string encodedAngle,
             string direction,
+            string requestedDirection,
             int voltageV,
             int positionValue)
         {
@@ -1236,6 +1268,7 @@ namespace CubleyControl
                 _diseqcMotionRequestedAngle = requestedAngle;
                 _diseqcMotionEncodedAngle = encodedAngle;
                 _diseqcMotionDirection = direction;
+                _diseqcMotionRequestedDirection = requestedDirection;
                 _diseqcMotionVoltageV = voltageV;
                 if (commandMode == "angular")
                 {

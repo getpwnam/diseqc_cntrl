@@ -66,6 +66,18 @@ namespace CubleyControl
 
             if (tokens[1] == "diseqc")
             {
+                if (tokens.Length == 3 && tokens[2] == "detail")
+                {
+                    EmitDiseqcShowSummaryLine(true);
+                    return;
+                }
+
+                if (tokens.Length != 2)
+                {
+                    WriteCommandResult(reqId, false, "validation_error", "show diseqc usage", "usage=show diseqc [detail]");
+                    return;
+                }
+
                 EmitDiseqcShowSummaryLine();
                 return;
             }
