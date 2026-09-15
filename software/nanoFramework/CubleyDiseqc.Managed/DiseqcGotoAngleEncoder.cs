@@ -236,18 +236,11 @@ namespace Cubley.Diseqc
             long signedEncodedMicrodegrees = effectiveDirection == DiseqcMotorDirection.West
                 ? -encodedMicrodegrees
                 : encodedMicrodegrees;
+            // Both terms are bounded by the protocol maximum, so the difference
+            // always fits in an int. An out-of-range result is returned
+            // unchanged and is rejected by the position estimate, which then
+            // reports an unknown position instead of a substituted angle.
             long signedUsalsMicrodegrees = signedEncodedMicrodegrees - signedOffsetMicrodegrees;
-            long maximumMicrodegrees = (long)DiseqcLimits.GotoAngularMaxDegrees * MicrodegreesPerDegree;
-            if (signedUsalsMicrodegrees < -maximumMicrodegrees)
-            {
-                return (int)(-maximumMicrodegrees);
-            }
-
-            if (signedUsalsMicrodegrees > maximumMicrodegrees)
-            {
-                return (int)maximumMicrodegrees;
-            }
-
             return (int)signedUsalsMicrodegrees;
         }
 

@@ -96,6 +96,25 @@ public sealed class DiseqcPositionEstimateTests
     }
 
     [Fact]
+    public void UsalsTargetOutsideTheProtocolRangeLeavesThePositionUnknown()
+    {
+        int usalsTarget = DiseqcGotoAngleEncoder.ToSignedUsalsMicrodegrees(
+            DiseqcMotorDirection.East,
+            1_800,
+            -180_000_000);
+        var estimate = new DiseqcPositionEstimate();
+
+        Assert.Equal(360_000_000, usalsTarget);
+
+        estimate.BeginGotoAngular(DiseqcMotorDirection.East, usalsTarget);
+
+        Assert.False(estimate.HasPendingTarget);
+        Assert.False(estimate.HasEstimate);
+        Assert.False(estimate.CompletePending());
+        Assert.Equal("unknown", estimate.Confidence);
+    }
+
+    [Fact]
     public void CalibratedStepsRetainSubTenthDegreePrecision()
     {
         var estimate = CreateEstimatedPosition(DiseqcMotorDirection.East, 36_600_000);
