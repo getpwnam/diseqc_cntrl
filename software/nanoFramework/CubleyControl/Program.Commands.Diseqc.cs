@@ -41,6 +41,7 @@ namespace CubleyControl
         private static int _diseqcGotoOffsetMicrodegrees;
         private static string _diseqcMotionCommandMode = "none";
         private static string _diseqcMotionRequestedAngle = "none";
+        private static int _diseqcMotionRequestedUsalsMicrodegrees;
         private static string _diseqcMotionEncodedAngle = "none";
         private static string _diseqcMotionDirection = "none";
         private static string _diseqcMotionRequestedDirection = "none";
@@ -279,7 +280,8 @@ namespace CubleyControl
                     "none",
                     dir,
                     dir,
-                    steps);
+                    steps,
+                    0);
                 return;
             }
 
@@ -426,7 +428,8 @@ namespace CubleyControl
                     "none",
                     stepDirection,
                     stepDirection,
-                    value);
+                    value,
+                    0);
                 return;
             }
 
@@ -545,7 +548,8 @@ namespace CubleyControl
                 DiseqcGotoAngleEncoder.FormatTenths(encodedAngleTenths),
                 effectiveDirection == DiseqcMotorDirection.East ? "east" : "west",
                 direction == DiseqcMotorDirection.East ? "east" : "west",
-                usalsMicrodegrees);
+                usalsMicrodegrees,
+                direction == DiseqcMotorDirection.East ? requestedMicrodegrees : -requestedMicrodegrees);
         }
 
         private static void EmitDiseqcShowSummaryLine(bool detail = false)
@@ -568,6 +572,7 @@ namespace CubleyControl
             string estimatedAngle;
             string positionSource;
             string pendingTarget;
+            string angleRounding;
             string eastStep;
             string westStep;
             lock (_diseqcMotionLock)
@@ -582,6 +587,7 @@ namespace CubleyControl
                 pendingTarget = _diseqcPositionEstimate.HasPendingTarget
                     ? FormatSignedDiseqcAngle(_diseqcPositionEstimate.PendingTargetMicrodegrees)
                     : "None";
+                angleRounding = BuildDiseqcAngleRoundingTextLocked();
                 eastStep = _diseqcPositionEstimate.HasStepCalibration
                     ? DiseqcGotoAngleEncoder.FormatMicrodegrees(_diseqcPositionEstimate.EastStepMicrodegrees)
                     : "Disabled";
@@ -610,6 +616,7 @@ namespace CubleyControl
                         : requestedDirection + " " + _diseqcMotionRequestedAngle + " deg");
                 WriteHumanField("Movement voltage", _diseqcMotionVoltageV == 0 ? "Unknown" : _diseqcMotionVoltageV.ToString() + " V");
                 WriteHumanField("Estimated current angle (USALS)", estimatedAngle == "Unknown" ? estimatedAngle : estimatedAngle + " deg");
+                WriteHumanField("Protocol rounding (estimate - request)", angleRounding);
                 WriteHumanField("Position confidence", positionConfidence);
                 WriteHumanField("Position source", positionSource);
                 WriteHumanField("Pending target angle (USALS)", pendingTarget == "None" ? pendingTarget : pendingTarget + " deg");
@@ -935,6 +942,7 @@ namespace CubleyControl
                 "none",
                 effectiveDirection,
                 effectiveDirection,
+                0,
                 0);
         }
 
@@ -949,7 +957,8 @@ namespace CubleyControl
             string encodedAngle,
             string commandedDirection,
             string requestedDirection,
-            int positionValue)
+            int positionValue,
+            int requestedUsalsMicrodegrees)
         {
             string error;
             byte[][] prefixFrames;
@@ -990,7 +999,8 @@ namespace CubleyControl
                     commandedDirection,
                     requestedDirection,
                     GetDiseqcMotionVoltageV(),
-                    positionValue);
+                    positionValue,
+                    requestedUsalsMicrodegrees);
                 WriteCommandResult(
                     reqId,
                     true,
@@ -1030,7 +1040,8 @@ namespace CubleyControl
                 commandedDirection,
                 requestedDirection,
                 GetDiseqcMotionVoltageV(),
-                positionValue);
+                positionValue,
+                requestedUsalsMicrodegrees);
 
             WriteCommandResult(
                 reqId,
@@ -1258,7 +1269,8 @@ namespace CubleyControl
             string direction,
             string requestedDirection,
             int voltageV,
-            int positionValue)
+            int positionValue,
+            int requestedUsalsMicrodegrees)
         {
             if (operation == null)
             {
@@ -1280,6 +1292,7 @@ namespace CubleyControl
             {
                 _diseqcMotionCommandMode = commandMode;
                 _diseqcMotionRequestedAngle = requestedAngle;
+                _diseqcMotionRequestedUsalsMicrodegrees = requestedUsalsMicrodegrees;
                 _diseqcMotionEncodedAngle = encodedAngle;
                 _diseqcMotionDirection = direction;
                 _diseqcMotionRequestedDirection = requestedDirection;
@@ -1364,6 +1377,41 @@ namespace CubleyControl
                 " west_step_deg=" + (_diseqcPositionEstimate.HasStepCalibration
                     ? DiseqcGotoAngleEncoder.FormatMicrodegrees(_diseqcPositionEstimate.WestStepMicrodegrees)
                     : "none");
+        }
+
+        // GoToX carries 0.1 degree resolution in the offset-adjusted motor
+        // domain, so the USALS angle recovered after removing the fixed offset
+        // can sit up to 0.05 degrees away from the angle the operator entered.
+        // Reporting the residual keeps that expected quantization from looking
+        // like a tracking error.
+        private static string BuildDiseqcAngleRoundingTextLocked()
+        {
+            if (_diseqcMotionCommandMode != "angular")
+            {
+                return "Not applicable";
+            }
+
+            int targetMicrodegrees;
+            if (_diseqcPositionEstimate.HasPendingTarget && _diseqcPositionEstimate.PendingSource == "goto_x")
+            {
+                targetMicrodegrees = _diseqcPositionEstimate.PendingTargetMicrodegrees;
+            }
+            else if (_diseqcPositionEstimate.HasEstimate && _diseqcPositionEstimate.Source == "goto_x")
+            {
+                targetMicrodegrees = _diseqcPositionEstimate.EstimatedAngleMicrodegrees;
+            }
+            else
+            {
+                return "Not applicable";
+            }
+
+            int deltaMicrodegrees = targetMicrodegrees - _diseqcMotionRequestedUsalsMicrodegrees;
+            if (deltaMicrodegrees == 0)
+            {
+                return "None";
+            }
+
+            return FormatSignedDiseqcAngle(deltaMicrodegrees) + " deg (0.1 deg GoToX step with fixed offset)";
         }
 
         private static string FormatSignedDiseqcAngle(int signedMicrodegrees)
