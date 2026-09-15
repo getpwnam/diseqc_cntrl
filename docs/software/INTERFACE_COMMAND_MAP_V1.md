@@ -341,10 +341,12 @@ continuous drive, Halt, uncalibrated step completion, and raw positioner command
 leave the angular estimate `unknown`; watchdog expiry sets `verification_failed`.
 No command-only transition is reported as `rf_verified`.
 
-The `direction` field always reports the offset-adjusted direction the motor is
-actually commanded to travel, which can differ from the direction the operator
-typed when the fixed GoToX offset is large enough to flip the sign of the
-effective angle. The interactive `show diseqc` view disambiguates this by
+For `goto-angle`, the `direction` field reports the offset-adjusted direction the motor is
+actually commanded to travel. Other explicitly directional operations report their
+commanded direction; stored-position and reference moves report `none` because the
+motor determines the path. For `goto-angle`, the direction can differ from the one
+the operator typed when the fixed GoToX offset is large enough to flip the sign of
+the effective angle. The interactive `show diseqc` view disambiguates this by
 labeling the operator's input "Requested angle (as entered)" and the
 offset-adjusted value sent to the motor "Commanded angle (after GoToX
 offset)".
