@@ -37,9 +37,8 @@ dw_step=<west step size in microdegrees>
 d_offset=<signed GoToX offset in microdegrees>
 ```
 
-Valid schema-3 records are migrated in memory by retaining hostname, angle
-limits, step calibration, GoToX offset, and generation. Retired MQTT fields are
-discarded. Schema 4 is written on the next application configuration update.
+Schema 4 is the only supported application record version. Records written by
+earlier schema versions are rejected and must be reconfigured.
 
 Unknown keys, malformed retained values, invalid field combinations, an
 unsupported schema version, and invalid magic, length, or CRC cause the record
