@@ -236,10 +236,11 @@ namespace Cubley.Diseqc
             long signedEncodedMicrodegrees = effectiveDirection == DiseqcMotorDirection.West
                 ? -encodedMicrodegrees
                 : encodedMicrodegrees;
-            // Both terms are bounded by the protocol maximum, so the difference
-            // always fits in an int. An out-of-range result is returned
-            // unchanged and is rejected by the position estimate, which then
-            // reports an unknown position instead of a substituted angle.
+            // The encoded angle and the configurable offset are each bounded by
+            // the protocol maximum, so the difference always fits in an int.
+            // A sum outside the protocol range is passed through unchanged and
+            // rejected by the position estimate, which then reports an unknown
+            // position instead of a substituted angle.
             long signedUsalsMicrodegrees = signedEncodedMicrodegrees - signedOffsetMicrodegrees;
             return (int)signedUsalsMicrodegrees;
         }

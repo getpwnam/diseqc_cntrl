@@ -93,6 +93,15 @@ public sealed class DiseqcPositionEstimateTests
             3_380_000);
 
         Assert.Equal(-980_000, usalsTarget);
+
+        var estimate = new DiseqcPositionEstimate();
+        estimate.BeginGotoAngular(
+            usalsTarget < 0 ? DiseqcMotorDirection.West : DiseqcMotorDirection.East,
+            usalsTarget < 0 ? -usalsTarget : usalsTarget);
+
+        Assert.Equal(-980_000, estimate.PendingTargetMicrodegrees);
+        Assert.True(estimate.CompletePending());
+        Assert.Equal(-980_000, estimate.EstimatedAngleMicrodegrees);
     }
 
     [Fact]
