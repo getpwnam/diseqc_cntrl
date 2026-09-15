@@ -220,7 +220,8 @@ alias for the `lnb` command family.
 | `show` | Emit system, both LNB channels, and DiSEqC summary lines. |
 | `show lnb` | Emit one summary line for each LNB channel. |
 | `show lnb <a\|b>` | Emit one selected channel summary. |
-| `show diseqc` | Emit routing preset, tone, carrier settings, and transmit-busy state. |
+| `show diseqc` | Emit routing preset, tone, carrier settings, transmit-busy state, and live motion/position status. |
+| `show diseqc detail` | Additionally emit step calibration, software limits, GoToX fixed offset, and watchdog timeout. |
 
 Each LNB summary includes enabled state, polarization, band, ISET range, ISW
 limit, voltage, tone, low-power mode, external DiSEqC input, and fault registers.
@@ -339,6 +340,16 @@ target on external completion. Stored-position movement, reference movement,
 continuous drive, Halt, uncalibrated step completion, and raw positioner commands
 leave the angular estimate `unknown`; watchdog expiry sets `verification_failed`.
 No command-only transition is reported as `rf_verified`.
+
+For `goto-angle`, the `direction` field reports the offset-adjusted direction the motor is
+actually commanded to travel. Other explicitly directional operations report their
+commanded direction; stored-position and reference moves report `none` because the
+motor determines the path. For `goto-angle`, the direction can differ from the one
+the operator typed when the fixed GoToX offset is large enough to flip the sign of
+the effective angle. The interactive `show diseqc` view disambiguates this by
+labeling the operator's input "Requested angle (as entered)" and the
+offset-adjusted value sent to the motor "Commanded angle (after GoToX
+offset)".
 
 ## Canonical Command IDs
 

@@ -158,7 +158,7 @@ namespace CubleyControl
             {
                 WriteHumanHeading("Operational syntax");
                 _activeOutputSink(
-                    "show [lnb [a|b]|diseqc|network|net|running-config [network|application|diseqc|all]|startup-config [network|application|diseqc|all]|status|capabilities|caps|version|ver]\r\n" +
+                    "show [lnb [a|b]|diseqc [detail]|network|net|running-config [network|application|diseqc|all]|startup-config [network|application|diseqc|all]|status|capabilities|caps|version|ver]\r\n" +
                     "lnb <a|b> <enable|disable|polarization|band|iset|isw> [value]\r\n" +
                     "diseqc <goto|step|drive|stop|preset|timeout|tx|tone|listen|complete> ...\r\n" +
                     "dns lookup <hostname>\r\n" +
@@ -192,7 +192,7 @@ namespace CubleyControl
                 _activeOutputSink(
                     "show\r\n" +
                     "show lnb [a|b]\r\n" +
-                    "show diseqc\r\n" +
+                    "show diseqc [detail]\r\n" +
                     "show network\r\n" +
                     "show running-config|run [network|application|diseqc|all]\r\n" +
                     "show startup-config|start [network|application|diseqc|all]\r\n" +
