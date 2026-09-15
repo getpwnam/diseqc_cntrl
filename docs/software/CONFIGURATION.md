@@ -98,7 +98,9 @@ encoding. For example, `diseqc fixed-offset west 3.38` changes a requested
 The offset is an internal calibration factor. Reported positions stay in the
 signed USALS domain, so the example above is reported as 36.58 degrees east
 after protocol rounding, and the offset-adjusted motor angle is visible only in
-USB `show diseqc detail`.
+USB `show diseqc detail`. The 0.02 degree difference between the entered and
+reported angle is the 0.1 degree GoToX quantization; USB `show diseqc` reports it
+as "Protocol rounding (estimate - request)".
 
 ## Commit And Recovery
 

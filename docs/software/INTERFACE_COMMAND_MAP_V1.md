@@ -220,7 +220,7 @@ alias for the `lnb` command family.
 | `show` | Emit system, both LNB channels, and DiSEqC summary lines. |
 | `show lnb` | Emit one summary line for each LNB channel. |
 | `show lnb <a\|b>` | Emit one selected channel summary. |
-| `show diseqc` | Emit routing preset, tone, carrier settings, transmit-busy state, and live motion/position status. |
+| `show diseqc` | Emit routing preset, tone, carrier settings, transmit-busy state, live motion/position status, and the protocol rounding residual between the requested and estimated angle. |
 | `show diseqc detail` | Additionally emit the offset-adjusted commanded angle, step calibration, software limits, GoToX fixed offset, and watchdog timeout. |
 
 Each LNB summary includes enabled state, polarization, band, ISET range, ISW
@@ -351,6 +351,14 @@ motor travels in the opposite direction; that offset-adjusted view is available
 only on the USB console as "Commanded angle (after GoToX offset)" in
 `show diseqc detail`, alongside the step calibration, software limits, and the
 fixed offset itself.
+
+GoToX carries 0.1 degree resolution in the offset-adjusted motor domain, so an
+angular target whose offset-adjusted angle is not an exact tenth of a degree is
+rounded before transmission. Removing the offset again leaves the reported USALS
+estimate up to 0.05 degrees away from the entered angle. USB `show diseqc`
+reports that residual as "Protocol rounding (estimate - request)"; for example a
+requested east 36.6 degrees reported as 36.58 degrees shows `-0.02 deg`. The
+residual is expected quantization, not a tracking error.
 
 ## Canonical Command IDs
 

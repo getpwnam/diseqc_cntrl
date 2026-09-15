@@ -154,6 +154,36 @@ public sealed class DiseqcGotoAngleEncoderTests
         Assert.False(DiseqcGotoAngleEncoder.IsWithinUsalsRange(usalsMicrodegrees));
     }
 
+    [Fact]
+    public void ReportedUsalsAngleKeepsProtocolRoundingResidual()
+    {
+        // East 36.6 deg with a west 3.38 deg fixed offset encodes east 33.2 deg
+        // after rounding to the 0.1 deg GoToX grid, so the USALS angle recovered
+        // by removing the offset is 36.58 deg, 0.02 deg below the entered angle.
+        bool success = DiseqcGotoAngleEncoder.TryBuildFrame(
+            DiseqcMotorDirection.East,
+            "36.6",
+            -3_380_000,
+            out _,
+            out int requestedMicrodegrees,
+            out DiseqcMotorDirection effectiveDirection,
+            out _,
+            out int encodedAngleTenths,
+            out string error);
+
+        Assert.True(success, error);
+        Assert.Equal(DiseqcMotorDirection.East, effectiveDirection);
+        Assert.Equal(332, encodedAngleTenths);
+
+        int usalsMicrodegrees = DiseqcGotoAngleEncoder.ToSignedUsalsMicrodegrees(
+            effectiveDirection,
+            encodedAngleTenths,
+            -3_380_000);
+
+        Assert.Equal(36_580_000, usalsMicrodegrees);
+        Assert.Equal(-20_000, usalsMicrodegrees - requestedMicrodegrees);
+    }
+
     [Theory]
     [InlineData(-180_000_000, true)]
     [InlineData(180_000_000, true)]
