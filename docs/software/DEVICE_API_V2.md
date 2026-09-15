@@ -209,9 +209,9 @@ job is rejected rather than ending a newer movement. `verification` accepts:
   command is rejected if the job has no angular pending target.
 - `verification_failed`: invalidate the position estimate.
 
-The device always adopts its offset-adjusted, protocol-rounded pending target;
-the client cannot inject an arbitrary angle. Stored-position, uncalibrated-step,
-and continuous-drive jobs cannot be marked `rf_verified`.
+The device always adopts its own protocol-rounded pending target; the client
+cannot inject an arbitrary angle. Stored-position, uncalibrated-step, and
+continuous-drive jobs cannot be marked `rf_verified`.
 
 ### REST queries
 
@@ -233,6 +233,11 @@ health, communication, fault, register, polarization, and band snapshot.
 numbers. The operation applies the persisted signed GoToX offset, enforces the
 configured direction-specific angular limit, and uses the same DiSEqC rounding
 and motion-lock path as console `diseqc goto-angle`.
+
+REST deals with one angle only: the signed USALS angle. The GoToX fixed offset is
+an internal calibration factor, so `estimated_angle_deg` and `pending_target_deg`
+report the protocol-rounded target converted back to USALS, and neither the
+offset nor the offset-adjusted motor angle is published over the network.
 
 ### Bridged operations
 

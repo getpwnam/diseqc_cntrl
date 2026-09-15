@@ -223,6 +223,39 @@ namespace Cubley.Diseqc
                 requestedMicrodegrees <= limitMicrodegrees;
         }
 
+        // Removing the GoToX offset from an encoded angle can push the
+        // reported USALS value outside the +/-180 degree protocol range even
+        // when the encoded (post-offset) angle itself is in range. Callers
+        // must reject such targets instead of starting motion that the
+        // position estimate cannot track.
+        public static bool IsWithinUsalsRange(int signedMicrodegrees)
+        {
+            long maximumMicrodegrees = (long)DiseqcLimits.GotoAngularMaxDegrees * MicrodegreesPerDegree;
+            return signedMicrodegrees >= -maximumMicrodegrees && signedMicrodegrees <= maximumMicrodegrees;
+        }
+
+        // Converts the direction and magnitude actually encoded into the GoToX
+        // frame back into the signed USALS domain by removing the fixed offset.
+        // Position reporting stays in USALS terms so the internal calibration
+        // factor is never published.
+        public static int ToSignedUsalsMicrodegrees(
+            DiseqcMotorDirection effectiveDirection,
+            int encodedAngleTenths,
+            int signedOffsetMicrodegrees)
+        {
+            long encodedMicrodegrees = (long)encodedAngleTenths * (MicrodegreesPerDegree / TenthsPerDegree);
+            long signedEncodedMicrodegrees = effectiveDirection == DiseqcMotorDirection.West
+                ? -encodedMicrodegrees
+                : encodedMicrodegrees;
+            // The encoded angle and the configurable offset are each bounded by
+            // the protocol maximum, so the difference always fits in an int.
+            // A sum outside the protocol range is passed through unchanged and
+            // rejected by the position estimate, which then reports an unknown
+            // position instead of a substituted angle.
+            long signedUsalsMicrodegrees = signedEncodedMicrodegrees - signedOffsetMicrodegrees;
+            return (int)signedUsalsMicrodegrees;
+        }
+
         public static string FormatTenths(int tenths)
         {
             int whole = tenths / TenthsPerDegree;

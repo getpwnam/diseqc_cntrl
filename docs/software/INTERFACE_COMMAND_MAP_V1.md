@@ -221,7 +221,7 @@ alias for the `lnb` command family.
 | `show lnb` | Emit one summary line for each LNB channel. |
 | `show lnb <a\|b>` | Emit one selected channel summary. |
 | `show diseqc` | Emit routing preset, tone, carrier settings, transmit-busy state, and live motion/position status. |
-| `show diseqc detail` | Additionally emit step calibration, software limits, GoToX fixed offset, and watchdog timeout. |
+| `show diseqc detail` | Additionally emit the offset-adjusted commanded angle, step calibration, software limits, GoToX fixed offset, and watchdog timeout. |
 
 Each LNB summary includes enabled state, polarization, band, ISET range, ISW
 limit, voltage, tone, low-power mode, external DiSEqC input, and fault registers.
@@ -328,28 +328,29 @@ bounded session. A configured software value is not evidence that the physical
 hardware limit was measured correctly.
 
 Motion command results and DiSEqC state/events record `command_mode`,
-`requested_angle_deg`, `encoded_angle_deg`, `direction`, `movement_voltage_v`,
+`requested_angle_deg`, `direction`, `movement_voltage_v`,
 `position_confidence`, `estimated_angle_deg`, `position_source`,
 `pending_target_deg`, `step_calibration_configured`, `east_step_deg`, and
-`west_step_deg`. The retained state also records
+`west_step_deg`. Every reported angle is a signed USALS angle; the fixed GoToX
+offset is an internal calibration factor and is never reported outside the USB
+console. The retained state also records
 `angle_limits_configured`, `east_limit_deg`, and `west_limit_deg`. A successful
 GoToX transmission records a pending target without changing the previous
-estimate. Matching external completion adopts the encoded target as
+estimate. Matching external completion adopts the protocol-rounded target,
+converted back to USALS by removing the fixed offset, as
 `position_confidence=estimated`. A calibrated step similarly adopts its pending
 target on external completion. Stored-position movement, reference movement,
 continuous drive, Halt, uncalibrated step completion, and raw positioner commands
 leave the angular estimate `unknown`; watchdog expiry sets `verification_failed`.
 No command-only transition is reported as `rf_verified`.
 
-For `goto-angle`, the `direction` field reports the offset-adjusted direction the motor is
-actually commanded to travel. Other explicitly directional operations report their
-commanded direction; stored-position and reference moves report `none` because the
-motor determines the path. For `goto-angle`, the direction can differ from the one
-the operator typed when the fixed GoToX offset is large enough to flip the sign of
-the effective angle. The interactive `show diseqc` view disambiguates this by
-labeling the operator's input "Requested angle (as entered)" and the
-offset-adjusted value sent to the motor "Commanded angle (after GoToX
-offset)".
+The reported `direction` is the requested USALS direction. Stored-position and
+reference moves report `none` because the motor determines the path. When the
+fixed GoToX offset is large enough to flip the sign of the effective angle, the
+motor travels in the opposite direction; that offset-adjusted view is available
+only on the USB console as "Commanded angle (after GoToX offset)" in
+`show diseqc detail`, alongside the step calibration, software limits, and the
+fixed offset itself.
 
 ## Canonical Command IDs
 

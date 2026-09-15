@@ -124,4 +124,43 @@ public sealed class DiseqcGotoAngleEncoderTests
         Assert.Empty(frame);
         Assert.Equal("offset_out_of_range", error);
     }
+
+    [Fact]
+    public void RejectsUsalsTargetOutsideProtocolRangeAfterRemovingOffset()
+    {
+        // East 180 deg with a west 0.04 deg fixed offset is encoded within
+        // range (180.0 deg east after rounding), but removing the offset to
+        // recover the USALS angle pushes the reported target to 180.04 deg,
+        // which is outside the +/-180 deg protocol range.
+        bool success = DiseqcGotoAngleEncoder.TryBuildFrame(
+            DiseqcMotorDirection.East,
+            "180",
+            -40_000,
+            out _,
+            out _,
+            out DiseqcMotorDirection effectiveDirection,
+            out _,
+            out int encodedAngleTenths,
+            out string error);
+
+        Assert.True(success, error);
+
+        int usalsMicrodegrees = DiseqcGotoAngleEncoder.ToSignedUsalsMicrodegrees(
+            effectiveDirection,
+            encodedAngleTenths,
+            -40_000);
+
+        Assert.Equal(180_040_000, usalsMicrodegrees);
+        Assert.False(DiseqcGotoAngleEncoder.IsWithinUsalsRange(usalsMicrodegrees));
+    }
+
+    [Theory]
+    [InlineData(-180_000_000, true)]
+    [InlineData(180_000_000, true)]
+    [InlineData(180_000_001, false)]
+    [InlineData(-180_000_001, false)]
+    public void IsWithinUsalsRangeChecksProtocolBounds(int signedMicrodegrees, bool expected)
+    {
+        Assert.Equal(expected, DiseqcGotoAngleEncoder.IsWithinUsalsRange(signedMicrodegrees));
+    }
 }

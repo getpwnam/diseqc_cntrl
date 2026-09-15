@@ -35,7 +35,7 @@ public sealed class DiseqcPositionEstimateTests
     }
 
     [Fact]
-    public void RestGotoAngleAdoptsOffsetAdjustedEncodedTargetOnCompletion()
+    public void GotoAngleAdoptsUsalsTargetWithoutExposingTheFixedOffset()
     {
         bool success = DiseqcCommandBuilder.TryBuildGotoAngularPosition(
             DiseqcMotorDirection.East,
@@ -53,14 +53,74 @@ public sealed class DiseqcPositionEstimateTests
         Assert.Equal(36_600_000, requestedMicrodegrees);
         Assert.Equal(DiseqcMotorDirection.East, effectiveDirection);
 
-        estimate.BeginGotoAngular(effectiveDirection, encodedAngleTenths * 100_000);
+        int usalsTarget = DiseqcGotoAngleEncoder.ToSignedUsalsMicrodegrees(
+            effectiveDirection,
+            encodedAngleTenths,
+            -3_380_000);
+
+        Assert.Equal(36_580_000, usalsTarget);
+
+        estimate.BeginGotoAngular(DiseqcMotorDirection.East, usalsTarget);
 
         Assert.False(estimate.HasEstimate);
-        Assert.Equal(33_200_000, estimate.PendingTargetMicrodegrees);
+        Assert.Equal(36_580_000, estimate.PendingTargetMicrodegrees);
         Assert.True(estimate.CompletePending());
-        Assert.Equal(33_200_000, estimate.EstimatedAngleMicrodegrees);
+        Assert.Equal(36_580_000, estimate.EstimatedAngleMicrodegrees);
         Assert.Equal("estimated", estimate.Confidence);
         Assert.Equal("goto_x", estimate.Source);
+    }
+
+    [Fact]
+    public void UsalsConversionKeepsWestRequestsNegativeWhenTheOffsetFlipsTheMotorDirection()
+    {
+        bool success = DiseqcCommandBuilder.TryBuildGotoAngularPosition(
+            DiseqcMotorDirection.West,
+            "1",
+            3_380_000,
+            out _,
+            out _,
+            out DiseqcMotorDirection effectiveDirection,
+            out _,
+            out int encodedAngleTenths,
+            out string error);
+
+        Assert.True(success, error);
+        Assert.Equal(DiseqcMotorDirection.East, effectiveDirection);
+
+        int usalsTarget = DiseqcGotoAngleEncoder.ToSignedUsalsMicrodegrees(
+            effectiveDirection,
+            encodedAngleTenths,
+            3_380_000);
+
+        Assert.Equal(-980_000, usalsTarget);
+
+        var estimate = new DiseqcPositionEstimate();
+        estimate.BeginGotoAngular(
+            usalsTarget < 0 ? DiseqcMotorDirection.West : DiseqcMotorDirection.East,
+            usalsTarget < 0 ? -usalsTarget : usalsTarget);
+
+        Assert.Equal(-980_000, estimate.PendingTargetMicrodegrees);
+        Assert.True(estimate.CompletePending());
+        Assert.Equal(-980_000, estimate.EstimatedAngleMicrodegrees);
+    }
+
+    [Fact]
+    public void UsalsTargetOutsideTheProtocolRangeLeavesThePositionUnknown()
+    {
+        int usalsTarget = DiseqcGotoAngleEncoder.ToSignedUsalsMicrodegrees(
+            DiseqcMotorDirection.East,
+            1_800,
+            -180_000_000);
+        var estimate = new DiseqcPositionEstimate();
+
+        Assert.Equal(360_000_000, usalsTarget);
+
+        estimate.BeginGotoAngular(DiseqcMotorDirection.East, usalsTarget);
+
+        Assert.False(estimate.HasPendingTarget);
+        Assert.False(estimate.HasEstimate);
+        Assert.False(estimate.CompletePending());
+        Assert.Equal("unknown", estimate.Confidence);
     }
 
     [Fact]
