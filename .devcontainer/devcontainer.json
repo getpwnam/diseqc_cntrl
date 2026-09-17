@@ -24,6 +24,13 @@
 	"customizations": {
 		"vscode": {
 			"settings": {
+				"window.title": "🐳 CONTAINER • ${rootName}",
+				"workbench.colorCustomizations": {
+					"titleBar.activeBackground": "#007ACC",
+					"titleBar.activeForeground": "#FFFFFF",
+					"statusBar.background": "#007ACC",
+					"statusBar.foreground": "#FFFFFF"
+				},
 				"cmake.preferredGenerators": [
 					"Ninja"
 				],
