@@ -777,7 +777,7 @@ else
   fi
 
   if ! command -v nanoff >/dev/null 2>&1; then
-    echo "nanoff not found in PATH. Install with: dotnet tool install -g nanoff" >&2
+    echo "nanoff not found in PATH. Rebuild the devcontainer or install with: dotnet tool install -g nanoff --version 2.5.163" >&2
     exit 2
   fi
 

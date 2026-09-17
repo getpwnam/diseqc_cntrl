@@ -1,5 +1,8 @@
 # ---------- Stage 1: Download toolchains ----------
-FROM ubuntu:24.04 AS downloader
+ARG UBUNTU_IMAGE=ubuntu:24.04@sha256:69cecf4bbf72d2d44a9eef1b71fb98c7fb973d78af11399deccef19beb008ad9
+ARG PYTHON_IMAGE=python:3.14.7-slim@sha256:cad9a2c871761c413caa6fdd6441c783451e740a48aaeba60ae62a8b53525ef6
+
+FROM ${UBUNTU_IMAGE} AS downloader
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -19,7 +22,7 @@ RUN mkdir -p /tmp/gcc \
     && rm -rf /tmp/gcc/share/doc /tmp/gcc/share/gcc-arm-none-eabi/samples
 
 # ---- CMake ----
-ARG CMAKE_VERSION=3.31.6
+ARG CMAKE_VERSION=3.31.12
 ARG CMAKE_SCRIPT=https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.sh
 
 RUN mkdir -p /tmp/cmake \
@@ -30,7 +33,7 @@ RUN mkdir -p /tmp/cmake \
 
 
 # ---------- Stage 2: Dev container ----------
-FROM python:3.11-slim AS devcontainer
+FROM ${PYTHON_IMAGE} AS devcontainer
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -108,11 +111,14 @@ RUN mkdir -p -m 755 /etc/apt/keyrings \
 RUN rm -rf /var/lib/apt/lists/*
 
 # ---- Install .NET SDK (includes NuGet, MSBuild) ----
+ARG DOTNET_SDK_VERSION=10.0.401
 RUN curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh \
     && chmod +x dotnet-install.sh \
-    && ./dotnet-install.sh --channel 8.0 --install-dir /usr/share/dotnet \
+    && ./dotnet-install.sh --version ${DOTNET_SDK_VERSION} --install-dir /usr/share/dotnet \
     && ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet \
     && rm dotnet-install.sh
+
+ENV DOTNET_ROOT=/usr/share/dotnet
 
 # ---- Create non-root user ----
 ARG USERNAME=vscode
@@ -141,7 +147,7 @@ RUN ln -sf /usr/bin/dotnet /usr/local/bin/msbuild \
     && ln -sf /usr/bin/dotnet /usr/local/bin/xbuild
 
 # ---- Install nanoFramework tools ----
-ARG NANOFF_VERSION=2.5.162
+ARG NANOFF_VERSION=2.5.163
 RUN mkdir -p /usr/local/share/dotnet-tools \
     && dotnet tool install --tool-path /usr/local/share/dotnet-tools nanoff --version ${NANOFF_VERSION} \
     && ln -sf /usr/local/share/dotnet-tools/nanoff /usr/local/bin/nanoff \
@@ -150,19 +156,30 @@ RUN mkdir -p /usr/local/share/dotnet-tools \
 # ---- hex2dfu ----
 ENV HEX2DFU_PATH=/usr/local/bin/hex2dfu
 
+ARG HEX2DFU_VERSION=3.1.3
+ARG HEX2DFU_SHA256=bab09231eb444c0479f221bfe7eda7ddc02fb42bffe62bb566d62aeff983b8c3
 RUN mkdir -p ${HEX2DFU_PATH} \
-    && curl -L https://github.com/nanoframework/hex2dfu/releases/latest/download/hex2dfu \
+    && curl -fL https://github.com/nanoframework/hex2dfu/releases/download/v${HEX2DFU_VERSION}/hex2dfu \
        -o ${HEX2DFU_PATH}/hex2dfu \
+    && echo "${HEX2DFU_SHA256}  ${HEX2DFU_PATH}/hex2dfu" | sha256sum --check --strict \
     && chmod +x ${HEX2DFU_PATH}/hex2dfu
 
 # ---- Python deps ----
-RUN pip install --no-cache-dir pyserial "kconfiglib>=14.1.0"
+RUN pip install --no-cache-dir pyserial==3.5 kconfiglib==14.1.0
 
 # ---- Source repos ----
 WORKDIR /workspace
 
-RUN git clone --depth 1 --branch stable-21.11.x https://github.com/chibios-upstream/chibios.git sources/ChibiOS \
- && git clone --depth 1 --branch chibios-21.11.x https://github.com/ChibiOS/ChibiOS-Contrib.git sources/ChibiOS-Contrib
+ARG CHIBIOS_COMMIT=13e8e2b4016103c9c13b6a0b12080ae0aecc068d
+ARG CHIBIOS_CONTRIB_COMMIT=7561ba75ce83bbc97c5935c4b59eceba90fa5da6
+RUN git init sources/ChibiOS \
+    && git -C sources/ChibiOS remote add origin https://github.com/chibios-upstream/chibios.git \
+    && git -C sources/ChibiOS fetch --depth 1 origin ${CHIBIOS_COMMIT} \
+    && git -C sources/ChibiOS checkout --detach FETCH_HEAD \
+    && git init sources/ChibiOS-Contrib \
+    && git -C sources/ChibiOS-Contrib remote add origin https://github.com/ChibiOS/ChibiOS-Contrib.git \
+    && git -C sources/ChibiOS-Contrib fetch --depth 1 origin ${CHIBIOS_CONTRIB_COMMIT} \
+    && git -C sources/ChibiOS-Contrib checkout --detach FETCH_HEAD
 
 # STM32 HAL
 #RUN git clone --depth 1 --branch v1.7.8 https://github.com/STMicroelectronics/stm32f0xx_hal_driver.git sources/stm32f0xx_hal_driver
