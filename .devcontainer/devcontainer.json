@@ -73,6 +73,8 @@
 	"remoteUser": "vscode",
 	"containerEnv": {
 		"SSH_AUTH_SOCK": "/tmp/ssh-agent.sock",
+		"LANG": "C.UTF-8",
+		"LC_ALL": "C.UTF-8",
 		"HISTFILE": "/home/vscode/commandhistory/.bash_history",
 		"HISTSIZE": "10000",
 		"HISTFILESIZE": "20000"

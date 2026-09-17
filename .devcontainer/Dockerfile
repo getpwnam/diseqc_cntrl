@@ -36,6 +36,8 @@ RUN mkdir -p /tmp/cmake \
 FROM ${PYTHON_IMAGE} AS devcontainer
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 # ---- Base packages ----
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -77,8 +79,8 @@ RUN apt-get install -y --no-install-recommends \
     unzip \
     # bsdmainutils required for hexdump
     bsdmainutils \
-    # mono dependencies for MSBuild support
-    libmono-system-drawing4.0-cil \
+    # Mono runtime and framework assemblies for the native NuGet CLI
+    mono-devel \
     # debug tools
     openocd \
     gdb-multiarch \
@@ -120,6 +122,18 @@ RUN curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh \
 
 ENV DOTNET_ROOT=/usr/share/dotnet
 
+# ---- Native NuGet CLI for the nanoFramework VS Code extension ----
+ARG NUGET_VERSION=7.9.0
+ARG NUGET_SHA256=992d70cac5b06c38efec91806caba64cdcc07e6d963a0959dbbbaf264d33b800
+RUN mkdir -p /usr/local/lib/nuget \
+     && curl -fL https://dist.nuget.org/win-x86-commandline/v${NUGET_VERSION}/nuget.exe \
+         -o /usr/local/lib/nuget/nuget.exe \
+     && echo "${NUGET_SHA256}  /usr/local/lib/nuget/nuget.exe" | sha256sum --check --strict \
+     && printf '%s\n' '#!/bin/sh' 'exec mono /usr/local/lib/nuget/nuget.exe "$@"' \
+         > /usr/local/bin/nuget \
+     && chmod +x /usr/local/bin/nuget \
+     && HOME=/tmp nuget help >/dev/null
+
 # ---- Create non-root user ----
 ARG USERNAME=vscode
 ARG USER_UID=1000
@@ -128,7 +142,8 @@ ARG USER_GID=1000
 RUN groupadd --gid ${USER_GID} ${USERNAME} \
     && useradd --uid ${USER_UID} --gid ${USER_GID} -m -s /bin/bash ${USERNAME} \
     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
-    && chmod 0440 /etc/sudoers.d/${USERNAME}
+    && chmod 0440 /etc/sudoers.d/${USERNAME} \
+    && install -d -o ${USER_UID} -g ${USER_GID} /home/${USERNAME}/.config/NuGet
 
 RUN gpasswd -a ${USERNAME} plugdev
 RUN gpasswd -a ${USERNAME} dialout

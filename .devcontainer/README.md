@@ -8,6 +8,7 @@ CUBLEY_F407_0_5 firmware and managed application.
 | Component | Version |
 | --- | --- |
 | .NET SDK | 10.0.401 |
+| NuGet CLI | 7.9.0 |
 | nanoff | 2.5.163 |
 | CMake | 3.31.12 |
 | Arm GNU toolchain | 15.2.rel1 |
@@ -29,7 +30,7 @@ Docker can also validate the image from the repository root:
 docker build --file .devcontainer/Dockerfile \
   --tag cubley-devcontainer:local .devcontainer
 docker run --rm cubley-devcontainer:local bash -lc \
-  'dotnet --version && nanoff --version && cmake --version && arm-none-eabi-gcc --version && python --version'
+  'dotnet --version && nuget help | head -n 1 && nanoff --version && cmake --version && arm-none-eabi-gcc --version && python --version'
 ```
 
 Run the host-side checks after rebuilding:
