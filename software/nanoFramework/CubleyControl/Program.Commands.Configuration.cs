@@ -74,6 +74,12 @@ namespace CubleyControl
                 return;
             }
 
+            if (head == "api-token")
+            {
+                HandleSetApiTokenCommand(tokens, valueTokens, reqId);
+                return;
+            }
+
             if (head == "diseqc")
             {
                 HandleSetDiseqcConfigurationCommand(tokens, reqId);
@@ -196,6 +202,7 @@ namespace CubleyControl
                 WriteHumanHeading("Configuration syntax");
                 _activeOutputSink(
                     "hostname <name|auto>\r\n" +
+                    "api-token <set TOKEN|clear>\r\n" +
                     "network <mode dhcp|static|address IP|mask MASK|gateway IP|dns auto|dns static DNS1 [DNS2]|defaults>\r\n" +
                     "diseqc <angle-limits EAST WEST|step-calibration EAST WEST|fixed-offset east|west DEGREES|defaults|off>\r\n" +
                     "show <running-config|run|startup-config|start|candidate-config|candidate|cand> [network|application|diseqc|all]\r\n" +
@@ -229,7 +236,16 @@ namespace CubleyControl
             if (topic == "hostname" || topic == "application")
             {
                 WriteHumanHeading("Application syntax");
-                _activeOutputSink("hostname <name|auto>\r\n");
+                _activeOutputSink(
+                    "hostname <name|auto>\r\n" +
+                    "api-token <set TOKEN|clear>\r\n");
+                return;
+            }
+
+            if (topic == "api-token")
+            {
+                WriteHumanHeading("API token syntax");
+                _activeOutputSink("api-token <set TOKEN|clear>\r\n");
                 return;
             }
 
@@ -332,6 +348,7 @@ namespace CubleyControl
             if (domain == "application" || domain == "all")
             {
                 _pendingApplicationConfiguration.Hostname = string.Empty;
+                _pendingApplicationConfiguration.ApiToken = string.Empty;
             }
 
             if (domain == "diseqc" || domain == "all")
@@ -445,7 +462,7 @@ namespace CubleyControl
                 return;
             }
 
-            _activeOutputSink("! cubley-config v4 " + source + "\r\n");
+            _activeOutputSink("! cubley-config v5 " + source + "\r\n");
             bool hideDefaults = source == "running";
             NetworkConfiguration defaultNetwork = NetworkConfiguration.CreateDefaults();
             ApplicationConfiguration defaultApplication = ApplicationConfiguration.CreateDefaults();
@@ -456,6 +473,10 @@ namespace CubleyControl
                     hideDefaults,
                     application.Hostname != defaultApplication.Hostname,
                     "hostname " + (string.IsNullOrEmpty(application.Hostname) ? "auto" : application.Hostname) + "\r\n");
+                EmitConfigurationLine(
+                    hideDefaults,
+                    application.ApiToken != defaultApplication.ApiToken,
+                    "api-token " + (string.IsNullOrEmpty(application.ApiToken) ? "unset" : "<redacted>") + "\r\n");
             }
 
             if (domain == "all" || domain == "network")
@@ -521,6 +542,7 @@ namespace CubleyControl
                 "hostname ",
                 string.IsNullOrEmpty(_applicationConfiguration.Hostname) ? "auto" : _applicationConfiguration.Hostname,
                 string.IsNullOrEmpty(_pendingApplicationConfiguration.Hostname) ? "auto" : _pendingApplicationConfiguration.Hostname);
+            changed |= EmitApiTokenDiff();
             changed |= EmitConfigurationDiffLine("network mode ", _networkConfiguration.Mode, _pendingNetworkConfiguration.Mode);
             changed |= EmitConfigurationDiffLine("network address ", _networkConfiguration.Address, _pendingNetworkConfiguration.Address);
             changed |= EmitConfigurationDiffLine("network mask ", _networkConfiguration.SubnetMask, _pendingNetworkConfiguration.SubnetMask);
@@ -554,6 +576,24 @@ namespace CubleyControl
 
             _activeOutputSink("- " + prefix + currentValue + "\r\n");
             _activeOutputSink("+ " + prefix + candidateValue + "\r\n");
+            return true;
+        }
+
+        private static bool EmitApiTokenDiff()
+        {
+            if (_applicationConfiguration.ApiToken == _pendingApplicationConfiguration.ApiToken)
+            {
+                return false;
+            }
+
+            _activeOutputSink(
+                "- api-token " +
+                (string.IsNullOrEmpty(_applicationConfiguration.ApiToken) ? "unset" : "<redacted>") +
+                "\r\n");
+            _activeOutputSink(
+                "+ api-token " +
+                (string.IsNullOrEmpty(_pendingApplicationConfiguration.ApiToken) ? "unset" : "<redacted>") +
+                "\r\n");
             return true;
         }
 

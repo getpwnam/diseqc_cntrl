@@ -48,6 +48,8 @@ Enter configuration mode with `configure`, `config`, or `conf`; an optional
 ```text
 cubley-a1b2c3> configure
 cubley-a1b2c3(config)# hostname <name|auto>
+cubley-a1b2c3(config)# api-token set <token>
+cubley-a1b2c3(config)# api-token clear
 cubley-a1b2c3(config)# network mode <dhcp|static>
 cubley-a1b2c3(config)# network address <ipv4>
 cubley-a1b2c3(config)# network mask <mask>
@@ -78,7 +80,10 @@ succeeds. `exit`, `end`, and empty-line `Ctrl+D` refuse to leave configuration
 mode while changes are pending. Use `commit` or `discard` explicitly.
 
 `show running-config` omits default-valued lines. Startup and candidate views
-render complete selected domains under a `! cubley-config v4 <source>` header.
+render complete selected domains under a `! cubley-config v5 <source>` header.
+API token values are always rendered as `<redacted>` and are omitted from
+command history and diagnostic logs. Tokens must contain 32 to 64 characters
+from `A-Za-z0-9._~-`; `openssl rand -hex 32` generates a suitable token.
 `show storage` reports network and application backend/load status. `debug on`
 shows successful setter details for the current USB session; failures are always
 shown.

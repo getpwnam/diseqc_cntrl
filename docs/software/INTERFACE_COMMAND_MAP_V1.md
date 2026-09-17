@@ -171,7 +171,7 @@ The output uses canonical commands only, includes explicit defaults, and has a
 version header. Blank lines and lines beginning with `!` are ignored on input.
 
 ```text
-! cubley-config v4 startup
+! cubley-config v5 startup
 hostname cubley-dish-01
 network mode static
 network address 192.168.1.40
@@ -369,7 +369,8 @@ commands use the operational grammar documented above.
 ## REST v2 Interface
 
 REST is the sole network interface. It listens for TLS 1.3 on TCP port 443 after
-the device has a usable IPv4 address. There is no client or application authentication.
+the device has a usable IPv4 address. Every request requires the configured
+`Authorization: Bearer <token>` credential; client certificates are not used.
 
 | Request | Purpose |
 |---|---|

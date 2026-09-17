@@ -365,7 +365,7 @@ namespace CubleyControl
             if (_usbConfigurationMode)
             {
                 return head == "network" || head == "net" ||
-                    head == "hostname" || head == "diseqc" ||
+                    head == "hostname" || head == "api-token" || head == "diseqc" ||
                     head == "commit" || head == "apply" ||
                     head == "discard" || head == "abort" ||
                     head == "load" || head == "defaults" ||
@@ -610,7 +610,31 @@ namespace CubleyControl
 
         private static string RedactCommandForLog(string command)
         {
-            return command;
+            return IsApiTokenSetCommand(command) ? "api-token set <redacted>" : command;
+        }
+
+        private static bool IsApiTokenSetCommand(string command)
+        {
+            const string prefix = "api-token set ";
+            if (command == null || command.Length <= prefix.Length)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < prefix.Length; index++)
+            {
+                char character = command[index];
+                if (character >= 'A' && character <= 'Z')
+                {
+                    character = (char)(character + ('a' - 'A'));
+                }
+                if (character != prefix[index])
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static string NormalizeCommandInput(string text)

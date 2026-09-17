@@ -703,7 +703,7 @@ namespace CubleyControl
         private static void StoreConsoleHistory(string line)
         {
             string command = NormalizeCommandInput(line);
-            if (command.Length == 0 || command[0] == '!')
+            if (command.Length == 0 || command[0] == '!' || IsApiTokenSetCommand(command))
             {
                 return;
             }

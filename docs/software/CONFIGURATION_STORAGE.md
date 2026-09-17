@@ -35,10 +35,12 @@ dw_lim=<west limit in microdegrees>
 de_step=<east step size in microdegrees>
 dw_step=<west step size in microdegrees>
 d_offset=<signed GoToX offset in microdegrees>
+api_token=<32 to 64 character API token, or empty>
 ```
 
-Schema 4 is the only supported application record version. Records written by
-earlier schema versions are rejected and must be reconfigured.
+Schema 5 is the current application record version. Schema-4 records are
+accepted with an empty API token and are rewritten as schema 5 on the next
+application-configuration commit. Earlier versions are rejected.
 
 Unknown keys, malformed retained values, invalid field combinations, an
 unsupported schema version, and invalid magic, length, or CRC cause the record
@@ -48,10 +50,11 @@ to be rejected. The application then uses schema-4 defaults.
 
 ### Capacity Budget
 
-The longest valid application values are a 63-character hostname, `180000000`
-for each angle limit and step calibration, and `-180000000` for the signed
-offset. Together these serialize to 162 payload bytes, or 178 meaningful bytes
-including the header. The complete 512-byte slot remains reserved and written.
+The longest valid application values are a 63-character hostname, a 64-character
+API token, `180000000` for each angle limit and step calibration, and
+`-180000000` for the signed offset. Together these serialize to 237 payload
+bytes, or 253 meaningful bytes including the header. The complete 512-byte slot
+remains reserved and written.
 
 The Ethernet HTTPS configuration estimate is:
 

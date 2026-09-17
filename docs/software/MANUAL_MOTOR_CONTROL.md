@@ -136,14 +136,17 @@ unique ID; retry the exact same body and ID after an ambiguous HTTP failure.
 base="https://<device-ip>"
 
 curl --cacert cubley.crt -fsS "$base/api/v2/commands" \
+    -H "Authorization: Bearer $CUBLEY_API_TOKEN" \
   -H 'Content-Type: application/json' \
   --data '{"v":2,"id":"step-east-001","op":"positioner.step","direction":"east","count":1}'
 
 curl --cacert cubley.crt -fsS "$base/api/v2/commands" \
+    -H "Authorization: Bearer $CUBLEY_API_TOKEN" \
   -H 'Content-Type: application/json' \
   --data '{"v":2,"id":"drive-west-001","op":"positioner.drive","direction":"west"}'
 
 curl --cacert cubley.crt -fsS "$base/api/v2/commands" \
+    -H "Authorization: Bearer $CUBLEY_API_TOKEN" \
   -H 'Content-Type: application/json' \
   --data '{"v":2,"id":"halt-001","op":"positioner.halt"}'
 ```
@@ -297,12 +300,16 @@ rotor.Halt();
 
 <script>
 let commandSequence = 0;
+const apiToken = '<configured-api-token>';
 
 function sendCommand(op, parameters = {}) {
     commandSequence += 1;
     return fetch('/api/v2/commands', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+            'Authorization': `Bearer ${apiToken}`,
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
             v: 2,
             id: `manual-${Date.now()}-${commandSequence}`,
