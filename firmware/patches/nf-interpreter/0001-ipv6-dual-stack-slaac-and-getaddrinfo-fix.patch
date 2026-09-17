@@ -1,0 +1,188 @@
+From: getpwnam/diseqc_cntrl
+Subject: [PATCH] Bring up IPv6 link-local/SLAAC and fix getaddrinfo() AF_INET6 marshalling
+Pinned nf-interpreter commit: 51945c3584cc7319106970c69f725b848b9bfe18
+Date: 2026-09-17
+
+Rationale (see getpwnam/diseqc_cntrl#159):
+ * targets/ChibiOS/_lwIP/nf_lwipthread.c left the LWIP_IPV6 branches as
+   unfinished "FIXME IPV6" stubs, so a netif built with LWIP_IPV6=1 never
+   created an IPv6 link-local address, never ran Duplicate Address
+   Detection, and never enabled SLAAC/Router Discovery.
+ * src/PAL/Lwip/lwIP_Sockets.cpp's GetAddrInfo() always cast the first
+   lwip_getaddrinfo() result to `struct sockaddr_in`, even when its family
+   was AF_INET6, and only ever marshalled that single record - silently
+   corrupting AAAA results and dropping every other A/AAAA record lwIP
+   returned for a hostname.
+
+These two fixes are the minimum required for dual-stack IPv4/IPv6 to work
+end-to-end once LWIP_IPV6 is turned on (via target_lwipopts.h). They are
+carried as a patch, rather than a submodule commit, because nf-interpreter
+is a pinned upstream submodule this repository does not fork; the patch is
+applied to the working tree by firmware/bootstrap.sh after the submodule is
+checked out, and is idempotent (already-applied patches are detected and
+skipped).
+
+--- a/src/PAL/Lwip/lwIP_Sockets.cpp
++++ b/src/PAL/Lwip/lwIP_Sockets.cpp
+@@ -804,27 +804,67 @@ int LWIP_SOCKETS_Driver::GetAddrInfo(
+         ///
+         /// Marshal addrinfo data
+         ///
+-        struct sockaddr_in *lwip_sockaddr_in = ((struct sockaddr_in *)lwipAddrinfo->ai_addr);
+-        ip_addr_t addr;
++        // Walk the full result chain returned by lwIP (it may contain a mix of A and AAAA
++        // records) instead of only looking at the first entry. Each entry's sockaddr must be
++        // interpreted according to its own address family: AF_INET records use sockaddr_in,
++        // while AF_INET6 records use sockaddr_in6 - treating the latter as a sockaddr_in would
++        // read past the IPv4 address field and corrupt the marshalled IPv6 address/port.
++        for (struct addrinfo *cur = lwipAddrinfo; cur != NULL; cur = cur->ai_next)
++        {
++            ip_addr_t addr;
++            short family;
++            u_short port;
++
++            memset(&addr, 0, sizeof(addr));
++
++#if LWIP_IPV6
++            if (cur->ai_family == AF_INET6)
++            {
++                struct sockaddr_in6 *lwip_sockaddr_in6 = (struct sockaddr_in6 *)cur->ai_addr;
++
++                family = SOCK_AF_INET6;
++                port = lwip_sockaddr_in6->sin6_port;
++
++                IP_SET_TYPE_VAL(addr, IPADDR_TYPE_V6);
++                memcpy(addr.u_addr.ip6.addr, &lwip_sockaddr_in6->sin6_addr, sizeof(addr.u_addr.ip6.addr));
++            }
++            else
++#endif
++            {
++                struct sockaddr_in *lwip_sockaddr_in = (struct sockaddr_in *)cur->ai_addr;
++
++                family = SOCK_AF_INET;
++                port = lwip_sockaddr_in->sin_port;
+ 
+ #if LWIP_IPV6
+-        addr.u_addr.ip4.addr = lwip_sockaddr_in->sin_addr.s_addr;
++                IP_SET_TYPE_VAL(addr, IPADDR_TYPE_V4);
++                addr.u_addr.ip4.addr = lwip_sockaddr_in->sin_addr.s_addr;
+ #else
+-        addr.addr = lwip_sockaddr_in->sin_addr.s_addr;
++                addr.addr = lwip_sockaddr_in->sin_addr.s_addr;
+ #endif
++            }
+ 
+-        ai = CreateAddressRecord(
+-            (lwip_sockaddr_in->sin_family == AF_INET6) ? SOCK_AF_INET6 : SOCK_AF_INET,
+-            addr,
+-            lwip_sockaddr_in->sin_port,
+-            lwipAddrinfo->ai_canonname,
+-            hints);
++            SOCK_addrinfo *entry = CreateAddressRecord(family, addr, port, cur->ai_canonname, hints);
+ 
+-        if (ai == NULL)
+-        {
+-            // Out of memory
+-            lwip_freeaddrinfo(lwipAddrinfo);
+-            return -1;
++            if (entry == NULL)
++            {
++                // Out of memory: free anything already marshalled and bail out
++                FreeAddrInfo(ai);
++                lwip_freeaddrinfo(lwipAddrinfo);
++                return -1;
++            }
++
++            // Preserve lwIP's ordering (A/AAAA priority as resolved) by appending at the tail
++            if (ai == NULL)
++            {
++                ai = entry;
++            }
++            else
++            {
++                nextAi->ai_next = entry;
++            }
++
++            nextAi = entry;
+         }
+ 
+         *res = ai;
+diff --git a/targets/ChibiOS/_lwIP/nf_lwipthread.c b/targets/ChibiOS/_lwIP/nf_lwipthread.c
+index 3e964e9ab..dbdef25fb 100644
+--- a/targets/ChibiOS/_lwIP/nf_lwipthread.c
++++ b/targets/ChibiOS/_lwIP/nf_lwipthread.c
+@@ -236,6 +236,26 @@ struct netif *nf_getNetif()
+     return &thisif;
+ }
+ 
++#if LWIP_IPV6
++/**
++ * @brief Enables IPv6 link-local addressing (with Duplicate Address Detection) and
++ * stateless address autoconfiguration (SLAAC) via Router Discovery on the given netif.
++ *
++ * Must run in the tcpip thread context (invoked through @p netifapi_netif_common),
++ * as it touches netif/ND6 state that is not otherwise protected by a lock.
++ */
++static void nf_lwip_ip6_start(struct netif *netif)
++{
++    // Derive the link-local address from the MAC address; this also kicks off DAD.
++    netif_create_ip6_linklocal_address(netif, 1);
++
++    // Accept Router Advertisements and build SLAAC global addresses / default route
++    // from them (RFC 4862). DNS servers advertised via RDNSS (RFC 8106) are picked
++    // up automatically by nd6.c when LWIP_ND6_RDNSS_MAX_DNS_SERVERS > 0.
++    netif_set_ip6_autoconfig_enabled(netif, 1);
++}
++#endif
++
+ void lwipDefaultLinkUpCB(void *p)
+ {
+     struct netif *ifc = (struct netif *)p;
+@@ -316,16 +336,12 @@ static THD_FUNCTION(lwip_thread, p)
+         {
+             thisif.hwaddr[i] = opts->macaddress[i];
+         }
+-#if LWIP_IPV6
+-        // FIXME IPV6
+-        // ip.u_addr = opts->address;
+-        // gateway.u_addr = opts->gateway;
+-        // netmask.u_addr = opts->netmask;
+-#else
++        // IPv4 static/DHCP configuration. This is independent of LWIP_IPV6: the netif is
++        // always given an IPv4 address (or ANY, when DHCP will supply one). IPv6 addressing
++        // (link-local + SLAAC) is configured separately, after the netif is added, below.
+         ip.addr = opts->address;
+         gateway.addr = opts->gateway;
+         netmask.addr = opts->netmask;
+-#endif
+         addressMode = opts->addrMode;
+ 
+ #if LWIP_NETIF_HOSTNAME
+@@ -343,16 +359,9 @@ static THD_FUNCTION(lwip_thread, p)
+         thisif.hwaddr[3] = LWIP_ETHADDR_3;
+         thisif.hwaddr[4] = LWIP_ETHADDR_4;
+         thisif.hwaddr[5] = LWIP_ETHADDR_5;
+-#if LWIP_IPV6
+-        // FIXME IPV6
+-        // LWIP_IPADDR(&ip);
+-        // LWIP_GATEWAY(&gateway);
+-        // LWIP_NETMASK(&netmask);
+-#else
+         LWIP_IPADDR(&ip);
+         LWIP_GATEWAY(&gateway);
+         LWIP_NETMASK(&netmask);
+-#endif
+     }
+ 
+ #if LWIP_NETIF_HOSTNAME
+@@ -387,6 +396,10 @@ static THD_FUNCTION(lwip_thread, p)
+     netifapi_netif_set_default(&thisif);
+     netifapi_netif_set_up(&thisif);
+ 
++#if LWIP_IPV6
++    netifapi_netif_common(&thisif, nf_lwip_ip6_start, NULL);
++#endif
++
+     /* Setup event sources.*/
+     evtObjectInit(&evt, LWIP_LINK_POLL_INTERVAL);
+     evtStart(&evt);
