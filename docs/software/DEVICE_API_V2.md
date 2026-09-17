@@ -270,7 +270,7 @@ migrating an op from `lines` to `data` — increments it.
 
 ## Known gaps
 
-- REST uses TLS 1.2 or TLS 1.3 on TCP port 443, but has no client or application
+- REST uses TLS 1.3 on TCP port 443, but has no client or application
   authentication. Restrict network access to trusted controllers.
 - Clients must validate or pin the provisioned device certificate. Disabling
   certificate validation provides encryption but does not prevent interception.

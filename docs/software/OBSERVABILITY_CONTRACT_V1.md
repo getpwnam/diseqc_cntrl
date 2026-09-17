@@ -106,6 +106,6 @@ for example `source=irq` or `source=health`.
 
 ## Data Handling
 
-Diagnostics must not contain secrets. REST is encrypted with TLS 1.2 or TLS 1.3
-but has no client or application authentication, so TCP port 443 must be
-restricted to trusted controllers and networks.
+Diagnostics must not contain secrets. REST is encrypted with TLS 1.3 but has no
+client or application authentication, so TCP port 443 must be restricted to
+trusted controllers and networks.

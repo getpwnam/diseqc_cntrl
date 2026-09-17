@@ -368,9 +368,8 @@ commands use the operational grammar documented above.
 
 ## REST v2 Interface
 
-REST is the sole network interface. It listens for TLS 1.2 or TLS 1.3 on TCP port
-443 after the device has a usable IPv4 address. There is no client or application
-authentication.
+REST is the sole network interface. It listens for TLS 1.3 on TCP port 443 after
+the device has a usable IPv4 address. There is no client or application authentication.
 
 | Request | Purpose |
 |---|---|

@@ -11,7 +11,7 @@ been fully exercised on hardware. The canonical contract is
 - Read endpoints: `/api/v2/health`, `/api/v2/state/positioner`,
   `/api/v2/state/lnb`, and `/api/v2/jobs/{job}`
 - Content type: `application/json`
-- TLS 1.2 or TLS 1.3 encryption is required. Clients must trust or pin the provisioned
+- TLS 1.3 encryption is required. Clients must trust or pin the provisioned
   device certificate; there is no client-certificate or application authentication.
 - HTTP status-code mappings are not yet contractual. Clients should parse the
   JSON response envelope.

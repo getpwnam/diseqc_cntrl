@@ -52,10 +52,7 @@ namespace CubleyControl
                                 SslVerification = SslVerification.NoVerification,
                                 UseStoredDeviceCertificate = true
                             };
-                            secureClient.AuthenticateAsServer(
-                                null,
-                                false,
-                                SslProtocols.Tls12 | SslProtocols.Tls13);
+                            secureClient.AuthenticateAsServer(null, false, SslProtocols.Tls13);
                             HandleRestRequest(secureClient);
                         }
                         catch (Exception ex)
