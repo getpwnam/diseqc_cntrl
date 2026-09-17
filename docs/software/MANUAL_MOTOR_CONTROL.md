@@ -133,17 +133,17 @@ Network automation uses `POST /api/v2/commands`. Give every logical action a
 unique ID; retry the exact same body and ID after an ambiguous HTTP failure.
 
 ```bash
-base="http://<device-ip>"
+base="https://<device-ip>"
 
-curl -fsS "$base/api/v2/commands" \
+curl --cacert cubley.crt -fsS "$base/api/v2/commands" \
   -H 'Content-Type: application/json' \
   --data '{"v":2,"id":"step-east-001","op":"positioner.step","direction":"east","count":1}'
 
-curl -fsS "$base/api/v2/commands" \
+curl --cacert cubley.crt -fsS "$base/api/v2/commands" \
   -H 'Content-Type: application/json' \
   --data '{"v":2,"id":"drive-west-001","op":"positioner.drive","direction":"west"}'
 
-curl -fsS "$base/api/v2/commands" \
+curl --cacert cubley.crt -fsS "$base/api/v2/commands" \
   -H 'Content-Type: application/json' \
   --data '{"v":2,"id":"halt-001","op":"positioner.halt"}'
 ```

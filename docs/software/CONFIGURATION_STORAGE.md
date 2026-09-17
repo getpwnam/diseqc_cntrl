@@ -46,6 +46,38 @@ to be rejected. The application then uses schema-4 defaults.
 
 ## Active Internal Flash Backend
 
+### Capacity Budget
+
+The longest valid application values are a 63-character hostname, `180000000`
+for each angle limit and step calibration, and `-180000000` for the signed
+offset. Together these serialize to 162 payload bytes, or 178 meaningful bytes
+including the header. The complete 512-byte slot remains reserved and written.
+
+The Ethernet HTTPS configuration estimate is:
+
+| Record | Allocated bytes |
+|---|---:|
+| nanoFramework Ethernet interface | 117 |
+| X.509 device-certificate header | 8 |
+| Representative P-256 certificate and private-key PEM bundle | 1,067 |
+| Cubley application record reservation | 512 |
+| **Total** | **1,704 (10.40%)** |
+| **Remaining before the Cubley reservation** | **14,680** |
+
+The representative credential uses a maximum-length DNS label in both the
+subject common name and subject alternative name, plus an IPv4 alternative
+name. Certificate size varies with encoded subject and extensions, so
+provisioning must check the actual combined PEM size.
+
+nanoFramework's generic certificate writer uses `__nanoConfig_end__` and is not
+aware of the final 512-byte Cubley reservation. The combined size of all
+nanoFramework blocks must therefore be limited to 15,872 bytes. With one
+117-byte Ethernet record and one 8-byte device-certificate header, the device
+certificate payload must not exceed 15,747 bytes. CA bundles, wireless records,
+or additional certificates reduce that limit. This Ethernet target does not
+use wireless station, wireless AP, or CA-root records in its HTTPS-server
+profile.
+
 The STM32 configuration sector spans `0x0800C000` through `0x0800FFFF`. The
 final 512 bytes, `0x0800FE00` through `0x0800FFFF`, are reserved for the
 application record. Standard nanoFramework configuration data must remain below

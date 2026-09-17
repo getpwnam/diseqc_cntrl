@@ -6,12 +6,13 @@ been fully exercised on hardware. The canonical contract is
 
 ## Transport
 
-- Base URL: `http://<device-ip>`
+- Base URL: `https://<device-ip>`
 - Endpoint: `POST /api/v2/commands`
 - Read endpoints: `/api/v2/health`, `/api/v2/state/positioner`,
   `/api/v2/state/lnb`, and `/api/v2/jobs/{job}`
 - Content type: `application/json`
-- No authentication or TLS; use only on a trusted network.
+- TLS 1.2 or TLS 1.3 encryption is required. Clients must trust or pin the provisioned
+  device certificate; there is no client-certificate or application authentication.
 - HTTP status-code mappings are not yet contractual. Clients should parse the
   JSON response envelope.
 
@@ -177,7 +178,7 @@ blindly.
 ## Example
 
 ```bash
-curl -X POST "http://<device-ip>/api/v2/commands" \
+curl --cacert cubley.crt -X POST "https://<device-ip>/api/v2/commands" \
   -H "Content-Type: application/json" \
   --data '{"v":2,"id":"goto-12-001","op":"positioner.goto","position":12}'
 ```
@@ -190,7 +191,8 @@ offset and angular limits, and a fresh request ID for every logical command.
 Only complete each job after observing that the motor has physically stopped.
 
 ```bash
-BASE_URL="http://<device-ip>/api/v2/commands"
+BASE_URL="https://<device-ip>/api/v2/commands"
+export CURL_CA_BUNDLE="cubley.crt"
 run_id="cal-$(date +%s)"
 
 curl -fsS "$BASE_URL" \
