@@ -107,6 +107,6 @@ for example `source=irq` or `source=health`.
 ## Data Handling
 
 Diagnostics must not contain secrets. REST is encrypted with TLS 1.3 but has no
-client-certificate authentication. Bearer-token authentication is required, and
-TCP port 443 must still be restricted to
-trusted controllers and networks.
+client-certificate authentication. Bearer-token authentication applies only when
+a token is configured; an unset token disables it. TCP port 443 must still be
+restricted to trusted controllers and networks.

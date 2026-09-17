@@ -81,9 +81,10 @@ mode while changes are pending. Use `commit` or `discard` explicitly.
 
 `show running-config` omits default-valued lines. Startup and candidate views
 render complete selected domains under a `! cubley-config v5 <source>` header.
-API token values are always rendered as `<redacted>` and are omitted from
-command history and diagnostic logs. Tokens must contain 32 to 64 characters
-from `A-Za-z0-9._~-`; `openssl rand -hex 32` generates a suitable token.
+Configured API token values are rendered in cleartext and token-setting commands
+are retained in command history. Protect console access and captured output.
+Tokens must contain 32 to 64 characters from `A-Za-z0-9._~-`;
+`openssl rand -hex 32` generates a suitable token.
 `show storage` reports network and application backend/load status. `debug on`
 shows successful setter details for the current USB session; failures are always
 shown.

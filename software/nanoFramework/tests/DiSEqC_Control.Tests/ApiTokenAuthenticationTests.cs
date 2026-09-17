@@ -46,12 +46,12 @@ public sealed class ApiTokenAuthenticationTests
     }
 
     [Fact]
-    public void AuthorizationRequiresConfiguredMatchingToken()
+    public void AuthorizationIsDisabledWhenTokenIsUnsetAndOtherwiseRequiresMatch()
     {
         string validHeaders = "GET /api/v2/health HTTP/1.1\r\nAuthorization: Bearer " + Token + "\r\n\r\n";
         string wrongHeaders = "GET /api/v2/health HTTP/1.1\r\nAuthorization: Bearer ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef\r\n\r\n";
 
-        Assert.False(ApiTokenAuthentication.IsAuthorized(validHeaders, string.Empty));
+        Assert.True(ApiTokenAuthentication.IsAuthorized("GET /api/v2/health HTTP/1.1\r\n\r\n", string.Empty));
         Assert.False(ApiTokenAuthentication.IsAuthorized(wrongHeaders, Token));
         Assert.True(ApiTokenAuthentication.IsAuthorized(validHeaders, Token));
     }

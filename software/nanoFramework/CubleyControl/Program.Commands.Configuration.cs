@@ -476,7 +476,7 @@ namespace CubleyControl
                 EmitConfigurationLine(
                     hideDefaults,
                     application.ApiToken != defaultApplication.ApiToken,
-                    "api-token " + (string.IsNullOrEmpty(application.ApiToken) ? "unset" : "<redacted>") + "\r\n");
+                    "api-token " + FormatApiTokenCommand(application.ApiToken) + "\r\n");
             }
 
             if (domain == "all" || domain == "network")
@@ -581,20 +581,15 @@ namespace CubleyControl
 
         private static bool EmitApiTokenDiff()
         {
-            if (_applicationConfiguration.ApiToken == _pendingApplicationConfiguration.ApiToken)
-            {
-                return false;
-            }
+            return EmitConfigurationDiffLine(
+                "api-token ",
+                FormatApiTokenCommand(_applicationConfiguration.ApiToken),
+                FormatApiTokenCommand(_pendingApplicationConfiguration.ApiToken));
+        }
 
-            _activeOutputSink(
-                "- api-token " +
-                (string.IsNullOrEmpty(_applicationConfiguration.ApiToken) ? "unset" : "<redacted>") +
-                "\r\n");
-            _activeOutputSink(
-                "+ api-token " +
-                (string.IsNullOrEmpty(_pendingApplicationConfiguration.ApiToken) ? "unset" : "<redacted>") +
-                "\r\n");
-            return true;
+        private static string FormatApiTokenCommand(string token)
+        {
+            return string.IsNullOrEmpty(token) ? "clear" : "set " + token;
         }
 
         private static string FormatConfiguredDnsCommand(NetworkConfiguration configuration)

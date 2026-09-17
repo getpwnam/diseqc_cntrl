@@ -178,17 +178,16 @@ network address 192.168.1.40
 network mask 255.255.255.0
 network gateway 192.168.1.1
 network dns static 192.168.1.1 1.1.1.1
+api-token set 0123456789abcdef0123456789abcdef
 diseqc angle-limits 50 50
 diseqc step-calibration 0.112658 0.112658
 diseqc fixed-offset west 3.38
 ```
 
 Configuration rendering is generated from the typed configuration objects, not
-from either persistence backend's payload. Passwords are accepted on input but
-are never emitted in cleartext. Consequently, normal textual output is complete
-except for secret material and is not a credential backup. Replaying the redacted
-password comment leaves the candidate's existing password unchanged; restoring to
-a new device requires entering the password separately before `commit`.
+from either persistence backend's payload. Configured API tokens are emitted in
+cleartext, so configuration output is credential-bearing material and must be
+protected accordingly.
 
 ## Operational Command Reference
 
@@ -369,8 +368,9 @@ commands use the operational grammar documented above.
 ## REST v2 Interface
 
 REST is the sole network interface. It listens for TLS 1.3 on TCP port 443 after
-the device has a usable IPv4 address. Every request requires the configured
-`Authorization: Bearer <token>` credential; client certificates are not used.
+the device has a usable IPv4 address. When configured, every request requires
+the `Authorization: Bearer <token>` credential; an unset token disables
+authentication. Client certificates are not used.
 
 | Request | Purpose |
 |---|---|

@@ -13,8 +13,9 @@ been fully exercised on hardware. The canonical contract is
 - Content type: `application/json`
 - TLS 1.3 encryption is required. Clients must trust or pin the provisioned
   device certificate; client certificates are not requested.
-- Every request requires `Authorization: Bearer <token>`. Missing or incorrect
-  credentials return HTTP 401 before routing.
+- When a token is configured, every request requires
+  `Authorization: Bearer <token>` and missing or incorrect credentials return
+  HTTP 401 before routing. An unset token disables authentication.
 - HTTP status-code mappings are not yet contractual. Clients should parse the
   JSON response envelope.
 

@@ -9,10 +9,11 @@ native configuration also compiles TLS 1.3, TLS client, RSA, and additional
 cipher-suite support even though this REST listener does not request them.
 
 TLS authenticates the server only; the API does not request client certificates.
-Every REST request additionally requires the configured bearer token. Network
-ACLs remain necessary because a bearer token grants full API access. A client
-that disables server-certificate validation can expose that token to an active
-interceptor.
+When an API token is configured, every REST request additionally requires that
+bearer token. An unset token disables application authentication. Network ACLs
+remain necessary, particularly when authentication is disabled. A client that
+disables server-certificate validation can expose a configured token to an
+active interceptor.
 
 ## Provision A Device Credential
 
@@ -51,10 +52,12 @@ cubley-a1b2c3(config)# api-token set <generated-token>
 cubley-a1b2c3(config*)# commit
 ```
 
-The token is stored in plaintext in the internal configuration sector. Its value
-is redacted from configuration displays and diagnostics and is not retained in
-console history. Until a token is committed, all REST requests return HTTP 401.
-Use `api-token clear` followed by `commit` to revoke REST access completely.
+The token is stored in plaintext in the internal configuration sector and may be
+shown in configuration output and command history. Diagnostic logs redact the
+token value. When a token is committed, missing or incorrect credentials return
+HTTP 401. Use
+`api-token clear` followed by `commit` to disable authentication and permit
+requests without an authorization header.
 
 ## Client Test
 
@@ -77,7 +80,7 @@ Measurements are from Debug builds of CUBLEY_F407_0_5:
 | Stock TLS 1.2 and TLS 1.3 configuration | 696,696 bytes | 96.64% |
 | Experimental TLS 1.2 single-suite profile | 458,848 bytes | 63.65% |
 
-The managed CubleyControl deployment bundle is 190,788 bytes. Current link
+The managed CubleyControl deployment bundle is 190,728 bytes. Current link
 inspection confirms that TLS 1.2 record and handshake code is absent while TLS
 1.3, RSA, PEM, and the hardware entropy path remain present. The single-suite
 result is retained as a measured optimization option, not the active build

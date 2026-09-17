@@ -8,7 +8,7 @@ namespace CubleyControl
         {
             if (string.IsNullOrEmpty(expectedToken))
             {
-                return false;
+                return true;
             }
 
             string providedToken;
