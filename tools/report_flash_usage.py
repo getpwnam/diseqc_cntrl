@@ -66,8 +66,8 @@ def artifact_size(path: Path) -> int:
 
 
 def validate_layout(repo: Path) -> None:
-    clr_linker = repo / "firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/STM32F407xG_CLR-DEBUG.ld"
-    block_storage = repo / "firmware/targets-local/CUBLEY_F407_0_5/common/Device_BlockStorage-DEBUG.c"
+    clr_linker = repo / "firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/STM32F407xG_CLR.ld"
+    block_storage = repo / "firmware/targets-local/CUBLEY_F407_0_5/common/Device_BlockStorage.c"
     expected_linker_tokens = ("org = 0x08010000", "len = 1M - 64k - 256k", "org = 0x080C0000", "len = 256k")
     expected_storage_tokens = ("0x08000000", "0x4000", "0x08010000", "0x10000", "0x08020000", "0x20000")
 
