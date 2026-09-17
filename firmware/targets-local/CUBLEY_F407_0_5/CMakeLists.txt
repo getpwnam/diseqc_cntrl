@@ -6,6 +6,14 @@
 include(binutils.common)
 include(binutils.ChibiOS)
 
+set(
+    MBEDTLS_USER_CONFIG_FILE
+    "${CMAKE_CURRENT_LIST_DIR}/mbedtls_tls13_only.h"
+    CACHE FILEPATH
+    "Cubley Mbed TLS user configuration"
+    FORCE
+)
+
 # Ensure nanoCLR build units resolve target_board.h from the nanoCLR-generated
 # include directory instead of the nanoBooter one.
 set(_cubley_boards_inc_clr "${CMAKE_BINARY_DIR}/targets/${RTOS}/${TARGET_BOARD}/nanoCLR")
@@ -28,6 +36,15 @@ nf_setup_target_build(
     CLR_EXTRA_LINKMAP_PROPERTIES
         ",--library-path=${CMAKE_SOURCE_DIR}/targets/ChibiOS/_common,--defsym=__main_stack_size__=0x400,--defsym=__process_stack_size__=0x800,--defsym=__crt_heap_size__=0x10000"
 )
+
+foreach(_cubley_mbedtls_target mbedtls mbedcrypto mbedx509 p256m everest NF_Network)
+    if(TARGET ${_cubley_mbedtls_target})
+        target_compile_definitions(
+            ${_cubley_mbedtls_target}
+            PUBLIC MBEDTLS_USER_CONFIG_FILE="${MBEDTLS_USER_CONFIG_FILE}"
+        )
+    endif()
+endforeach()
 
 # Keep wire protocol on UART even when USB CDC is enabled by compiling the
 # shared receiver thread with USB serial gating disabled.

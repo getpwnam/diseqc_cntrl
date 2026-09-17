@@ -270,9 +270,10 @@ migrating an op from `lines` to `data` — increments it.
 
 ## Known gaps
 
-- REST has no authentication or authorization. Network access to TCP port 80
-  must be restricted to trusted controllers.
-- REST has no TLS.
+- REST uses TLS 1.3 on TCP port 443, but has no client or application
+  authentication. Restrict network access to trusted controllers.
+- Clients must validate or pin the provisioned device certificate. Disabling
+  certificate validation provides encryption but does not prevent interception.
 - `ts_ms` is an uptime tick, not wall clock. There is no RTC.
 - REST clients must poll state and job resources; there is no push notification
   interface.

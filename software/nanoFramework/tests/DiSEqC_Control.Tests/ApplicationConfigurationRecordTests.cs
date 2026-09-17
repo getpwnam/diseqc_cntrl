@@ -6,6 +6,26 @@ namespace DiSEqC_Control.Tests;
 public sealed class ApplicationConfigurationRecordTests
 {
     [Fact]
+    public void MaximumValidValuesUse162PayloadBytes()
+    {
+        ApplicationConfiguration expected = ApplicationConfiguration.CreateDefaults();
+        expected.Hostname = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijk";
+        expected.DiseqcEastLimitMicrodegrees = ApplicationConfiguration.MaximumDiseqcAngleMicrodegrees;
+        expected.DiseqcWestLimitMicrodegrees = ApplicationConfiguration.MaximumDiseqcAngleMicrodegrees;
+        expected.DiseqcEastStepMicrodegrees = ApplicationConfiguration.MaximumDiseqcAngleMicrodegrees;
+        expected.DiseqcWestStepMicrodegrees = ApplicationConfiguration.MaximumDiseqcAngleMicrodegrees;
+        expected.DiseqcGotoOffsetMicrodegrees = -ApplicationConfiguration.MaximumDiseqcAngleMicrodegrees;
+
+        Assert.Equal(ApplicationConfiguration.MaximumHostnameLength, expected.Hostname.Length);
+        Assert.Equal(162, expected.ToPayload().Length);
+        Assert.True(ApplicationConfigurationRecord.TryEncode(expected, uint.MaxValue, out byte[] record, out string encodeError), encodeError);
+        Assert.Equal(ApplicationConfigurationRecord.RecordSize, record.Length);
+        Assert.Equal(162, record[6] | (record[7] << 8));
+        Assert.True(ApplicationConfigurationRecord.TryDecode(record, out ApplicationConfiguration actual, out _, out string decodeError), decodeError);
+        Assert.Equal(expected.ToPayload(), actual.ToPayload());
+    }
+
+    [Fact]
     public void RoundTripPreservesDiseqcPositioningConfiguration()
     {
         ApplicationConfiguration expected = ApplicationConfiguration.CreateDefaults();

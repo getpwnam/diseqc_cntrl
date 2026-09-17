@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Threading;
 
@@ -8,7 +9,7 @@ namespace CubleyControl
 {
     public static partial class Program
     {
-        private const int RestPort = 80;
+        private const int RestPort = 443;
         private const string RestCommandPath = "/api/v2/commands";
         private const int RestHeaderMaxLength = 768;
         private const int RestSocketTimeoutMs = 2000;
@@ -41,15 +42,36 @@ namespace CubleyControl
                     while (true)
                     {
                         Socket client = listener.Accept();
+                        SslStream secureClient = null;
                         try
                         {
                             client.ReceiveTimeout = RestSocketTimeoutMs;
                             client.SendTimeout = RestSocketTimeoutMs;
-                            HandleRestRequest(client);
+                            secureClient = new SslStream(client)
+                            {
+                                SslVerification = SslVerification.NoVerification,
+                                UseStoredDeviceCertificate = true
+                            };
+                            secureClient.AuthenticateAsServer(null, false, SslProtocols.Tls13);
+                            HandleRestRequest(secureClient);
+                        }
+                        catch (Exception ex)
+                        {
+                            WriteStructuredDebug(
+                                "REST",
+                                "schema=1 sub=rest comp=tls operation=client stat=error detail=" +
+                                SanitizeToken(ex.Message));
                         }
                         finally
                         {
-                            client.Close();
+                            if (secureClient != null)
+                            {
+                                secureClient.Close();
+                            }
+                            else
+                            {
+                                client.Close();
+                            }
                         }
                     }
                 }
@@ -85,14 +107,14 @@ namespace CubleyControl
                 interfaces[0].IPv4Address != "0.0.0.0";
         }
 
-        private static void HandleRestRequest(Socket client)
+        private static void HandleRestRequest(SslStream client)
         {
             byte[] request = new byte[RestHeaderMaxLength + ApiCommandEnvelopeMaxLength];
             int received = 0;
             int bodyOffset = -1;
             while (received < request.Length && bodyOffset < 0)
             {
-                int count = client.Receive(request, received, request.Length - received, SocketFlags.None);
+                int count = client.Read(request, received, request.Length - received);
                 if (count <= 0)
                 {
                     WriteRestResponse(client, 400, null);
@@ -153,7 +175,7 @@ namespace CubleyControl
             int required = bodyOffset + contentLength;
             while (received < required)
             {
-                int count = client.Receive(request, received, required - received, SocketFlags.None);
+                int count = client.Read(request, received, required - received);
                 if (count <= 0)
                 {
                     WriteRestResponse(client, 400, null);
@@ -171,7 +193,7 @@ namespace CubleyControl
             WriteRestResponse(client, 200, responseBody);
         }
 
-        private static void HandleRestGetRequest(Socket client, string path)
+        private static void HandleRestGetRequest(SslStream client, string path)
         {
             if (path == RestHealthPath)
             {
@@ -279,7 +301,7 @@ namespace CubleyControl
                 : -1;
         }
 
-        private static void WriteRestResponse(Socket client, int statusCode, string body)
+        private static void WriteRestResponse(SslStream client, int statusCode, string body)
         {
             string reason = statusCode == 200 ? "OK" :
                 (statusCode == 404 ? "Not Found" :
@@ -290,17 +312,7 @@ namespace CubleyControl
                 "Content-Type: application/json\r\n" +
                 "Content-Length: " + payload.Length.ToString() + "\r\n" +
                 "Connection: close\r\n\r\n" + payload);
-            int sent = 0;
-            while (sent < response.Length)
-            {
-                int count = client.Send(response, sent, response.Length - sent, SocketFlags.None);
-                if (count <= 0)
-                {
-                    return;
-                }
-
-                sent += count;
-            }
+            client.Write(response, 0, response.Length);
         }
 
         private static string AsciiBytesToString(byte[] bytes, int offset, int length)
