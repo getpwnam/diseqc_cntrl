@@ -1,3 +1,4 @@
+using System;
 using CubleyControl;
 using Xunit;
 
@@ -62,11 +63,19 @@ public sealed class ApplicationConfigurationRecordTests
     public void PreviousSchemaRecordIsAcceptedForMigration()
     {
         ApplicationConfiguration expected = ApplicationConfiguration.CreateDefaults();
-        Assert.True(ApplicationConfigurationRecord.TryEncode(expected, 3, out byte[] record, out string encodeError), encodeError);
-        record[4] = 4;
+        expected.Hostname = "cubley-test";
+        string payload =
+            "hostname=" + expected.Hostname + "\n" +
+            "de_lim=" + expected.DiseqcEastLimitMicrodegrees.ToString() + "\n" +
+            "dw_lim=" + expected.DiseqcWestLimitMicrodegrees.ToString() + "\n" +
+            "de_step=" + expected.DiseqcEastStepMicrodegrees.ToString() + "\n" +
+            "dw_step=" + expected.DiseqcWestStepMicrodegrees.ToString() + "\n" +
+            "d_offset=" + expected.DiseqcGotoOffsetMicrodegrees.ToString();
+        byte[] record = BuildPreviousSchemaRecord(payload, 4, 3);
 
         Assert.True(ApplicationConfigurationRecord.TryDecode(record, out ApplicationConfiguration actual, out uint generation, out string decodeError), decodeError);
         Assert.Equal((uint)3, generation);
+        Assert.Equal(expected.Hostname, actual.Hostname);
         Assert.Equal(string.Empty, actual.ApiToken);
     }
 
@@ -101,5 +110,56 @@ public sealed class ApplicationConfigurationRecordTests
 
         Assert.False(ApplicationConfigurationRecord.TryDecode(record, out _, out _, out string decodeError));
         Assert.Equal("record_version_unsupported", decodeError);
+    }
+
+    private static byte[] BuildPreviousSchemaRecord(string payload, byte version, uint generation)
+    {
+        byte[] payloadBytes = new byte[payload.Length];
+        for (int index = 0; index < payload.Length; index++)
+        {
+            payloadBytes[index] = (byte)payload[index];
+        }
+
+        byte[] record = new byte[ApplicationConfigurationRecord.RecordSize];
+        for (int index = 0; index < record.Length; index++)
+        {
+            record[index] = 0xFF;
+        }
+
+        record[0] = (byte)'C';
+        record[1] = (byte)'C';
+        record[2] = (byte)'F';
+        record[3] = (byte)'G';
+        record[4] = version;
+        record[5] = 0;
+        record[6] = (byte)payloadBytes.Length;
+        record[7] = (byte)(payloadBytes.Length >> 8);
+        record[8] = (byte)generation;
+        record[9] = (byte)(generation >> 8);
+        record[10] = (byte)(generation >> 16);
+        record[11] = (byte)(generation >> 24);
+
+        uint crc = CalculateCrc32(payloadBytes);
+        record[12] = (byte)crc;
+        record[13] = (byte)(crc >> 8);
+        record[14] = (byte)(crc >> 16);
+        record[15] = (byte)(crc >> 24);
+
+        Array.Copy(payloadBytes, 0, record, ApplicationConfigurationRecord.HeaderSize, payloadBytes.Length);
+        return record;
+    }
+
+    private static uint CalculateCrc32(byte[] data)
+    {
+        uint crc = 0xFFFFFFFF;
+        for (int index = 0; index < data.Length; index++)
+        {
+            crc ^= data[index];
+            for (int bit = 0; bit < 8; bit++)
+            {
+                crc = (crc & 1) != 0 ? (crc >> 1) ^ 0xEDB88320 : crc >> 1;
+            }
+        }
+        return ~crc;
     }
 }

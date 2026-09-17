@@ -7,7 +7,7 @@ CubleyControl has two persisted configuration domains:
 - **Network**: IPv4 assignment and DNS in the standard nanoFramework network
   configuration block.
 - **Application**: hostname and DiSEqC positioning calibration in the portable
-  512-byte schema-4 application record described in
+  512-byte schema-5 application record described in
   [CONFIGURATION_STORAGE.md](CONFIGURATION_STORAGE.md).
 
 Configuration is changed only through the USB CDC console. The REST API does
@@ -24,11 +24,12 @@ not expose configuration operations.
 | DNS mode | Automatic |
 | Static DNS servers | `0.0.0.0` |
 
-### Application Schema 4
+### Application Schema 5
 
 | Setting | Default | Valid values |
 |---|---|---|
 | Hostname | Automatic | Empty/`auto`, or a lowercase DNS label up to 63 characters using `a-z`, `0-9`, and internal hyphens |
+| API token | Disabled | Empty, or 32-64 characters from `a-z`, `A-Z`, `0-9`, `-`, `_`, `.`, `~` |
 | East angle limit | Disabled | `0`, or greater than 0 through 180 degrees |
 | West angle limit | Disabled | `0`, or greater than 0 through 180 degrees |
 | East step calibration | Disabled | `0`, or greater than 0 through 180 degrees per step |

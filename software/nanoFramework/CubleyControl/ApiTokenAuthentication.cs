@@ -64,7 +64,8 @@ namespace CubleyControl
                     }
 
                     int tokenStart = valueStart + 7;
-                    while (tokenStart < lineEnd && headers[tokenStart] == '\t')
+                    while (tokenStart < lineEnd &&
+                        (headers[tokenStart] == ' ' || headers[tokenStart] == '\t'))
                     {
                         tokenStart++;
                     }

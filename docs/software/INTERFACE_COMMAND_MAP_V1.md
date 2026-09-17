@@ -242,7 +242,7 @@ state. Assignment commands require a value; all reads begin with `show`.
 ## Network And Application Configuration
 
 Network addressing is persisted by nanoFramework. Hostname and DiSEqC
-positioning settings are written to the portable schema-4 application record.
+positioning settings are written to the portable schema-5 application record.
 All are changed only through USB configuration mode.
 
 | Command | Behavior |

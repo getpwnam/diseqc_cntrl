@@ -6,17 +6,17 @@ Define the portable Cubley application configuration record and its active
 physical backend. Network addressing and DNS remain in the standard
 nanoFramework network configuration block.
 
-The application record contains only the device hostname and DiSEqC positioning
-calibration.
+The application record contains the device hostname, API token, and DiSEqC
+positioning calibration.
 
-## Schema 4 Record
+## Schema 5 Record
 
 The record is exactly 512 bytes. Header integers are little-endian.
 
 | Offset | Size | Field | Description |
 |---:|---:|---|---|
 | `0x000` | 4 | Magic | ASCII `CCFG` |
-| `0x004` | 1 | Schema version | `4` |
+| `0x004` | 1 | Schema version | `5` |
 | `0x005` | 1 | Flags | Reserved; `0` |
 | `0x006` | 2 | Payload length | Used bytes in the payload area |
 | `0x008` | 4 | Generation | Monotonic save generation |
@@ -30,12 +30,12 @@ The payload contains exactly these keys:
 
 ```text
 hostname=<configured hostname or empty for automatic>
+api_token=<32 to 64 character API token, or empty>
 de_lim=<east limit in microdegrees>
 dw_lim=<west limit in microdegrees>
 de_step=<east step size in microdegrees>
 dw_step=<west step size in microdegrees>
 d_offset=<signed GoToX offset in microdegrees>
-api_token=<32 to 64 character API token, or empty>
 ```
 
 Schema 5 is the current application record version. Schema-4 records are
@@ -44,7 +44,7 @@ application-configuration commit. Earlier versions are rejected.
 
 Unknown keys, malformed retained values, invalid field combinations, an
 unsupported schema version, and invalid magic, length, or CRC cause the record
-to be rejected. The application then uses schema-4 defaults.
+to be rejected. The application then uses schema-5 defaults.
 
 ## Active Internal Flash Backend
 

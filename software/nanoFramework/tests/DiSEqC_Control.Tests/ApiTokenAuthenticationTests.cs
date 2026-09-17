@@ -25,6 +25,15 @@ public sealed class ApiTokenAuthenticationTests
         Assert.Equal(Token, actual);
     }
 
+    [Fact]
+    public void ReadsBearerTokenWithRepeatedSpaces()
+    {
+        string headers = "GET /api/v2/health HTTP/1.1\r\nAuthorization:  Bearer  " + Token + "  \r\n\r\n";
+
+        Assert.True(ApiTokenAuthentication.TryReadBearerToken(headers, out string actual));
+        Assert.Equal(Token, actual);
+    }
+
     [Theory]
     [InlineData("GET / HTTP/1.1\r\nHost: cubley\r\n\r\n")]
     [InlineData("GET / HTTP/1.1\r\nAuthorization: Basic abc\r\n\r\n")]
