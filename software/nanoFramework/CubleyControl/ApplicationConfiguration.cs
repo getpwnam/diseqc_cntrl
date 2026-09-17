@@ -5,9 +5,12 @@ namespace CubleyControl
     internal sealed class ApplicationConfiguration
     {
         public const int MaximumHostnameLength = 63;
+        public const int MinimumApiTokenLength = 32;
+        public const int MaximumApiTokenLength = 64;
         public const int MaximumDiseqcAngleMicrodegrees = 180_000_000;
 
         public string Hostname = string.Empty;
+        public string ApiToken = string.Empty;
         public int DiseqcEastLimitMicrodegrees;
         public int DiseqcWestLimitMicrodegrees;
         public int DiseqcEastStepMicrodegrees;
@@ -24,6 +27,7 @@ namespace CubleyControl
             return new ApplicationConfiguration
             {
                 Hostname = Hostname,
+                ApiToken = ApiToken,
                 DiseqcEastLimitMicrodegrees = DiseqcEastLimitMicrodegrees,
                 DiseqcWestLimitMicrodegrees = DiseqcWestLimitMicrodegrees,
                 DiseqcEastStepMicrodegrees = DiseqcEastStepMicrodegrees,
@@ -37,6 +41,12 @@ namespace CubleyControl
             if (!IsValidHostname(Hostname))
             {
                 error = "hostname_invalid";
+                return false;
+            }
+
+            if (!IsValidApiToken(ApiToken))
+            {
+                error = "api_token_invalid";
                 return false;
             }
 
@@ -67,6 +77,7 @@ namespace CubleyControl
         {
             return
                 "hostname=" + Hostname + "\n" +
+                "api_token=" + ApiToken + "\n" +
                 "de_lim=" + DiseqcEastLimitMicrodegrees.ToString() + "\n" +
                 "dw_lim=" + DiseqcWestLimitMicrodegrees.ToString() + "\n" +
                 "de_step=" + DiseqcEastStepMicrodegrees.ToString() + "\n" +
@@ -100,6 +111,10 @@ namespace CubleyControl
                 if (key == "hostname")
                 {
                     configuration.Hostname = value;
+                }
+                else if (key == "api_token")
+                {
+                    configuration.ApiToken = value;
                 }
                 else if (key == "de_lim")
                 {
@@ -184,6 +199,33 @@ namespace CubleyControl
                 char character = value[index];
                 if ((character < 'a' || character > 'z') &&
                     (character < '0' || character > '9') && character != '-')
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool IsValidApiToken(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return true;
+            }
+
+            if (value.Length < MinimumApiTokenLength || value.Length > MaximumApiTokenLength)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < value.Length; index++)
+            {
+                char character = value[index];
+                if ((character < 'a' || character > 'z') &&
+                    (character < 'A' || character > 'Z') &&
+                    (character < '0' || character > '9') &&
+                    character != '-' && character != '_' && character != '.' && character != '~')
                 {
                     return false;
                 }

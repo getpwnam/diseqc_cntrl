@@ -19,6 +19,7 @@
   </PropertyGroup>
   <Import Project="$(NanoFrameworkProjectSystemPath)NFProjectSystem.props" Condition="Exists('$(NanoFrameworkProjectSystemPath)NFProjectSystem.props')" />
   <ItemGroup>
+    <Compile Include="ApiTokenAuthentication.cs" />
     <Compile Include="ApplicationConfigurationRecord.cs" />
     <Compile Include="ApplicationConfigurationStorage.cs" />
     <Compile Include="ApplicationConfiguration.cs" />

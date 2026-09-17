@@ -12,7 +12,10 @@ been fully exercised on hardware. The canonical contract is
   `/api/v2/state/lnb`, and `/api/v2/jobs/{job}`
 - Content type: `application/json`
 - TLS 1.3 encryption is required. Clients must trust or pin the provisioned
-  device certificate; there is no client-certificate or application authentication.
+  device certificate; client certificates are not requested.
+- When a token is configured, every request requires
+  `Authorization: Bearer <token>` and missing or incorrect credentials return
+  HTTP 401 before routing. An unset token disables authentication.
 - HTTP status-code mappings are not yet contractual. Clients should parse the
   JSON response envelope.
 
@@ -179,6 +182,7 @@ blindly.
 
 ```bash
 curl --cacert cubley.crt -X POST "https://<device-ip>/api/v2/commands" \
+  -H "Authorization: Bearer $CUBLEY_API_TOKEN" \
   -H "Content-Type: application/json" \
   --data '{"v":2,"id":"goto-12-001","op":"positioner.goto","position":12}'
 ```
@@ -193,13 +197,16 @@ Only complete each job after observing that the motor has physically stopped.
 ```bash
 BASE_URL="https://<device-ip>/api/v2/commands"
 export CURL_CA_BUNDLE="cubley.crt"
+AUTH_HEADER="Authorization: Bearer $CUBLEY_API_TOKEN"
 run_id="cal-$(date +%s)"
 
 curl -fsS "$BASE_URL" \
+  -H "$AUTH_HEADER" \
   -H 'Content-Type: application/json' \
   --data "{\"v\":2,\"id\":\"$run_id-lnb\",\"op\":\"lnb.enable\",\"channel\":\"a\"}"
 
 reference_response=$(curl -fsS "$BASE_URL" \
+  -H "$AUTH_HEADER" \
   -H 'Content-Type: application/json' \
   --data "{\"v\":2,\"id\":\"$run_id-ref\",\"op\":\"positioner.goto\",\"position\":0}")
 printf '%s\n' "$reference_response" | jq .
@@ -208,10 +215,12 @@ reference_job=$(printf '%s\n' "$reference_response" |
 
 # Wait for the motor to stop at reference before completing this job.
 curl -fsS "$BASE_URL" \
+  -H "$AUTH_HEADER" \
   -H 'Content-Type: application/json' \
   --data "{\"v\":2,\"id\":\"$run_id-ref-complete\",\"op\":\"positioner.complete\",\"job\":$reference_job,\"verification\":\"estimated\"}"
 
 goto_response=$(curl -fsS "$BASE_URL" \
+  -H "$AUTH_HEADER" \
   -H 'Content-Type: application/json' \
   --data "{\"v\":2,\"id\":\"$run_id-astra2\",\"op\":\"positioner.goto_angle\",\"direction\":\"east\",\"angle\":\"36.6\"}")
 printf '%s\n' "$goto_response" | jq .
@@ -220,6 +229,7 @@ goto_job=$(printf '%s\n' "$goto_response" |
 
 # Wait for physical cessation and verify the known Astra 2 signal first.
 curl -fsS "$BASE_URL" \
+  -H "$AUTH_HEADER" \
   -H 'Content-Type: application/json' \
   --data "{\"v\":2,\"id\":\"$run_id-astra2-complete\",\"op\":\"positioner.complete\",\"job\":$goto_job,\"verification\":\"rf_verified\"}"
 ```

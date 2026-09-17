@@ -36,6 +36,49 @@ namespace CubleyControl
                     " state=" + (_applicationConfigurationDirty ? "staged" : "saved"));
         }
 
+        private static void HandleSetApiTokenCommand(string[] tokens, string[] valueTokens, int reqId)
+        {
+            bool clear = tokens.Length == 2 && tokens[1] == "clear";
+            bool set = tokens.Length == 3 && tokens[1] == "set";
+            if (!clear && !set)
+            {
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "api token usage",
+                    "usage=api-token <set TOKEN|clear>");
+                return;
+            }
+
+            ApplicationConfiguration previous = _pendingApplicationConfiguration.Clone();
+            _pendingApplicationConfiguration.ApiToken = clear ? string.Empty : valueTokens[2];
+            string error;
+            if (!_pendingApplicationConfiguration.TryValidate(out error))
+            {
+                _pendingApplicationConfiguration = previous;
+                WriteCommandResult(
+                    reqId,
+                    false,
+                    "validation_error",
+                    "api token invalid",
+                    "reason=" + error +
+                        " length=" + ApplicationConfiguration.MinimumApiTokenLength.ToString() +
+                        ".." + ApplicationConfiguration.MaximumApiTokenLength.ToString());
+                return;
+            }
+
+            _applicationConfigurationDirty =
+                _pendingApplicationConfiguration.ToPayload() != _applicationConfiguration.ToPayload();
+            WriteCommandResult(
+                reqId,
+                true,
+                "ok",
+                "configuration staged",
+                "field=api_token configured=" + (clear ? "0" : "1") +
+                    " state=" + (_applicationConfigurationDirty ? "staged" : "saved"));
+        }
+
         private static string ResolveHostname(string configuredHostname)
         {
             if (!string.IsNullOrEmpty(configuredHostname))

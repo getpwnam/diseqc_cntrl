@@ -7,7 +7,7 @@ CubleyControl has two persisted configuration domains:
 - **Network**: IPv4 assignment and DNS in the standard nanoFramework network
   configuration block.
 - **Application**: hostname and DiSEqC positioning calibration in the portable
-  512-byte schema-4 application record described in
+  512-byte schema-5 application record described in
   [CONFIGURATION_STORAGE.md](CONFIGURATION_STORAGE.md).
 
 Configuration is changed only through the USB CDC console. The REST API does
@@ -24,11 +24,12 @@ not expose configuration operations.
 | DNS mode | Automatic |
 | Static DNS servers | `0.0.0.0` |
 
-### Application Schema 4
+### Application Schema 5
 
 | Setting | Default | Valid values |
 |---|---|---|
 | Hostname | Automatic | Empty/`auto`, or a lowercase DNS label up to 63 characters using `a-z`, `0-9`, and internal hyphens |
+| API token | Disabled | Empty, or 32-64 characters from `a-z`, `A-Z`, `0-9`, `-`, `_`, `.`, `~` |
 | East angle limit | Disabled | `0`, or greater than 0 through 180 degrees |
 | West angle limit | Disabled | `0`, or greater than 0 through 180 degrees |
 | East step calibration | Disabled | `0`, or greater than 0 through 180 degrees per step |
@@ -48,6 +49,8 @@ Enter configuration mode with `configure`, `config`, or `conf`; an optional
 ```text
 cubley-a1b2c3> configure
 cubley-a1b2c3(config)# hostname <name|auto>
+cubley-a1b2c3(config)# api-token set <token>
+cubley-a1b2c3(config)# api-token clear
 cubley-a1b2c3(config)# network mode <dhcp|static>
 cubley-a1b2c3(config)# network address <ipv4>
 cubley-a1b2c3(config)# network mask <mask>
@@ -78,7 +81,11 @@ succeeds. `exit`, `end`, and empty-line `Ctrl+D` refuse to leave configuration
 mode while changes are pending. Use `commit` or `discard` explicitly.
 
 `show running-config` omits default-valued lines. Startup and candidate views
-render complete selected domains under a `! cubley-config v4 <source>` header.
+render complete selected domains under a `! cubley-config v5 <source>` header.
+Configured API token values are rendered in cleartext and token-setting commands
+are retained in command history. Protect console access and captured output.
+Tokens must contain 32 to 64 characters from `A-Za-z0-9._~-`;
+`openssl rand -hex 32` generates a suitable token.
 `show storage` reports network and application backend/load status. `debug on`
 shows successful setter details for the current USB session; failures are always
 shown.

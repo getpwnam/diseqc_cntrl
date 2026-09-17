@@ -39,6 +39,11 @@ Send commands with `POST /api/v2/commands` over HTTP. The request and response
 content type is `application/json`. A command result is returned in the HTTP
 response body.
 
+When a token is configured through the USB CDC console, every request MUST
+include `Authorization: Bearer <token>`. Missing, malformed, duplicate, and
+incorrect authorization headers then return HTTP 401 before endpoint routing or
+command execution. An unset token disables authentication.
+
 Read current device state with:
 
 - `GET /api/v2/health`
@@ -270,8 +275,9 @@ migrating an op from `lines` to `data` — increments it.
 
 ## Known gaps
 
-- REST uses TLS 1.3 on TCP port 443, but has no client or application
-  authentication. Restrict network access to trusted controllers.
+- REST uses TLS 1.3 on TCP port 443. A configured bearer token is required on
+  every request; an unset token disables authentication. Restrict network access
+  to trusted controllers and protect any configured token as a device credential.
 - Clients must validate or pin the provisioned device certificate. Disabling
   certificate validation provides encryption but does not prevent interception.
 - `ts_ms` is an uptime tick, not wall clock. There is no RTC.

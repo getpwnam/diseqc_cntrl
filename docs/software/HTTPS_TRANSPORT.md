@@ -8,10 +8,12 @@ The application uses P-256, SHA-256, and hardware-generated entropy. The stock
 native configuration also compiles TLS 1.3, TLS client, RSA, and additional
 cipher-suite support even though this REST listener does not request them.
 
-TLS authenticates the server only. The API does not request client certificates
-and does not provide application authentication or authorization. Network ACLs
-remain necessary. A client that disables server-certificate validation is
-encrypted against passive observation but remains vulnerable to interception.
+TLS authenticates the server only; the API does not request client certificates.
+When an API token is configured, every REST request additionally requires that
+bearer token. An unset token disables application authentication. Network ACLs
+remain necessary, particularly when authentication is disabled. A client that
+disables server-certificate validation can expose a configured token to an
+active interceptor.
 
 ## Provision A Device Credential
 
@@ -39,10 +41,29 @@ deployment and persists across application updates.
 Distribute only `cubley.crt` to API clients. For production, provision a unique
 key per device and protect the provisioning workstation and retained backups.
 
+## Provision An API Token
+
+Generate a token and stage it through the USB CDC configuration console:
+
+```text
+$ openssl rand -hex 32
+cubley-a1b2c3> configure
+cubley-a1b2c3(config)# api-token set <generated-token>
+cubley-a1b2c3(config*)# commit
+```
+
+The token is stored in plaintext in the internal configuration sector and may be
+shown in configuration output and command history. Diagnostic logs redact the
+token value. When a token is committed, missing or incorrect credentials return
+HTTP 401. Use
+`api-token clear` followed by `commit` to disable authentication and permit
+requests without an authorization header.
+
 ## Client Test
 
 ```bash
 curl --tlsv1.3 --tls-max 1.3 --cacert cubley.crt \
+   -H "Authorization: Bearer $CUBLEY_API_TOKEN" \
    "https://<device-ip>/api/v2/health"
 ```
 
@@ -59,7 +80,7 @@ Measurements are from Debug builds of CUBLEY_F407_0_5:
 | Stock TLS 1.2 and TLS 1.3 configuration | 696,696 bytes | 96.64% |
 | Experimental TLS 1.2 single-suite profile | 458,848 bytes | 63.65% |
 
-The managed CubleyControl deployment bundle is 188,088 bytes. Current link
+The managed CubleyControl deployment bundle is 190,728 bytes. Current link
 inspection confirms that TLS 1.2 record and handshake code is absent while TLS
 1.3, RSA, PEM, and the hardware entropy path remain present. The single-suite
 result is retained as a measured optimization option, not the active build

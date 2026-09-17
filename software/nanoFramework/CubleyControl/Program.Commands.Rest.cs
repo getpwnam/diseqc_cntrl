@@ -147,6 +147,18 @@ namespace CubleyControl
 
             string method = headers.Substring(0, firstSpace);
             string path = headers.Substring(firstSpace + 1, secondSpace - firstSpace - 1);
+            if (!IsRestRequestAuthorized(headers))
+            {
+                WriteStructuredDebug(
+                    "REST",
+                    "schema=1 sub=rest comp=auth operation=authorize stat=error code=unauthorized");
+                WriteRestResponse(
+                    client,
+                    401,
+                    BuildRestQueryResponse(false, "unauthorized", null, "valid bearer token required"));
+                return;
+            }
+
             if (method == "GET")
             {
                 HandleRestGetRequest(client, path);
@@ -301,16 +313,30 @@ namespace CubleyControl
                 : -1;
         }
 
+        private static bool IsRestRequestAuthorized(string headers)
+        {
+            string expectedToken;
+            lock (_applicationConfigurationLock)
+            {
+                expectedToken = _applicationConfiguration.ApiToken;
+            }
+
+            return ApiTokenAuthentication.IsAuthorized(headers, expectedToken);
+        }
+
         private static void WriteRestResponse(SslStream client, int statusCode, string body)
         {
             string reason = statusCode == 200 ? "OK" :
+                (statusCode == 401 ? "Unauthorized" :
                 (statusCode == 404 ? "Not Found" :
-                (statusCode == 405 ? "Method Not Allowed" : "Bad Request"));
+                (statusCode == 405 ? "Method Not Allowed" : "Bad Request")));
             string payload = body == null ? string.Empty : body;
             byte[] response = AsciiStringToBytes(
                 "HTTP/1.1 " + statusCode.ToString() + " " + reason + "\r\n" +
                 "Content-Type: application/json\r\n" +
                 "Content-Length: " + payload.Length.ToString() + "\r\n" +
+                (statusCode == 401 ? "WWW-Authenticate: Bearer\r\n" : string.Empty) +
+                "Cache-Control: no-store\r\n" +
                 "Connection: close\r\n\r\n" + payload);
             client.Write(response, 0, response.Length);
         }
