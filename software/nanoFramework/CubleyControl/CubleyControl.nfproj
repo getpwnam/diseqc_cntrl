@@ -34,6 +34,7 @@
     <Compile Include="Program.Commands.Api.cs" />
     <Compile Include="Program.Commands.Network.cs" />
     <Compile Include="Program.Commands.Rest.cs" />
+    <Compile Include="RestDiagnostics.cs" />
     <Compile Include="Program.Commands.cs" />
     <Compile Include="Program.Jobs.cs" />
     <Compile Include="Program.LnbHealth.cs" />

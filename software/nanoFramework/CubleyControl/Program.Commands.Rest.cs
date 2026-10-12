@@ -15,9 +15,11 @@ namespace CubleyControl
         private const int RestSocketTimeoutMs = 2000;
         private const string RestJobsPathPrefix = "/api/v2/jobs/";
         private const string RestHealthPath = "/api/v2/health";
+        private const string RestDiagnosticsPath = "/api/v2/diagnostics";
         private const string RestPositionerStatePath = "/api/v2/state/positioner";
         private const string RestLnbStatePath = "/api/v2/state/lnb";
         private static readonly string RestBootId = Guid.NewGuid().ToString();
+        private static readonly RestDiagnostics _restDiagnostics = new RestDiagnostics();
 
         private static void RestLoop()
         {
@@ -42,7 +44,10 @@ namespace CubleyControl
                     while (true)
                     {
                         Socket client = listener.Accept();
+                        _restDiagnostics.RecordConnectionAccepted();
                         SslStream secureClient = null;
+                        bool tlsEstablished = false;
+                        bool requestHandled = false;
                         try
                         {
                             client.ReceiveTimeout = RestSocketTimeoutMs;
@@ -52,26 +57,51 @@ namespace CubleyControl
                                 SslVerification = SslVerification.NoVerification,
                                 UseStoredDeviceCertificate = true
                             };
+                            _restDiagnostics.RecordTlsHandshakeStarted();
                             secureClient.AuthenticateAsServer(null, false, SslProtocols.Tls13);
+                            tlsEstablished = true;
+                            _restDiagnostics.RecordTlsHandshakeSucceeded();
                             HandleRestRequest(secureClient);
+                            requestHandled = true;
                         }
                         catch (Exception ex)
                         {
+                            if (!tlsEstablished)
+                            {
+                                _restDiagnostics.RecordTlsHandshakeFailed();
+                            }
+
                             WriteStructuredDebug(
                                 "REST",
-                                "schema=1 sub=rest comp=tls operation=client stat=error detail=" +
+                                "schema=1 sub=rest comp=" + (tlsEstablished ? "request" : "tls") +
+                                " operation=client stat=error detail=" +
                                 SanitizeToken(ex.Message));
                         }
                         finally
                         {
-                            if (secureClient != null)
+                            bool cleanClose = false;
+                            try
                             {
-                                secureClient.Close();
+                                if (secureClient != null)
+                                {
+                                    secureClient.Close();
+                                }
+                                else
+                                {
+                                    client.Close();
+                                }
+
+                                cleanClose = tlsEstablished && requestHandled;
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                client.Close();
+                                WriteStructuredDebug(
+                                    "REST",
+                                    "schema=1 sub=rest comp=transport operation=close stat=error detail=" +
+                                    SanitizeToken(ex.Message));
                             }
+
+                            _restDiagnostics.RecordClose(cleanClose);
                         }
                     }
                 }
@@ -108,6 +138,19 @@ namespace CubleyControl
         }
 
         private static void HandleRestRequest(SslStream client)
+        {
+            _restDiagnostics.RecordRequestStarted();
+            try
+            {
+                HandleRestRequestCore(client);
+            }
+            finally
+            {
+                _restDiagnostics.RecordRequestCompleted();
+            }
+        }
+
+        private static void HandleRestRequestCore(SslStream client)
         {
             byte[] request = new byte[RestHeaderMaxLength + ApiCommandEnvelopeMaxLength];
             int received = 0;
@@ -214,6 +257,28 @@ namespace CubleyControl
                     .AddString("firmware_version", BuildInfo.Version)
                     .Build();
                 WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", health, null));
+                return;
+            }
+
+            if (path == RestDiagnosticsPath)
+            {
+                RestDiagnosticsSnapshot snapshot = _restDiagnostics.Snapshot();
+                string diagnostics = new JsonBuilder()
+                    .AddLong("connections_accepted", snapshot.ConnectionsAccepted)
+                    .AddLong("tls_handshakes_started", snapshot.TlsHandshakesStarted)
+                    .AddLong("tls_handshakes_succeeded", snapshot.TlsHandshakesSucceeded)
+                    .AddLong("tls_handshakes_failed", snapshot.TlsHandshakesFailed)
+                    .AddLong("requests_started", snapshot.RequestsStarted)
+                    .AddLong("requests_active", snapshot.RequestsActive)
+                    .AddLong("requests_active_high_water", snapshot.RequestsActiveHighWater)
+                    .AddLong("responses_2xx", snapshot.Responses2xx)
+                    .AddLong("responses_4xx", snapshot.Responses4xx)
+                    .AddLong("responses_5xx", snapshot.Responses5xx)
+                    .AddLong("response_write_failures", snapshot.ResponseWriteFailures)
+                    .AddLong("clean_closes", snapshot.CleanCloses)
+                    .AddLong("aborted_closes", snapshot.AbortedCloses)
+                    .Build();
+                WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", diagnostics, null));
                 return;
             }
 
@@ -338,7 +403,16 @@ namespace CubleyControl
                 (statusCode == 401 ? "WWW-Authenticate: Bearer\r\n" : string.Empty) +
                 "Cache-Control: no-store\r\n" +
                 "Connection: close\r\n\r\n" + payload);
-            client.Write(response, 0, response.Length);
+            _restDiagnostics.RecordResponse(statusCode);
+            try
+            {
+                client.Write(response, 0, response.Length);
+            }
+            catch
+            {
+                _restDiagnostics.RecordResponseWriteFailure();
+                throw;
+            }
         }
 
         private static string AsciiBytesToString(byte[] bytes, int offset, int length)

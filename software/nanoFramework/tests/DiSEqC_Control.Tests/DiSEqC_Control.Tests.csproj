@@ -15,6 +15,7 @@
     <Compile Include="../../CubleyControl/ApiTokenAuthentication.cs" Link="Control/ApiTokenAuthentication.cs" />
     <Compile Include="../../CubleyControl/ApplicationConfigurationRecord.cs" Link="Control/ApplicationConfigurationRecord.cs" />
     <Compile Include="../../CubleyControl/ApplicationConfiguration.cs" Link="Control/ApplicationConfiguration.cs" />
+    <Compile Include="../../CubleyControl/RestDiagnostics.cs" Link="Control/RestDiagnostics.cs" />
   </ItemGroup>
 
   <ItemGroup>
