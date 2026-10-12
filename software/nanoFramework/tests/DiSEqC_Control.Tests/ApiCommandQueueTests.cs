@@ -46,4 +46,21 @@ public sealed class ApiCommandQueueTests
         queue.Complete(commandId);
         Assert.Equal(ApiCommandQueueResult.Accepted, queue.TryEnqueue("one", "different", false, out _));
     }
+
+    [Fact]
+    public void ReportsQueuedAndRunningLifecycleStates()
+    {
+        var queue = new ApiCommandQueue(1);
+        Assert.Equal(ApiCommandQueueResult.Accepted, queue.TryEnqueue("one", "payload-one", false));
+
+        Assert.True(queue.TryGetState("one", out string state));
+        Assert.Equal("queued", state);
+        Assert.True(queue.TryDequeue(out string commandId, out _));
+        Assert.True(queue.TryGetState("one", out state));
+        Assert.Equal("running", state);
+
+        queue.Complete(commandId);
+        Assert.False(queue.TryGetState("one", out state));
+        Assert.Null(state);
+    }
 }

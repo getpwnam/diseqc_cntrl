@@ -11,6 +11,7 @@ namespace CubleyControl
     {
         private const int RestPort = 443;
         private const string RestCommandPath = "/api/v2/commands";
+        private const string RestCommandsPathPrefix = "/api/v2/commands/";
         private const int RestHeaderMaxLength = 768;
         private const int RestSocketTimeoutMs = 2000;
         private const string RestJobsPathPrefix = "/api/v2/jobs/";
@@ -243,8 +244,13 @@ namespace CubleyControl
                 received += count;
             }
 
-            string responseBody = AcceptApiCommand(AsciiBytesToString(request, bodyOffset, contentLength));
-            WriteRestResponse(client, 200, responseBody);
+            int statusCode;
+            int retryAfterSeconds;
+            string responseBody = AcceptApiCommand(
+                AsciiBytesToString(request, bodyOffset, contentLength),
+                out statusCode,
+                out retryAfterSeconds);
+            WriteRestResponse(client, statusCode, responseBody, retryAfterSeconds);
         }
 
         private static void HandleRestGetRequest(SslStream client, string path)
@@ -309,6 +315,53 @@ namespace CubleyControl
                 if (!TryParsePositiveInt(text, out jobId))
                 {
                     WriteRestResponse(client, 400, BuildRestQueryResponse(false, "validation_error", null, "job must be a positive integer"));
+                    return;
+                }
+
+                if (path.StartsWith(RestCommandsPathPrefix))
+                {
+                    string commandId = path.Substring(RestCommandsPathPrefix.Length);
+                    if (!IsValidApiCommandId(commandId))
+                    {
+                        WriteRestResponse(
+                            client,
+                            400,
+                            BuildRestQueryResponse(
+                                false,
+                                "validation_error",
+                                null,
+                                "command id must be 1 to " + ApiCommandIdMaxLength.ToString() +
+                                " characters of A-Za-z0-9._:-"));
+                        return;
+                    }
+
+                    string receipt;
+                    string state;
+                    if (TryGetCachedApiCommandReceipt(commandId, out receipt, out state))
+                    {
+                        string completed = new JsonBuilder()
+                            .AddString("id", commandId)
+                            .AddString("state", state)
+                            .AddRaw("receipt", "{" + receipt + "}")
+                            .Build();
+                        WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", completed, null));
+                        return;
+                    }
+
+                    if (_apiCommandQueue.TryGetState(commandId, out state))
+                    {
+                        string pending = new JsonBuilder()
+                            .AddString("id", commandId)
+                            .AddString("state", state)
+                            .Build();
+                        WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", pending, null));
+                        return;
+                    }
+
+                    WriteRestResponse(
+                        client,
+                        404,
+                        BuildRestQueryResponse(false, "not_found", null, "command is unknown or has been evicted"));
                     return;
                 }
 
@@ -393,16 +446,31 @@ namespace CubleyControl
 
         private static void WriteRestResponse(SslStream client, int statusCode, string body)
         {
+            WriteRestResponse(client, statusCode, body, 0);
+        }
+
+        private static void WriteRestResponse(
+            SslStream client,
+            int statusCode,
+            string body,
+            int retryAfterSeconds)
+        {
             string reason = statusCode == 200 ? "OK" :
+                (statusCode == 202 ? "Accepted" :
                 (statusCode == 401 ? "Unauthorized" :
                 (statusCode == 404 ? "Not Found" :
-                (statusCode == 405 ? "Method Not Allowed" : "Bad Request")));
+                (statusCode == 405 ? "Method Not Allowed" :
+                (statusCode == 409 ? "Conflict" :
+                (statusCode == 503 ? "Service Unavailable" : "Bad Request"))))));
             string payload = body == null ? string.Empty : body;
             byte[] response = AsciiStringToBytes(
                 "HTTP/1.1 " + statusCode.ToString() + " " + reason + "\r\n" +
                 "Content-Type: application/json\r\n" +
                 "Content-Length: " + payload.Length.ToString() + "\r\n" +
                 (statusCode == 401 ? "WWW-Authenticate: Bearer\r\n" : string.Empty) +
+                (retryAfterSeconds > 0
+                    ? "Retry-After: " + retryAfterSeconds.ToString() + "\r\n"
+                    : string.Empty) +
                 "Cache-Control: no-store\r\n" +
                 "Connection: close\r\n\r\n" + payload);
             _restDiagnostics.RecordResponse(statusCode);

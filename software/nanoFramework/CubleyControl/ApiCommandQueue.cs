@@ -118,6 +118,37 @@ namespace CubleyControl
             }
         }
 
+        internal bool TryGetState(string commandId, out string state)
+        {
+            lock (_sync)
+            {
+                if (_activeCommandId == commandId)
+                {
+                    state = "running";
+                    return true;
+                }
+
+                if (_priorityCommandId == commandId)
+                {
+                    state = "queued";
+                    return true;
+                }
+
+                for (int offset = 0; offset < _count; offset++)
+                {
+                    int slot = (_head + offset) % _commandIds.Length;
+                    if (_commandIds[slot] == commandId)
+                    {
+                        state = "queued";
+                        return true;
+                    }
+                }
+
+                state = null;
+                return false;
+            }
+        }
+
         private bool TryFindLocked(string commandId, out string payload)
         {
             if (_activeCommandId == commandId)

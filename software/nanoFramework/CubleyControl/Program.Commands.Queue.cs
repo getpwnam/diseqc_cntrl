@@ -10,14 +10,20 @@ namespace CubleyControl
         private static readonly ApiCommandQueue _apiCommandQueue =
             new ApiCommandQueue(ApiCommandQueueCapacity);
 
-        private static string AcceptApiCommand(string payload)
+        private static string AcceptApiCommand(
+            string payload,
+            out int statusCode,
+            out int retryAfterSeconds)
         {
+            statusCode = 202;
+            retryAfterSeconds = 0;
             JsonObject command;
             string commandId;
             string operation;
             string validationFailure;
             if (!TryParseApiCommand(payload, out command, out commandId, out operation, out validationFailure))
             {
+                statusCode = 400;
                 return "{" + validationFailure + "}";
             }
 
@@ -27,6 +33,7 @@ namespace CubleyControl
             {
                 if (cachedConflict)
                 {
+                    statusCode = 409;
                     return "{" + BuildApiFailureBody(
                         commandId,
                         "id_conflict",
@@ -34,6 +41,7 @@ namespace CubleyControl
                         0) + "}";
                 }
 
+                statusCode = 200;
                 return "{" + cachedResponse + ",\"replayed\":true}";
             }
 
@@ -54,6 +62,7 @@ namespace CubleyControl
                 out queueDepth);
             if (result == ApiCommandQueueResult.Conflict)
             {
+                statusCode = 409;
                 return "{" + BuildApiFailureBody(
                     commandId,
                     "id_conflict",
@@ -64,6 +73,8 @@ namespace CubleyControl
             if (result == ApiCommandQueueResult.Full)
             {
                 _restDiagnostics.RecordQueueRejected();
+                statusCode = 503;
+                retryAfterSeconds = 1;
                 return "{" + BuildApiFailureBody(
                     commandId,
                     "queue_full",

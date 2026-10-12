@@ -16,6 +16,7 @@ namespace CubleyControl
         private static readonly string[] _apiCachedCommandIds = new string[ApiDuplicateCacheSize];
         private static readonly string[] _apiCachedPayloads = new string[ApiDuplicateCacheSize];
         private static readonly string[] _apiCachedResponseBodies = new string[ApiDuplicateCacheSize];
+        private static readonly bool[] _apiCachedSucceeded = new bool[ApiDuplicateCacheSize];
         private static readonly long[] _apiCachedAtMs = new long[ApiDuplicateCacheSize];
         private static readonly object _apiReceiptLock = new object();
         private static int _apiDuplicateCacheNext;
@@ -722,6 +723,7 @@ namespace CubleyControl
                     _apiCachedCommandIds[index] = null;
                     _apiCachedPayloads[index] = null;
                     _apiCachedResponseBodies[index] = null;
+                    _apiCachedSucceeded[index] = false;
                     return -1;
                 }
 
@@ -753,6 +755,27 @@ namespace CubleyControl
             }
         }
 
+        private static bool TryGetCachedApiCommandReceipt(
+            string commandId,
+            out string responseBody,
+            out string state)
+        {
+            lock (_apiReceiptLock)
+            {
+                int cachedIndex = FindCachedApiCommand(commandId);
+                if (cachedIndex < 0)
+                {
+                    responseBody = null;
+                    state = null;
+                    return false;
+                }
+
+                responseBody = _apiCachedResponseBodies[cachedIndex];
+                state = _apiCachedSucceeded[cachedIndex] ? "completed" : "failed";
+                return true;
+            }
+        }
+
         private static void CacheApiCommandResponse(string commandId, string payload, string responseBody)
         {
             lock (_apiReceiptLock)
@@ -761,6 +784,7 @@ namespace CubleyControl
                 _apiCachedCommandIds[slot] = commandId;
                 _apiCachedPayloads[slot] = payload;
                 _apiCachedResponseBodies[slot] = responseBody;
+                _apiCachedSucceeded[slot] = responseBody.IndexOf("\"ok\":true") >= 0;
                 _apiCachedAtMs[slot] = Environment.TickCount64;
                 _apiDuplicateCacheNext = (slot + 1) % ApiDuplicateCacheSize;
             }

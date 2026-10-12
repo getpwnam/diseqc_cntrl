@@ -39,7 +39,8 @@ Nothing in this document changes the console. An operator types
 Send commands with `POST /api/v2/commands` over HTTP. The request and response
 content type is `application/json`. A validated command is placed in a bounded
 device queue and returns a non-terminal `queued` receipt. Hardware execution
-continues asynchronously.
+continues asynchronously. Use the command receipt endpoint to resolve completion
+or an ambiguous POST response.
 
 When a token is configured through the USB CDC console, every request MUST
 include `Authorization: Bearer <token>`. Missing, malformed, duplicate, and
@@ -52,7 +53,13 @@ Read current device state with:
 - `GET /api/v2/state/positioner`
 - `GET /api/v2/state/lnb`
 - `GET /api/v2/jobs/{job}`
+- `GET /api/v2/commands/{id}`
 - `GET /api/v2/diagnostics`
+
+The device reserves queue capacity for `positioner.halt`. When normal command
+capacity is exhausted, POST returns HTTP 503 with `Retry-After: 1`; the command
+was not accepted and did not execute. Reusing an active or retained command ID
+with a different payload returns HTTP 409.
 
 ### Payload constraints
 
@@ -93,8 +100,8 @@ non-idempotent operation such as `positioner.step` from executing twice.
 
 ### Deduplication
 
-The device remembers the 8 most recent `{id, raw payload, response}`
-transactions for **120 seconds**.
+The device remembers queued and active IDs plus the 8 most recent
+`{id, raw payload, response}` terminal transactions for **120 seconds**.
 
 - Same `id`, byte-identical payload, within the window → the original response
   is returned verbatim with an added `"replayed":true` member, and the
@@ -144,6 +151,21 @@ Exactly one response object is returned per HTTP request.
 | `hw_fault` | false | Hardware or transmission failure. |
 | `id_conflict` | false | `id` reused within the dedup window with a different payload. |
 | `not_found` | false | Referenced job is unknown or has been evicted. |
+| `queue_full` | false | Normal and reserved capacity applicable to this command is exhausted. |
+
+### Command receipts
+
+`GET /api/v2/commands/{id}` is scoped to the current `boot_id` and reports:
+
+- `queued` — accepted but not yet executing.
+- `running` — executing on the hardware worker.
+- `completed` — terminal receipt has `ok=true`.
+- `failed` — terminal receipt has `ok=false`.
+
+Terminal results include the original response envelope in `data.receipt`.
+Unknown, expired, or evicted IDs return HTTP 404 with `code=not_found`.
+Clients should identify a command by `(boot_id, id)` and stop polling if the
+device boot ID changes.
 
 ## Positioner job model
 
