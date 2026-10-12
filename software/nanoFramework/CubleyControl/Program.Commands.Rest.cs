@@ -243,11 +243,7 @@ namespace CubleyControl
                 received += count;
             }
 
-            string responseBody;
-            lock (_commandLock)
-            {
-                responseBody = ProcessApiCommand(AsciiBytesToString(request, bodyOffset, contentLength));
-            }
+            string responseBody = AcceptApiCommand(AsciiBytesToString(request, bodyOffset, contentLength));
             WriteRestResponse(client, 200, responseBody);
         }
 
@@ -280,6 +276,9 @@ namespace CubleyControl
                     .AddLong("response_write_failures", snapshot.ResponseWriteFailures)
                     .AddLong("clean_closes", snapshot.CleanCloses)
                     .AddLong("aborted_closes", snapshot.AbortedCloses)
+                    .AddLong("queue_accepted", snapshot.QueueAccepted)
+                    .AddLong("queue_rejected", snapshot.QueueRejected)
+                    .AddLong("queue_high_water", snapshot.QueueHighWater)
                     .Build();
                 WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", diagnostics, null));
                 return;

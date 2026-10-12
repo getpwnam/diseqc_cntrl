@@ -22,6 +22,9 @@ public sealed class RestDiagnosticsTests
         diagnostics.RecordResponseWriteFailure();
         diagnostics.RecordClose(true);
         diagnostics.RecordClose(false);
+        diagnostics.RecordQueueAccepted(2);
+        diagnostics.RecordQueueAccepted(1);
+        diagnostics.RecordQueueRejected();
 
         RestDiagnosticsSnapshot snapshot = diagnostics.Snapshot();
 
@@ -38,6 +41,9 @@ public sealed class RestDiagnosticsTests
         Assert.Equal(1, snapshot.ResponseWriteFailures);
         Assert.Equal(1, snapshot.CleanCloses);
         Assert.Equal(1, snapshot.AbortedCloses);
+        Assert.Equal(2, snapshot.QueueAccepted);
+        Assert.Equal(1, snapshot.QueueRejected);
+        Assert.Equal(2, snapshot.QueueHighWater);
     }
 
     [Fact]

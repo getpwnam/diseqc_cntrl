@@ -17,6 +17,9 @@ namespace CubleyControl
             InitializeLnbSafeDefaults();
             InitializeLnbFaultMonitor();
 
+            var apiCommandWorkerThread = new Thread(ApiCommandWorkerLoop);
+            apiCommandWorkerThread.Start();
+
             var usbConsoleThread = new Thread(UsbConsoleLoop);
             usbConsoleThread.Start();
 

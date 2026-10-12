@@ -15,6 +15,9 @@ namespace CubleyControl
         internal long ResponseWriteFailures;
         internal long CleanCloses;
         internal long AbortedCloses;
+        internal long QueueAccepted;
+        internal long QueueRejected;
+        internal long QueueHighWater;
     }
 
     internal sealed class RestDiagnostics
@@ -33,6 +36,9 @@ namespace CubleyControl
         private long _responseWriteFailures;
         private long _cleanCloses;
         private long _abortedCloses;
+        private long _queueAccepted;
+        private long _queueRejected;
+        private long _queueHighWater;
 
         internal void RecordConnectionAccepted()
         {
@@ -132,6 +138,26 @@ namespace CubleyControl
             }
         }
 
+        internal void RecordQueueAccepted(int depth)
+        {
+            lock (_sync)
+            {
+                _queueAccepted++;
+                if (depth > _queueHighWater)
+                {
+                    _queueHighWater = depth;
+                }
+            }
+        }
+
+        internal void RecordQueueRejected()
+        {
+            lock (_sync)
+            {
+                _queueRejected++;
+            }
+        }
+
         internal RestDiagnosticsSnapshot Snapshot()
         {
             lock (_sync)
@@ -150,7 +176,10 @@ namespace CubleyControl
                     Responses5xx = _responses5xx,
                     ResponseWriteFailures = _responseWriteFailures,
                     CleanCloses = _cleanCloses,
-                    AbortedCloses = _abortedCloses
+                    AbortedCloses = _abortedCloses,
+                    QueueAccepted = _queueAccepted,
+                    QueueRejected = _queueRejected,
+                    QueueHighWater = _queueHighWater
                 };
             }
         }
