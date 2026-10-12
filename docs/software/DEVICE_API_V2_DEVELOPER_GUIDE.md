@@ -1,8 +1,11 @@
 # Cubley Device REST API v2 Developer Guide
 
-Status: **draft and subject to change**. The API is implemented but has not yet
-been fully exercised on hardware. The canonical contract is
+Status: **draft and subject to change**. The TLS 1.3 health and read-only state
+flows have been exercised on Cubley v0.5 hardware. The canonical contract is
 [DEVICE_API_V2.md](DEVICE_API_V2.md).
+
+For firmware deployment, X.509 provisioning, and the first trusted request,
+start with [HTTPS_TRANSPORT.md](HTTPS_TRANSPORT.md).
 
 ## Transport
 

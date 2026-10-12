@@ -4,7 +4,25 @@ Ethernet-connected DiSEqC motor control interface for satellite LNB systems, bui
 
 ## Disclaimer
 
-This project is in development. No hardware or software testing has been performed and use in any way is at your own risk.
+This project is in active development and use is at your own risk. Core firmware,
+managed deployment, X.509 provisioning, TLS 1.3, and read-only REST API flows
+have been exercised on Cubley v0.5 hardware; this is not a production safety
+certification.
+
+## Quick Start
+
+For the tested firmware-to-HTTPS path:
+
+1. Build and flash the firmware.
+2. Build and deploy `CubleyControl` over the nanoFramework wire protocol.
+3. Provision a unique X.509 device credential.
+4. Trust the public certificate and verify `/api/v2/health`.
+5. Optionally configure an API token over the USB CDC console.
+
+Follow [HTTPS Transport](docs/software/HTTPS_TRANSPORT.md) for the complete
+copy-and-paste sequence. The API client is [tools/cubleyctl.py](tools/cubleyctl.py);
+the API guide is
+[DEVICE_API_V2_DEVELOPER_GUIDE.md](docs/software/DEVICE_API_V2_DEVELOPER_GUIDE.md).
 
 ## Introduction
 
