@@ -1748,3 +1748,11 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: firmware/nf-interpreter/build/nanoCLR.bin; firmware/targets-local/CUBLEY_F407_0_5/mbedtls_tls13_only.h; /home/vscode/.copilot/session-state/561b9d8f-8ec0-4d25-8f60-ff11144d5550/files/cubley-x509/cubley.crt
 - Conclusion: TLS handshake allocation failure fixed by target-only 2 KiB record buffers; certificate verification and REST health/state requests pass repeatedly.
 - Note: Captured pre-fix Mbed TLS error MBEDTLS_ERR_SSL_ALLOC_FAILED (-0x7F00). Final OpenSSL negotiation: TLSv1.3, TLS_AES_256_GCM_SHA384, ECDSA P-256 certificate verified; TLS 1.2 rejected.
+
+### 2026-10-12 10:45:54 UTC [PASS]
+- Git rev: 94dc273
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): remove firmware/nf-interpreter/build; firmware/build-flash-cubley.sh build; repeat firmware/build-flash-cubley.sh build; bash -n firmware/build-flash-cubley.sh; python3 -m json.tool CMakePresets.json
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin; firmware/nf-interpreter/build/_deps/cubley-chibios-src
+- Conclusion: Fresh and repeated CUBLEY_F407_0_5 builds used pinned ChibiOS commit 11951bbd and completed successfully.
+- Note: Moving stable-21.11.x tip ffd5646b previously failed nanoBooter linking with unresolved halRegWaitAllClear32X and halRegWaitAllSet32X.

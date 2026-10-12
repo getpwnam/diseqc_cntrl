@@ -14,6 +14,11 @@ It is intended as a quick reference for bring-up and firmware changes.
 ./build-flash-cubley.sh build
 ```
 
+The target preset pins ChibiOS to commit
+`11951bbd18e438bf4b76d60228e590da5a9a48d3`. Update that pin only after a
+clean build and hardware validation; using the moving `stable-21.11.x` branch
+can change or break otherwise identical firmware builds.
+
 ## Scope and Source of Truth
 
 Primary code sources:
