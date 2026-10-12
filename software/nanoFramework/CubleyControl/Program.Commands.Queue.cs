@@ -27,9 +27,10 @@ namespace CubleyControl
                 return "{" + validationFailure + "}";
             }
 
+            string identity = ApiCommandCanonicalizer.Build(command, DeviceContractVersion);
             string cachedResponse;
             bool cachedConflict;
-            if (TryGetCachedApiCommand(commandId, payload, out cachedResponse, out cachedConflict))
+            if (TryGetCachedApiCommand(commandId, identity, out cachedResponse, out cachedConflict))
             {
                 if (cachedConflict)
                 {
@@ -37,7 +38,7 @@ namespace CubleyControl
                     return "{" + BuildApiFailureBody(
                         commandId,
                         "id_conflict",
-                        "id reused within the deduplication window with a different payload",
+                        "id reused within the deduplication window with a different command",
                         0) + "}";
                 }
 
@@ -58,6 +59,7 @@ namespace CubleyControl
             int queueDepth;
             int result = _apiCommandQueue.TryEnqueue(
                 commandId,
+                identity,
                 payload,
                 operation == "positioner.halt",
                 out queueDepth);
@@ -67,7 +69,7 @@ namespace CubleyControl
                 return "{" + BuildApiFailureBody(
                     commandId,
                     "id_conflict",
-                    "id reused by a queued or active command with a different payload",
+                    "id reused by a queued or active command with a different command",
                     0) + "}";
             }
 
@@ -105,8 +107,9 @@ namespace CubleyControl
             while (true)
             {
                 string commandId;
+                string identity;
                 string payload;
-                if (!_apiCommandQueue.TryDequeue(out commandId, out payload))
+                if (!_apiCommandQueue.TryDequeue(out commandId, out identity, out payload))
                 {
                     Thread.Sleep(ApiCommandWorkerIdleMs);
                     continue;
@@ -120,7 +123,7 @@ namespace CubleyControl
                 {
                     CacheApiCommandResponse(
                         commandId,
-                        payload,
+                        identity,
                         BuildApiFailureBody(commandId, "internal_error", "command execution failed", 0));
                     WriteStructuredDebug(
                         "COMMAND",

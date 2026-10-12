@@ -17,6 +17,8 @@
     <Compile Include="../../CubleyControl/ApplicationConfiguration.cs" Link="Control/ApplicationConfiguration.cs" />
     <Compile Include="../../CubleyControl/RestDiagnostics.cs" Link="Control/RestDiagnostics.cs" />
     <Compile Include="../../CubleyControl/ApiCommandQueue.cs" Link="Control/ApiCommandQueue.cs" />
+    <Compile Include="../../CubleyControl/ApiCommandCanonicalizer.cs" Link="Control/ApiCommandCanonicalizer.cs" />
+    <Compile Include="../../CubleyControl/Json.cs" Link="Control/Json.cs" />
   </ItemGroup>
 
   <ItemGroup>

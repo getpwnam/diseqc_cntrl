@@ -14,7 +14,7 @@ namespace CubleyControl
         private const int ApiBridgedLineLimit = 16;
 
         private static readonly string[] _apiCachedCommandIds = new string[ApiDuplicateCacheSize];
-        private static readonly string[] _apiCachedPayloads = new string[ApiDuplicateCacheSize];
+        private static readonly string[] _apiCachedIdentities = new string[ApiDuplicateCacheSize];
         private static readonly string[] _apiCachedResponseBodies = new string[ApiDuplicateCacheSize];
         private static readonly bool[] _apiCachedSucceeded = new bool[ApiDuplicateCacheSize];
         private static readonly long[] _apiCachedAtMs = new long[ApiDuplicateCacheSize];
@@ -53,9 +53,10 @@ namespace CubleyControl
                 return "{" + validationFailure + "}";
             }
 
+            string identity = ApiCommandCanonicalizer.Build(command, DeviceContractVersion);
             string cachedResponse;
             bool cachedConflict;
-            if (TryGetCachedApiCommand(commandId, payload, out cachedResponse, out cachedConflict))
+            if (TryGetCachedApiCommand(commandId, identity, out cachedResponse, out cachedConflict))
             {
                 if (cachedConflict)
                 {
@@ -66,7 +67,7 @@ namespace CubleyControl
                     return "{" + BuildApiFailureBody(
                         commandId,
                         "id_conflict",
-                        "id reused within the deduplication window with a different payload",
+                        "id reused within the deduplication window with a different command",
                         0) + "}";
                 }
 
@@ -85,7 +86,7 @@ namespace CubleyControl
                 " op=" + SanitizeToken(operation));
 
             string responseBody = ExecuteApiOperation(commandId, operation, command);
-            CacheApiCommandResponse(commandId, payload, responseBody);
+            CacheApiCommandResponse(commandId, identity, responseBody);
 
             WriteStructuredDebug(
                 "COMMAND",
@@ -721,7 +722,7 @@ namespace CubleyControl
                 if (nowMs - _apiCachedAtMs[index] > ApiDedupTtlMs)
                 {
                     _apiCachedCommandIds[index] = null;
-                    _apiCachedPayloads[index] = null;
+                    _apiCachedIdentities[index] = null;
                     _apiCachedResponseBodies[index] = null;
                     _apiCachedSucceeded[index] = false;
                     return -1;
@@ -735,7 +736,7 @@ namespace CubleyControl
 
         private static bool TryGetCachedApiCommand(
             string commandId,
-            string payload,
+            string identity,
             out string responseBody,
             out bool conflict)
         {
@@ -750,7 +751,7 @@ namespace CubleyControl
                 }
 
                 responseBody = _apiCachedResponseBodies[cachedIndex];
-                conflict = _apiCachedPayloads[cachedIndex] != payload;
+                conflict = _apiCachedIdentities[cachedIndex] != identity;
                 return true;
             }
         }
@@ -776,13 +777,13 @@ namespace CubleyControl
             }
         }
 
-        private static void CacheApiCommandResponse(string commandId, string payload, string responseBody)
+        private static void CacheApiCommandResponse(string commandId, string identity, string responseBody)
         {
             lock (_apiReceiptLock)
             {
                 int slot = _apiDuplicateCacheNext;
                 _apiCachedCommandIds[slot] = commandId;
-                _apiCachedPayloads[slot] = payload;
+                _apiCachedIdentities[slot] = identity;
                 _apiCachedResponseBodies[slot] = responseBody;
                 int succeededAt = responseBody.IndexOf("\"ok\":true");
                 int failedAt = responseBody.IndexOf("\"ok\":false");

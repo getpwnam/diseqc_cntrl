@@ -101,13 +101,13 @@ non-idempotent operation such as `positioner.step` from executing twice.
 ### Deduplication
 
 The device remembers queued and active IDs plus the 8 most recent
-`{id, raw payload, response}` terminal transactions for **120 seconds**.
+`{id, canonical command, response}` terminal transactions for **120 seconds**.
 
-- Same `id`, byte-identical payload, within the window → the original response
+- Same `id`, semantically identical parsed command, within the window → the original response
   is returned verbatim with an added `"replayed":true` member, and the
   command is **not** executed again. `ok` and `code` stay as they originally
   were, so a replay is never mistaken for a fresh execution.
-- Same `id`, different payload, within the window → `id_conflict`, nothing
+- Same `id`, different parsed command, within the window → `id_conflict`, nothing
   executes.
 - Any `id` older than the window, or evicted by the 8-entry ring → treated as
   new and executed.
@@ -116,6 +116,10 @@ The TTL is what makes this predictable: under the v1 slot-count-only scheme,
 whether a reused ID replayed or conflicted depended on how many unrelated
 commands had happened since. Requesters should still use unique IDs (a ULID or
 UUID is ideal, and 32 chars is enough for either).
+
+Member order, insignificant JSON whitespace, string escape spelling, and an
+omitted versus explicit `"v":2` do not affect command identity. Scalar types
+and values do affect identity.
 
 ## Response envelope
 

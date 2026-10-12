@@ -12,30 +12,39 @@ namespace CubleyControl
     {
         private readonly object _sync = new object();
         private readonly string[] _commandIds;
+        private readonly string[] _identities;
         private readonly string[] _payloads;
         private int _head;
         private int _tail;
         private int _count;
         private string _priorityCommandId;
+        private string _priorityIdentity;
         private string _priorityPayload;
         private string _activeCommandId;
+        private string _activeIdentity;
         private string _activePayload;
 
         internal ApiCommandQueue(int capacity)
         {
             _commandIds = new string[capacity];
+            _identities = new string[capacity];
             _payloads = new string[capacity];
         }
 
-        internal int TryEnqueue(string commandId, string payload, bool priority, out int depth)
+        internal int TryEnqueue(
+            string commandId,
+            string identity,
+            string payload,
+            bool priority,
+            out int depth)
         {
             lock (_sync)
             {
                 depth = _count + (_priorityCommandId == null ? 0 : 1);
-                string existingPayload;
-                if (TryFindLocked(commandId, out existingPayload))
+                string existingIdentity;
+                if (TryFindLocked(commandId, out existingIdentity))
                 {
-                    return existingPayload == payload
+                    return existingIdentity == identity
                         ? ApiCommandQueueResult.Duplicate
                         : ApiCommandQueueResult.Conflict;
                 }
@@ -48,6 +57,7 @@ namespace CubleyControl
                     }
 
                     _priorityCommandId = commandId;
+                    _priorityIdentity = identity;
                     _priorityPayload = payload;
                     depth++;
                     return ApiCommandQueueResult.Accepted;
@@ -59,6 +69,7 @@ namespace CubleyControl
                 }
 
                 _commandIds[_tail] = commandId;
+                _identities[_tail] = identity;
                 _payloads[_tail] = payload;
                 _tail = (_tail + 1) % _commandIds.Length;
                 _count++;
@@ -67,11 +78,12 @@ namespace CubleyControl
             }
         }
 
-        internal bool TryDequeue(out string commandId, out string payload)
+        internal bool TryDequeue(out string commandId, out string identity, out string payload)
         {
             lock (_sync)
             {
                 commandId = null;
+                identity = null;
                 payload = null;
                 if (_activeCommandId != null)
                 {
@@ -81,15 +93,19 @@ namespace CubleyControl
                 if (_priorityCommandId != null)
                 {
                     commandId = _priorityCommandId;
+                    identity = _priorityIdentity;
                     payload = _priorityPayload;
                     _priorityCommandId = null;
+                    _priorityIdentity = null;
                     _priorityPayload = null;
                 }
                 else if (_count > 0)
                 {
                     commandId = _commandIds[_head];
+                    identity = _identities[_head];
                     payload = _payloads[_head];
                     _commandIds[_head] = null;
+                    _identities[_head] = null;
                     _payloads[_head] = null;
                     _head = (_head + 1) % _commandIds.Length;
                     _count--;
@@ -101,6 +117,7 @@ namespace CubleyControl
                 }
 
                 _activeCommandId = commandId;
+                _activeIdentity = identity;
                 _activePayload = payload;
                 return true;
             }
@@ -113,6 +130,7 @@ namespace CubleyControl
                 if (_activeCommandId == commandId)
                 {
                     _activeCommandId = null;
+                    _activeIdentity = null;
                     _activePayload = null;
                 }
             }
@@ -153,13 +171,13 @@ namespace CubleyControl
         {
             if (_activeCommandId == commandId)
             {
-                payload = _activePayload;
+                payload = _activeIdentity;
                 return true;
             }
 
             if (_priorityCommandId == commandId)
             {
-                payload = _priorityPayload;
+                payload = _priorityIdentity;
                 return true;
             }
 
@@ -168,7 +186,7 @@ namespace CubleyControl
                 int slot = (_head + offset) % _commandIds.Length;
                 if (_commandIds[slot] == commandId)
                 {
-                    payload = _payloads[slot];
+                    payload = _identities[slot];
                     return true;
                 }
             }
