@@ -28,6 +28,9 @@ public sealed class RestDiagnosticsTests
         diagnostics.RecordQueueAccepted(2);
         diagnostics.RecordQueueAccepted(1);
         diagnostics.RecordQueueRejected();
+        diagnostics.RecordKeepAliveRequest();
+        diagnostics.RecordKeepAliveLimitClose();
+        diagnostics.RecordPipelinedRequestRejected();
 
         RestDiagnosticsSnapshot snapshot = diagnostics.Snapshot();
 
@@ -50,6 +53,9 @@ public sealed class RestDiagnosticsTests
         Assert.Equal(2, snapshot.QueueAccepted);
         Assert.Equal(1, snapshot.QueueRejected);
         Assert.Equal(2, snapshot.QueueHighWater);
+        Assert.Equal(1, snapshot.KeepAliveRequests);
+        Assert.Equal(1, snapshot.KeepAliveLimitCloses);
+        Assert.Equal(1, snapshot.PipelinedRequestsRejected);
     }
 
     [Fact]

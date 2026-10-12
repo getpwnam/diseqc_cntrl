@@ -14,6 +14,9 @@ namespace CubleyControl
         private const string RestCommandsPathPrefix = "/api/v2/commands/";
         private const int RestHeaderMaxLength = 768;
         private const int RestSocketTimeoutMs = 2000;
+        private const int RestKeepAliveIdleTimeoutMs = 1500;
+        private const int RestKeepAliveMaxRequests = 4;
+        private const int RestKeepAliveTimeoutSeconds = 1;
         private const string RestJobsPathPrefix = "/api/v2/jobs/";
         private const string RestHealthPath = "/api/v2/health";
         private const string RestDiagnosticsPath = "/api/v2/diagnostics";
@@ -21,6 +24,9 @@ namespace CubleyControl
         private const string RestLnbStatePath = "/api/v2/state/lnb";
         private static readonly string RestBootId = Guid.NewGuid().ToString();
         private static readonly RestDiagnostics _restDiagnostics = new RestDiagnostics();
+        private static bool _restKeepAliveResponse;
+        private static int _restKeepAliveRemaining;
+        private static bool _restPeerClosed;
 
         private static void RestLoop()
         {
@@ -64,8 +70,34 @@ namespace CubleyControl
                             secureClient.AuthenticateAsServer(null, false, SslProtocols.Tls13);
                             tlsEstablished = true;
                             _restDiagnostics.RecordTlsHandshakeSucceeded();
-                            HandleRestRequest(secureClient);
-                            requestHandled = true;
+                            for (int requestIndex = 0;
+                                requestIndex < RestKeepAliveMaxRequests;
+                                requestIndex++)
+                            {
+                                client.ReceiveTimeout = requestIndex == 0
+                                    ? RestSocketTimeoutMs
+                                    : RestKeepAliveIdleTimeoutMs;
+                                bool keepAlive = HandleRestRequest(
+                                    secureClient,
+                                    RestKeepAliveMaxRequests - requestIndex - 1);
+                                if (_restPeerClosed)
+                                {
+                                    break;
+                                }
+
+                                requestHandled = true;
+                                if (!keepAlive)
+                                {
+                                    if (requestIndex == RestKeepAliveMaxRequests - 1)
+                                    {
+                                        _restDiagnostics.RecordKeepAliveLimitClose();
+                                    }
+
+                                    break;
+                                }
+
+                                _restDiagnostics.RecordKeepAliveRequest();
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -141,12 +173,16 @@ namespace CubleyControl
                 interfaces[0].IPv4Address != "0.0.0.0";
         }
 
-        private static void HandleRestRequest(SslStream client)
+        private static bool HandleRestRequest(SslStream client, int keepAliveRequestsRemaining)
         {
+            _restKeepAliveResponse = false;
+            _restKeepAliveRemaining = keepAliveRequestsRemaining;
+            _restPeerClosed = false;
             _restDiagnostics.RecordRequestStarted();
             try
             {
-                HandleRestRequestCore(client);
+                HandleRestRequestCore(client, keepAliveRequestsRemaining > 0);
+                return _restKeepAliveResponse;
             }
             finally
             {
@@ -154,7 +190,7 @@ namespace CubleyControl
             }
         }
 
-        private static void HandleRestRequestCore(SslStream client)
+        private static void HandleRestRequestCore(SslStream client, bool allowKeepAlive)
         {
             byte[] request = new byte[RestHeaderMaxLength + ApiCommandEnvelopeMaxLength];
             int received = 0;
@@ -164,6 +200,12 @@ namespace CubleyControl
                 int count = client.Read(request, received, request.Length - received);
                 if (count <= 0)
                 {
+                    if (received == 0)
+                    {
+                        _restPeerClosed = true;
+                        return;
+                    }
+
                     WriteRestResponse(client, 400, null);
                     return;
                 }
@@ -194,6 +236,8 @@ namespace CubleyControl
 
             string method = headers.Substring(0, firstSpace);
             string path = headers.Substring(firstSpace + 1, secondSpace - firstSpace - 1);
+            bool keepAliveRequested = allowKeepAlive &&
+                RestConnectionPolicy.ShouldKeepAlive(headers);
             if (!IsRestRequestAuthorized(headers))
             {
                 WriteStructuredDebug(
@@ -208,6 +252,15 @@ namespace CubleyControl
 
             if (method == "GET")
             {
+                if (received == bodyOffset)
+                {
+                    _restKeepAliveResponse = keepAliveRequested;
+                }
+                else
+                {
+                    _restDiagnostics.RecordPipelinedRequestRejected();
+                }
+
                 HandleRestGetRequest(client, path);
                 return;
             }
@@ -242,6 +295,15 @@ namespace CubleyControl
                 }
 
                 received += count;
+            }
+
+            if (received == required)
+            {
+                _restKeepAliveResponse = keepAliveRequested;
+            }
+            else
+            {
+                _restDiagnostics.RecordPipelinedRequestRejected();
             }
 
             int statusCode;
@@ -288,6 +350,9 @@ namespace CubleyControl
                     .AddLong("queue_accepted", snapshot.QueueAccepted)
                     .AddLong("queue_rejected", snapshot.QueueRejected)
                     .AddLong("queue_high_water", snapshot.QueueHighWater)
+                    .AddLong("keep_alive_requests", snapshot.KeepAliveRequests)
+                    .AddLong("keep_alive_limit_closes", snapshot.KeepAliveLimitCloses)
+                    .AddLong("pipelined_requests_rejected", snapshot.PipelinedRequestsRejected)
                     .Build();
                 WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", diagnostics, null));
                 return;
@@ -475,7 +540,12 @@ namespace CubleyControl
                     ? "Retry-After: " + retryAfterSeconds.ToString() + "\r\n"
                     : string.Empty) +
                 "Cache-Control: no-store\r\n" +
-                "Connection: close\r\n\r\n" + payload);
+                (_restKeepAliveResponse
+                    ? "Connection: keep-alive\r\n" +
+                        "Keep-Alive: timeout=" + RestKeepAliveTimeoutSeconds.ToString() +
+                        ", max=" + _restKeepAliveRemaining.ToString() + "\r\n"
+                    : "Connection: close\r\n") +
+                "\r\n" + payload);
             _restDiagnostics.RecordResponse(statusCode);
             try
             {

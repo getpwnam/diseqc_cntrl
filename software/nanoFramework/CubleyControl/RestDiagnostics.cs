@@ -21,6 +21,9 @@ namespace CubleyControl
         internal long QueueAccepted;
         internal long QueueRejected;
         internal long QueueHighWater;
+        internal long KeepAliveRequests;
+        internal long KeepAliveLimitCloses;
+        internal long PipelinedRequestsRejected;
     }
 
     internal sealed class RestDiagnostics
@@ -45,6 +48,9 @@ namespace CubleyControl
         private long _queueAccepted;
         private long _queueRejected;
         private long _queueHighWater;
+        private long _keepAliveRequests;
+        private long _keepAliveLimitCloses;
+        private long _pipelinedRequestsRejected;
 
         internal void RecordConnectionAccepted()
         {
@@ -188,6 +194,30 @@ namespace CubleyControl
             }
         }
 
+        internal void RecordKeepAliveRequest()
+        {
+            lock (_sync)
+            {
+                _keepAliveRequests++;
+            }
+        }
+
+        internal void RecordKeepAliveLimitClose()
+        {
+            lock (_sync)
+            {
+                _keepAliveLimitCloses++;
+            }
+        }
+
+        internal void RecordPipelinedRequestRejected()
+        {
+            lock (_sync)
+            {
+                _pipelinedRequestsRejected++;
+            }
+        }
+
         internal RestDiagnosticsSnapshot Snapshot()
         {
             lock (_sync)
@@ -212,7 +242,10 @@ namespace CubleyControl
                     AbortedCloses = _abortedCloses,
                     QueueAccepted = _queueAccepted,
                     QueueRejected = _queueRejected,
-                    QueueHighWater = _queueHighWater
+                    QueueHighWater = _queueHighWater,
+                    KeepAliveRequests = _keepAliveRequests,
+                    KeepAliveLimitCloses = _keepAliveLimitCloses,
+                    PipelinedRequestsRejected = _pipelinedRequestsRejected
                 };
             }
         }

@@ -66,6 +66,13 @@ nanoFramework TLS stream invokes the target MbedTLS `close_notify` path before
 the TCP socket is closed. Write, flush, clean-close, and aborted-close counters
 are available from the diagnostics endpoint.
 
+HTTP/1.1 connections support at most four sequential requests per TLS session.
+The idle timeout between requests is 1.5 seconds, and each response advertises
+the remaining request bound in `Keep-Alive`. HTTP pipelining is not supported:
+if bytes from a second request arrive before the first response, the first
+request is answered and the connection is closed. HTTP/1.0 and
+`Connection: close` requests always close after one response.
+
 ### Payload constraints
 
 The device parses a deliberately small JSON subset. This is a hard contract,
