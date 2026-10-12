@@ -13,4 +13,11 @@
 #undef MBEDTLS_SSL_DTLS_CONNECTION_ID
 #undef MBEDTLS_SSL_DTLS_CONNECTION_ID_COMPAT
 
+// Covers the measured 1,473-byte ClientHello and the REST API's bounded messages.
+#undef MBEDTLS_SSL_IN_CONTENT_LEN
+#define MBEDTLS_SSL_IN_CONTENT_LEN 2048
+
+#undef MBEDTLS_SSL_OUT_CONTENT_LEN
+#define MBEDTLS_SSL_OUT_CONTENT_LEN 2048
+
 #endif

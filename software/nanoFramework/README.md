@@ -49,13 +49,24 @@ Full build:
 
 Build and deploy via serial:
 
-- `./toolchain/build-CubleyControl.sh build --deploy --serialport /dev/ttyUSB0 --address 0x08060000`
+- `./toolchain/build-CubleyControl.sh build --deploy --serialport /dev/ttyUSB0 --address 0x080C0000 --reset`
 
 Build and deploy via SWD:
 
-- `./toolchain/build-CubleyControl.sh build --deploy --swd --address 0x08060000`
+- `./toolchain/build-CubleyControl.sh build --deploy --swd --address 0x080C0000 --reset`
 
-These addresses are for the Debug layout. Verify `firmware/nf-interpreter/build/nanoCLR.map` before using another firmware configuration.
+The current deployment region is `0x080C0000` through `0x080FFFFF`. Always
+verify `__deployment_start__` and `__deployment_size__` in
+`firmware/nf-interpreter/build/nanoCLR.map` before using an address explicitly.
+
+For a reproducible command-line deployment, run the build wrapper and then
+`./toolchain/deploy-CubleyControl.sh --reset`. A local VS Code nanoFramework
+launch configuration may provide the same build-and-deploy flow. Choose one
+deployment workflow and do not alternate between them during one bring-up
+session.
+
+For certificate provisioning and the first trusted API request, follow
+[`docs/software/HTTPS_TRANSPORT.md`](../../docs/software/HTTPS_TRANSPORT.md).
 
 ## Build Outputs
 

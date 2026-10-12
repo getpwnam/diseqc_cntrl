@@ -1716,3 +1716,35 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin; /tmp/cubley-nanobooter-readback.bin; /tmp/cubley-nanoclr-readback.bin
 - Conclusion: Built and flashed nanoBooter and nanoCLR; both SWD readbacks matched the build artifacts byte-for-byte.
 - Note: Deployment region was preserved; software reset used AIRCR because NRST is not connected. Runtime mailbox verification script is absent from this checkout.
+
+### 2026-10-12 07:53:53 UTC [PASS] [NON-BASELINE]
+- Git rev: c72cdc0
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): st-info --probe; st-flash read 0x08000000 0x100000 twice; cmp; sha256sum
+- Artifact: /home/vscode/.copilot/session-state/36665490-7540-4bb8-b0ea-33f747a90732/files/cubley-backup-20261012T075245Z/stm32f407-full-flash.bin (SHA-256 fc8f870416b8b006a04ccffd83bf8e472b33c6666263244ddb509f5f39dad05a)
+- Conclusion: Installed STM32F407 1 MiB flash backed up; two independent reads matched byte-for-byte
+- Note: Read-only operation. ST-Link NRST is not connected; SWD reads completed successfully.
+
+### 2026-10-12 08:12:36 UTC [INFO] [NON-BASELINE]
+- Git rev: c72cdc0
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): build clean managed at c72cdc0e; interop check 0A4353F9; build native; st-flash booter@0x08000000 CLR@0x08010000; SWD bundle@0x080C0000; read-back cmp; HTTPS health
+- Artifact: /home/vscode/.copilot/session-state/36665490-7540-4bb8-b0ea-33f747a90732/files/cubley-upgrade-c72cdc0e
+- Conclusion: Clean pinned native and managed images flashed and byte-verified; TCP 443 listens but TLS health is blocked at handshake
+- Note: Managed SWD write required one bounded retry after a four-byte verification mismatch. Final read-back SHA-256 616cb7202d3b683ceb4200e9a51c1bf2ff747ad40dd56d516476a463bd5a74e5. /dev/ttyUSB0 unavailable; user authorized SWD deployment.
+
+### 2026-10-12 09:21:14 UTC [PASS]
+- Git rev: c72cdc0
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): generate P-256 certificate; back up/read-modify-write/verify 0x0800C000 configuration sector; restore nanoCLR at artifact-derived 0x08010000; nanoff devicedetails; debugger GetAllX509DeviceCertificates; curl TLS 1.3 health probe
+- Artifact: /home/vscode/.copilot/session-state/561b9d8f-8ec0-4d25-8f60-ff11144d5550/files/cubley-x509/cubley.crt; /home/vscode/.copilot/session-state/561b9d8f-8ec0-4d25-8f60-ff11144d5550/files/cubley-x509/cubley-device.pem; /home/vscode/.copilot/session-state/561b9d8f-8ec0-4d25-8f60-ff11144d5550/files/cubley-x509-config-final-readback.bin
+- Conclusion: Provisioned one 855-byte NUL-terminated X.509 device credential; configuration read-back and nanoCLR runtime verification passed.
+- Note: TLS 1.3 health probe still ends with unexpected EOF both with CA validation and --insecure; handshake acceptance remains unresolved.
+
+### 2026-10-12 09:31:35 UTC [PASS]
+- Git rev: c72cdc0
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): build-flash-cubley.sh build; flash nanoCLR at map-derived 0x08010000; 10x CA-validated curl TLS 1.3 health; tools/cubleyctl.py health/lnb/positioner; OpenSSL s_client TLS 1.3; forced TLS 1.2 probe
+- Artifact: firmware/nf-interpreter/build/nanoCLR.bin; firmware/targets-local/CUBLEY_F407_0_5/mbedtls_tls13_only.h; /home/vscode/.copilot/session-state/561b9d8f-8ec0-4d25-8f60-ff11144d5550/files/cubley-x509/cubley.crt
+- Conclusion: TLS handshake allocation failure fixed by target-only 2 KiB record buffers; certificate verification and REST health/state requests pass repeatedly.
+- Note: Captured pre-fix Mbed TLS error MBEDTLS_ERR_SSL_ALLOC_FAILED (-0x7F00). Final OpenSSL negotiation: TLSv1.3, TLS_AES_256_GCM_SHA384, ECDSA P-256 certificate verified; TLS 1.2 rejected.

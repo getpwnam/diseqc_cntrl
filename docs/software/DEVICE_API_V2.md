@@ -1,7 +1,8 @@
 # Device API v2 — JSON Command Envelope And Positioner Jobs
 
-Status: **draft contract**, implemented on the device but not yet exercised on
-hardware. REST is the only network interface.
+Status: **draft contract**, implemented on the device. TLS 1.3 health and
+read-only state flows have been exercised on Cubley v0.5 hardware. REST is the
+only network interface.
 
 ## Why this exists
 

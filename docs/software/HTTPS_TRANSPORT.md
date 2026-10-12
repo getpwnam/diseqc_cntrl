@@ -7,6 +7,9 @@ a target override that removes TLS 1.2, DTLS, and their legacy handshake options
 The application uses P-256, SHA-256, and hardware-generated entropy. The stock
 native configuration also compiles TLS 1.3, TLS client, RSA, and additional
 cipher-suite support even though this REST listener does not request them.
+The target limits inbound and outbound TLS record content to 2 KiB. This covers
+the measured 1,473-byte OpenSSL ClientHello and the API's bounded requests and
+responses while avoiding handshake allocation failure on the STM32F407.
 
 TLS authenticates the server only; the API does not request client certificates.
 When an API token is configured, every REST request additionally requires that
@@ -14,6 +17,56 @@ bearer token. An unset token disables application authentication. Network ACLs
 remain necessary, particularly when authentication is disabled. A client that
 disables server-certificate validation can expose a configured token to an
 active interceptor.
+
+## Quick Start From Source
+
+Prerequisites:
+
+- OpenSSL 3 and Python 3 on the development host.
+- ST-Link attached for firmware flashing.
+- `/dev/ttyUSB0` connected to the nanoFramework wire-protocol UART.
+- The nanoFramework build toolchain and `nanoff` installed. The nanoFramework
+  VS Code extension is optional when using the command-line flow below.
+- The device's intended IPv4 address. The certificate IP subject alternative
+  name and the client URL must match this address.
+
+From the repository root, build and flash the current target:
+
+```bash
+./firmware/build-flash-cubley.sh build
+./firmware/build-flash-cubley.sh flash --reset
+```
+
+The current generated layout places nanoCLR at `0x08010000` and managed
+deployment at `0x080C0000`. Check these values in
+`firmware/nf-interpreter/build/nanoCLR.map` after every firmware build rather
+than copying addresses from historical logs.
+
+Build and deploy the managed application and all required assemblies:
+
+```bash
+cd software/nanoFramework
+./toolchain/build-CubleyControl.sh build --configuration Debug
+./toolchain/deploy-CubleyControl.sh --reset
+cd ../..
+```
+
+The nanoFramework VS Code extension may be used instead when a local launch
+configuration deploys the same complete assembly set. Use one managed
+deployment workflow consistently; do not alternate between VS Code and the
+manual scripts in the same bring-up session.
+
+Then provision a device credential as described below and verify the connection:
+
+```bash
+python3 tools/cubleyctl.py \
+  --url "https://<device-ip>" \
+  --ca-file cubley.crt \
+  health
+```
+
+An unset API token permits this first request. Configure a token only after the
+trusted TLS request succeeds, then provide it through `CUBLEY_TOKEN`.
 
 ## Provision A Device Credential
 
@@ -41,6 +94,10 @@ deployment and persists across application updates.
 Distribute only `cubley.crt` to API clients. For production, provision a unique
 key per device and protect the provisioning workstation and retained backups.
 
+The device configuration stores PEM text with a terminating NUL byte. Use the
+Device Explorer configuration command rather than writing a raw certificate
+block or deployment image to the configuration sector.
+
 ## Provision An API Token
 
 Generate a token and stage it through the USB CDC configuration console:
@@ -61,14 +118,41 @@ requests without an authorization header.
 
 ## Client Test
 
+With no API token configured:
+
+```bash
+python3 tools/cubleyctl.py \
+  --url "https://<device-ip>" \
+  --ca-file cubley.crt \
+  health
+```
+
+With a configured API token:
+
+```bash
+CUBLEY_TOKEN="<token>" python3 tools/cubleyctl.py \
+  --url "https://<device-ip>" \
+  --ca-file cubley.crt \
+  health
+```
+
+Equivalent `curl` request:
+
 ```bash
 curl --tlsv1.3 --tls-max 1.3 --cacert cubley.crt \
    -H "Authorization: Bearer $CUBLEY_API_TOKEN" \
    "https://<device-ip>/api/v2/health"
 ```
 
+Omit the `Authorization` header when no token is configured.
+
 Use `--insecure` only as a diagnostic to distinguish certificate trust failures
 from handshake or application failures.
+
+Expected success includes `"ok":true`, `"code":"ok"`, and
+`"data":{"status":"ok",...}`. If certificate verification fails, confirm that
+the client URL uses a DNS name or IP address present in the certificate's
+subject alternative name.
 
 ## Resource Measurements
 
@@ -76,7 +160,7 @@ Measurements are from Debug builds of CUBLEY_F407_0_5:
 
 | Build | nanoCLR flash | 704 KiB region |
 |---|---:|---:|
-| Current TLS 1.3-only profile | 631,992 bytes | 87.67% |
+| Current TLS 1.3-only profile | 631,936 bytes | 87.66% |
 | Stock TLS 1.2 and TLS 1.3 configuration | 696,696 bytes | 96.64% |
 | Experimental TLS 1.2 single-suite profile | 458,848 bytes | 63.65% |
 
