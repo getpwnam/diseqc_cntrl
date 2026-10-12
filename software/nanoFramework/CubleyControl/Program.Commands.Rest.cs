@@ -308,6 +308,53 @@ namespace CubleyControl
                 return;
             }
 
+            if (path.StartsWith(RestCommandsPathPrefix))
+            {
+                string commandId = path.Substring(RestCommandsPathPrefix.Length);
+                if (!IsValidApiCommandId(commandId))
+                {
+                    WriteRestResponse(
+                        client,
+                        400,
+                        BuildRestQueryResponse(
+                            false,
+                            "validation_error",
+                            null,
+                            "command id must be 1 to " + ApiCommandIdMaxLength.ToString() +
+                            " characters of A-Za-z0-9._:-"));
+                    return;
+                }
+
+                string receipt;
+                string state;
+                if (TryGetCachedApiCommandReceipt(commandId, out receipt, out state))
+                {
+                    string completed = new JsonBuilder()
+                        .AddString("id", commandId)
+                        .AddString("state", state)
+                        .AddRaw("receipt", "{" + receipt + "}")
+                        .Build();
+                    WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", completed, null));
+                    return;
+                }
+
+                if (_apiCommandQueue.TryGetState(commandId, out state))
+                {
+                    string pending = new JsonBuilder()
+                        .AddString("id", commandId)
+                        .AddString("state", state)
+                        .Build();
+                    WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", pending, null));
+                    return;
+                }
+
+                WriteRestResponse(
+                    client,
+                    404,
+                    BuildRestQueryResponse(false, "not_found", null, "command is unknown or has been evicted"));
+                return;
+            }
+
             if (path.StartsWith(RestJobsPathPrefix))
             {
                 int jobId;
@@ -315,53 +362,6 @@ namespace CubleyControl
                 if (!TryParsePositiveInt(text, out jobId))
                 {
                     WriteRestResponse(client, 400, BuildRestQueryResponse(false, "validation_error", null, "job must be a positive integer"));
-                    return;
-                }
-
-                if (path.StartsWith(RestCommandsPathPrefix))
-                {
-                    string commandId = path.Substring(RestCommandsPathPrefix.Length);
-                    if (!IsValidApiCommandId(commandId))
-                    {
-                        WriteRestResponse(
-                            client,
-                            400,
-                            BuildRestQueryResponse(
-                                false,
-                                "validation_error",
-                                null,
-                                "command id must be 1 to " + ApiCommandIdMaxLength.ToString() +
-                                " characters of A-Za-z0-9._:-"));
-                        return;
-                    }
-
-                    string receipt;
-                    string state;
-                    if (TryGetCachedApiCommandReceipt(commandId, out receipt, out state))
-                    {
-                        string completed = new JsonBuilder()
-                            .AddString("id", commandId)
-                            .AddString("state", state)
-                            .AddRaw("receipt", "{" + receipt + "}")
-                            .Build();
-                        WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", completed, null));
-                        return;
-                    }
-
-                    if (_apiCommandQueue.TryGetState(commandId, out state))
-                    {
-                        string pending = new JsonBuilder()
-                            .AddString("id", commandId)
-                            .AddString("state", state)
-                            .Build();
-                        WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", pending, null));
-                        return;
-                    }
-
-                    WriteRestResponse(
-                        client,
-                        404,
-                        BuildRestQueryResponse(false, "not_found", null, "command is unknown or has been evicted"));
                     return;
                 }
 
