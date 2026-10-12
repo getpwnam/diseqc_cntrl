@@ -45,6 +45,41 @@ namespace CubleyControl
             return true;
         }
 
+        internal static bool HasRequestBody(string headers)
+        {
+            if (headers == null)
+            {
+                return false;
+            }
+
+            int lineStart = headers.IndexOf("\r\n");
+            lineStart = lineStart < 0 ? headers.Length : lineStart + 2;
+            while (lineStart < headers.Length)
+            {
+                int lineEnd = headers.IndexOf("\r\n", lineStart);
+                if (lineEnd < 0)
+                {
+                    lineEnd = headers.Length;
+                }
+
+                int colon = headers.IndexOf(':', lineStart);
+                if (colon > lineStart && colon < lineEnd)
+                {
+                    string name = headers.Substring(lineStart, colon - lineStart).Trim().ToLower();
+                    string value = headers.Substring(colon + 1, lineEnd - colon - 1).Trim();
+                    if (name == "transfer-encoding" ||
+                        (name == "content-length" && value != "0"))
+                    {
+                        return true;
+                    }
+                }
+
+                lineStart = lineEnd + 2;
+            }
+
+            return false;
+        }
+
         private static bool ContainsToken(string value, string expected)
         {
             int start = 0;

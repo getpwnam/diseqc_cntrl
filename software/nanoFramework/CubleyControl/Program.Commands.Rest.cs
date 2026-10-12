@@ -252,6 +252,12 @@ namespace CubleyControl
 
             if (method == "GET")
             {
+                if (RestConnectionPolicy.HasRequestBody(headers))
+                {
+                    WriteRestResponse(client, 400, null);
+                    return;
+                }
+
                 if (received == bodyOffset)
                 {
                     _restKeepAliveResponse = keepAliveRequested;
