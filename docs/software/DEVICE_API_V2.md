@@ -61,6 +61,11 @@ capacity is exhausted, POST returns HTTP 503 with `Retry-After: 1`; the command
 was not accepted and did not execute. Reusing an active or retained command ID
 with a different parsed command returns HTTP 409.
 
+Responses are written and flushed before connection shutdown. Closing the
+nanoFramework TLS stream invokes the target MbedTLS `close_notify` path before
+the TCP socket is closed. Write, flush, clean-close, and aborted-close counters
+are available from the diagnostics endpoint.
+
 ### Payload constraints
 
 The device parses a deliberately small JSON subset. This is a hard contract,

@@ -280,6 +280,9 @@ namespace CubleyControl
                     .AddLong("responses_4xx", snapshot.Responses4xx)
                     .AddLong("responses_5xx", snapshot.Responses5xx)
                     .AddLong("response_write_failures", snapshot.ResponseWriteFailures)
+                    .AddLong("response_writes_succeeded", snapshot.ResponseWritesSucceeded)
+                    .AddLong("response_flush_failures", snapshot.ResponseFlushFailures)
+                    .AddLong("response_flushes_succeeded", snapshot.ResponseFlushesSucceeded)
                     .AddLong("clean_closes", snapshot.CleanCloses)
                     .AddLong("aborted_closes", snapshot.AbortedCloses)
                     .AddLong("queue_accepted", snapshot.QueueAccepted)
@@ -477,10 +480,22 @@ namespace CubleyControl
             try
             {
                 client.Write(response, 0, response.Length);
+                _restDiagnostics.RecordResponseWriteSucceeded();
             }
             catch
             {
                 _restDiagnostics.RecordResponseWriteFailure();
+                throw;
+            }
+
+            try
+            {
+                client.Flush();
+                _restDiagnostics.RecordResponseFlushSucceeded();
+            }
+            catch
+            {
+                _restDiagnostics.RecordResponseFlushFailure();
                 throw;
             }
         }

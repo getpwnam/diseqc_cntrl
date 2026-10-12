@@ -13,6 +13,9 @@ namespace CubleyControl
         internal long Responses4xx;
         internal long Responses5xx;
         internal long ResponseWriteFailures;
+        internal long ResponseWritesSucceeded;
+        internal long ResponseFlushFailures;
+        internal long ResponseFlushesSucceeded;
         internal long CleanCloses;
         internal long AbortedCloses;
         internal long QueueAccepted;
@@ -34,6 +37,9 @@ namespace CubleyControl
         private long _responses4xx;
         private long _responses5xx;
         private long _responseWriteFailures;
+        private long _responseWritesSucceeded;
+        private long _responseFlushFailures;
+        private long _responseFlushesSucceeded;
         private long _cleanCloses;
         private long _abortedCloses;
         private long _queueAccepted;
@@ -123,6 +129,30 @@ namespace CubleyControl
             }
         }
 
+        internal void RecordResponseWriteSucceeded()
+        {
+            lock (_sync)
+            {
+                _responseWritesSucceeded++;
+            }
+        }
+
+        internal void RecordResponseFlushFailure()
+        {
+            lock (_sync)
+            {
+                _responseFlushFailures++;
+            }
+        }
+
+        internal void RecordResponseFlushSucceeded()
+        {
+            lock (_sync)
+            {
+                _responseFlushesSucceeded++;
+            }
+        }
+
         internal void RecordClose(bool clean)
         {
             lock (_sync)
@@ -175,6 +205,9 @@ namespace CubleyControl
                     Responses4xx = _responses4xx,
                     Responses5xx = _responses5xx,
                     ResponseWriteFailures = _responseWriteFailures,
+                    ResponseWritesSucceeded = _responseWritesSucceeded,
+                    ResponseFlushFailures = _responseFlushFailures,
+                    ResponseFlushesSucceeded = _responseFlushesSucceeded,
                     CleanCloses = _cleanCloses,
                     AbortedCloses = _abortedCloses,
                     QueueAccepted = _queueAccepted,
