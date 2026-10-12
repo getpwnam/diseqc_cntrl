@@ -302,10 +302,62 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(INTEROP-CubleyNative DEFAULT_MSG CubleyNative_
 EOF
 }
 
+ensure_cubley_chibios_source() {
+  local preset_file="$WORK_DIR/../targets-local/CUBLEY_F407_0_5/CMakePresets.json"
+  local source_dir="$WORK_DIR/build/_deps/cubley-chibios-src"
+  local revision
+
+  require_cmd git
+  require_cmd python3
+
+  revision="$(
+    python3 - "$preset_file" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as preset_file:
+    presets = json.load(preset_file)
+
+for preset in presets.get("configurePresets", []):
+    if preset.get("name") == "CUBLEY_F407_0_5":
+        revision = preset.get("cacheVariables", {}).get("RTOS_VERSION", "")
+        if isinstance(revision, str):
+            print(revision)
+        break
+PY
+  )"
+
+  if [[ ! "$revision" =~ ^[0-9a-fA-F]{40}$ ]]; then
+    echo "CUBLEY_F407_0_5 RTOS_VERSION must be a full 40-character Git commit: $revision" >&2
+    exit 1
+  fi
+
+  if [[ -d "$source_dir/.git" ]] &&
+     [[ "$(git -C "$source_dir" rev-parse HEAD 2>/dev/null || true)" == "$revision" ]] &&
+     [[ -z "$(git -C "$source_dir" status --porcelain)" ]]; then
+    echo "[build] Reuse pinned ChibiOS: $revision"
+    return
+  fi
+
+  echo "[build] Fetch pinned ChibiOS: $revision"
+  rm -rf -- "$source_dir"
+  mkdir -p "$(dirname "$source_dir")"
+  git init -q "$source_dir"
+  git -C "$source_dir" remote add origin https://github.com/chibios-upstream/chibios.git
+  git -C "$source_dir" fetch --depth 1 origin "$revision"
+  git -C "$source_dir" checkout -q --detach FETCH_HEAD
+
+  if [[ "$(git -C "$source_dir" rev-parse HEAD)" != "$revision" ]]; then
+    echo "Fetched ChibiOS revision does not match requested pin: $revision" >&2
+    exit 1
+  fi
+}
+
 do_build() {
   require_cmd cmake
   clean_build_space_preserve_downloads
   if [[ "$PRESET" == "CUBLEY_F407_0_5" ]]; then
+    ensure_cubley_chibios_source
     echo "[build] Prepare CUBLEY_F407_0_5 local target + interop module"
     prepare_cubley_f407_overlay
   fi
