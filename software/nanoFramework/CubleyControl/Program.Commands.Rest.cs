@@ -327,6 +327,16 @@ namespace CubleyControl
 
                 string receipt;
                 string state;
+                if (_apiCommandQueue.TryGetState(commandId, out state))
+                {
+                    string pending = new JsonBuilder()
+                        .AddString("id", commandId)
+                        .AddString("state", state)
+                        .Build();
+                    WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", pending, null));
+                    return;
+                }
+
                 if (TryGetCachedApiCommandReceipt(commandId, out receipt, out state))
                 {
                     string completed = new JsonBuilder()
@@ -335,16 +345,6 @@ namespace CubleyControl
                         .AddRaw("receipt", "{" + receipt + "}")
                         .Build();
                     WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", completed, null));
-                    return;
-                }
-
-                if (_apiCommandQueue.TryGetState(commandId, out state))
-                {
-                    string pending = new JsonBuilder()
-                        .AddString("id", commandId)
-                        .AddString("state", state)
-                        .Build();
-                    WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", pending, null));
                     return;
                 }
 

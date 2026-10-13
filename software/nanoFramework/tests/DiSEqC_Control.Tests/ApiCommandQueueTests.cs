@@ -51,7 +51,7 @@ public sealed class ApiCommandQueueTests
     public void ReportsQueuedAndRunningLifecycleStates()
     {
         var queue = new ApiCommandQueue(1);
-        Assert.Equal(ApiCommandQueueResult.Accepted, queue.TryEnqueue("one", "payload-one", false));
+        Assert.Equal(ApiCommandQueueResult.Accepted, queue.TryEnqueue("one", "payload-one", false, out _));
 
         Assert.True(queue.TryGetState("one", out string state));
         Assert.Equal("queued", state);

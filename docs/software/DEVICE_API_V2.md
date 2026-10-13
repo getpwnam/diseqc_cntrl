@@ -122,7 +122,7 @@ UUID is ideal, and 32 chars is enough for either).
 Exactly one response object is returned per HTTP request.
 
 ```json
-{"v":2,"boot_id":"d942c94f-16fd-4d8e-b6d5-44201d3caa4c","id":"01J8ZK4M7Q","ok":true,"code":"accepted","job":7,"ts_ms":41231}
+{"v":2,"boot_id":"d942c94f-16fd-4d8e-b6d5-44201d3caa4c","id":"01J8ZK4M7Q","ok":true,"code":"queued","ts_ms":41231}
 ```
 
 | Member | Type | Always | Meaning |

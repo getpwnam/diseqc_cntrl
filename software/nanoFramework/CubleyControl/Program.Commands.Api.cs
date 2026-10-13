@@ -784,7 +784,10 @@ namespace CubleyControl
                 _apiCachedCommandIds[slot] = commandId;
                 _apiCachedPayloads[slot] = payload;
                 _apiCachedResponseBodies[slot] = responseBody;
-                _apiCachedSucceeded[slot] = responseBody.IndexOf("\"ok\":true") >= 0;
+                int succeededAt = responseBody.IndexOf("\"ok\":true");
+                int failedAt = responseBody.IndexOf("\"ok\":false");
+                _apiCachedSucceeded[slot] =
+                    succeededAt >= 0 && (failedAt < 0 || succeededAt < failedAt);
                 _apiCachedAtMs[slot] = Environment.TickCount64;
                 _apiDuplicateCacheNext = (slot + 1) % ApiDuplicateCacheSize;
             }
