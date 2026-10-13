@@ -19,7 +19,7 @@ namespace CubleyControl
             {
                 string current = keys[index];
                 int destination = index;
-                while (destination > 0 && string.Compare(keys[destination - 1], current) > 0)
+                while (destination > 0 && CompareOrdinal(keys[destination - 1], current) > 0)
                 {
                     keys[destination] = keys[destination - 1];
                     destination--;
@@ -53,6 +53,21 @@ namespace CubleyControl
             }
 
             return builder.Build();
+        }
+
+        private static int CompareOrdinal(string left, string right)
+        {
+            int commonLength = left.Length < right.Length ? left.Length : right.Length;
+            for (int index = 0; index < commonLength; index++)
+            {
+                int difference = left[index] - right[index];
+                if (difference != 0)
+                {
+                    return difference;
+                }
+            }
+
+            return left.Length - right.Length;
         }
     }
 }

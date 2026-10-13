@@ -32,4 +32,21 @@ public sealed class ApiCommandCanonicalizerTests
             ApiCommandCanonicalizer.Build(number, 2),
             ApiCommandCanonicalizer.Build(text, 2));
     }
+
+    [Fact]
+    public void UsesOrdinalMemberOrdering()
+    {
+        Assert.True(Json.TryParseObject(
+            "{\"id\":\"same\",\"op\":\"test\",\"a\":1,\"a\\u0000\":2}",
+            out JsonObject first,
+            out _));
+        Assert.True(Json.TryParseObject(
+            "{\"a\\u0000\":2,\"a\":1,\"op\":\"test\",\"id\":\"same\"}",
+            out JsonObject second,
+            out _));
+
+        Assert.Equal(
+            ApiCommandCanonicalizer.Build(first, 2),
+            ApiCommandCanonicalizer.Build(second, 2));
+    }
 }

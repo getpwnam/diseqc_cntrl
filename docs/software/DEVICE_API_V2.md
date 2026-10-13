@@ -59,7 +59,7 @@ Read current device state with:
 The device reserves queue capacity for `positioner.halt`. When normal command
 capacity is exhausted, POST returns HTTP 503 with `Retry-After: 1`; the command
 was not accepted and did not execute. Reusing an active or retained command ID
-with a different payload returns HTTP 409.
+with a different parsed command returns HTTP 409.
 
 ### Payload constraints
 
@@ -153,7 +153,7 @@ Exactly one response object is returned per HTTP request.
 | `unsupported` | false | Unknown `op`, or an op not permitted on this transport. |
 | `busy` | false | A positioner job is already running; `job` names it. |
 | `hw_fault` | false | Hardware or transmission failure. |
-| `id_conflict` | false | `id` reused within the dedup window with a different payload. |
+| `id_conflict` | false | `id` reused within the dedup window with a different canonical command. |
 | `not_found` | false | Referenced job is unknown or has been evicted. |
 | `queue_full` | false | Normal and reserved capacity applicable to this command is exhausted. |
 
