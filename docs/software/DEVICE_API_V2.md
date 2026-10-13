@@ -37,8 +37,10 @@ Nothing in this document changes the console. An operator types
 ## Transport
 
 Send commands with `POST /api/v2/commands` over HTTP. The request and response
-content type is `application/json`. A command result is returned in the HTTP
-response body.
+content type is `application/json`. A validated command is placed in a bounded
+device queue and returns a non-terminal `queued` receipt. Hardware execution
+continues asynchronously. Use the command receipt endpoint to resolve completion
+or an ambiguous POST response.
 
 When a token is configured through the USB CDC console, every request MUST
 include `Authorization: Bearer <token>`. Missing, malformed, duplicate, and
@@ -51,6 +53,25 @@ Read current device state with:
 - `GET /api/v2/state/positioner`
 - `GET /api/v2/state/lnb`
 - `GET /api/v2/jobs/{job}`
+- `GET /api/v2/commands/{id}`
+- `GET /api/v2/diagnostics`
+
+The device reserves queue capacity for `positioner.halt`. When normal command
+capacity is exhausted, POST returns HTTP 503 with `Retry-After: 1`; the command
+was not accepted and did not execute. Reusing an active or retained command ID
+with a different parsed command returns HTTP 409.
+
+Responses are written and flushed before connection shutdown. Closing the
+nanoFramework TLS stream invokes the target MbedTLS `close_notify` path before
+the TCP socket is closed. Write, flush, clean-close, and aborted-close counters
+are available from the diagnostics endpoint.
+
+HTTP/1.1 connections support at most four sequential requests per TLS session.
+The idle timeout between requests is 1.5 seconds, and each response advertises
+the remaining request bound in `Keep-Alive`. HTTP pipelining is not supported:
+if bytes from a second request arrive before the first response, the first
+request is answered and the connection is closed. HTTP/1.0 and
+`Connection: close` requests always close after one response.
 
 ### Payload constraints
 
@@ -91,14 +112,14 @@ non-idempotent operation such as `positioner.step` from executing twice.
 
 ### Deduplication
 
-The device remembers the 8 most recent `{id, raw payload, response}`
-transactions for **120 seconds**.
+The device remembers queued and active IDs plus the 8 most recent
+`{id, canonical command, response}` terminal transactions for **120 seconds**.
 
-- Same `id`, byte-identical payload, within the window → the original response
+- Same `id`, semantically identical parsed command, within the window → the original response
   is returned verbatim with an added `"replayed":true` member, and the
   command is **not** executed again. `ok` and `code` stay as they originally
   were, so a replay is never mistaken for a fresh execution.
-- Same `id`, different payload, within the window → `id_conflict`, nothing
+- Same `id`, different parsed command, within the window → `id_conflict`, nothing
   executes.
 - Any `id` older than the window, or evicted by the 8-entry ring → treated as
   new and executed.
@@ -108,12 +129,16 @@ whether a reused ID replayed or conflicted depended on how many unrelated
 commands had happened since. Requesters should still use unique IDs (a ULID or
 UUID is ideal, and 32 chars is enough for either).
 
+Member order, insignificant JSON whitespace, string escape spelling, and an
+omitted versus explicit `"v":2` do not affect command identity. Scalar types
+and values do affect identity.
+
 ## Response envelope
 
 Exactly one response object is returned per HTTP request.
 
 ```json
-{"v":2,"boot_id":"d942c94f-16fd-4d8e-b6d5-44201d3caa4c","id":"01J8ZK4M7Q","ok":true,"code":"accepted","job":7,"ts_ms":41231}
+{"v":2,"boot_id":"d942c94f-16fd-4d8e-b6d5-44201d3caa4c","id":"01J8ZK4M7Q","ok":true,"code":"queued","ts_ms":41231}
 ```
 
 | Member | Type | Always | Meaning |
@@ -121,7 +146,7 @@ Exactly one response object is returned per HTTP request.
 | `v` | int | yes | Always `2`. |
 | `boot_id` | string | yes | Changes on every boot. Job IDs are meaningful only within this boot. |
 | `id` | string | yes | Echo of the command `id`, or `"?"` if the envelope was unparseable. |
-| `ok` | bool | yes | Whether the command was accepted and completed. |
+| `ok` | bool | yes | Whether the command was queued or completed successfully. |
 | `code` | string | yes | Machine-readable outcome, see below. |
 | `ts_ms` | int | yes | Device uptime in milliseconds when the response was formed. Monotonic within a boot; **not** wall clock, and it restarts at reboot. |
 | `msg` | string | on failure | Short human-readable detail. |
@@ -134,13 +159,29 @@ Exactly one response object is returned per HTTP request.
 | `code` | `ok` | Meaning |
 |---|---|---|
 | `ok` | true | Completed. Terminal, nothing further happens. |
+| `queued` | true | Non-terminal queue receipt. The command is queued or active. |
 | `accepted` | true | A job was started. Motion continues after this response. |
 | `validation_error` | false | Malformed envelope, unknown member, bad parameter. |
 | `unsupported` | false | Unknown `op`, or an op not permitted on this transport. |
 | `busy` | false | A positioner job is already running; `job` names it. |
 | `hw_fault` | false | Hardware or transmission failure. |
-| `id_conflict` | false | `id` reused within the dedup window with a different payload. |
+| `id_conflict` | false | `id` reused within the dedup window with a different canonical command. |
 | `not_found` | false | Referenced job is unknown or has been evicted. |
+| `queue_full` | false | Normal and reserved capacity applicable to this command is exhausted. |
+
+### Command receipts
+
+`GET /api/v2/commands/{id}` is scoped to the current `boot_id` and reports:
+
+- `queued` — accepted but not yet executing.
+- `running` — executing on the hardware worker.
+- `completed` — terminal receipt has `ok=true`.
+- `failed` — terminal receipt has `ok=false`.
+
+Terminal results include the original response envelope in `data.receipt`.
+Unknown, expired, or evicted IDs return HTTP 404 with `code=not_found`.
+Clients should identify a command by `(boot_id, id)` and stop polling if the
+device boot ID changes.
 
 ## Positioner job model
 
@@ -266,6 +307,29 @@ untested. Moving an op from `lines` to `data` is a **breaking change and
 requires a contract version bump** — v2 freezes the shapes above.
 
 Configuration commands remain USB-only and are not exposed by REST.
+
+### REST transport diagnostics
+
+`GET /api/v2/diagnostics` returns a since-boot snapshot in `data`:
+
+| Member | Meaning |
+|---|---|
+| `connections_accepted` | TCP connections accepted by the REST listener. |
+| `tls_handshakes_started` | TLS handshakes that reached authentication. |
+| `tls_handshakes_succeeded` | TLS handshakes completed successfully. |
+| `tls_handshakes_failed` | Started TLS handshakes that failed. Transport setup failures before authentication are excluded. |
+| `requests_started` | HTTP requests handed to the request parser. |
+| `requests_active` | Requests currently being handled, including this diagnostics request. |
+| `requests_active_high_water` | Highest simultaneous active-request count since boot. |
+| `responses_2xx`, `responses_4xx`, `responses_5xx` | Responses by status class. The current diagnostics response is counted only after its snapshot is built. |
+| `response_write_failures` | Response writes that threw before completion. |
+| `clean_closes` | Connections closed after a successful TLS handshake and handled request. |
+| `aborted_closes` | Connections closed before that clean-close condition was met. |
+
+All counters reset at boot. The snapshot is not transactionally inclusive of
+its own response: `requests_active` includes the diagnostics request, while its
+response status, write outcome, and connection close appear only in a later
+snapshot.
 
 ## Versioning
 

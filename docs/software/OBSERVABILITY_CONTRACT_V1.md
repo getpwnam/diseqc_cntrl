@@ -82,6 +82,7 @@ REST is the sole network observability interface:
 | `GET /api/v2/state/positioner` | Active and last terminal jobs, timeout, position confidence, estimate, source, and pending target |
 | `GET /api/v2/state/lnb` | LNB health, communications, faults, registers, polarization, and band |
 | `GET /api/v2/jobs/{job}` | One retained positioner job |
+| `GET /api/v2/diagnostics` | Since-boot REST connection, TLS handshake, request lifecycle, response-class/write-failure, and close counters |
 
 Every successful GET response includes `v`, `boot_id`, `ok`, `code`, `ts_ms`,
 and `data`. `boot_id` changes at reboot. `ts_ms` is uptime, not wall time.
@@ -90,6 +91,17 @@ The device retains four positioner jobs. An unknown or evicted job returns HTTP
 404 with `code=not_found`. Controllers must use the positioner snapshot to
 recover after reconnecting and must discard cached job IDs when `boot_id`
 changes.
+
+The diagnostics snapshot contains `connections_accepted`,
+`tls_handshakes_started`, `tls_handshakes_succeeded`,
+`tls_handshakes_failed`, `requests_started`, `requests_active`,
+`requests_active_high_water`, `responses_2xx`, `responses_4xx`,
+`responses_5xx`, `response_write_failures`, `clean_closes`, and
+`aborted_closes`. TLS failures count only handshakes that started
+authentication; earlier transport setup failures are excluded. All values reset
+at boot. The diagnostics request is included in `requests_active`, but its
+response status, write result, and close occur after the snapshot and are
+visible only on a subsequent read.
 
 Polling frequency is a client policy. Clients should poll job state while motion
 is active and read broader snapshots at startup, after reconnect, or when an

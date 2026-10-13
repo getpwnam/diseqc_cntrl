@@ -11,13 +11,22 @@ namespace CubleyControl
     {
         private const int RestPort = 443;
         private const string RestCommandPath = "/api/v2/commands";
+        private const string RestCommandsPathPrefix = "/api/v2/commands/";
         private const int RestHeaderMaxLength = 768;
         private const int RestSocketTimeoutMs = 2000;
+        private const int RestKeepAliveIdleTimeoutMs = 1500;
+        private const int RestKeepAliveMaxRequests = 4;
+        private const int RestKeepAliveTimeoutSeconds = 1;
         private const string RestJobsPathPrefix = "/api/v2/jobs/";
         private const string RestHealthPath = "/api/v2/health";
+        private const string RestDiagnosticsPath = "/api/v2/diagnostics";
         private const string RestPositionerStatePath = "/api/v2/state/positioner";
         private const string RestLnbStatePath = "/api/v2/state/lnb";
         private static readonly string RestBootId = Guid.NewGuid().ToString();
+        private static readonly RestDiagnostics _restDiagnostics = new RestDiagnostics();
+        private static bool _restKeepAliveResponse;
+        private static int _restKeepAliveRemaining;
+        private static bool _restPeerClosed;
 
         private static void RestLoop()
         {
@@ -42,7 +51,11 @@ namespace CubleyControl
                     while (true)
                     {
                         Socket client = listener.Accept();
+                        _restDiagnostics.RecordConnectionAccepted();
                         SslStream secureClient = null;
+                        bool tlsHandshakeStarted = false;
+                        bool tlsEstablished = false;
+                        bool requestHandled = false;
                         try
                         {
                             client.ReceiveTimeout = RestSocketTimeoutMs;
@@ -52,26 +65,79 @@ namespace CubleyControl
                                 SslVerification = SslVerification.NoVerification,
                                 UseStoredDeviceCertificate = true
                             };
+                            _restDiagnostics.RecordTlsHandshakeStarted();
+                            tlsHandshakeStarted = true;
                             secureClient.AuthenticateAsServer(null, false, SslProtocols.Tls13);
-                            HandleRestRequest(secureClient);
+                            tlsEstablished = true;
+                            _restDiagnostics.RecordTlsHandshakeSucceeded();
+                            for (int requestIndex = 0;
+                                requestIndex < RestKeepAliveMaxRequests;
+                                requestIndex++)
+                            {
+                                client.ReceiveTimeout = requestIndex == 0
+                                    ? RestSocketTimeoutMs
+                                    : RestKeepAliveIdleTimeoutMs;
+                                bool keepAlive = HandleRestRequest(
+                                    secureClient,
+                                    RestKeepAliveMaxRequests - requestIndex - 1);
+                                if (_restPeerClosed)
+                                {
+                                    break;
+                                }
+
+                                requestHandled = true;
+                                if (!keepAlive)
+                                {
+                                    if (requestIndex == RestKeepAliveMaxRequests - 1)
+                                    {
+                                        _restDiagnostics.RecordKeepAliveLimitClose();
+                                    }
+
+                                    break;
+                                }
+
+                                _restDiagnostics.RecordKeepAliveRequest();
+                            }
                         }
                         catch (Exception ex)
                         {
+                            if (tlsHandshakeStarted && !tlsEstablished)
+                            {
+                                _restDiagnostics.RecordTlsHandshakeFailed();
+                            }
+
                             WriteStructuredDebug(
                                 "REST",
-                                "schema=1 sub=rest comp=tls operation=client stat=error detail=" +
+                                "schema=1 sub=rest comp=" +
+                                (tlsEstablished ? "request" : tlsHandshakeStarted ? "tls" : "transport") +
+                                " operation=client stat=error detail=" +
                                 SanitizeToken(ex.Message));
                         }
                         finally
                         {
-                            if (secureClient != null)
+                            bool cleanClose = false;
+                            try
                             {
-                                secureClient.Close();
+                                if (secureClient != null)
+                                {
+                                    secureClient.Close();
+                                }
+                                else
+                                {
+                                    client.Close();
+                                }
+
+                                cleanClose = tlsEstablished && requestHandled;
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                client.Close();
+                                WriteStructuredDebug(
+                                    "REST",
+                                    "schema=1 sub=rest comp=transport operation=close stat=error detail=" +
+                                    SanitizeToken(ex.Message));
                             }
+
+                            _restDiagnostics.RecordClose(cleanClose);
                         }
                     }
                 }
@@ -107,7 +173,30 @@ namespace CubleyControl
                 interfaces[0].IPv4Address != "0.0.0.0";
         }
 
-        private static void HandleRestRequest(SslStream client)
+        private static bool HandleRestRequest(SslStream client, int keepAliveRequestsRemaining)
+        {
+            _restKeepAliveResponse = false;
+            _restKeepAliveRemaining = keepAliveRequestsRemaining;
+            _restPeerClosed = false;
+            bool requestStarted = false;
+            try
+            {
+                HandleRestRequestCore(client, keepAliveRequestsRemaining > 0, ref requestStarted);
+                return _restKeepAliveResponse;
+            }
+            finally
+            {
+                if (requestStarted)
+                {
+                    _restDiagnostics.RecordRequestCompleted();
+                }
+            }
+        }
+
+        private static void HandleRestRequestCore(
+            SslStream client,
+            bool allowKeepAlive,
+            ref bool requestStarted)
         {
             byte[] request = new byte[RestHeaderMaxLength + ApiCommandEnvelopeMaxLength];
             int received = 0;
@@ -117,11 +206,23 @@ namespace CubleyControl
                 int count = client.Read(request, received, request.Length - received);
                 if (count <= 0)
                 {
+                    if (received == 0)
+                    {
+                        _restPeerClosed = true;
+                        return;
+                    }
+
                     WriteRestResponse(client, 400, null);
                     return;
                 }
 
                 received += count;
+                if (!requestStarted)
+                {
+                    _restDiagnostics.RecordRequestStarted();
+                    requestStarted = true;
+                }
+
                 bodyOffset = FindRestBodyOffset(request, received);
                 if (bodyOffset > RestHeaderMaxLength)
                 {
@@ -147,6 +248,8 @@ namespace CubleyControl
 
             string method = headers.Substring(0, firstSpace);
             string path = headers.Substring(firstSpace + 1, secondSpace - firstSpace - 1);
+            bool keepAliveRequested = allowKeepAlive &&
+                RestConnectionPolicy.ShouldKeepAlive(headers);
             if (!IsRestRequestAuthorized(headers))
             {
                 WriteStructuredDebug(
@@ -161,6 +264,21 @@ namespace CubleyControl
 
             if (method == "GET")
             {
+                if (RestConnectionPolicy.HasRequestBody(headers))
+                {
+                    WriteRestResponse(client, 400, null);
+                    return;
+                }
+
+                if (received == bodyOffset)
+                {
+                    _restKeepAliveResponse = keepAliveRequested;
+                }
+                else
+                {
+                    _restDiagnostics.RecordPipelinedRequestRejected();
+                }
+
                 HandleRestGetRequest(client, path);
                 return;
             }
@@ -197,12 +315,22 @@ namespace CubleyControl
                 received += count;
             }
 
-            string responseBody;
-            lock (_commandLock)
+            if (received == required)
             {
-                responseBody = ProcessApiCommand(AsciiBytesToString(request, bodyOffset, contentLength));
+                _restKeepAliveResponse = keepAliveRequested;
             }
-            WriteRestResponse(client, 200, responseBody);
+            else
+            {
+                _restDiagnostics.RecordPipelinedRequestRejected();
+            }
+
+            int statusCode;
+            int retryAfterSeconds;
+            string responseBody = AcceptApiCommand(
+                AsciiBytesToString(request, bodyOffset, contentLength),
+                out statusCode,
+                out retryAfterSeconds);
+            WriteRestResponse(client, statusCode, responseBody, retryAfterSeconds);
         }
 
         private static void HandleRestGetRequest(SslStream client, string path)
@@ -214,6 +342,37 @@ namespace CubleyControl
                     .AddString("firmware_version", BuildInfo.Version)
                     .Build();
                 WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", health, null));
+                return;
+            }
+
+            if (path == RestDiagnosticsPath)
+            {
+                RestDiagnosticsSnapshot snapshot = _restDiagnostics.Snapshot();
+                string diagnostics = new JsonBuilder()
+                    .AddLong("connections_accepted", snapshot.ConnectionsAccepted)
+                    .AddLong("tls_handshakes_started", snapshot.TlsHandshakesStarted)
+                    .AddLong("tls_handshakes_succeeded", snapshot.TlsHandshakesSucceeded)
+                    .AddLong("tls_handshakes_failed", snapshot.TlsHandshakesFailed)
+                    .AddLong("requests_started", snapshot.RequestsStarted)
+                    .AddLong("requests_active", snapshot.RequestsActive)
+                    .AddLong("requests_active_high_water", snapshot.RequestsActiveHighWater)
+                    .AddLong("responses_2xx", snapshot.Responses2xx)
+                    .AddLong("responses_4xx", snapshot.Responses4xx)
+                    .AddLong("responses_5xx", snapshot.Responses5xx)
+                    .AddLong("response_write_failures", snapshot.ResponseWriteFailures)
+                    .AddLong("response_writes_succeeded", snapshot.ResponseWritesSucceeded)
+                    .AddLong("response_flush_failures", snapshot.ResponseFlushFailures)
+                    .AddLong("response_flushes_succeeded", snapshot.ResponseFlushesSucceeded)
+                    .AddLong("clean_closes", snapshot.CleanCloses)
+                    .AddLong("aborted_closes", snapshot.AbortedCloses)
+                    .AddLong("queue_accepted", snapshot.QueueAccepted)
+                    .AddLong("queue_rejected", snapshot.QueueRejected)
+                    .AddLong("queue_high_water", snapshot.QueueHighWater)
+                    .AddLong("keep_alive_requests", snapshot.KeepAliveRequests)
+                    .AddLong("keep_alive_limit_closes", snapshot.KeepAliveLimitCloses)
+                    .AddLong("pipelined_requests_rejected", snapshot.PipelinedRequestsRejected)
+                    .Build();
+                WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", diagnostics, null));
                 return;
             }
 
@@ -232,6 +391,53 @@ namespace CubleyControl
             if (path == RestLnbStatePath)
             {
                 WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", BuildLnbStateJson(), null));
+                return;
+            }
+
+            if (path.StartsWith(RestCommandsPathPrefix))
+            {
+                string commandId = path.Substring(RestCommandsPathPrefix.Length);
+                if (!IsValidApiCommandId(commandId))
+                {
+                    WriteRestResponse(
+                        client,
+                        400,
+                        BuildRestQueryResponse(
+                            false,
+                            "validation_error",
+                            null,
+                            "command id must be 1 to " + ApiCommandIdMaxLength.ToString() +
+                            " characters of A-Za-z0-9._:-"));
+                    return;
+                }
+
+                string receipt;
+                string state;
+                if (_apiCommandQueue.TryGetState(commandId, out state))
+                {
+                    string pending = new JsonBuilder()
+                        .AddString("id", commandId)
+                        .AddString("state", state)
+                        .Build();
+                    WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", pending, null));
+                    return;
+                }
+
+                if (TryGetCachedApiCommandReceipt(commandId, out receipt, out state))
+                {
+                    string completed = new JsonBuilder()
+                        .AddString("id", commandId)
+                        .AddString("state", state)
+                        .AddRaw("receipt", "{" + receipt + "}")
+                        .Build();
+                    WriteRestResponse(client, 200, BuildRestQueryResponse(true, "ok", completed, null));
+                    return;
+                }
+
+                WriteRestResponse(
+                    client,
+                    404,
+                    BuildRestQueryResponse(false, "not_found", null, "command is unknown or has been evicted"));
                 return;
             }
 
@@ -326,19 +532,60 @@ namespace CubleyControl
 
         private static void WriteRestResponse(SslStream client, int statusCode, string body)
         {
+            WriteRestResponse(client, statusCode, body, 0);
+        }
+
+        private static void WriteRestResponse(
+            SslStream client,
+            int statusCode,
+            string body,
+            int retryAfterSeconds)
+        {
             string reason = statusCode == 200 ? "OK" :
+                (statusCode == 202 ? "Accepted" :
                 (statusCode == 401 ? "Unauthorized" :
                 (statusCode == 404 ? "Not Found" :
-                (statusCode == 405 ? "Method Not Allowed" : "Bad Request")));
+                (statusCode == 405 ? "Method Not Allowed" :
+                (statusCode == 409 ? "Conflict" :
+                (statusCode == 503 ? "Service Unavailable" : "Bad Request"))))));
             string payload = body == null ? string.Empty : body;
             byte[] response = AsciiStringToBytes(
                 "HTTP/1.1 " + statusCode.ToString() + " " + reason + "\r\n" +
                 "Content-Type: application/json\r\n" +
                 "Content-Length: " + payload.Length.ToString() + "\r\n" +
                 (statusCode == 401 ? "WWW-Authenticate: Bearer\r\n" : string.Empty) +
+                (retryAfterSeconds > 0
+                    ? "Retry-After: " + retryAfterSeconds.ToString() + "\r\n"
+                    : string.Empty) +
                 "Cache-Control: no-store\r\n" +
-                "Connection: close\r\n\r\n" + payload);
-            client.Write(response, 0, response.Length);
+                (_restKeepAliveResponse
+                    ? "Connection: keep-alive\r\n" +
+                        "Keep-Alive: timeout=" + RestKeepAliveTimeoutSeconds.ToString() +
+                        ", max=" + _restKeepAliveRemaining.ToString() + "\r\n"
+                    : "Connection: close\r\n") +
+                "\r\n" + payload);
+            _restDiagnostics.RecordResponse(statusCode);
+            try
+            {
+                client.Write(response, 0, response.Length);
+                _restDiagnostics.RecordResponseWriteSucceeded();
+            }
+            catch
+            {
+                _restDiagnostics.RecordResponseWriteFailure();
+                throw;
+            }
+
+            try
+            {
+                client.Flush();
+                _restDiagnostics.RecordResponseFlushSucceeded();
+            }
+            catch
+            {
+                _restDiagnostics.RecordResponseFlushFailure();
+                throw;
+            }
         }
 
         private static string AsciiBytesToString(byte[] bytes, int offset, int length)

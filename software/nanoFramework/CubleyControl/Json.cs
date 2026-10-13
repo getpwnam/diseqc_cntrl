@@ -36,6 +36,21 @@ namespace CubleyControl
             return index < 0 || index >= _count ? null : _keys[index];
         }
 
+        internal int KindAt(int index)
+        {
+            return index < 0 || index >= _count ? -1 : _kinds[index];
+        }
+
+        internal string StringAt(int index)
+        {
+            return index < 0 || index >= _count ? null : _strings[index];
+        }
+
+        internal int NumberAt(int index)
+        {
+            return index < 0 || index >= _count ? 0 : _numbers[index];
+        }
+
         internal bool Add(string key, int kind, string text, int number)
         {
             if (_count >= MaxMembers || IndexOf(key) >= 0)

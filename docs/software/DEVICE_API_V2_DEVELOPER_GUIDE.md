@@ -12,7 +12,7 @@ start with [HTTPS_TRANSPORT.md](HTTPS_TRANSPORT.md).
 - Base URL: `https://<device-ip>`
 - Endpoint: `POST /api/v2/commands`
 - Read endpoints: `/api/v2/health`, `/api/v2/state/positioner`,
-  `/api/v2/state/lnb`, and `/api/v2/jobs/{job}`
+  `/api/v2/state/lnb`, `/api/v2/jobs/{job}`, and `/api/v2/diagnostics`
 - Content type: `application/json`
 - TLS 1.3 encryption is required. Clients must trust or pin the provisioned
   device certificate; client certificates are not requested.
@@ -109,8 +109,9 @@ Optional:
 - `lines`: Newline-separated output from legacy bridged operations.
 - `replayed`: The response came from the idempotency cache.
 
-Result codes are `ok`, `accepted`, `validation_error`, `unsupported`, `busy`,
-`hw_fault`, `id_conflict`, and `not_found`.
+Result codes are `ok`, `queued`, `accepted`, `validation_error`, `unsupported`,
+`busy`, `hw_fault`, `id_conflict`, and `not_found`. `queued` is a non-terminal
+receipt from the POST; `accepted` means execution started a positioner job.
 
 ## Positioner Jobs
 
@@ -158,6 +159,14 @@ recover the active job and position confidence after reconnecting, and
 
 `GET /api/v2/health` is the lightweight liveness endpoint. A changed `boot_id`
 means cached job IDs and uptime values belong to an earlier boot.
+
+`GET /api/v2/diagnostics` returns since-boot REST transport counters under
+`data`: accepted connections; started, succeeded, and failed TLS handshakes;
+started, active, and high-water requests; 2xx, 4xx, and 5xx responses; response
+write failures; and clean or aborted closes. A failed TLS count applies only
+after authentication starts, not to earlier socket or stream setup failures.
+The snapshot observes itself as an active request, but its response and close
+are visible only in the next snapshot.
 
 ## Polling And Recovery
 
