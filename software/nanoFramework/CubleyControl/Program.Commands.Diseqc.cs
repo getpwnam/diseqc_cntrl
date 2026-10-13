@@ -1006,9 +1006,7 @@ namespace CubleyControl
                     true,
                     "ok",
                     source,
-                    "bytes=" + BytesToHex(positionerFrame) +
-                    " encoded_bits=" + DiseqcFrameCodec.GetEncodedBitCount(positionerFrame).ToString() +
-                    BuildDiseqcMotionResultData());
+                    BuildDiseqcPositionerCommandResultData(positionerFrame, false));
                 return;
             }
 
@@ -1048,10 +1046,20 @@ namespace CubleyControl
                 true,
                 "ok",
                 source,
-                "preset=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) +
-                " bytes=" + BytesToHex(positionerFrame) +
+                BuildDiseqcPositionerCommandResultData(positionerFrame, true));
+        }
+
+        private static string BuildDiseqcPositionerCommandResultData(byte[] positionerFrame, bool includePreset)
+        {
+            if (_activeCommandTransport != CommandTransport.Usb || !_usbDebugEnabled)
+            {
+                return null;
+            }
+
+            return (includePreset ? "preset=" + DiseqcV1Presets.ToText(_diseqcRoutePreset) + " " : string.Empty) +
+                "bytes=" + BytesToHex(positionerFrame) +
                 " encoded_bits=" + DiseqcFrameCodec.GetEncodedBitCount(positionerFrame).ToString() +
-                BuildDiseqcMotionResultData());
+                BuildDiseqcMotionResultData();
         }
 
         private static string MotionDirectionFromOperation(string operation)

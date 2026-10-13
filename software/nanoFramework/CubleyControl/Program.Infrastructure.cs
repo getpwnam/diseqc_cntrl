@@ -668,7 +668,26 @@ namespace CubleyControl
                     }
 
                     StoreConsoleHistory(_consoleLine);
-                    ExecuteCommand(_consoleLine, WriteSerialLine, CommandTransport.Usb);
+                    try
+                    {
+                        ExecuteCommand(_consoleLine, WriteSerialLine, CommandTransport.Usb);
+                    }
+                    catch (Exception ex)
+                    {
+                        try
+                        {
+                            WriteStructuredDebug(
+                                "CDC",
+                                "schema=1 sub=cdc comp=command operation=execute stat=error" +
+                                " code=command_exception type=" + SanitizeToken(ex.GetType().Name) +
+                                " detail=" + SanitizeToken(ex.Message));
+                        }
+                        catch
+                        {
+                        }
+
+                        SafeUsbWrite("Fail: internal error\r\n");
+                    }
                     _consoleLine = string.Empty;
                     _consoleHistoryIndex = _consoleHistoryCount;
                     SafeUsbWrite(GetUsbPrompt());

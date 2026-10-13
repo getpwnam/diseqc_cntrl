@@ -121,14 +121,21 @@ namespace CubleyControl
                 }
                 catch (Exception ex)
                 {
+                    string exceptionType = SanitizeToken(ex.GetType().Name);
                     CacheApiCommandResponse(
                         commandId,
                         identity,
-                        BuildApiFailureBody(commandId, "internal_error", "command execution failed", 0));
+                        BuildApiFailureBody(
+                            commandId,
+                            "internal_error",
+                            "command execution failed (" + exceptionType + ")",
+                            0));
                     WriteStructuredDebug(
                         "COMMAND",
                         "schema=1 sub=command comp=worker operation=execute stat=error id=" +
-                        SanitizeToken(commandId) + " detail=" + SanitizeToken(ex.Message));
+                        SanitizeToken(commandId) +
+                        " type=" + exceptionType +
+                        " detail=" + SanitizeToken(ex.Message));
                 }
                 finally
                 {
