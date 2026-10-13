@@ -51,6 +51,7 @@ Read current device state with:
 - `GET /api/v2/state/positioner`
 - `GET /api/v2/state/lnb`
 - `GET /api/v2/jobs/{job}`
+- `GET /api/v2/diagnostics`
 
 ### Payload constraints
 
@@ -266,6 +267,29 @@ untested. Moving an op from `lines` to `data` is a **breaking change and
 requires a contract version bump** — v2 freezes the shapes above.
 
 Configuration commands remain USB-only and are not exposed by REST.
+
+### REST transport diagnostics
+
+`GET /api/v2/diagnostics` returns a since-boot snapshot in `data`:
+
+| Member | Meaning |
+|---|---|
+| `connections_accepted` | TCP connections accepted by the REST listener. |
+| `tls_handshakes_started` | TLS handshakes that reached authentication. |
+| `tls_handshakes_succeeded` | TLS handshakes completed successfully. |
+| `tls_handshakes_failed` | Started TLS handshakes that failed. Transport setup failures before authentication are excluded. |
+| `requests_started` | HTTP requests handed to the request parser. |
+| `requests_active` | Requests currently being handled, including this diagnostics request. |
+| `requests_active_high_water` | Highest simultaneous active-request count since boot. |
+| `responses_2xx`, `responses_4xx`, `responses_5xx` | Responses by status class. The current diagnostics response is counted only after its snapshot is built. |
+| `response_write_failures` | Response writes that threw before completion. |
+| `clean_closes` | Connections closed after a successful TLS handshake and handled request. |
+| `aborted_closes` | Connections closed before that clean-close condition was met. |
+
+All counters reset at boot. The snapshot is not transactionally inclusive of
+its own response: `requests_active` includes the diagnostics request, while its
+response status, write outcome, and connection close appear only in a later
+snapshot.
 
 ## Versioning
 

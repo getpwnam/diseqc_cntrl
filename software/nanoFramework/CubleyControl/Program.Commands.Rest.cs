@@ -46,6 +46,7 @@ namespace CubleyControl
                         Socket client = listener.Accept();
                         _restDiagnostics.RecordConnectionAccepted();
                         SslStream secureClient = null;
+                        bool tlsHandshakeStarted = false;
                         bool tlsEstablished = false;
                         bool requestHandled = false;
                         try
@@ -58,6 +59,7 @@ namespace CubleyControl
                                 UseStoredDeviceCertificate = true
                             };
                             _restDiagnostics.RecordTlsHandshakeStarted();
+                            tlsHandshakeStarted = true;
                             secureClient.AuthenticateAsServer(null, false, SslProtocols.Tls13);
                             tlsEstablished = true;
                             _restDiagnostics.RecordTlsHandshakeSucceeded();
@@ -66,14 +68,15 @@ namespace CubleyControl
                         }
                         catch (Exception ex)
                         {
-                            if (!tlsEstablished)
+                            if (tlsHandshakeStarted && !tlsEstablished)
                             {
                                 _restDiagnostics.RecordTlsHandshakeFailed();
                             }
 
                             WriteStructuredDebug(
                                 "REST",
-                                "schema=1 sub=rest comp=" + (tlsEstablished ? "request" : "tls") +
+                                "schema=1 sub=rest comp=" +
+                                (tlsEstablished ? "request" : tlsHandshakeStarted ? "tls" : "transport") +
                                 " operation=client stat=error detail=" +
                                 SanitizeToken(ex.Message));
                         }
