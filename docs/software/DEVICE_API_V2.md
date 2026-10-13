@@ -37,8 +37,9 @@ Nothing in this document changes the console. An operator types
 ## Transport
 
 Send commands with `POST /api/v2/commands` over HTTP. The request and response
-content type is `application/json`. A command result is returned in the HTTP
-response body.
+content type is `application/json`. A validated command is placed in a bounded
+device queue and returns a non-terminal `queued` receipt. Hardware execution
+continues asynchronously.
 
 When a token is configured through the USB CDC console, every request MUST
 include `Authorization: Bearer <token>`. Missing, malformed, duplicate, and
@@ -122,7 +123,7 @@ Exactly one response object is returned per HTTP request.
 | `v` | int | yes | Always `2`. |
 | `boot_id` | string | yes | Changes on every boot. Job IDs are meaningful only within this boot. |
 | `id` | string | yes | Echo of the command `id`, or `"?"` if the envelope was unparseable. |
-| `ok` | bool | yes | Whether the command was accepted and completed. |
+| `ok` | bool | yes | Whether the command was queued or completed successfully. |
 | `code` | string | yes | Machine-readable outcome, see below. |
 | `ts_ms` | int | yes | Device uptime in milliseconds when the response was formed. Monotonic within a boot; **not** wall clock, and it restarts at reboot. |
 | `msg` | string | on failure | Short human-readable detail. |
@@ -135,6 +136,7 @@ Exactly one response object is returned per HTTP request.
 | `code` | `ok` | Meaning |
 |---|---|---|
 | `ok` | true | Completed. Terminal, nothing further happens. |
+| `queued` | true | Non-terminal queue receipt. The command is queued or active. |
 | `accepted` | true | A job was started. Motion continues after this response. |
 | `validation_error` | false | Malformed envelope, unknown member, bad parameter. |
 | `unsupported` | false | Unknown `op`, or an op not permitted on this transport. |

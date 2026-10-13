@@ -30,6 +30,14 @@ namespace CubleyControl
 
         private static string ProcessApiCommand(string payload)
         {
+            lock (_commandLock)
+            {
+                return ProcessApiCommandLocked(payload);
+            }
+        }
+
+        private static string ProcessApiCommandLocked(string payload)
+        {
             JsonObject command;
             string commandId;
             string operation;

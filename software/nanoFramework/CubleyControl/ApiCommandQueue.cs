@@ -27,21 +27,11 @@ namespace CubleyControl
             _payloads = new string[capacity];
         }
 
-        internal int Count
-        {
-            get
-            {
-                lock (_sync)
-                {
-                    return _count + (_priorityCommandId == null ? 0 : 1);
-                }
-            }
-        }
-
-        internal int TryEnqueue(string commandId, string payload, bool priority)
+        internal int TryEnqueue(string commandId, string payload, bool priority, out int depth)
         {
             lock (_sync)
             {
+                depth = _count + (_priorityCommandId == null ? 0 : 1);
                 string existingPayload;
                 if (TryFindLocked(commandId, out existingPayload))
                 {
@@ -59,6 +49,7 @@ namespace CubleyControl
 
                     _priorityCommandId = commandId;
                     _priorityPayload = payload;
+                    depth++;
                     return ApiCommandQueueResult.Accepted;
                 }
 
@@ -71,6 +62,7 @@ namespace CubleyControl
                 _payloads[_tail] = payload;
                 _tail = (_tail + 1) % _commandIds.Length;
                 _count++;
+                depth++;
                 return ApiCommandQueueResult.Accepted;
             }
         }

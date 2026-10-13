@@ -109,8 +109,9 @@ Optional:
 - `lines`: Newline-separated output from legacy bridged operations.
 - `replayed`: The response came from the idempotency cache.
 
-Result codes are `ok`, `accepted`, `validation_error`, `unsupported`, `busy`,
-`hw_fault`, `id_conflict`, and `not_found`.
+Result codes are `ok`, `queued`, `accepted`, `validation_error`, `unsupported`,
+`busy`, `hw_fault`, `id_conflict`, and `not_found`. `queued` is a non-terminal
+receipt from the POST; `accepted` means execution started a positioner job.
 
 ## Positioner Jobs
 

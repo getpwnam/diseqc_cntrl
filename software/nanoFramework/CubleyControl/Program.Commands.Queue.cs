@@ -37,16 +37,27 @@ namespace CubleyControl
                 return "{" + cachedResponse + ",\"replayed\":true}";
             }
 
+            if (operation == "positioner.halt")
+            {
+                string error;
+                if (!TryValidateApiMembers(command, null, null, out error))
+                {
+                    return "{" + BuildApiFailureBody(commandId, "validation_error", error, 0) + "}";
+                }
+            }
+
+            int queueDepth;
             int result = _apiCommandQueue.TryEnqueue(
                 commandId,
                 payload,
-                operation == "positioner.halt");
+                operation == "positioner.halt",
+                out queueDepth);
             if (result == ApiCommandQueueResult.Conflict)
             {
                 return "{" + BuildApiFailureBody(
                     commandId,
                     "id_conflict",
-                    "id reused by a queued command with a different payload",
+                    "id reused by a queued or active command with a different payload",
                     0) + "}";
             }
 
@@ -62,14 +73,14 @@ namespace CubleyControl
 
             if (result == ApiCommandQueueResult.Accepted)
             {
-                _restDiagnostics.RecordQueueAccepted(_apiCommandQueue.Count);
+                _restDiagnostics.RecordQueueAccepted(queueDepth);
             }
 
             return "{" + BuildApiResponseBody(
                 commandId,
                 true,
-                "accepted",
-                result == ApiCommandQueueResult.Duplicate ? "command is already queued" : "command queued",
+                "queued",
+                result == ApiCommandQueueResult.Duplicate ? "command is already queued or active" : "command queued",
                 null,
                 0,
                 null) +
