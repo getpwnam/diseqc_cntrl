@@ -50,6 +50,7 @@ namespace CubleyControl
                 string error;
                 if (!TryValidateApiMembers(command, null, null, out error))
                 {
+                    statusCode = 400;
                     return "{" + BuildApiFailureBody(commandId, "validation_error", error, 0) + "}";
                 }
             }
