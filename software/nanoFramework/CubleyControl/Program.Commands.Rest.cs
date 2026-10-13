@@ -178,19 +178,25 @@ namespace CubleyControl
             _restKeepAliveResponse = false;
             _restKeepAliveRemaining = keepAliveRequestsRemaining;
             _restPeerClosed = false;
-            _restDiagnostics.RecordRequestStarted();
+            bool requestStarted = false;
             try
             {
-                HandleRestRequestCore(client, keepAliveRequestsRemaining > 0);
+                HandleRestRequestCore(client, keepAliveRequestsRemaining > 0, ref requestStarted);
                 return _restKeepAliveResponse;
             }
             finally
             {
-                _restDiagnostics.RecordRequestCompleted();
+                if (requestStarted)
+                {
+                    _restDiagnostics.RecordRequestCompleted();
+                }
             }
         }
 
-        private static void HandleRestRequestCore(SslStream client, bool allowKeepAlive)
+        private static void HandleRestRequestCore(
+            SslStream client,
+            bool allowKeepAlive,
+            ref bool requestStarted)
         {
             byte[] request = new byte[RestHeaderMaxLength + ApiCommandEnvelopeMaxLength];
             int received = 0;
@@ -211,6 +217,12 @@ namespace CubleyControl
                 }
 
                 received += count;
+                if (!requestStarted)
+                {
+                    _restDiagnostics.RecordRequestStarted();
+                    requestStarted = true;
+                }
+
                 bodyOffset = FindRestBodyOffset(request, received);
                 if (bodyOffset > RestHeaderMaxLength)
                 {
