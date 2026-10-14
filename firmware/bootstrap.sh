@@ -15,6 +15,9 @@
 #     repo's working tree without any copying.
 #   * The link is inside a submodule's working tree, so it is untracked from
 #     git's point of view — nothing to commit, nothing to keep in sync.
+#   * Small, documented fixes to the pinned nf-interpreter submodule (e.g.
+#     IPv6 dual-stack bring-up) are carried as patch files under
+#     firmware/patches/nf-interpreter and applied here, idempotently.
 #
 # Run this after cloning diseqc_cntrl (with --recursive) and before running
 # cmake. The script is idempotent: repeated runs simply replace the symlink.
@@ -100,3 +103,29 @@ cat > "${LINK_DIR}/../CMakePresets.json" <<'JSON'
 JSON
 
 echo "OK: wrote nf-interpreter developer-local config (user-tools-repos.json, user-prefs.json, user-kconfig.conf, targets-community/CMakePresets.json)"
+
+# ── Apply local patches to the pinned nf-interpreter submodule ───────────────
+# nf-interpreter is a pinned upstream submodule (no fork). Small, well
+# documented fixes needed ahead of upstream review (e.g. IPv6 dual-stack
+# bring-up) are carried as patch files under firmware/patches/nf-interpreter
+# and applied to the submodule's working tree here. This step is idempotent:
+# a patch that is already applied (e.g. because bootstrap.sh already ran, or
+# because the pinned commit was bumped to include the fix upstream) is
+# detected and skipped rather than re-applied or failing the run.
+PATCH_DIR="${SCRIPT_DIR}/patches/nf-interpreter"
+if [[ -d "${PATCH_DIR}" ]]; then
+    shopt -s nullglob
+    for patch in "${PATCH_DIR}"/*.patch; do
+        patch_name="$(basename "${patch}")"
+        if git -C "${NFI_DIR}" apply --check "${patch}" 2>/dev/null; then
+            git -C "${NFI_DIR}" apply "${patch}"
+            echo "OK: applied nf-interpreter patch ${patch_name}"
+        elif git -C "${NFI_DIR}" apply --reverse --check "${patch}" 2>/dev/null; then
+            echo "OK: nf-interpreter patch ${patch_name} already applied, skipping"
+        else
+            echo "ERROR: nf-interpreter patch ${patch_name} does not apply (upstream may have diverged)" >&2
+            exit 1
+        fi
+    done
+    shopt -u nullglob
+fi
