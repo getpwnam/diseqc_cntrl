@@ -1756,3 +1756,20 @@ This file should be committed and checked on each build to prevent version drift
 - Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin; firmware/nf-interpreter/build/_deps/cubley-chibios-src
 - Conclusion: Fresh and repeated CUBLEY_F407_0_5 builds used pinned ChibiOS commit 11951bbd and completed successfully.
 - Note: Moving stable-21.11.x tip ffd5646b previously failed nanoBooter linking with unresolved halRegWaitAllClear32X and halRegWaitAllSet32X.
+
+### 2026-10-13 21:11:19 UTC [INFO]
+- Git rev: 23b82a6
+- Baseline: YES — matches cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): ./toolchain/build-CubleyControl.sh build --project CubleyControl/CubleyControl.nfproj --configuration Debug; ./toolchain/interop-checksum.sh --check --assembly CubleyNative --pe build/CubleyControl/CubleyNative.pe; ../../firmware/build-flash-cubley.sh build; ../../firmware/build-flash-cubley.sh flash --bootaddr 0x08000000 --clraddr 0x08010000 --deployaddr 0x080C0000 --deploysize 0x00040000 --reset; st-flash write ../../firmware/nf-interpreter/build/nanoCLR.bin 0x08010000; ./toolchain/deploy-CubleyControl.sh --reset; st-flash write build/CubleyControl/latest.deploy.bin 0x080C0000; st-flash reset
+- Artifact: firmware/nf-interpreter/build/nanoBooter.bin; firmware/nf-interpreter/build/nanoCLR.bin; software/nanoFramework/build/CubleyControl/latest.deploy.bin
+- Conclusion: Managed and native builds passed; nanoBooter, nanoCLR, and CubleyControl payload were flashed and verified; runtime identity verification was unavailable because /dev/ttyUSB0 was absent.
+- Note: Interop checksum 0A4353F9. Derived map/ELF layout: booter 0x08000000, nanoCLR 0x08010000, deployment 0x080C0000 size 0x00040000. First nanoCLR flash verification failed at offset 18432; one bounded retry succeeded. nanoff deployment returned E2002, then SWD fallback verified the 200860-byte payload through 0x080F109C. ST-Link remained healthy; mailbox script is absent.
+
+### 2026-10-14 14:17:18 UTC [PASS] [NON-BASELINE]
+- Git rev: 23b82a6
+- Baseline: NO — deviates from cubley-base Phase A baseline (see docs/debug/PHASE_A_BASELINE.md)
+- Command(s): openocd hot-attach (reset_config none) + DEMCR vector catch and DWT PCSR sampling; ./firmware/build-flash-cubley.sh build; openocd program nanoCLR.bin 0x08010000 verify; reset run; wavescope active scan
+- Artifact: firmware/nf-interpreter/build/nanoCLR.elf; firmware/nf-interpreter/build/nanoCLR.bin; firmware/targets-local/CUBLEY_F407_0_5/nanoCLR/malloc_lock.c
+- Breakpoints: vector catch HARDERR/BUSERR/MMERR/INTERR/STATERR/CHKERR/NOCPERR/CORERESET
+- Conclusion: Scan-time reboot root-caused to unlocked newlib heap (lwIP + mbedTLS race); thread-safe __malloc_lock fix flashed and wavescope scan completed with no halt or reset.
+- Note: Pre-fix: BKPT halt at 0x08036226 tcp_input (tcp_in.c:251, LWIP_ASSERT active pcb->state != CLOSED) in tcpip_thread; tcp_active_pcbs head 0x100003d8 zeroed; CFSR/HFSR=0, DFSR=0x2, RCC_CSR=0x1E000003 unchanged; PC samples showed mbedtls bignum work immediately before. newlib __retarget_lock_*_recursive were empty stubs while lwIP uses MEM_LIBC_MALLOC/MEMP_MEM_MALLOC from tcpip_thread (NORMALPRIO+2) and mbedTLS allocates from the CLR thread. Without a debugger the lwIP BKPT escalates to HardFault -> lockup -> IWDG reset (~10 s), matching the earlier silent reboot. Fix: recursive ChibiOS-mutex __malloc_lock/__malloc_unlock; halts on ISR or critical-section allocation. Post-fix trap 13:58-14:15:30 UTC: no halt, no reset; SWD link dropped ~14:16 after scan completion. Only nanoCLR reflashed; nanoBooter and deployment untouched; interop unchanged (0A4353F9).
